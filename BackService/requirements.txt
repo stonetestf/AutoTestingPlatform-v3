@@ -1,4 +1,4 @@
 Django==3.2.9
 mysqlclient
 djangorestframework
-##django-cors-headers
+django-cors-headers

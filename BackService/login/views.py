@@ -43,7 +43,7 @@ def registered(request):
                     # is_activation 默认未激活，需要联系管理员进行配置权限工作
                     db_UserTable.objects.create(
                         userId=create_DjUser.id,userName=userName,nickName=nickName,emails=emails,
-                        is_lock=1,is_activation=0,is_del=1
+                        is_lock=0,is_activation=0,is_del=1
                     )
             except Exception as e:  # 自动回滚，不需要任何操作
                 errorMsg = f'用户注册失败：{e}!'
