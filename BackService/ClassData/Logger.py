@@ -1,5 +1,5 @@
 from django.conf import settings
-# from login.models import ErrorMsg as db_ErrorMsg
+from info.models import ErrorInfo as db_ErrorInfo
 
 import logging
 import json
@@ -94,7 +94,7 @@ class Logging(object):
         return inner
 
     # 错误日志
-    def record_error_info(self, sys, level, methodsName, info):
+    def record_error_info(self, sysType, level, methodsName, info):
         """
         :param sys: 所属系统
         :param level: 错误等级，1:主逻辑错误，2:普通错误
@@ -102,9 +102,9 @@ class Logging(object):
         :param info:
         :return:
         """
-        # db_ErrorMsg.objects.create(
-        #     sys=sys, level=level, methodsName=methodsName, info=info, is_read=0
-        # )
+        db_ErrorInfo.objects.create(
+            sysType=sysType, level=level, methodsName=methodsName, info=info, is_read=0
+        )
 
     # 记录操作信息
     def record_operate_info(self, sysType, toPage, btn):
