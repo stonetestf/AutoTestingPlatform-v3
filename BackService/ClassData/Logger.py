@@ -1,18 +1,24 @@
 from django.conf import settings
+# from login.models import ErrorMsg as db_ErrorMsg
+
 import logging
 import json
-import datetime
-import os
-
-from login.models import ErrorMsg as db_ErrorMsg
+import colorlog
 
 # region 配置日志
+log_colors_config = {
+    'DEBUG': 'cyan',
+    'INFO': 'white',
+    'ERROR': 'red'
+}
 # 获取日志记录器，配置日志等级
 logging.basicConfig(level=logging.INFO)  # 设置日志级别
 logger = logging.getLogger(__name__)
 logger.propagate = False  # 重复打印解决方法 当logger其中一个子记录器收集了一条消息时，它在层次结构中向后退，导致logger的父节点也记录信息。
 # 默认日志格式
-formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - %(message)s")
+formatter = colorlog.ColoredFormatter("%(log_color)s [%(asctime)s] %(message)s",
+                                      log_colors=log_colors_config)
+# formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - %(message)s")
 # 输出到控制台的handler
 chlr = logging.StreamHandler()
 # 配置默认日志格式
@@ -84,9 +90,11 @@ class Logging(object):
                             f"{text}\n"
                             f"----------------------------------------------------------------------\n")
             return res
+
         return inner
 
-    def record_error_info(self,sys,level,methodsName,info):
+    # 错误日志
+    def record_error_info(self, sys, level, methodsName, info):
         """
         :param sys: 所属系统
         :param level: 错误等级，1:主逻辑错误，2:普通错误
@@ -94,7 +102,25 @@ class Logging(object):
         :param info:
         :return:
         """
-        db_ErrorMsg.objects.create(
-            sys=sys,level=level,methodsName=methodsName,info=info,is_read=0
-        )
+        # db_ErrorMsg.objects.create(
+        #     sys=sys, level=level, methodsName=methodsName, info=info, is_read=0
+        # )
 
+    # 记录操作信息
+    def record_operate_info(self, sysType, toPage, btn):
+        """
+        :param sysType: 系统类型 INT、FUN、PER
+        :param toPage:访问的是哪个页面
+        :param btn:使用的是哪个按钮
+        :return:
+        """
+
+        def wrapper(func):
+            def inner(*args, **kwargs):
+                res = func(*args, **kwargs)
+                text = json.loads(res.content)
+                print(text)
+
+            return inner()
+
+        return wrapper
