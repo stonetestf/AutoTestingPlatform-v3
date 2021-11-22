@@ -1,16 +1,16 @@
 import Vue from 'vue'
 import Vuex from 'vuex'//引入vuex
-// import createPersistedState from "vuex-persistedstate" //刷新也不会清除vuex信息
+import createPersistedState from "vuex-persistedstate" //刷新也不会清除vuex信息
 
 Vue.use(Vuex); //使用 vuex
 const store = new Vuex.Store({
   
   // 如果此刻想配置多个选项，将plugins写成一个一维数组，不然会报错,刷新也不会清除vuex信息
-//   plugins:[createPersistedState()],
+  plugins:[createPersistedState()],
   state: {
     isDebug:true,
-    userId:"",
-    // nickName:"",
+    nickName:"",
+    version:'211122',
     // userImage:'',
     // tokenValue: "",
     
@@ -22,7 +22,8 @@ const store = new Vuex.Store({
     userName:'admin',
     passWord:'hbwj@123',
     
-    BackService:'http://127.0.0.1:9090',
+    BackService:'http://192.168.2.12:9090',
+    nginxUrl:'http://192.168.2.12:9092/',// 注意这里的端口不是网页的端口，是网络目录的地址
   },
   mutations: {
     // userId(state,payload){

@@ -18,8 +18,12 @@ from django.contrib import admin
 from django.conf.urls import url, include
 
 import login.urls
+import home.urls
+import upLoad.urls
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
-    url('login/', include(login.urls)),
+    url('api/login/', include(login.urls)),
+    url('api/home/', include(home.urls)),
+    url('api/upLoad/', include(upLoad.urls)),
 ]

@@ -7,8 +7,10 @@ from django.db import transaction
 import json
 
 # Create your views here.
+from rest_framework.authtoken.models import Token as db_Token
 from django.contrib.auth.models import User as db_DjUser
 from login.models import UserTable as db_UserTable
+from info.models import OperateInfo as db_OperateInfo
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -30,7 +32,7 @@ def registered(request):
     except Exception as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Login', '2', 'registered', errorMsg)
+        cls_Logging.record_error_info('API', '2', 'login>registered', errorMsg)
     else:
         if userName.lower() == "admin":
             errorMsg = '用户注册失败:不可使用敏感用户名注册!'
@@ -51,7 +53,46 @@ def registered(request):
                 except Exception as e:  # 自动回滚，不需要任何操作
                     errorMsg = f'用户注册失败：{e}!'
                     response['errorMsg'] = errorMsg
-                    cls_Logging.record_error_info('Login', '1', 'registered', errorMsg)
+                    cls_Logging.record_error_info('API', '1', 'login>registered', errorMsg)
                 else:
                     response['statusCode'] = 2001
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@require_http_methods(["POST"])
+def login_in(request):
+    response = {}
+    try:
+        userName = request.POST['userName']
+        passWord = request.POST['passWord']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', '2', 'login>login_in', errorMsg)
+    else:
+        obj_db_Djuser = auth.authenticate(username=userName, password=passWord)
+        obj_db_UserTable = db_UserTable.objects.filter(userName=userName)
+
+        if obj_db_Djuser and obj_db_UserTable:
+            if obj_db_UserTable.filter(is_lock=1):
+                response['errorMsg'] = '用户已被禁用,请联系管理员进行操作！'
+            elif obj_db_UserTable.filter(is_activation=0):
+                response['errorMsg'] = '用户属于未激活状态,请联系管理员进行操作！'
+            else:
+                token = db_Token.objects.filter(user=obj_db_Djuser)  # 内置查询方法
+                token.delete()
+
+                token = db_Token.objects.create(user=obj_db_Djuser)  # 生成用户的token值
+                db_OperateInfo.objects.create(sysType='Login',
+                                              toPage='Login',
+                                              toFun='登录',
+                                              uid_id=obj_db_UserTable[0].id)
+                response['code'] = 1001  # 登录时传给vue拦截器验证用的
+                response['statusCode'] = 2000
+                response['nickName'] = obj_db_UserTable[0].nickName
+                response['userImg'] = ''
+                response['token'] = token.key
+        else:
+            response['errorMsg'] = '用户名或密码错误!'
     return JsonResponse(response)

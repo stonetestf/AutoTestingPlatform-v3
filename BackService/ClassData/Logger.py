@@ -124,3 +124,15 @@ class Logging(object):
             return inner()
 
         return wrapper
+
+    def print_log(self, logType, methods, msg):  # 打印log信息
+        """
+        :param logType: info/error
+        :param methods: 方法名称
+        :param msg: 打印的信息
+        :return:
+        """
+        if logType == "info":
+            logger.info(f'[{methods}] [{logType}]: {msg}')
+        elif logType == "error":
+            logger.error(f'[{methods}] [{logType}]: {msg}')

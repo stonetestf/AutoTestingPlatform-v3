@@ -33,6 +33,7 @@
 
 <script>
 import Qs from 'qs'
+import {PrintConsole} from "../../js/Logger.js";
 
 export default {
     data() {
@@ -91,7 +92,8 @@ export default {
         dialogPara:{
             handler(newval,oldval)
             {
-                console.log(newval)
+                // console.log(newval);
+                PrintConsole(newval);
                 this.resetForm('RomeData');
                 this.dialogTitle = newval.dialogTitle;
             }
@@ -108,7 +110,7 @@ export default {
         },
         addUser(){
             let self = this;
-            self.$axios.post('/login/registered',
+            self.$axios.post('/api/login/registered',
             Qs.stringify({
                 'userName':self.RomeData.userName,
                 'passWord':self.RomeData.passWord,

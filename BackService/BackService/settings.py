@@ -14,6 +14,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
 
 
 # Quick-start development settings - unsuitable for production
@@ -62,6 +63,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'login',
     'info',
+    'home',
+    'upLoad',
 ]
 
 REST_FRAMEWORK = {

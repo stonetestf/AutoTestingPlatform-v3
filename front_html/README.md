@@ -41,3 +41,7 @@
     重启 /usr/local/nginx/sbin/nginx -s reload
 
     注意 上面这个安装时第6步，安装后文件会在/usr/local/nginx 
+
+    开启端口
+    firewall-cmd --zone=public --add-port=9092/tcp --permanent
+    firewall-cmd --reload
