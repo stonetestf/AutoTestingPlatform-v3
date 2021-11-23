@@ -1,7 +1,7 @@
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 # from django.conf import settings
-# from django.db import transaction
+from django.db import transaction
 # from django.contrib.auth import hashers
 
 import json
@@ -48,7 +48,7 @@ def select_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('Home', '2', 'routerPar>select_data', errorMsg)
     else:
-        obj_db_Router = db_Router.objects.filter(is_del=0).order_by('index')
+        obj_db_Router = db_Router.objects.filter(is_del=0)
         select_db_RouterPar = obj_db_Router[minSize: maxSize]
         if menuName:
             obj_db_Router = obj_db_Router.filter(menuName__icontains=menuName)
@@ -65,7 +65,7 @@ def select_data(request):
             dataList.append(
                 {"id": i.id,
                  "levelText": level,
-                 "index": i.index,
+                 # "index": i.index,
                  "menuName": i.menuName,
                  "routerPath": i.routerPath,
                  "sysType": i.sysType,
@@ -91,7 +91,7 @@ def get_preview_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home','2','registered',errorMsg)
+        cls_Logging.record_error_info('Home', '2', 'registered', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0).order_by('sortNum')
         find_db_Router = obj_db_Router.filter(sysType=sysType, level='1')
@@ -105,9 +105,207 @@ def get_preview_data(request):
                                  'sortNum': i.sortNum,
                                  'allowDrag': True,  # 能否拖动
                                  'allowDrop': False})  # 能否拖入
-            dataList.append({'id': item_router.id, 'label': item_router.menuName, 'allowDrag': False,
+            dataList.append({'id': item_router.id,
+                             'label': item_router.menuName,
+                             'allowDrag': False,  # 1层菜单不可拖动
                              'children': children})
         response['statusCode'] = 2000
         response['TreeData'] = dataList
+
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 加载上级菜单
+def get_belogid_table(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        sysType = objData.sysType
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Home', '1', 'routerPar>get_belogid_table', errorMsg)
+    else:
+        obj_db_Router = db_Router.objects.filter(is_del=0, level='1', sysType=sysType).order_by('index')
+        for i in obj_db_Router:
+            dataList.append({'label': i.menuName, 'value': i.id})
+
+        response['dataList'] = dataList
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def save_data(request):
+    response = {}
+    try:
+        sysType = request.POST['sysType']
+        menuLevel = request.POST['menuLevel']
+        menuName = request.POST['menuName']
+        routerPath = request.POST['routerPath']
+        belogId = request.POST['belogId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Home', '2', 'routerPar>data_save', errorMsg)
+    else:
+        #  效验保存的数据
+        obj_db_Router = db_Router.objects.filter(is_del=0, sysType=sysType)
+        if obj_db_Router.filter(menuName=menuName):
+            response['errorMsg'] = "当前输入的菜单名称已存在,请更改!"
+        else:
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    save_db_Router = db_Router.objects.create(
+                        sysType=sysType,
+                        level=menuLevel,
+                        menuName=menuName,
+                        routerPath=routerPath,
+                        belogId=belogId if belogId else None,
+                        is_del=0,
+                    )
+
+                    if menuLevel == '1':
+                        index = save_db_Router.id
+                        sortNum = 1
+                    else:
+                        select_db_Router = obj_db_Router.filter(belogId=belogId)
+                        index = f"{belogId}-{select_db_Router.count()}"
+                        sortNum = select_db_Router.count()
+                    db_Router.objects.filter(id=save_db_Router.id).update(index=index, sortNum=sortNum)
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'保存失败:{e}'
+            else:
+                response['statusCode'] = 2001
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def edit_data(request):
+    response = {}
+    try:
+        routerId = request.POST['routerId']
+        sysType = request.POST['sysType']
+        menuLevel = request.POST['menuLevel']
+        menuName = request.POST['menuName']
+        routerPath = request.POST['routerPath']
+        belogId = request.POST['belogId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Home', '2', 'routerPar>edit_data', errorMsg)
+    else:
+        obj_db_Router = db_Router.objects.filter(id=routerId)
+        if obj_db_Router:
+            if menuLevel == '1':
+                index = routerId
+                sortNum = 1
+            else:
+                select_db_Router = db_Router.objects.filter(is_del=0, belogId=belogId)
+                if select_db_Router.count() == 0:
+                    sortNum = 1
+                else:
+                    sortNum = select_db_Router.count() + 1
+                index = f"{belogId}-{sortNum}"
+
+            obj_db_Router.update(level=menuLevel,
+                                 index=index,
+                                 sortNum=sortNum,
+                                 menuName=menuName,
+                                 routerPath=routerPath,
+                                 belogId=belogId if belogId else None,
+                                 sysType=sysType,
+                                 updateTime=cls_Common.get_date_time()
+                                 )
+
+            response['statusCode'] = 2002
+        else:
+            response['errorMsg'] = "当前修改的路由不存在于数据库中!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def delete_data(request):
+    response = {}
+    try:
+        routerId = request.POST['routerId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Home', '2', 'routerPae>delete_data', errorMsg)
+    else:
+        obj_db_Router = db_Router.objects.filter(is_del=0, id=routerId)
+        if obj_db_Router:
+            obj_db_Router.update(is_del=1, updateTime=cls_Common.get_date_time())
+            response['statusCode'] = 2003
+        else:
+            response['errorMsg'] = "当前路由参数不存在于数据库中!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 更新路由排序
+def update_router_sort(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+        treeData = objData.TreeData
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Home', '2', 'routerPar>update_router_sort', errorMsg)
+    else:
+        for item_tree in treeData:
+            for index, item_children in enumerate(item_tree.children, 1):
+                routerId = item_children.id
+                obj_db_Router = db_Router.objects.filter(id=routerId)
+                if obj_db_Router:
+                    belogId = f"{obj_db_Router[0].belogId}-{index}"
+                    obj_db_Router.update(sortNum=index, index=belogId, updateTime=cls_Common.get_date_time())
+        response['statusCode'] = 2002
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 编辑时加载路由信息
+def load_router_data(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        routerId = objData.routerId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Home', '1', 'routerPar>get_belogid_table', errorMsg)
+    else:
+        obj_db_Router = db_Router.objects.filter(id=routerId)
+        if obj_db_Router:
+            dataTable = {
+                'sysType': obj_db_Router[0].sysType,
+                'menuLevel': str(obj_db_Router[0].level),
+                'belogId': obj_db_Router[0].belogId,
+                'menuName': obj_db_Router[0].menuName,
+                'routerPath': obj_db_Router[0].routerPath,
+            }
+            response['statusCode'] = 2000
+            response['dataTable'] = dataTable
+        else:
+            response['errorMsg'] = "当前选择的路由信息不存在,请刷新后在重新尝试!"
 
     return JsonResponse(response)

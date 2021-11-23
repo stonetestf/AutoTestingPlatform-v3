@@ -59,12 +59,6 @@
                                         prop="levelText">
                                     </el-table-column>
                                     <el-table-column
-                                        label="Index"
-                                        align= "center"
-                                        width="100px"
-                                        prop="index">
-                                    </el-table-column>
-                                    <el-table-column
                                         label="菜单名称"
                                         width="300px"
                                         align= "center"
@@ -75,23 +69,11 @@
                                         align= "center"
                                         prop="routerPath">
                                     </el-table-column>         
-                                    <!-- <el-table-column
-                                        label="所属上级ID"
-                                        align= "center"
-                                        width="100px"
-                                        prop="belogId">
-                                    </el-table-column>    -->
-                                    <!-- <el-table-column
-                                        label="排序"
-                                        align= "center"
-                                        width="100px"
-                                        prop="sortNum">
-                                    </el-table-column>   -->
                                     <el-table-column
                                         align="center"
                                         width="180px">
                                     <template slot="header">
-                                        <el-button type="primary" @click="OpenEditDialog_Edit()">新增</el-button>
+                                        <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                                     </template>
                                     <template slot-scope="scope" style="width:100px">
                                         <el-button
@@ -135,24 +117,25 @@
                 </template>
             </el-tab-pane>
         </el-tabs>
-        <!-- <template>
+        <template>
             <dialog-editor
-                @closeDialog="closeDialog_Edit" 
-                :isVisible="dialogVisible_editor" 
-                :dialogPara="dialogPara_editor"
+                @closeDialog="closeEditDialog" 
+                :isVisible="dialog.editor.dialogVisible" 
+                :dialogPara="dialog.editor.dialogPara"
                 @Succeed="SelectData">
             </dialog-editor>
-        </template> -->
+        </template>
     </div>
 </template>
 
 <script>
+import Qs from 'qs'
 import {PrintConsole} from "../../../js/Logger.js";
-// import DialogEditor from "./Editor.vue";
+import DialogEditor from "./Editor.vue";
 
 export default {
     components: {
-    //    DialogEditor,
+       DialogEditor,
     },
     data() {
         return {
@@ -195,11 +178,16 @@ export default {
                 total: 0,// 总条数，根据接口获取数据长度(注意：这里不能为空)
                 pageSize: 10, // 默认每页显示的条数（可修改）
             },
-            dialogVisible_editor:false,
-            dialogPara_editor:{
-                dialogTitle:"",//初始化标题
-                isAddNew:true,//初始化是否新增\修改
+            dialog:{
+                editor:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                }
             },
+           
         };
     },
     mounted(){
@@ -223,7 +211,7 @@ export default {
                         let obj = {};
                         obj.id =d.id;
                         obj.levelText = d.levelText;
-                        obj.index = d.index;
+                        // obj.index = d.index;
                         obj.menuName = d.menuName;
                         obj.routerPath = d.routerPath;
                         obj.sysType = d.sysType;
@@ -243,60 +231,51 @@ export default {
                 console.log(error);
             })
         },
-        // closeDialog_Edit(){
-        //     this.dialogVisible_editor =false;
-        // },
-        // OpenEditDialog_Edit(){
-        //     this.dialogPara_editor={
-        //         dialogTitle:"新增路由",//初始化标题
-        //         isAddNew:true,//初始化是否新增\修改
-        //     }
-        //     this.dialogVisible_editor=true;
-        // },
-        // handleEdit(index,row){
-        //     this.dialogPara_editor={
-        //         dialogTitle:"编辑路由",//初始化标题
-        //         isAddNew:false,//初始化是否新增\修改
-        //         routerId:row.id,
-        //         level:row.level,
-        //         index:row.index,
-        //         menuName:row.menuName,
-        //         routerPath:row.routerPath,
-        //         belogId:row.belogId,
-        //         sortNum:row.sortNum,
-        //         toPage:row.toPage,
-        //     }
-        //     this.dialogVisible_editor=true;
+        closeEditDialog(){
+            this.dialog.editor.dialogVisible =false;
+        },
+        OpenEditDialog(){
+            this.dialog.editor.dialogPara={
+                dialogTitle:"新增路由",//初始化标题
+                isAddNew:true,//初始化是否新增\修改
+            }
+            this.dialog.editor.dialogVisible=true;
+        },
+        handleEdit(index,row){
+            this.dialog.editor.dialogPara={
+                dialogTitle:"编辑路由",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                routerId:row.id,
+            }
+            this.dialog.editor.dialogVisible=true;
 
-        // },
-        // handleDelete(index,row){
-        //     this.$confirm('请确定是否删除?', '提示', {
-        //         confirmButtonText: '确定',
-        //         cancelButtonText: '取消',
-        //         type: 'warning'
-        //         }).then(() => {
-        //             this.DataDelete(row.id);     
-        //         }).catch(() => {       
-        //     });
-        // },
-        // DataDelete(routerId){
-        //     let self = this;
-        //     self.$axios.post('/api/RouterManagement/DataDelete',{
-        //         "data":{
-        //             'routerId':routerId
-        //         }
-        //     }).then(res => {
-        //     if(res.data.statusCode ==2003){
-        //         self.$message.success('删除成功!');
-        //         self.SelectData();
-        //     }
-        //     else{
-        //         self.$message.error('删除失败:'+ res.data.errorMsg);
-        //     }
-        //     }).catch(function (error) {
-        //         console.log(error);
-        //     })
-        // },
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                    this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(routerId){
+            let self = this;
+            self.$axios.post('/api/router/DeleteData',Qs.stringify({
+                'routerId':routerId
+            })).then(res => {
+                if(res.data.statusCode ==2003){
+                    self.$message.success('删除成功!');
+                    self.SelectData();
+                }
+                else{
+                    self.$message.error('删除失败:'+ res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
         GetPreviewData(){//加载预览数据
             let self = this;
             self.RightRomeData.TreeData= [];
@@ -318,10 +297,8 @@ export default {
             PrintConsole('tree drop: ', dropNode);
             PrintConsole('TreeData',this.RightRomeData.TreeData)
             let self = this;
-            self.$axios.post('/api/RouterManagement/UpdateSort',{
-                "data":{
-                    'TreeData':self.RightRomeData.TreeData
-                }
+            self.$axios.post('/api/router/UpdateRouterSort',{
+                'TreeData':self.RightRomeData.TreeData
             }).then(res => {
             if(res.data.statusCode ==2002){
                 self.$message.success('排序更新成功,请退出重新登录后应用!');
@@ -329,12 +306,11 @@ export default {
             }
             else{
                 self.$message.error('排序更新失败:'+ res.data.errorMsg);
+                self.SelectData();
             }
             }).catch(function (error) {
                 console.log(error);
             })
-
-            
         },
         allowDrag(draggingNode){//判断节点能否被拖拽
             PrintConsole(draggingNode);

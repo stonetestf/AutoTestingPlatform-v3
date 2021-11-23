@@ -2,6 +2,7 @@ import random
 import string
 import os
 import hashlib
+import datetime
 
 
 class Common(object):
@@ -53,7 +54,7 @@ class Common(object):
             for item in listData:
                 if item.startswith(listName):
                     keyName = item.split('[')[-1].replace(']', '')
-                    itemDicts[keyName] = listData[f"fileList[{i}][{keyName}]"]
+                    itemDicts[keyName] = listData[f"{listName}[{i}][{keyName}]"]
             lists.append(itemDicts)
         return lists
 
@@ -71,3 +72,6 @@ class Common(object):
             data = fp.read()
         file_md5 = hashlib.md5(data).hexdigest()
         return file_md5
+
+    def get_date_time(self):
+        return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
