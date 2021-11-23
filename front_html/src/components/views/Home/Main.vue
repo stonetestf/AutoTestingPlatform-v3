@@ -28,19 +28,19 @@
                       :index="item.index" :key="item.menuName"
                       >{{item.menuName}}
                     </el-menu-item>
-                </el-submenu>
+                </el-submenu> -->
                 <el-submenu index="2" :disabled="MenuDisPlqy.Setting">
                   <template slot="title">
                     <i class="el-icon-setting"></i>
-                    <a>设置</a>
+                    <a>Setting</a>
                   </template>
                     <el-menu-item
                       class="title"
-                      v-for="item in MenuList.Setting"
+                      v-for="item in MenuTable.Setting"
                       :index="item.index" :key="item.menuName"
                       >{{item.menuName}}
                     </el-menu-item>
-                </el-submenu> -->
+                </el-submenu>
               </el-menu>
             </el-col>
             <el-col :span="4">
@@ -86,85 +86,138 @@ import store from '../../../store/index'
 import {PrintConsole} from "../../js/Logger.js";
 import DialogUserInfo from "./UserInfo.vue";
 
-  export default {
-    components: {
-      DialogUserInfo
-    },
-    data() {
-        return {
-          RomeData:{
-            nickName:'',
-            userImage:'',
+export default {
+  components: {
+    DialogUserInfo
+  },
+  data() {
+    return {
+      RomeData:{
+        nickName:'',
+        userImage:'',
+      },
+      MenuDisPlqy:{
+        Setting:true,
+      },
+      MenuTable:{
+        Setting:[],
+      },
+      dialog:{
+        userinfo:{
+          dialogVisible:false,
+          dialogPara:{
+            dialogTitle:"",//初始化标题
           },
-          dialog:{
-            userinfo:{
-              dialogVisible:false,
-              dialogPara:{
-                dialogTitle:"",//初始化标题
-              },
-            }
-          },
         }
-    },
-    mounted (){
-      this.LoadUserInfo();
-    },
-    watch:{
-    },
-    methods: {
-      handleSelect(key, keyPath) {//点击菜单跳转页面
-        PrintConsole(key,keyPath);
-        let self = this;
-        if(key=='0'){
-          self.$router.push('/Choose');
-        }
-      },
-      QuitUser(){
-        this.$cookies.remove('token');
-        this.$router.push({ path:'/'  })
-      },
-      handleCommand(command){
-        let self = this;
-        if (command=="close"){
-          self.QuitUser();
-        }
-        else if(command=="userinfo"){
-          self.OpenDialog_UserInfo();
-        }
-      },
-      closeDialog_UserInfo(){
-        this.dialog.userinfo.dialogVisible =false;
-      },
-      OpenDialog_UserInfo(){
-          let self = this;
-          self.dialog.userinfo.dialogPara={
-            dialogTitle:"个人信息",//初始化标题
-          }
-          self.dialog.userinfo.dialogVisible=true;
-      },
-      LoadUserInfo(){//基本信息及权限信息
-        let self = this;
-        self.$axios.get('/api/home/LoadUserInfo', {
-          params:{}
-        }).then(res => {
-          if(res.data.statusCode==2000){
-            this.$cookies.set('nickName',res.data.baseInfo.nickName,"0") 
-            self.RomeData.nickName =this.$cookies.get('nickName');
-           
-            if(res.data.baseInfo.userImg){
-              store.state.userImage = res.data.baseInfo.userImg;
-              self.RomeData.userImage = 'data:image/png;base64,'+store.state.userImage ;
-            }
-            self.$router.push('/Choose');
-          }else{
-            self.$message.error('用户数据获取失败:'+res.data.errorMsg);
-          }
-        }).catch(function (error) {
-          console.log(error);
-        })
       },
     }
+  },
+  mounted (){
+    this.LoadUserInfo();
+    this.GetHomePermissions();
+  },
+  watch:{
+  },
+  methods: {
+    handleSelect(key, keyPath) {//点击菜单跳转页面
+      PrintConsole(key);
+      let self = this;
+      if(key=='0'){
+        self.$router.push('/Choose');
+      }else{
+        self.GetRouterPath(key).then(d => {//这种方法用来遵守执行顺序
+          switch(key){
+            case key:
+              this.$router.push(d);
+              break;
+          }
+        });
+      }
+    },
+    QuitUser(){
+      this.$cookies.remove('token');
+      this.$router.push({ path:'/'  })
+    },
+    handleCommand(command){
+      let self = this;
+      if (command=="close"){
+        self.QuitUser();
+      }
+      else if(command=="userinfo"){
+        self.OpenDialog_UserInfo();
+      }
+    },
+    closeDialog_UserInfo(){
+      this.dialog.userinfo.dialogVisible =false;
+    },
+    OpenDialog_UserInfo(){
+        let self = this;
+        self.dialog.userinfo.dialogPara={
+          dialogTitle:"个人信息",//初始化标题
+        }
+        self.dialog.userinfo.dialogVisible=true;
+    },
+    LoadUserInfo(){//基本信息及权限信息
+      let self = this;
+      self.$axios.get('/api/home/LoadUserInfo', {
+        params:{}
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          this.$cookies.set('nickName',res.data.baseInfo.nickName,"0") 
+          self.RomeData.nickName =this.$cookies.get('nickName');
+          
+          if(res.data.baseInfo.userImg){
+            store.state.userImage = res.data.baseInfo.userImg;
+            self.RomeData.userImage = 'data:image/png;base64,'+store.state.userImage ;
+          }
+          self.$router.push('/Choose');
+        }else{
+          self.$message.error('用户数据获取失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+        console.log(error);
+      })
+    },
+    GetHomePermissions(){
+      let self = this;
+      self.$axios.get('/api/home/GetHomePermissions', {
+        params:{}
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          res.data.menuTable.forEach(d => {
+            if(d.menuName=='Setting'){
+              self.MenuDisPlqy.Setting = d.disPlay;
+              self.MenuTable.Setting = d.children;
+            }
+            
+          });
+
+        }else{
+          self.$message.error(':'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+        console.log(error);
+      })
+    },
+    GetRouterPath(key){//获取二级菜单页面地址
+        let self = this;
+        return self.$axios.get('/api/home/GetRouterPath',{
+            params:{
+              'sysType':'Home',
+              'index':key,
+            }
+          }).then(res => {
+            if(res.data.statusCode==2000){
+              return res.data.routerPath;
+            }else{
+              self.$message.error(res.data.errorMsg);
+            }
+          }).catch(function (error) {
+            console.log(error);
+          })
+      },
   }
+}
 
 </script>
 

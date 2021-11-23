@@ -94,17 +94,20 @@ class Logging(object):
         return inner
 
     # 错误日志
-    def record_error_info(self, sysType, level, methodsName, info):
+    def record_error_info(self, sysType, level, methodName, info):
         """
         :param sys: 所属系统
         :param level: 错误等级，1:主逻辑错误，2:普通错误
-        :param methodsName: 方法名称
+        :param methodName: 方法名称
         :param info:
         :return:
         """
-        db_ErrorInfo.objects.create(
-            sysType=sysType, level=level, methodsName=methodsName, info=info, is_read=0
-        )
+        try:
+            db_ErrorInfo.objects.create(
+                sysType=sysType, level=level, methodName=methodName, info=info, is_read=0
+            )
+        except BaseException as e:
+            self.print_log('error','record_error_info',str(e))
 
     # 记录操作信息
     def record_operate_info(self, sysType, toPage, btn):

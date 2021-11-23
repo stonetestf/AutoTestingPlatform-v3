@@ -6,10 +6,11 @@ class UserTable(models.Model):
     userId = models.IntegerField("内置用户ID", null=False)  # Dango内置的用户，因为要用到token数据
     userName = models.CharField(max_length=50, null=False)
     nickName = models.CharField(max_length=200, null=False)
-    userImg = models.CharField(max_length=100, null=True)
+    userImg = models.TextField('用户图片base64', null=True)
     imgMD5 = models.CharField(max_length=100, null=True)
     emails = models.CharField(max_length=100, null=True)
     is_lock = models.IntegerField("是否锁定(0:不锁定,1:锁定)", null=False)
     is_activation = models.IntegerField("是否激活(0:未激活,1:已激活)", null=False)
     is_del = models.IntegerField(null=False, verbose_name="是否删除(0:不删除,1:删除)")
-    createTime = models.DateTimeField('登录时间', auto_now=True)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+    updateTime = models.DateTimeField('更新时间', auto_now=True)

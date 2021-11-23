@@ -1,5 +1,7 @@
 import random
 import string
+import os
+import hashlib
 
 
 class Common(object):
@@ -54,3 +56,18 @@ class Common(object):
                     itemDicts[keyName] = listData[f"fileList[{i}][{keyName}]"]
             lists.append(itemDicts)
         return lists
+
+    # 删除文件
+    def delete_file(self, filePath):
+        if os.path.exists(filePath):
+            os.remove(filePath)  # 删除
+            return True
+        else:
+            return False
+
+    # 返回文件MD5值
+    def get_file_md5(self,filePath):
+        with open(filePath, 'rb') as fp:
+            data = fp.read()
+        file_md5 = hashlib.md5(data).hexdigest()
+        return file_md5

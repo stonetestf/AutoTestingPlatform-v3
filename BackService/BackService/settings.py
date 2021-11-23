@@ -12,9 +12,15 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
+
+# NginxServer
+NGINX_SERVER = 'http://192.168.2.12:9092/'
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,8 +29,6 @@ TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b@-_njx8ks!#*p=dtcuf+_gwq7v6oi_3^2a^05nyjt*n7hm&_k'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 # region Request 跨域
 CORS_ORIGIN_ALLOW_ALL = True
@@ -49,9 +53,7 @@ CORS_ALLOW_HEADERS = (  # 前端项目设置请求头记得添加到CORS_ALLOW_H
 ALLOWED_HOSTS = ['*']
 # endregion
 
-
-# Application definition
-
+# region Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -65,7 +67,9 @@ INSTALLED_APPS = [
     'info',
     'home',
     'upLoad',
+    'routerPar',
 ]
+# endregion
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

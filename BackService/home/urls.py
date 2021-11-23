@@ -4,4 +4,6 @@ from . import views
 urlpatterns = [
     url(r'LoadUserInfo', views.load_user_info, name='LoadUserInfo'),
     url(r'SaveUserInfo', views.save_user_info, name='SaveUserInfo'),
+    url(r'GetHomePermissions', views.get_home_permissions, name='GetHomePermissions'),
+    url(r'GetRouterPath', views.get_router_path, name='GetRouterPath'),
 ]

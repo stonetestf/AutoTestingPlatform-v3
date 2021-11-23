@@ -20,10 +20,12 @@ from django.conf.urls import url, include
 import login.urls
 import home.urls
 import upLoad.urls
+import routerPar.urls
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
     url('api/login/', include(login.urls)),
     url('api/home/', include(home.urls)),
     url('api/upLoad/', include(upLoad.urls)),
+    url('api/router/', include(routerPar.urls)),
 ]
