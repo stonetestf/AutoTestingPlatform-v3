@@ -22,6 +22,7 @@ import home.urls
 import upLoad.urls
 import routerPar.urls
 import role.urls
+import userManagement.urls
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
@@ -30,4 +31,5 @@ urlpatterns = [
     url('api/upLoad/', include(upLoad.urls)),
     url('api/router/', include(routerPar.urls)),
     url('api/role/', include(role.urls)),
+    url('api/userManagement/', include(userManagement.urls)),
 ]

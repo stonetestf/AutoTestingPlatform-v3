@@ -22,8 +22,8 @@
                     <el-form-item label="Email:">
                         <el-input v-model.trim="RomeData.emails"></el-input>
                     </el-form-item>
-                    <el-form-item label="入加角色:" prop="role">
-                       <el-select v-model="RomeData.role" clearable placeholder="请选择" style="float:left" @click.native="GetRoleNameOption()">
+                    <el-form-item label="入加角色:" prop="roleId">
+                       <el-select v-model="RomeData.roleId" clearable placeholder="请选择" style="float:left" @click.native="GetRoleNameOption()">
                             <el-option
                                 v-for="item in RomeData.roleOption"
                                 :key="item.value"
@@ -45,7 +45,7 @@
 import Qs from 'qs'
 import {PrintConsole} from "../../js/Logger.js";
 
-import {GetRoleNameItems} from "../../js/GetSelectTable.js";
+import {NoTokenGetRoleNameItems} from "../../js/GetSelectTable.js";
 
 export default {
     data() {
@@ -67,7 +67,7 @@ export default {
                 checkPass:'',
                 nickName:'',
                 emails:'',
-                role:'',
+                roleId:'',
                 roleOption:[],
                 rules: {
                     userName: [
@@ -85,7 +85,7 @@ export default {
                         { required: true, message: '请输入昵称', trigger: 'blur' },
                         { min: 1, max: 20, message: '长度在 1 到 20 个字符', trigger: 'blur' }
                     ],
-                    role:[
+                    roleId:[
                         { required: true, message: '请选择加入角色', trigger: 'change' }
                     ]
                 }
@@ -121,7 +121,7 @@ export default {
             this.$emit('closeDialog');
         },
         GetRoleNameOption(){
-            GetRoleNameItems().then(d=>{
+            NoTokenGetRoleNameItems().then(d=>{
                 this.RomeData.roleOption = d;
             });
         },
@@ -138,7 +138,7 @@ export default {
                 'passWord':self.RomeData.passWord,
                 'nickName':self.RomeData.nickName,
                 'emails':self.RomeData.emails,
-                'role':self.RomeData.role,
+                'roleId':self.RomeData.roleId,
             })).then(res => {
                 if(res.data.statusCode==2001){
                     self.$message.success('注册成功,请联系管理员进行权限分配及激活操作!');

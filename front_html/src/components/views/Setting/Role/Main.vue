@@ -47,28 +47,29 @@
                         </el-table-column>
                         <el-table-column
                             align="center"
-                            width="250px">
+                            width="200px">
                         <template slot="header">
                             <el-button-group>
                                 <el-button type="primary" @click="OpenEditDialog()">新增角色</el-button>
-                                <el-button type="warning" @click="OpenPermissionsDialog()">角色权限</el-button>
                             </el-button-group>
                         </template>
                         <template slot-scope="scope" style="width:100px">
-                            <el-button
-                                size="mini"
-                                type="success"
-                                @click="OpenEditDialog_bindUsers(scope.$index, scope.row)">绑定用户
-                            </el-button>
-                            <el-button
-                                size="mini"
-                                @click="handleEdit(scope.$index, scope.row)">Edit
-                            </el-button>
-                            <el-button
-                                size="mini"
-                                type="danger"
-                                @click="handleDelete(scope.$index, scope.row)">Delete
-                            </el-button>
+                            <el-button-group>
+                                <el-button
+                                    size="mini"
+                                    type="warning"
+                                    @click="OpenPermissionsDialog(scope.$index, scope.row)">权限
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    @click="handleEdit(scope.$index, scope.row)">Edit
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    type="danger"
+                                    @click="handleDelete(scope.$index, scope.row)">Delete
+                                </el-button>
+                            </el-button-group>
                         </template>
                         </el-table-column>
                     </el-table>
@@ -93,6 +94,14 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+            <dialog-permissions
+                @closeDialog="closePermissionsDialog" 
+                :isVisible="dialog.permissions.dialogVisible" 
+                :dialogPara="dialog.permissions.dialogPara"
+                @Succeed="SelectData">
+            </dialog-permissions>
+        </template>
     </div>
 </template>
 
@@ -100,10 +109,11 @@
 import Qs from 'qs'
 import store from '../../../../store/index'
 import DialogEditor from "./Editor.vue"
+import DialogPermissions from "./Permissions.vue"
 
 export default {
     components: {
-        DialogEditor
+        DialogEditor,DialogPermissions,
     },
     data() {
         return {
@@ -121,8 +131,14 @@ export default {
                 ediror:{
                     dialogVisible:false,
                     dialogPara:{
-                        dialogTitle:"新增角色",//初始化标题
+                        dialogTitle:"",//初始化标题
                         isAddNew:true,//初始化是否新增\修改
+                    }
+                },
+                permissions:{//权限
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
                     }
                 },
             },
@@ -162,16 +178,7 @@ export default {
                 console.log(error);
             })
         },
-        closeEditDialog(){
-            this.dialog.ediror.dialogVisible =false;
-        },
-        OpenEditDialog(){
-            this.dialog.ediror.dialogPara={
-                dialogTitle:"新增角色",//初始化标题
-                isAddNew:true,//初始化是否新增\修改
-            }
-            this.dialog.ediror.dialogVisible=true;
-        },
+
         handleEdit(index,row){
             this.dialog.ediror.dialogPara={
                 dialogTitle:"编辑角色",//初始化标题
@@ -198,7 +205,7 @@ export default {
             })
         },
         handleDelete(index,row){
-            this.$confirm('请确定是否删除?', '提示', {
+            this.$confirm('如该角色下有绑定用户,删除角色后绑定用户会成为游客,请确定是否删除?', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
@@ -222,6 +229,29 @@ export default {
             let self = this;
             // 改变默认的页数
             self.page.current=val
+        },
+
+        //Dialog
+        closeEditDialog(){
+            this.dialog.ediror.dialogVisible =false;
+        },
+        OpenEditDialog(){
+            this.dialog.ediror.dialogPara={
+                dialogTitle:"新增角色",//初始化标题
+                isAddNew:true,//初始化是否新增\修改
+            }
+            this.dialog.ediror.dialogVisible=true;
+        },
+
+        closePermissionsDialog(){
+            this.dialog.permissions.dialogVisible =false;
+        },
+        OpenPermissionsDialog(index,row){
+            this.dialog.permissions.dialogPara={
+                dialogTitle:"修改权限",//初始化标题
+                roleId:row.id,//初始化是否新增\修改
+            }
+            this.dialog.permissions.dialogVisible=true;
         },
 
     }

@@ -14,3 +14,11 @@ class UserTable(models.Model):
     is_del = models.IntegerField(null=False, verbose_name="是否删除(0:不删除,1:删除)")
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('更新时间', auto_now=True)
+
+
+class UserBindRole(models.Model):  # 用户绑定基础角色
+    user = models.ForeignKey("UserTable", to_field='id', on_delete=models.CASCADE)  # 用户ID
+    role = models.ForeignKey("role.BasicRole", to_field='id', on_delete=models.CASCADE)  # 基础角色ID
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+    updateTime = models.DateTimeField('更新时间', auto_now=True)

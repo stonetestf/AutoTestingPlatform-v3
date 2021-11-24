@@ -60,7 +60,8 @@ def load_user_info(request):
             baseInfo = {
                 'userName': obj_db_UserTable[0].userName,
                 'nickName': obj_db_UserTable[0].nickName,
-                'userImg': str(eval(obj_db_UserTable[0].userImg), encoding='utf-8'),
+                'userImg': str(eval(obj_db_UserTable[0].userImg),
+                               encoding='utf-8') if obj_db_UserTable[0].userImg else None,
                 'fileList': fileList,
                 'emails': obj_db_UserTable[0].emails,
             }

@@ -5,6 +5,7 @@ import Home from '@/components/views/Home/Main'
 import Choose from '@/components/views/Home/Choose'//主页面选择入口
 import RouterPar from '@/components/views/Setting/Router/Main'//路由管理
 import Role from '@/components/views/Setting/Role/Main'//角色管理
+import UserTable from '@/components/views/Setting/UserTable/Main'//用户管理
 
 
 import Router from 'vue-router'
@@ -25,6 +26,7 @@ export default new Router({
       {path: '/Choose',name: 'Choose',component: Choose},
       {path: '/Setting/Router/Main',name: 'Main',component: RouterPar},
       {path: '/Setting/Role/Main',name: 'Main',component: Role},
+      {path: '/Setting/UserTable/Main',name: 'Main',component: UserTable},
        
      ]}
   ]
