@@ -69,7 +69,7 @@
                             <el-table-column
                                 label="角色权限"
                                 align= "center"
-                                width="100px">
+                                width="110px">
                                 <template slot-scope="scope">
                                     <el-tag type="info" v-if="scope.row.roleName=='游客'">{{scope.row.roleName}}</el-tag>
                                     <el-tag type="success"  v-else>{{scope.row.roleName}}</el-tag>
@@ -110,7 +110,7 @@
                                     <el-button
                                         v-if="scope.row.is_lock==0"
                                         size="mini"
-                                        type="warning"
+                                        type="info"
                                         @click="editIsLockState(scope.$index, scope.row,'1')">禁用
                                     </el-button>
                                     <el-button
