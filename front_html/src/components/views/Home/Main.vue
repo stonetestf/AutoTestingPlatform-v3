@@ -29,7 +29,7 @@
                       >{{item.menuName}}
                     </el-menu-item>
                 </el-submenu> -->
-                <el-submenu index="2" :disabled="MenuDisPlqy.Setting">
+                <el-submenu index="2" :disabled="MenuDisPlay.Setting">
                   <template slot="title">
                     <i class="el-icon-setting"></i>
                     <a>Setting</a>
@@ -96,7 +96,7 @@ export default {
         nickName:'',
         userImage:'',
       },
-      MenuDisPlqy:{
+      MenuDisPlay:{
         Setting:true,
       },
       MenuTable:{
@@ -186,12 +186,10 @@ export default {
         if(res.data.statusCode==2000){
           res.data.menuTable.forEach(d => {
             if(d.menuName=='Setting'){
-              self.MenuDisPlqy.Setting = d.disPlay;
+              self.MenuDisPlay.Setting = d.disPlay;
               self.MenuTable.Setting = d.children;
             }
-            
           });
-
         }else{
           self.$message.error(':'+res.data.errorMsg);
         }
