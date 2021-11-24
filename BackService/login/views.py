@@ -11,6 +11,7 @@ from rest_framework.authtoken.models import Token as db_Token
 from django.contrib.auth.models import User as db_DjUser
 from login.models import UserTable as db_UserTable
 from info.models import OperateInfo as db_OperateInfo
+from role.models import BasicRole as db_BasicRole
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -29,6 +30,7 @@ def registered(request):
         passWord = request.POST['passWord']
         nickName = request.POST['nickName']
         emails = request.POST['emails']
+        role = request.POST['role']
     except Exception as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg

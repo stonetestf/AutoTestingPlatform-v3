@@ -1,6 +1,6 @@
 <template>
     <div ref="tab-main"  id="tab-main">
-        <el-tabs type="border-card" style="height:811px">
+        <el-tabs type="border-card" style="height:830px">
             <el-tab-pane label="路由管理">
                 <template>
                     <el-row :gutter="20">
@@ -68,7 +68,13 @@
                                         label="路由地址"
                                         align= "center"
                                         prop="routerPath">
-                                    </el-table-column>         
+                                    </el-table-column>      
+                                    <el-table-column
+                                        label="更新时间"
+                                        width="200px"
+                                        align= "center"
+                                        prop="updateTime">
+                                    </el-table-column>     
                                     <el-table-column
                                         align="center"
                                         width="180px">
@@ -215,6 +221,7 @@ export default {
                         obj.menuName = d.menuName;
                         obj.routerPath = d.routerPath;
                         obj.sysType = d.sysType;
+                        obj.updateTime=d.updateTime;
 
                         self.tableData.push(obj);
                     });

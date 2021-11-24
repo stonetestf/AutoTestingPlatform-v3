@@ -69,6 +69,7 @@ def select_data(request):
                  "menuName": i.menuName,
                  "routerPath": i.routerPath,
                  "sysType": i.sysType,
+                 "updateTime":str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  }
             )
 
