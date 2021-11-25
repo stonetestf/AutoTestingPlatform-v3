@@ -1,5 +1,5 @@
 from django.conf import settings
-from info.models import ErrorInfo as db_ErrorInfo
+from info.models import OperateInfo as db_OperateInfo
 
 import logging
 import json
@@ -94,39 +94,21 @@ class Logging(object):
         return inner
 
     # 错误日志
-    def record_error_info(self, sysType, level, methodName, info):
+    def record_error_info(self, sysType, toPage,toFun, info):
         """
-        :param sys: 所属系统
+        :param sysType: 系统类型
+        :param toFun: 所属页面
+        :param toPage: 所属功能
         :param level: 错误等级，1:主逻辑错误，2:普通错误
-        :param methodName: 方法名称
         :param info:
         :return:
         """
         try:
-            db_ErrorInfo.objects.create(
-                sysType=sysType, level=level, methodName=methodName, info=info, is_read=0
+            db_OperateInfo.objects.create(
+                sysType=sysType, level=1,remindType='Error', toPage=toPage,toFun=toFun, info=info, is_read=0
             )
         except BaseException as e:
             self.print_log('error','record_error_info',str(e))
-
-    # 记录操作信息
-    def record_operate_info(self, sysType, toPage, btn):
-        """
-        :param sysType: 系统类型 INT、FUN、PER
-        :param toPage:访问的是哪个页面
-        :param btn:使用的是哪个按钮
-        :return:
-        """
-
-        def wrapper(func):
-            def inner(*args, **kwargs):
-                res = func(*args, **kwargs)
-                text = json.loads(res.content)
-                print(text)
-
-            return inner()
-
-        return wrapper
 
     def print_log(self, logType, methods, msg):  # 打印log信息
         """

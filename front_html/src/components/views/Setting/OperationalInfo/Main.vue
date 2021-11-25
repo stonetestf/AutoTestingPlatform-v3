@@ -4,10 +4,30 @@
             <el-tab-pane label="操作信息">
                 <template>
                     <el-form :inline="true" class="demo-form-inline" method="post">
-                        <el-form-item label="所属系统:" prop="sysType">
+                        <el-form-item label="所属系统:">
                             <el-select v-model="SelectRomeData.sysType" clearable placeholder="请选择" style="width:150px;float:left;">
                                 <el-option
                                     v-for="item in SelectRomeData.sysTypeOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="提醒类别:">
+                            <el-select v-model="SelectRomeData.remindType" clearable placeholder="请选择" style="width:150px;float:left;">
+                                <el-option
+                                    v-for="item in SelectRomeData.remindTypeOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="读取状态:">
+                            <el-select v-model="SelectRomeData.isRead" clearable placeholder="请选择" style="width:150px;float:left;">
+                                <el-option
+                                    v-for="item in SelectRomeData.isReadOption"
                                     :key="item.value"
                                     :label="item.label"
                                     :value="item.value">
@@ -27,16 +47,27 @@
                         height="596px"
                         border>
                         <el-table-column
-                            label="Index"
+                            label="ID"
                             align= "center"
                             width="80px"
-                            type="index">
+                            prop="id">
                         </el-table-column>
                         <el-table-column
                             label="所属系统"
                             width="100px"
                             align= "center"
                             prop="sysType">
+                        </el-table-column>  
+                        <el-table-column
+                            label="提醒类别"
+                            width="150px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="danger" v-if="scope.row.level==1">{{scope.row.remindType}}</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.level==2">{{scope.row.remindType}}</el-tag>
+                                <el-tag type="success" v-else-if="scope.row.level==3">{{scope.row.remindType}}</el-tag>
+                                <el-tag v-else>{{scope.row.remindType}}</el-tag>
+                            </template>
                         </el-table-column>  
                         <el-table-column
                             label="所属页面"
@@ -51,15 +82,24 @@
                             prop="toFun">
                         </el-table-column>
                         <el-table-column
-                            label="修改前"
+                            label="信息"
                             align= "center"
-                            prop="CUFront">
+                            prop="info">
                         </el-table-column>
-                        <el-table-column
-                            label="修改后"
+                        <!-- <el-table-column
+                            label="修改信息"
                             align= "center"
-                            prop="CURear">
-                        </el-table-column>
+                            prop="editInfo">
+                        </el-table-column> -->
+                        <!-- <el-table-column
+                            label="是否已读"
+                            width="100px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.is_read==0">未读</el-tag>
+                                <el-tag v-else>已读</el-tag>
+                            </template>
+                        </el-table-column> -->
                         <el-table-column
                             label="操作时间"
                             width="200px"
@@ -67,10 +107,24 @@
                             prop="createTime">
                         </el-table-column>
                         <el-table-column
-                            label="操作者"
+                            label="创建者"
                             align= "center"
                             width="100px"
                             prop="userName">
+                        </el-table-column>
+                        <el-table-column
+                            label="操作"
+                            align="center"
+                            width="100px">
+                            <template slot-scope="scope" style="width:100px">
+                                <el-button
+                                    v-if="scope.row.is_read==0"
+                                    size="mini"
+                                    type="warning"
+                                    @click="handleIsRead(scope.$index, scope.row)">已读
+                                </el-button>
+                                <el-button v-else size="mini" type="info" disabled>已读</el-button>
+                            </template>
                         </el-table-column>
                     </el-table>
                 </template>
@@ -90,6 +144,7 @@
 </template>
 
 <script>
+import Qs from 'qs'
 import store from '../../../../store/index'
 
 export default {
@@ -107,6 +162,18 @@ export default {
                     {'label':'UI','value':'UI'},
                     {'label':'API','value':'API'},
                     {'label':'PTS','value':'PTS'},
+                ],
+                isRead:'',
+                isReadOption:[
+                    {'label':'已读','value':'1'},
+                    {'label':'未读','value':'0'},
+                ],
+                remindType:'',
+                remindTypeOption:[
+                    {'label':'Error','value':'Error'},
+                    {'label':'Warning','value':'Warning'},
+                    {'label':'Change','value':'Change'},
+                    {'label':'Other','value':'Other'},
                 ],
             },
             page: { 
@@ -126,6 +193,8 @@ export default {
             self.$axios.get('/api/info/SelectOperationalInfo',{
                 params:{
                     'sysType':self.SelectRomeData.sysType,
+                    'remindType':self.SelectRomeData.remindType,
+                    'isRead':self.SelectRomeData.isRead,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -134,11 +203,15 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
+                        obj.level=d.level;
+                        obj.remindType=d.remindType;
                         obj.sysType = d.sysType;
                         obj.toPage = d.toPage;
                         obj.toFun = d.toFun;
-                        obj.CUFront = d.CUFront;
-                        obj.CURear = d.CURear;
+                        obj.info=d.info;
+                        // obj.CUFront = d.CUFront;
+                        // obj.CURear = d.CURear;
+                        obj.is_read=d.is_read;
                         obj.createTime = d.createTime;
                         obj.userName = d.userName;
 
@@ -156,9 +229,27 @@ export default {
                 console.log(error);
             })
         },
+        handleIsRead(index,row){
+            let self = this;
+            self.$axios.post('/api/info/EditIsReadState',Qs.stringify({
+                'infoId':row.id,
+                'types':'1',
+            })).then(res => {
+                if(res.data.statusCode==2002){
+                    self.SelectData();
+                }
+                else{
+                    self.$message.error(res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
         ClearSelectRomeData(){
             let self = this;
             self.SelectRomeData.sysType='';
+            self.SelectRomeData.isRead='';
+            self.SelectRomeData.remindType='';
             self.SelectData();
         },
         pageSizeChange(pageSize) {

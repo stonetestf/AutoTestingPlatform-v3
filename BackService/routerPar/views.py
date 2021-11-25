@@ -47,7 +47,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'routerPar>select_data', errorMsg)
+        cls_Logging.record_error_info('Home', 'routerPar','select_data', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0)
         select_db_RouterPar = obj_db_Router[minSize: maxSize]
@@ -94,7 +94,7 @@ def get_preview_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'registered', errorMsg)
+        cls_Logging.record_error_info('Home','routerPar', 'get_preview_data', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0).order_by('sortNum')
         find_db_Router = obj_db_Router.filter(sysType=sysType, level='1')
@@ -133,7 +133,7 @@ def get_belogid_table(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '1', 'routerPar>get_belogid_table', errorMsg)
+        cls_Logging.record_error_info('Home', 'routerPar','get_belogid_table', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0, level='1', sysType=sysType).order_by('index')
         for i in obj_db_Router:
@@ -159,7 +159,7 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'routerPar>data_save', errorMsg)
+        cls_Logging.record_error_info('Home', 'routerPar','data_save', errorMsg)
     else:
         #  效验保存的数据
         obj_db_Router = db_Router.objects.filter(is_del=0, sysType=sysType)
@@ -210,7 +210,7 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'routerPar>edit_data', errorMsg)
+        cls_Logging.record_error_info('Home', 'routerPar','edit_data', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(id=routerId)
         if obj_db_Router:
@@ -252,7 +252,7 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'routerPae>delete_data', errorMsg)
+        cls_Logging.record_error_info('Home', 'routerPae','delete_data', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0, id=routerId)
         if obj_db_Router:
@@ -297,7 +297,7 @@ def update_router_sort(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'routerPar>update_router_sort', errorMsg)
+        cls_Logging.record_error_info('Home','routerPar','update_router_sort', errorMsg)
     else:
         for item_level_1_index,item_tree in enumerate(treeData,1):
             db_Router.objects.filter(id=item_tree.id).update(
@@ -325,7 +325,7 @@ def load_router_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '1', 'routerPar>get_belogid_table', errorMsg)
+        cls_Logging.record_error_info('Home', 'routerPar','get_belogid_table', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(id=routerId)
         if obj_db_Router:

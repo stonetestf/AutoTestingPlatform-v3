@@ -4,7 +4,7 @@
       <el-container>
         <el-header class="top-header">
           <el-row>
-            <el-col :span="20">
+            <el-col :span="19">
               <el-menu
                 mode="horizontal"
                 @select="handleSelect"
@@ -58,23 +58,34 @@
                 </el-submenu> -->
               </el-menu>
             </el-col>
-            <el-col :span="4">
-              <div class="top-msg">
-                <div style="margin-top: 5px;">
-                <el-avatar :size="50" fit="fill" :src="RomeData.userImage"></el-avatar>
-                </div>
-                <div class="top-userName">
-                  <el-dropdown trigger="click" @command="handleCommand">
-                    <span style="color:white">{{RomeData.nickName}}
-                      <i class="el-icon-caret-bottom el-icon--right"></i>
-                    </span>
-                    <el-dropdown-menu slot="dropdown">
-                      <el-dropdown-item command="userinfo">个人信息</el-dropdown-item>
-                      <el-dropdown-item command="close">退出登录</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </el-dropdown>
-                </div>
-              </div>
+            <el-col :span="5">
+             <el-row>
+                  <el-col>
+                    <div class="remindInfo">
+                      <el-badge :value="RomeData.remindNum" :max="99">
+                        <el-button size="small" type="warning" icon="el-icon-message" circle @click="OpenRemindInfo()"></el-button>
+                      </el-badge>
+                    </div>
+                  </el-col>
+                  <el-col>
+                    <div class="fun-top-msg">
+                      <div style="margin-top: 5px;">
+                        <el-avatar :size="50" fit="fill" :src="RomeData.userImage"></el-avatar>
+                      </div>
+                      <div class="top-userName">
+                        <el-dropdown trigger="click" @command="handleCommand">
+                          <span style="color:white">{{RomeData.nickName}}
+                            <i class="el-icon-caret-bottom el-icon--right"></i>
+                          </span>
+                          <el-dropdown-menu slot="dropdown">
+                            <el-dropdown-item command="userinfo">个人信息</el-dropdown-item>
+                            <el-dropdown-item command="close">退出登录</el-dropdown-item>
+                          </el-dropdown-menu>
+                        </el-dropdown>
+                      </div>
+                    </div>
+                  </el-col>
+               </el-row>
             </el-col>
           </el-row>
         </el-header>
@@ -93,6 +104,13 @@
           :dialogPara="dialog.userinfo.dialogPara">
       </dialog-user-info>
     </template>
+    <template>
+      <dialog-remind-info
+          @closeDialog="closeRemindInfoDialog" 
+          :isVisible="dialog.remindInfo.dialogVisible" 
+          :dialogPara="dialog.remindInfo.dialogPara">
+      </dialog-remind-info>
+    </template>
   </div>
 </template>
 
@@ -100,10 +118,11 @@
 import store from '../../../store/index'
 import {PrintConsole} from "../../js/Logger.js";
 import DialogUserInfo from "./UserInfo.vue";
+import DialogRemindInfo from "../Home/RemindInfo.vue";
 
 export default {
   components: {
-    DialogUserInfo
+    DialogUserInfo,DialogRemindInfo
   },
   data() {
     return {
@@ -111,6 +130,7 @@ export default {
         nickName:'',
         userImage:'',
         menuTable:[],
+        remindNum:0
       },
       // MenuDisPlay:{
       //   Setting:true,
@@ -124,6 +144,12 @@ export default {
           dialogPara:{
             dialogTitle:"",//初始化标题
           },
+        },
+        remindInfo:{
+          dialogVisible:false,
+          dialogPara:{
+            dialogTitle:"",//初始化标题
+          },
         }
       },
     }
@@ -131,6 +157,7 @@ export default {
   mounted (){
     this.LoadUserInfo();
     this.GetHomePermissions();
+    this.getUserStatisticsInfo();
   },
   watch:{
   },
@@ -167,13 +194,13 @@ export default {
       this.dialog.userinfo.dialogVisible =false;
     },
     OpenDialog_UserInfo(){
-        let self = this;
-        self.dialog.userinfo.dialogPara={
-          dialogTitle:"个人信息",//初始化标题
-        }
-        self.dialog.userinfo.dialogVisible=true;
+      let self = this;
+      self.dialog.userinfo.dialogPara={
+        dialogTitle:"个人信息",//初始化标题
+      }
+      self.dialog.userinfo.dialogVisible=true;
     },
-    LoadUserInfo(){//基本信息及权限信息
+    LoadUserInfo(){//基本信息
       let self = this;
       self.$axios.get('/api/home/LoadUserInfo', {
         params:{}
@@ -194,7 +221,7 @@ export default {
         console.log(error);
       })
     },
-    GetHomePermissions(){
+    GetHomePermissions(){//加载用户菜单和权限信息
       let self = this;
       self.$axios.get('/api/home/GetHomePermissions', {
         params:{}
@@ -230,7 +257,37 @@ export default {
           }).catch(function (error) {
             console.log(error);
           })
-      },
+    },
+    getUserStatisticsInfo(){
+      let self = this;
+      self.$axios.get('/api/home/GetUserStatisticsInfo', {
+        params:{}
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          self.$notify({
+            title: '欢迎 '+store.state.userName+' 登录',
+            dangerouslyUseHTMLString: true,
+            message: res.data.message,
+            position: 'bottom-right'
+          });
+        }else{
+          self.$message.error('用户统计数据获取失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+        console.log(error);
+      })
+       
+    },
+    OpenRemindInfo(){
+      let self = this;
+      self.dialog.remindInfo.dialogPara={
+        dialogTitle:"",//初始化标题
+      }
+      self.dialog.remindInfo.dialogVisible=true;
+    },
+    closeRemindInfoDialog(){
+      this.dialog.remindInfo.dialogVisible =false;
+    },
   }
 }
 
@@ -251,6 +308,18 @@ export default {
   margin-left: 10px;
 }
 .top-msg{
+  font-size: 12px;
+  height: 60px;
+  display: flex; 
+  justify-content: flex-end; 
+  background-color:#545c64;
+}
+.remindInfo{
+  margin-top: 18px;
+  /* float: right; */
+}
+.fun-top-msg{
+  margin-top: -50px;
   font-size: 12px;
   height: 60px;
   display: flex; 

@@ -105,7 +105,7 @@
                         </el-col>
                         <el-col :span="5">
                             <div style=" margin-top: 77px;">
-                                <el-card style="height:595px">
+                                <el-card style="height:595px" shadow="never">
                                     <el-tree
                                         :data="RightRomeData.TreeData"
                                         node-key="id"

@@ -12,6 +12,8 @@ from django.contrib.auth.models import User as db_DjUser
 from routerPar.models import Router as db_Router
 from login.models import UserBindRole as db_UserBindRole
 from role.models import RoleBindMenu as db_RoleBindMenu
+from info.models import OperateInfo as db_OperateInfo
+from info.models import PushInfo as db_PushInfo
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -42,7 +44,7 @@ def load_user_info(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '1', 'home>load_user_info', errorMsg)
+        cls_Logging.record_error_info('Home', 'home', 'load_user_info', errorMsg)
     else:
         # region 基本信息
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
@@ -95,7 +97,7 @@ def save_user_info(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'home>save_user_info', errorMsg)
+        cls_Logging.record_error_info('Home', 'home', 'save_user_info', errorMsg)
     else:
         obj_db_user = db_UserTable.objects.filter(id=userId)
         if obj_db_user:
@@ -140,7 +142,7 @@ def get_home_permissions(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '1', 'home>get_home_permissions', errorMsg)
+        cls_Logging.record_error_info('Home', 'home', 'get_home_permissions', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0)
         obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='Home').order_by('sortNum')  # 1级菜单
@@ -165,7 +167,7 @@ def get_home_permissions(request):
                                   'level': item_level_1.level,
                                   'menuName': item_level_1.menuName,
                                   'disPlay': False if children or item_level_1.menuName == 'Home' else True,
-                                  'icon':item_level_1.icon,
+                                  'icon': item_level_1.icon,
                                   'children': children})
         else:
             pass
@@ -189,7 +191,7 @@ def get_router_path(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '1', 'home>get_router_path', errorMsg)
+        cls_Logging.record_error_info('Home', 'home', 'get_router_path', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(sysType=sysType, index=index, is_del=0)
         if obj_db_Router:
@@ -197,4 +199,40 @@ def get_router_path(request):
             response['routerPath'] = obj_db_Router[0].routerPath
         else:
             response['errorMsg'] = '未查询到此菜单参数!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 用户统计数据
+def get_user_statistics_info(request):
+    response = {}
+    errorCount = 0
+    changeCount = 0
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Home', 'home', 'get_router_path', errorMsg)
+    else:
+        obj_db_UserTable = db_UserTable.objects.filter(id=userId)
+        obj_db_OperateInfo = db_OperateInfo.objects.filter(is_read=0)
+        if obj_db_UserTable:
+            if obj_db_UserTable[0].userName == 'admin':
+                obj_db_PushInfo = db_PushInfo.objects.filter(received=0)
+                obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType='Error')
+            else:
+                obj_db_PushInfo = db_PushInfo.objects.filter(received=0, uid_id=userId)
+                obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId,remindType='Error')
+            for i in obj_db_PushInfo:
+                match i.oinfo.remindType:
+                    case 'Error':
+                        errorCount += 1
+                    case 'Add' | 'Edit':
+                        changeCount += 1
+            errorCount += obj_db_OperateInfo.count()
+            response['statusCode'] = 2000
+            response['message'] = f"当前您有未读信息: <br>错误信息({errorCount}),更变信息({changeCount}),<br>请注意查收!"
+
     return JsonResponse(response)

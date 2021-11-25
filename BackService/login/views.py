@@ -34,7 +34,7 @@ def registered(request):
     except Exception as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Login', '2', 'login>registered', errorMsg)
+        cls_Logging.record_error_info('Login', 'login', 'registered', errorMsg)
     else:
         if userName.lower() == "admin":
             errorMsg = '用户注册失败:不可使用敏感用户名注册!'
@@ -60,7 +60,7 @@ def registered(request):
                 except Exception as e:  # 自动回滚，不需要任何操作
                     errorMsg = f'用户注册失败：{e}!'
                     response['errorMsg'] = errorMsg
-                    cls_Logging.record_error_info('Login', '1', 'login>registered', errorMsg)
+                    cls_Logging.record_error_info('Login', 'login', 'registered', errorMsg)
                 else:
                     response['statusCode'] = 2001
     return JsonResponse(response)
@@ -76,7 +76,7 @@ def login_in(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Login', '2', 'login>login_in', errorMsg)
+        cls_Logging.record_error_info('Login', 'login', 'login_in', errorMsg)
     else:
         obj_db_Djuser = auth.authenticate(username=userName, password=passWord)
         obj_db_UserTable = db_UserTable.objects.filter(userName=userName)
@@ -91,10 +91,13 @@ def login_in(request):
                 token.delete()
 
                 token = db_Token.objects.create(user=obj_db_Djuser)  # 生成用户的token值
-                db_OperateInfo.objects.create(sysType='Login',
-                                              toPage='Login',
-                                              toFun='登录',
-                                              uid_id=obj_db_UserTable[0].id)
+                db_OperateInfo.objects.create(
+                    level=4, sysType='Login',
+                    toPage='登录页',
+                    toFun='登录',
+                    uid_id=obj_db_UserTable[0].id,
+                    remindType='Other',
+                    is_read=1)
                 response['code'] = 1001  # 登录时传给vue拦截器验证用的
                 response['statusCode'] = 2000
                 response['nickName'] = obj_db_UserTable[0].nickName

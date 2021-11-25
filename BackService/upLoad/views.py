@@ -25,7 +25,7 @@ def upLoad_to_temp_path(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('ALL', '2', 'upLoad>upLoad_to_temp_path', errorMsg)
+        cls_Logging.record_error_info('ALL', 'upLoad','upLoad_to_temp_path', errorMsg)
     else:
         if fileObj:
             toTemp = cls_FileOperations.file_to_path(fileObj)

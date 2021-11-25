@@ -45,7 +45,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'role>select_data', errorMsg)
+        cls_Logging.record_error_info('Home', 'role','select_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0).order_by('updateTime').order_by('dataType')
         select_db_BasicRole = obj_db_BasicRole[minSize: maxSize]
@@ -87,7 +87,7 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'role>save_data', errorMsg)
+        cls_Logging.record_error_info('Home', 'role','save_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del='0', roleName=roleName)
         if obj_db_BasicRole:
@@ -116,7 +116,7 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'role>save_data', errorMsg)
+        cls_Logging.record_error_info('Home', 'role','save_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(id=roleId)
         if obj_db_BasicRole[0].dataType == 0:  # 系统级别数据
@@ -153,7 +153,7 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'role>delete_data', errorMsg)
+        cls_Logging.record_error_info('Home', 'role','delete_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del='0', id=roleId)
         if obj_db_BasicRole:
@@ -222,7 +222,7 @@ def get_menu_list(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', '2', 'role>get_menulist', errorMsg)
+        cls_Logging.record_error_info('Home', 'role','get_menulist', errorMsg)
     else:
         # 根据 归属页面查询出这个页面下所有的菜单
         obj_db_Router = db_Router.objects.filter(is_del=0).order_by('sortNum')
@@ -264,7 +264,7 @@ def save_role_permissions(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', '2', 'registered', errorMsg)
+        cls_Logging.record_error_info('Home',  'role','save_role_permissions', errorMsg)
     else:
         try:
             with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
