@@ -38,13 +38,12 @@
                                 <el-table
                                     :data="tableData"
                                     height="596px"
-                                    border
-                                    >
+                                    border>
                                     <el-table-column
-                                        label="Index"
-                                        type="index"
+                                        label="ID"
                                         align= "center"
-                                        width="80px">
+                                        width="80px"
+                                        prop="id">
                                     </el-table-column>
                                     <el-table-column
                                         label="所属系统"
@@ -221,6 +220,7 @@ export default {
                         obj.menuName = d.menuName;
                         obj.routerPath = d.routerPath;
                         obj.sysType = d.sysType;
+                        obj.icon = d.icon;
                         obj.updateTime=d.updateTime;
 
                         self.tableData.push(obj);

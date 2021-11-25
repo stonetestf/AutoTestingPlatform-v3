@@ -17,18 +17,33 @@
                     <a>Home</a>
                   </template>
                 </el-menu-item>
-                <!-- <el-submenu index="3" :disabled="MenuDisPlqy.SmallTools">
-                  <template slot="title">
-                    <i class="el-icon-setting"></i>
-                    <a>小工具</a>
-                  </template>
+                <el-submenu 
+                  v-for="itemLevel1 in RomeData.menuTable"
+                  :index="itemLevel1.index"
+                  :key="itemLevel1.menuName">
+                    <template slot="title">
+                      <i :class="itemLevel1.icon"></i>
+                      <a>{{itemLevel1.menuName}}</a>
+                    </template>
                     <el-menu-item
                       class="title"
-                      v-for="item in MenuList.SmallTools"
+                      v-for="item in itemLevel1.children"
                       :index="item.index" :key="item.menuName"
                       >{{item.menuName}}
                     </el-menu-item>
-                </el-submenu> -->
+                </el-submenu>
+                <!-- <el-menu-item
+                  v-for="itemLevel1 in RomeData.menuTable"
+                  :index="itemLevel1.index"
+                  :key="itemLevel1.menuName">
+                  {{itemLevel1.menuName}}
+                </el-menu-item> -->
+                <!-- <el-menu-item index="0" >
+                  <template slot="title" >
+                    <i class="el-icon-star-off"></i>
+                    <a>Home</a>
+                  </template>
+                </el-menu-item>
                 <el-submenu index="2" :disabled="MenuDisPlay.Setting">
                   <template slot="title">
                     <i class="el-icon-setting"></i>
@@ -40,7 +55,7 @@
                       :index="item.index" :key="item.menuName"
                       >{{item.menuName}}
                     </el-menu-item>
-                </el-submenu>
+                </el-submenu> -->
               </el-menu>
             </el-col>
             <el-col :span="4">
@@ -95,13 +110,14 @@ export default {
       RomeData:{
         nickName:'',
         userImage:'',
+        menuTable:[],
       },
-      MenuDisPlay:{
-        Setting:true,
-      },
-      MenuTable:{
-        Setting:[],
-      },
+      // MenuDisPlay:{
+      //   Setting:true,
+      // },
+      // MenuTable:{
+      //   Setting:[],
+      // },
       dialog:{
         userinfo:{
           dialogVisible:false,
@@ -184,12 +200,13 @@ export default {
         params:{}
       }).then(res => {
         if(res.data.statusCode==2000){
-          res.data.menuTable.forEach(d => {
-            if(d.menuName=='Setting'){
-              self.MenuDisPlay.Setting = d.disPlay;
-              self.MenuTable.Setting = d.children;
-            }
-          });
+          self.RomeData.menuTable = res.data.menuTable;
+          // res.data.menuTable.forEach(d => {
+          //   if(d.menuName=='Setting'){
+          //     self.MenuDisPlay.Setting = d.disPlay;
+          //     self.MenuTable.Setting = d.children;
+          //   }
+          // });
         }else{
           self.$message.error(':'+res.data.errorMsg);
         }

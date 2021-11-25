@@ -42,6 +42,9 @@
             <el-form-item label="路由地址:">
                 <el-input v-model.trim="RomeData.routerPath"></el-input>
             </el-form-item>
+            <el-form-item label="菜单ICON:">
+                <el-input v-model.trim="RomeData.icon"></el-input>
+            </el-form-item>
             <el-form-item>
                 <el-button style="margin: auto 20px auto auto; " type="primary" @click="submitForm('RomeData')">保存</el-button>
                 <el-button style="margin: auto 80px auto auto; "  @click="ClearRomeData()">重置</el-button>
@@ -82,6 +85,8 @@ export default {
                 disPlay_belogId:true,
                 belogId:'',
                 belogIdOption:[],
+                icon:'',
+                disPlay_icon:true,
             },
             rules: {
                 sysType: [
@@ -137,6 +142,7 @@ export default {
                             }
                             self.RomeData.menuName = d.dataTable.menuName;
                             self.RomeData.routerPath = d.dataTable.routerPath;
+                            self.RomeData.icon = d.dataTable.icon;
                         }else{
                             self.$message.error(d.errorMsg);
                             self.$emit('closeDialog');
@@ -151,7 +157,6 @@ export default {
             if(newVal!=oldVal){
                 if(newVal=='1'){
                     this.RomeData.disPlay_belogId=false;
-                    this.RomeData.belogId='';
                 }else{
                     this.RomeData.disPlay_belogId=true;
                 }
@@ -205,6 +210,7 @@ export default {
                     'menuName':self.RomeData.menuName,
                     'routerPath':self.RomeData.routerPath,
                     'belogId':self.RomeData.belogId,
+                    'icon':self.RomeData.icon,
                 })).then(res => {
                 if(res.data.statusCode==2001){
                     self.$message.success('路由新增成功');
@@ -226,6 +232,7 @@ export default {
                     'menuName':self.RomeData.menuName,
                     'routerPath':self.RomeData.routerPath,
                     'belogId':self.RomeData.belogId,
+                    'icon':self.RomeData.icon,
                 })).then(res => {
                 if(res.data.statusCode==2002){
                     self.$message.success('路由修改成功!');
@@ -255,9 +262,11 @@ export default {
         },
         ClearRomeData(){
             let self = this;
+            self.resetForm('RomeData');
             self.RomeData.routerId='';
             self.RomeData.routerPath='';
-            self.resetForm('RomeData');
+            self.RomeData.icon='';
+           
         },
     }
 };
