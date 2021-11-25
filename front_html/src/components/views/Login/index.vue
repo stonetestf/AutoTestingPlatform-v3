@@ -86,6 +86,7 @@ export default {
         })).then(res => {
           if(res.data.statusCode==2000){
               self.$cookies.set('token',res.data.token,"0") //0的意思是随浏览器关闭就没了,但不能同时开2个浏览器,这里是浏览器不是窗口的意思,如果开2个 只有2个都关了才会没有
+              store.state.userName = self.RomeData.userName;
               self.$router.push({//跳转到
                 name:'Home',
                 params:{
