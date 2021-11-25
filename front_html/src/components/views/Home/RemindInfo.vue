@@ -151,6 +151,7 @@ export default {
     methods: {
         dialogClose(done){//用于调用父页面方法
             this.$emit('closeDialog');
+            this.$emit('getData',this.RomeData.tableData.length);
         },
         SelectData(){//刷新列表数据
             let self = this;
