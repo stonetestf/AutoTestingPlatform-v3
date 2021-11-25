@@ -20,7 +20,8 @@
                 <el-submenu 
                   v-for="itemLevel1 in RomeData.menuTable"
                   :index="itemLevel1.index"
-                  :key="itemLevel1.menuName">
+                  :key="itemLevel1.menuName"
+                  :disabled="itemLevel1.disPlay">
                     <template slot="title">
                       <i :class="itemLevel1.icon"></i>
                       <a>{{itemLevel1.menuName}}</a>
@@ -132,12 +133,6 @@ export default {
         menuTable:[],
         remindNum:0
       },
-      // MenuDisPlay:{
-      //   Setting:true,
-      // },
-      // MenuTable:{
-      //   Setting:[],
-      // },
       dialog:{
         userinfo:{
           dialogVisible:false,
