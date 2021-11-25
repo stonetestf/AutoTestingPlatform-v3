@@ -16,7 +16,7 @@ class UserTable(models.Model):
     updateTime = models.DateTimeField('更新时间', auto_now=True)
 
 
-class UserBindRole(models.Model):  # 用户绑定基础角色
+class UserBindRole(models.Model):  # 用户绑定基础角色,新增用户的时候选择绑定
     user = models.ForeignKey("UserTable", to_field='id', on_delete=models.CASCADE)  # 用户ID
     role = models.ForeignKey("role.BasicRole", to_field='id', on_delete=models.CASCADE)  # 基础角色ID
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)

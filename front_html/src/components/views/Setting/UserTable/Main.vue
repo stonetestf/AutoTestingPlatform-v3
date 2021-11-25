@@ -38,10 +38,10 @@
                             height="596px"
                             border>
                             <el-table-column
-                                label="Index"
+                                label="ID"
                                 align= "center"
                                 width="80px"
-                                type="index">
+                                prop="id">
                             </el-table-column>
                             <el-table-column
                                 label="头像"

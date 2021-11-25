@@ -143,27 +143,29 @@ def get_home_permissions(request):
         cls_Logging.record_error_info('Home', '1', 'home>get_home_permissions', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0)
-        obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='Home').order_by('index')  # 1级菜单
-        obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0,user_id=userId)
+        obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='Home').order_by('sortNum')  # 1级菜单
+        obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
         menuTable = []
         if obj_db_UserBindRole:
             roleId = obj_db_UserBindRole[0].id
             for item_level_1 in obj_level_1_Menu:
                 children = []
                 # 2级菜单
-                obj_level_2_Menu = obj_db_Router.filter(level=2, belogId=item_level_1.id, sysType='Home').order_by('index')
+                obj_level_2_Menu = obj_db_Router.filter(
+                    level=2, belogId=item_level_1.id, sysType='Home').order_by('index')
                 for item_level_2 in obj_level_2_Menu:
                     obj_db_RoleBindMenu = db_RoleBindMenu.objects.filter(is_del=0, sysType='Home', role_id=roleId)
                     for item_bindMenu in obj_db_RoleBindMenu:
                         if item_bindMenu.router.id == item_level_2.id:
                             children.append({
-                                'index': item_level_2.index,
+                                'index': str(item_level_2.index),
                                 'menuName': item_level_2.menuName
                             })
-                menuTable.append({'index': item_level_1.index,
+                menuTable.append({'index': str(item_level_1.sortNum),
                                   'level': item_level_1.level,
                                   'menuName': item_level_1.menuName,
-                                  'disPlay': False if children else True,
+                                  'disPlay': False if children or item_level_1.menuName == 'Home' else True,
+                                  'icon':item_level_1.icon,
                                   'children': children})
         else:
             pass
@@ -175,7 +177,7 @@ def get_home_permissions(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])#返回路由地址
+@require_http_methods(["GET"])  # 返回路由地址
 def get_router_path(request):
     response = {}
     try:

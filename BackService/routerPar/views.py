@@ -8,6 +8,7 @@ import json
 
 # Create your db here.
 from routerPar.models import Router as db_Router
+from role.models import RoleBindMenu as db_RoleBindMenu
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -69,7 +70,8 @@ def select_data(request):
                  "menuName": i.menuName,
                  "routerPath": i.routerPath,
                  "sysType": i.sysType,
-                 "updateTime":str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                 "icon":i.icon,
+                 "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  }
             )
 
@@ -108,7 +110,8 @@ def get_preview_data(request):
                                  'allowDrop': False})  # 能否拖入
             dataList.append({'id': item_router.id,
                              'label': item_router.menuName,
-                             'allowDrag': False,  # 1层菜单不可拖动
+                             'allowDrag': True,  # 1层菜单不可拖动
+                             'allowDrop': False,
                              'children': children})
         response['statusCode'] = 2000
         response['TreeData'] = dataList
@@ -152,6 +155,7 @@ def save_data(request):
         menuName = request.POST['menuName']
         routerPath = request.POST['routerPath']
         belogId = request.POST['belogId']
+        icon = request.POST['icon']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -170,17 +174,19 @@ def save_data(request):
                         menuName=menuName,
                         routerPath=routerPath,
                         belogId=belogId if belogId else None,
+                        icon=icon,
                         is_del=0,
                     )
 
                     if menuLevel == '1':
-                        index = save_db_Router.id
-                        sortNum = 1
+                        select_db_Router = obj_db_Router.filter(level=1)
+                        sortNum = select_db_Router.count()+1
+                        db_Router.objects.filter(id=save_db_Router.id).update(sortNum=sortNum)
                     else:
                         select_db_Router = obj_db_Router.filter(belogId=belogId)
                         index = f"{belogId}-{select_db_Router.count()}"
                         sortNum = select_db_Router.count()
-                    db_Router.objects.filter(id=save_db_Router.id).update(index=index, sortNum=sortNum)
+                        db_Router.objects.filter(id=save_db_Router.id).update(index=index, sortNum=sortNum)
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:
@@ -200,6 +206,7 @@ def edit_data(request):
         menuName = request.POST['menuName']
         routerPath = request.POST['routerPath']
         belogId = request.POST['belogId']
+        icon = request.POST['icon']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -207,24 +214,25 @@ def edit_data(request):
     else:
         obj_db_Router = db_Router.objects.filter(id=routerId)
         if obj_db_Router:
-            if menuLevel == '1':
-                index = routerId
-                sortNum = 1
-            else:
-                select_db_Router = db_Router.objects.filter(is_del=0, belogId=belogId)
-                if select_db_Router.count() == 0:
-                    sortNum = 1
-                else:
-                    sortNum = select_db_Router.count() + 1
-                index = f"{belogId}-{sortNum}"
+            # if menuLevel == '1':
+            #     index = routerId
+            #     sortNum = 1
+            # else:
+            #     select_db_Router = db_Router.objects.filter(is_del=0, belogId=belogId)
+            # if select_db_Router.count() == 0:
+            #     sortNum = 1
+            # else:
+            #     sortNum = select_db_Router.count() + 1
+            # index = f"{belogId}-{sortNum}"
 
             obj_db_Router.update(level=menuLevel,
-                                 index=index,
-                                 sortNum=sortNum,
+                                 # index=index,
+                                 # sortNum=sortNum,
                                  menuName=menuName,
                                  routerPath=routerPath,
                                  belogId=belogId if belogId else None,
                                  sysType=sysType,
+                                 icon=icon,
                                  updateTime=cls_Common.get_date_time()
                                  )
 
@@ -248,8 +256,30 @@ def delete_data(request):
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0, id=routerId)
         if obj_db_Router:
-            obj_db_Router.update(is_del=1, updateTime=cls_Common.get_date_time())
-            response['statusCode'] = 2003
+            if obj_db_Router[0].level == 1:
+                select_db_Router = db_Router.objects.filter(is_del=0, belogId=obj_db_Router[0].id)
+                if select_db_Router:
+                    response['errorMsg'] = f"当前一级菜单下存在二级菜单数据,请先删除2级菜单数据后在进行删除操作!"
+                else:
+                    try:
+                        with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                            db_RoleBindMenu.objects.filter(is_del=0, router_id=routerId).update(
+                                is_del=1, updateTime=cls_Common.get_date_time())
+                            obj_db_Router.update(is_del=1, updateTime=cls_Common.get_date_time())
+                    except BaseException as e:  # 自动回滚，不需要任何操作
+                        response['errorMsg'] = f"删除路由菜单失败:{e}"
+                    else:
+                        response['statusCode'] = 2003
+            else:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        db_RoleBindMenu.objects.filter(is_del=0, router_id=routerId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time())
+                        obj_db_Router.update(is_del=1, updateTime=cls_Common.get_date_time())
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"删除路由菜单失败:{e}"
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = "当前路由参数不存在于数据库中!"
     return JsonResponse(response)
@@ -269,7 +299,9 @@ def update_router_sort(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('Home', '2', 'routerPar>update_router_sort', errorMsg)
     else:
-        for item_tree in treeData:
+        for item_level_1_index,item_tree in enumerate(treeData,1):
+            db_Router.objects.filter(id=item_tree.id).update(
+                sortNum=item_level_1_index, updateTime=cls_Common.get_date_time())
             for index, item_children in enumerate(item_tree.children, 1):
                 routerId = item_children.id
                 obj_db_Router = db_Router.objects.filter(id=routerId)
@@ -303,6 +335,7 @@ def load_router_data(request):
                 'belogId': obj_db_Router[0].belogId,
                 'menuName': obj_db_Router[0].menuName,
                 'routerPath': obj_db_Router[0].routerPath,
+                'icon':obj_db_Router[0].icon,
             }
             response['statusCode'] = 2000
             response['dataTable'] = dataTable
