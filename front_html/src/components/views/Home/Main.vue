@@ -109,7 +109,8 @@
       <dialog-remind-info
           @closeDialog="closeRemindInfoDialog" 
           :isVisible="dialog.remindInfo.dialogVisible" 
-          :dialogPara="dialog.remindInfo.dialogPara">
+          :dialogPara="dialog.remindInfo.dialogPara"
+          @getData="updateRemindNum($event)">
       </dialog-remind-info>
     </template>
   </div>
@@ -282,6 +283,10 @@ export default {
     },
     closeRemindInfoDialog(){
       this.dialog.remindInfo.dialogVisible =false;
+    },
+    updateRemindNum(event){
+      PrintConsole(event);
+      this.RomeData.remindNum=event;
     },
   }
 }

@@ -22,13 +22,11 @@ TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
 # NginxServer
 NGINX_SERVER = 'http://192.168.2.12:9092/'
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b@-_njx8ks!#*p=dtcuf+_gwq7v6oi_3^2a^05nyjt*n7hm&_k'
-
 
 # region Request 跨域
 CORS_ORIGIN_ALLOW_ALL = True
@@ -111,7 +109,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'BackService.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
@@ -125,7 +122,6 @@ DATABASES = {
         'PORT': '3306',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -145,7 +141,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -153,8 +148,7 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Shanghai'  # 少8小时就用这种参数处理
 USE_I18N = True
 USE_L10N = True
-USE_TZ = True
-
+USE_TZ = False  # 少8小时 此参数必须为关
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
