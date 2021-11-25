@@ -284,7 +284,7 @@ export default {
     closeRemindInfoDialog(){
       this.dialog.remindInfo.dialogVisible =false;
     },
-    updateRemindNum(event){
+    updateRemindNum(event){//关闭推送消失时，回调传参数给首页的提醒数量
       PrintConsole(event);
       this.RomeData.remindNum=event;
     },
