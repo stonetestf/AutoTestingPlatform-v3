@@ -24,6 +24,7 @@ const store = new Vuex.Store({
     
     BackService:'http://192.168.2.12:9090',
     nginxUrl:'http://192.168.2.12:9092/',// 注意这里的端口不是网页的端口，是网络目录的地址
+    WebSock:'ws://192.168.2.12:9090',
   },
   mutations: {
     // userId(state,payload){

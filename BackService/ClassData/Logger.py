@@ -53,10 +53,14 @@ class Logging(object):
                 HTTP_ACCEPT_LANGUAGE = args[0].META['HTTP_ACCEPT_LANGUAGE']
             else:
                 HTTP_ACCEPT_LANGUAGE = None
+            if 'SERVER_PROTOCOL' in args[0].META:
+                SERVER_PROTOCOL = args[0].META['SERVER_PROTOCOL']
+            else:
+                SERVER_PROTOCOL = ""
             if method == "GET":
                 params = args[0].META['QUERY_STRING']
                 logger.info(f"[{func.__name__}]:\n"
-                            f"{method} {path}?{params} {args[0].META['SERVER_PROTOCOL']} {res.status_code}\n"
+                            f"{method} {path}?{params} {SERVER_PROTOCOL} {res.status_code}\n"
                             f"Host:{args[0].META['HTTP_HOST']}\n"
                             f"Connection:{args[0].META['HTTP_CONNECTION']}\n"
                             f"Accept:{args[0].META['HTTP_CONNECTION']}\n"
@@ -94,7 +98,7 @@ class Logging(object):
         return inner
 
     # 错误日志
-    def record_error_info(self, sysType, toPage,toFun, info):
+    def record_error_info(self, sysType, toPage, toFun, info):
         """
         :param sysType: 系统类型
         :param toFun: 所属页面
@@ -105,10 +109,10 @@ class Logging(object):
         """
         try:
             db_OperateInfo.objects.create(
-                sysType=sysType, level=1,remindType='Error', toPage=toPage,toFun=toFun, info=info, is_read=0
+                sysType=sysType, level=1, remindType='Error', toPage=toPage, toFun=toFun, info=info, is_read=0
             )
         except BaseException as e:
-            self.print_log('error','record_error_info',str(e))
+            self.print_log('error', 'record_error_info', str(e))
 
     def print_log(self, logType, methods, msg):  # 打印log信息
         """

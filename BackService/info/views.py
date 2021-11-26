@@ -56,7 +56,7 @@ def select_operational_info(request):
             obj_db_OperateInfo = obj_db_OperateInfo.filter(sysType=sysType)
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
         if remindType:
-            obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType__in=('Add','Edit'))
+            obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType__in=('Add', 'Edit'))
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
         if isRead:
             obj_db_OperateInfo = obj_db_OperateInfo.filter(is_read=isRead)
@@ -103,32 +103,35 @@ def user_operational_info(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('Home', 'info', 'select_operational_info', errorMsg)
     else:
-        obj_db_OperateInfo = db_OperateInfo.objects.filter(
-            uid_id=userId, is_read=0, remindType='Warning').order_by('-createTime')
-        select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
-
-        for i in select_db_OperateInfo:
-            dataList.append({
-                'id': i.id,
-                'level': i.level,
-                'remindType': i.remindType,
-                'sysType': i.sysType,
-                'toPage': i.toPage,
-                'toFun': i.toFun,
-                'info': i.info,
-                # 'CUFront': i.CUFront,
-                # 'CURear': i.CURear,
-                'is_read': i.is_read,
-                'userName': i.uid.userName,
-                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-            })
+        # # 消息提醒中不会提醒错误信息 包括管理员也不会提醒
+        # obj_db_OperateInfo = db_OperateInfo.objects.filter(
+        #     uid_id=userId, is_read=0, remindType='Warning').order_by('-createTime')
+        # select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
+        #
+        # for i in select_db_OperateInfo:
+        #     dataList.append({
+        #         'id': i.id,
+        #         'level': i.level,
+        #         'remindType': i.remindType,
+        #         'sysType': i.sysType,
+        #         'toPage': i.toPage,
+        #         'toFun': i.toFun,
+        #         'info': i.info,
+        #         # 'CUFront': i.CUFront,
+        #         # 'CURear': i.CURear,
+        #         'is_read': i.is_read,
+        #         'userName': i.uid.userName,
+        #         'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+        #     })
 
         # 加载推送信息
+        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
+        select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
         if obj_db_UserTable:
-            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
-            for i in obj_db_PushInfo:
-                if i.oinfo.uid_id != userId and i.oinfo.is_read==0:  # 排除创建者看到自己推给别人的信息
+            for i in select_db_PushInfo:
+                # 排除创建者看到自己推给别人的信息
+                if i.oinfo.uid_id != userId and i.oinfo.is_read == 0 and i.oinfo.remindType != 'Error':
                     dataList.append({
                         'id': i.oinfo.id,
                         'level': i.oinfo.level,
@@ -145,7 +148,7 @@ def user_operational_info(request):
                     })
 
         response['TableData'] = dataList
-        response['Total'] = obj_db_OperateInfo.count()
+        response['Total'] = obj_db_PushInfo.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 

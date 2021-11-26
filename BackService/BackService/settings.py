@@ -61,14 +61,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'corsheaders',
+    'dwebsocket',
     'login',
     'info',
     'home',
     'upLoad',
     'routerPar',
     'role',
-    'userManagement'
+    'userManagement',
 ]
+WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets
 # endregion
 
 REST_FRAMEWORK = {
@@ -77,7 +79,6 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     )
 }
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -159,3 +160,4 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

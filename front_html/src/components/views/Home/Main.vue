@@ -154,8 +154,17 @@ export default {
     this.LoadUserInfo();
     this.GetHomePermissions();
     this.getUserStatisticsInfo();
+
+    // //定时执行
+    // this.RemindInfoData = setInterval(() => {
+    //   setTimeout(this.SelectRemindInfoData(), 0)}, 1000*3
+    // );
+  },
+  beforeDestroy(){//生命周期-离开时
+    // clearInterval(this.RemindInfoData);
   },
   watch:{
+
   },
   methods: {
     handleSelect(key, keyPath) {//点击菜单跳转页面
@@ -288,6 +297,23 @@ export default {
       PrintConsole(event);
       this.RomeData.remindNum=event;
     },
+    SelectRemindInfoData(){//刷新列表数据
+      let self = this;
+      self.$axios.get('/api/info/UserOperationalInfo',{
+          params:{
+            'current':1,
+            'pageSize':9999
+          }
+      }).then(res => {
+        if(res.data.statusCode==2000){
+            self.RomeData.remindNum = res.data.Total;
+        }else{
+            // self.$message.error('操作信息获取失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+          console.log(error);
+      })
+    }
   }
 }
 

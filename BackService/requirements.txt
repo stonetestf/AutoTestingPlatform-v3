@@ -1,4 +1,4 @@
-Django==3.2.9
+Django==2.2.24
 mysqlclient==2.0.3
 djangorestframework==3.12.4
 django-cors-headers==3.10.0
@@ -10,3 +10,4 @@ numpy
 psutil
 opencv-python
 Pillow
+dwebsocket

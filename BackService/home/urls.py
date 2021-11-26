@@ -1,4 +1,4 @@
-from django.conf.urls import url, include
+from django.conf.urls import url
 from . import views
 
 urlpatterns = [
@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'GetHomePermissions', views.get_home_permissions, name='GetHomePermissions'),
     url(r'GetRouterPath', views.get_router_path, name='GetRouterPath'),
     url(r'GetUserStatisticsInfo', views.get_user_statistics_info, name='GetUserStatisticsInfo'),
+    url(r'GetServerIndicators', views.get_server_indicators, name='GetServerIndicators'),
 ]
