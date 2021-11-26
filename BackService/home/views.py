@@ -46,7 +46,6 @@ def load_user_info(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('Home', 'home', 'load_user_info', errorMsg)
     else:
-        # region 基本信息
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
         if obj_db_UserTable:
             # region 处理userImg
@@ -70,11 +69,6 @@ def load_user_info(request):
                 'emails': obj_db_UserTable[0].emails,
             }
             response['baseInfo'] = baseInfo
-            # endregion
-
-            # region 权限信息
-
-            # endregion
             response['statusCode'] = 2000
         else:
             response['errorMsg'] = '用户信息获取失败!'
@@ -204,7 +198,7 @@ def get_router_path(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])  # 用户统计数据
+@require_http_methods(["GET"])  # 用户统计数据,首页右下角弹出框
 def get_user_statistics_info(request):
     response = {}
     errorCount = 0
@@ -216,23 +210,21 @@ def get_user_statistics_info(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('Home', 'home', 'get_router_path', errorMsg)
     else:
-        obj_db_UserTable = db_UserTable.objects.filter(id=userId)
+        obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId,is_del=0)
         obj_db_OperateInfo = db_OperateInfo.objects.filter(is_read=0)
-        if obj_db_UserTable:
-            if obj_db_UserTable[0].userName == 'admin':
-                obj_db_PushInfo = db_PushInfo.objects.filter(received=0)
+        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
+        if obj_db_UserBindRole:
+            if obj_db_UserBindRole[0].role.dataType == 0:  # 系统级别角色可以理解为超级管理
                 obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType='Error')
             else:
-                obj_db_PushInfo = db_PushInfo.objects.filter(received=0, uid_id=userId)
-                obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId,remindType='Error')
+                obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId, remindType='Warning')
             for i in obj_db_PushInfo:
-                match i.oinfo.remindType:
-                    case 'Error':
-                        errorCount += 1
-                    case 'Add' | 'Edit':
-                        changeCount += 1
+                if i.oinfo.remindType == 'Error' and i.oinfo.is_read == 0:
+                    errorCount += 1
+                elif i.oinfo.remindType in ('Add', 'Edit') and i.oinfo.is_read == 0:
+                    changeCount += 1
             errorCount += obj_db_OperateInfo.count()
             response['statusCode'] = 2000
-            response['message'] = f"当前您有未读信息: <br>错误信息({errorCount}),更变信息({changeCount}),<br>请注意查收!"
+            response['message'] = f"当前您有未读信息: <br>错误信息({errorCount}),更变推送信息({changeCount}),<br>请注意查收!"
 
     return JsonResponse(response)

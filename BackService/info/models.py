@@ -21,6 +21,6 @@ class OperateInfo(models.Model):  # 操作日志
 class PushInfo(models.Model):  # 推送表，谁给我推送了1条操作日志
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 被推的人
     oinfo = models.ForeignKey(to='OperateInfo', to_field='id', on_delete=models.CASCADE)  # 操作日志ID
-    received = models.IntegerField("已接收(0:未接收,1:已接收)", null=False)  # 这里只有读取后才会改正
+    # received = models.IntegerField("已接收(0:未接收,1:已接收)", null=False)  # 这里只有读取后才会改正
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('更新时间', auto_now=True)
