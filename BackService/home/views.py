@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import transaction
 from django.contrib.auth import hashers
 from dwebsocket.decorators import accept_websocket
+from time import sleep
 
 import json
 import psutil
@@ -234,6 +235,7 @@ def get_user_statistics_info(request):
 
 @accept_websocket  # 获取服务器的性能,服务的状态,当前用户推送统计数量
 def get_server_indicators(request):
+    counter = 0  # 计数器 到10就会断开通信
     if request.is_websocket():
         retMessage = str(request.websocket.wait(), 'utf-8')  # 接受前段发送来的数据
         if retMessage:
@@ -242,49 +244,61 @@ def get_server_indicators(request):
             if objData.Message == "Start":  # 开始执行
                 while True:
                     sendText = {}
-                    retMessage = request.websocket.read()
-                    if retMessage:
-                        objData = object_maker(json.loads(retMessage))
-                        if objData.Message == 'Heartbeat':
-                            pass
-                        else:
-                            request.websocket.close()
-                        userId = cls_FindTable.get_userId(token)
-                        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
-                        pushCount = obj_db_PushInfo.count()
-                        # region CPU和内存
-                        cpu = psutil.cpu_percent(interval=2)
-                        mem = psutil.virtual_memory()[2]
-                        # endregion
-                        # # region Celery
-                        # celery_worker = False
-                        # celery_beat = False
-                        # ret_worker = cls_ComClass.run_command("ps -ef |grep worker", False)
-                        # debug_worker = []  # 在Debug模式下有点奇葩所以要计数下
-                        # for i in ret_worker:
-                        #     if "celery -A BackGround worker -l info" in i:
-                        #         celery_worker = True
-                        #         break
-                        #     elif "celery worker -A BackGround -E --loglevel=INFO" in i:  # Debug模式
-                        #         debug_worker.append(i)
-                        #         if len(debug_worker) >= 3:
-                        #             celery_worker = True
-                        #             break
-                        # ret_beat = cls_ComClass.run_command("ps -ef |grep beat", False)
-                        # for i in ret_beat:
-                        #     if "celery -A BackGround beat -l info" in i:
-                        #         celery_beat = True
-                        #         break
-                        #     elif "celery beat -A BackGround --loglevel=INFO" in i:  # Debug模式
-                        #         celery_beat = True
-                        #         break
+                    try:
+                        retMessage = request.websocket.read()
+                    except BaseException as e:
+                        cls_Logging.print_log('info', 'get_server_indicators', f'前端已关闭,断开连接:{e}')
+                        break
+                    else:
+                        if retMessage:
+                            objData = object_maker(json.loads(retMessage))
+                            if objData.Message == 'Heartbeat':
+                                counter = 0
+                            else:
+                                counter += 1
+                                if counter >= 10:
+                                    request.websocket.close()
+                                    cls_Logging.print_log('info', 'get_server_indicators',
+                                                          f'心跳包:{counter}秒内无响应,断开连接')
+                                    break
+                            userId = cls_FindTable.get_userId(token)
+                            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
+                            pushCount = obj_db_PushInfo.count()
+                            # region CPU和内存
+                            cpu = psutil.cpu_percent(interval=2)
+                            mem = psutil.virtual_memory()[2]
+                            # endregion
+                            # region Celery
+                            celery = False
+                            celeryBeat = False
+                            perform_Celery = cls_Common.run_command("ps -ef |grep worker",False)
+                            debug_worker = []  # 在Debug模式下有点奇葩所以要计数下
+                            for i in perform_Celery:
+                                if "celery -A BackGround worker -l info" in i:
+                                    celery = True
+                                    break
+                                elif "celery worker -A BackGround -E --loglevel=INFO" in i:  # Debug模式
+                                    debug_worker.append(i)
+                                    if len(debug_worker) >= 3:
+                                        celery = True
+                                        break
+                            perform_CeleryBeat = cls_Common.run_command("ps -ef |grep beat",False)
+                            for i in perform_CeleryBeat:
+                                if "celery -A BackGround beat -l info" in i:
+                                    celeryBeat = True
+                                    break
+                                elif "celery beat -A BackGround --loglevel=INFO" in i:  # Debug模式
+                                    celeryBeat = True
+                                    break
 
-                        # endregion
-                        sendText = {
-                            'pushCount': pushCount,
-                            'cpu': cpu,
-                            'mem': mem,
-                        }
+                            # endregion
+                            sendText = {
+                                'pushCount': pushCount,
+                                'cpu': cpu,
+                                'mem': mem,
+                                'celery':celery,
+                                'celeryBeat':celeryBeat,
+                            }
 
-                    request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
-                    # sleep(2)
+                        request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
+                        sleep(1)

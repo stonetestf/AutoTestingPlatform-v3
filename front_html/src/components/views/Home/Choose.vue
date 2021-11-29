@@ -296,14 +296,6 @@ var echarts = require('echarts');
             };
             self.ServerPerformance.myChartMEM.setOption(option,true);//加载属性后显示 true自动每次清除数据
         },
-        CrateHeartbeatData(socket){//创建心跳包
-            var data ={};
-            data.Message = 'Heartbeat';
-            data.Params = {
-                'time':'Date()'
-            }
-            socket.send(JSON.stringify(data));//发送数据到服务端
-        },
         CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据
             let self = this;
             var socket = new WebSocket(store.state.WebSock+'/api/home/GetServerIndicators');
@@ -330,28 +322,26 @@ var echarts = require('echarts');
                     'time':'Date()'
                 }
                 socket.send(JSON.stringify(data));//发送数据到服务端
-                // //celery服务
-                // if(retData.celery.celery){
-                //     self.ServerPerformance.celery = 'success';
-                // }else{
-                //     self.ServerPerformance.celery = 'exception';
-                // }
-                // if(retData.celery.celeryBeat){
-                //     self.ServerPerformance.celeryBeat = 'success';
-                // }else{
-                //     self.ServerPerformance.celeryBeat = 'exception';
-                // }
-       
-                // this.CrateHeartbeatData(socket)
-            
+                //celery服务
+                if(retData.celery){
+                    self.ServerPerformance.celery = 'success';
+                }else{
+                    self.ServerPerformance.celery = 'exception';
+                }
+                if(retData.celeryBeat){
+                    self.ServerPerformance.celeryBeat = 'success';
+                }else{
+                    self.ServerPerformance.celeryBeat = 'exception';
+                }
             };
-            // //发送心跳包
-            // this.HeartbeatData = setInterval(() => {
-            //     setTimeout(, 0)}, 1000*3
-            // );
             socket.onclose=function(e){
                 PrintConsole("关闭TCP连接onclose",e);
                 socket.close(); //关闭TCP连接
+                // //10次重连
+                // for(let i=1;i<=11;i++){
+                //     PrintConsole("正在重连",i);
+                //     self.CreateSocket();
+                // }
             };
             if (socket.readyState == WebSocket.OPEN) socket.onopen();       
         },

@@ -1,8 +1,14 @@
+# Create reference here.
+from ClassData.Logger import Logging
+
 import random
 import string
 import os
 import hashlib
 import datetime
+
+# Create info here.
+cls_Logging = Logging()
 
 
 class Common(object):
@@ -75,3 +81,15 @@ class Common(object):
 
     def get_date_time(self):
         return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # 执行本地命令
+    def run_command(self, cmd,isPrint):
+        if isPrint:
+            cls_Logging.print_log("info", "run_command", cmd)
+        temp = os.popen(cmd)
+        text = temp.read()
+        if text:
+            split_text = [i for i in text.split('\n') if i]
+            return split_text
+        else:
+            return None
