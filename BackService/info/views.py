@@ -47,7 +47,7 @@ def select_operational_info(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'info', 'select_operational_info', errorMsg)
+        cls_Logging.record_error_info('HOME', 'info', 'select_operational_info', errorMsg)
     else:
         obj_db_OperateInfo = db_OperateInfo.objects.filter().order_by('-createTime').order_by('is_read')
         select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
@@ -101,7 +101,7 @@ def user_operational_info(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'info', 'select_operational_info', errorMsg)
+        cls_Logging.record_error_info('HOME', 'info', 'select_operational_info', errorMsg)
     else:
         # # 消息提醒中不会提醒错误信息 包括管理员也不会提醒
         # obj_db_OperateInfo = db_OperateInfo.objects.filter(
@@ -165,7 +165,7 @@ def edit_isread_state(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'info', 'edit_isread_state', errorMsg)
+        cls_Logging.record_error_info('HOME', 'info', 'edit_isread_state', errorMsg)
     else:
         try:
             with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用

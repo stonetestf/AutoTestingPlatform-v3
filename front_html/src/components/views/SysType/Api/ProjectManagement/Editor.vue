@@ -9,7 +9,7 @@
             <el-form-item label="项目名称:" prop="proName" >
                 <el-input v-model.trim="RomeData.proName "></el-input>
             </el-form-item>
-            <el-form-item label="备注:">
+            <el-form-item label="备注信息:">
                 <el-input  
                     type="textarea"
                     :autosize="{ minRows: 2, maxRows: 4}"
@@ -66,16 +66,16 @@ export default {
             handler(newval,oldval)
             {
                 PrintConsole(newval);
-                // this.ClearRomeData();
+                this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew
                 
-                // if(newval.isAddNew==false){//进入编辑状态
-                //     let self = this;
-                //     self.RomeData.proId =newval.proId;
-                //     self.RomeData.proName =newval.proName;
-                //     self.RomeData.remarks =newval.remarks;
-                // }
+                if(newval.isAddNew==false){//进入编辑状态
+                    let self = this;
+                    self.RomeData.proId =newval.proId;
+                    self.RomeData.proName =newval.proName;
+                    self.RomeData.remarks =newval.remarks;
+                }
             }
         },
     },
@@ -83,68 +83,66 @@ export default {
         dialogClose(done){//用于调用父页面方法
             this.$emit('closeDialog');
         },
-        // ClearRomeData(){
-        //     let self = this;
-        //     self.resetForm('RomeData');
-        //      self.RomeData.proName ='';
-        //     self.RomeData.remarks='';
-           
-        // },
-        // resetForm(formName) {//清除正则验证
-        //     if (this.$refs[formName] !== undefined) {
-        //         this.$refs[formName].resetFields();
-        //     }
-        // },
-        // DataSave(){
-        //     let self = this;
-        //     if(self.isAddNew){
-        //         self.$axios.post('/api/Int_ProjectManagement/DataSave',
-        //         // {headers:{'Content-Type':'application/x-www-form-urlencoded'}},
-        //         Qs.stringify({
-        //             "userId":store.state.userId,
-        //             'proName':self.RomeData.proName,
-        //             'remarks':self.RomeData.remarks,
-        //         })).then(res => {
-        //         if(res.data.statusCode==2001){
-        //             self.$message.success('项目新增成功');
-        //             self.dialogVisible = false;//关闭新增弹窗
-        //             self.$emit('closeDialog');
-        //             self.$emit('Succeed');//回调查询
-        //         }
-        //         else{
-        //             self.$message.error('项目新增失败:'+res.data.errorMsg);
-        //         }
-        //         }).catch(function (error) {
-        //             console.log(error);
-        //         })
-        //     }else{
-        //         self.$axios.post('/api/Int_ProjectManagement/DataEdit',{
-        //             "userId":store.state.userId,
-        //             'proId':self.RomeData.proId,
-        //             'proName':self.RomeData.proName,
-        //             'remarks':self.RomeData.remarks,
-        //         }).then(res => {
-        //         if(res.data.statusCode==2002){
-        //             self.$message.success('项目修改成功!');
-        //             self.dialogVisible = false;//关闭新增弹窗
-        //             self.$emit('closeDialog');
-        //             self.$emit('Succeed');//回调查询
-        //         }
-        //         else{
-        //             self.$message.error('项目修改失败:'+res.data.errorMsg);
-        //         }
-        //         }).catch(function (error) {
-        //             console.log(error);
-        //         })
-        //     }
-        // },
-        // submitForm(formName,id) {//保存
-        //     this.$refs[formName].validate((valid) => {
-        //         if (valid) {
-        //             this.DataSave();
-        //         } 
-        //     });
-        // },
+        ClearRomeData(){
+            let self = this;
+            self.resetForm('RomeData');
+            self.RomeData.proName ='';
+            self.RomeData.remarks='';
+        },
+        resetForm(formName) {//清除正则验证
+            if (this.$refs[formName] !== undefined) {
+                this.$refs[formName].resetFields();
+            }
+        },
+        SaveData(){
+            let self = this;
+            if(self.isAddNew){
+                self.$axios.post('/api/ProjectManagement/SaveData',
+                Qs.stringify({
+                    "sysType":'API',
+                    'proName':self.RomeData.proName,
+                    'remarks':self.RomeData.remarks,
+                })).then(res => {
+                if(res.data.statusCode==2001){
+                    self.$message.success('项目新增成功');
+                    self.dialogVisible = false;//关闭新增弹窗
+                    self.$emit('closeDialog');
+                    self.$emit('Succeed');//回调查询
+                }
+                else{
+                    self.$message.error('项目新增失败:'+res.data.errorMsg);
+                }
+                }).catch(function (error) {
+                    console.log(error);
+                })
+            }else{
+                self.$axios.post('/api/ProjectManagement/EditData',Qs.stringify({
+                    "sysType":'API',
+                    'proId':self.RomeData.proId,
+                    'proName':self.RomeData.proName,
+                    'remarks':self.RomeData.remarks,
+                })).then(res => {
+                if(res.data.statusCode==2002){
+                    self.$message.success('项目修改成功!');
+                    self.dialogVisible = false;//关闭新增弹窗
+                    self.$emit('closeDialog');
+                    self.$emit('Succeed');//回调查询
+                }
+                else{
+                    self.$message.error('项目修改失败:'+res.data.errorMsg);
+                }
+                }).catch(function (error) {
+                    console.log(error);
+                })
+            }
+        },
+        submitForm(formName,id) {//保存
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    this.SaveData();
+                } 
+            });
+        },
     }
 };
 </script>

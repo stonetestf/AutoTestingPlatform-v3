@@ -34,7 +34,7 @@ def registered(request):
     except Exception as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Login', 'login', 'registered', errorMsg)
+        cls_Logging.record_error_info('LOGIN', 'login', 'registered', errorMsg)
     else:
         if userName.lower() == "admin":
             errorMsg = '用户注册失败:不可使用敏感用户名注册!'
@@ -60,7 +60,7 @@ def registered(request):
                 except Exception as e:  # 自动回滚，不需要任何操作
                     errorMsg = f'用户注册失败：{e}!'
                     response['errorMsg'] = errorMsg
-                    cls_Logging.record_error_info('Login', 'login', 'registered', errorMsg)
+                    cls_Logging.record_error_info('LOGIN', 'login', 'registered', errorMsg)
                 else:
                     response['statusCode'] = 2001
     return JsonResponse(response)
@@ -76,7 +76,7 @@ def login_in(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Login', 'login', 'login_in', errorMsg)
+        cls_Logging.record_error_info('LOGIN', 'login', 'login_in', errorMsg)
     else:
         obj_db_Djuser = auth.authenticate(username=userName, password=passWord)
         obj_db_UserTable = db_UserTable.objects.filter(userName=userName)

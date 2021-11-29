@@ -48,7 +48,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'userManagement','select_data', errorMsg)
+        cls_Logging.record_error_info('HOME', 'userManagement','select_data', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(is_del=0).order_by("-is_activation")
         select_db_UserTable = obj_db_UserTable[minSize: maxSize]
@@ -99,7 +99,7 @@ def user_activation(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'userManagement','user_activation', errorMsg)
+        cls_Logging.record_error_info('HOME', 'userManagement','user_activation', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
         if obj_db_UserTable:
@@ -121,7 +121,7 @@ def edit_islock_state(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'userManagement','user_activation', errorMsg)
+        cls_Logging.record_error_info('HOME', 'userManagement','user_activation', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
         if obj_db_UserTable:
@@ -142,7 +142,7 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'userManagement','delete_data', errorMsg)
+        cls_Logging.record_error_info('HOME', 'userManagement','delete_data', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
         if obj_db_UserTable:
@@ -178,7 +178,7 @@ def internal_registered(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'userManagement','internal_registered', errorMsg)
+        cls_Logging.record_error_info('HOME', 'userManagement','internal_registered', errorMsg)
     else:
         if userName.lower() == "admin":
             errorMsg = '用户注册失败:不可使用敏感用户名注册!'
@@ -204,7 +204,7 @@ def internal_registered(request):
                 except Exception as e:  # 自动回滚，不需要任何操作
                     errorMsg = f'用户注册失败：{e}!'
                     response['errorMsg'] = errorMsg
-                    cls_Logging.record_error_info('Home', 'userManagement','internal_registered', errorMsg)
+                    cls_Logging.record_error_info('HOME', 'userManagement','internal_registered', errorMsg)
                 else:
                     response['statusCode'] = 2001
     return JsonResponse(response)
@@ -224,7 +224,7 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'userManagement','edit_data', errorMsg)
+        cls_Logging.record_error_info('HOME', 'userManagement','edit_data', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
         if obj_db_UserTable:

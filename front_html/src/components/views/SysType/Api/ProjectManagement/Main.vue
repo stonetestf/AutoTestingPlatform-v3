@@ -34,7 +34,7 @@
                                 prop="remarks">
                             </el-table-column>
                             <el-table-column
-                                label="关联用户"
+                                label="关联成员"
                                 align= "center"
                                 prop="methodName">
                             </el-table-column>
@@ -47,25 +47,40 @@
                             <el-table-column
                                 label="修改者"
                                 align= "center"
-                                width="200px"
+                                width="150px"
                                 prop="userName">
                             </el-table-column>
                             <el-table-column
+                                label="创建人"
+                                align= "center"
+                                width="150px"
+                                prop="createUserName">
+                            </el-table-column>
+                            <el-table-column
                                 align="center"
-                                width="150px">
+                                width="210px">
                                 <template slot="header">
                                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                                 </template>
                                 <template slot-scope="scope" style="width:100px">
-                                    <el-button
-                                        size="mini"
-                                        @click="handleEdit(scope.$index, scope.row)">进入
-                                    </el-button>
-                                    <el-button
-                                        size="mini"
-                                        type="danger"
-                                        @click="handleDelete(scope.$index, scope.row)">Delete
-                                    </el-button>
+                                    <el-button-group>
+                                        <el-button
+                                            size="mini"
+                                            type="success"
+                                            @click="handleEdit(scope.$index, scope.row)">进入
+                                        </el-button>
+                                        <el-button
+                                            :disabled="scope.row.isEdit"
+                                            size="mini"
+                                            @click="handleEdit(scope.$index, scope.row)">Edit
+                                        </el-button>
+                                        <el-button
+                                            :disabled="scope.row.isDelete"
+                                            size="mini"
+                                            type="danger"
+                                            @click="handleDelete(scope.$index, scope.row)">Delete
+                                        </el-button>
+                                    </el-button-group>
                                 </template>
                             </el-table-column>
                         </el-table>
@@ -95,8 +110,11 @@
 </template>
 
 <script>
-// import store from '../../../../store/index'
+import Qs from 'qs'
+import { PrintConsole } from '../../../../js/Logger';
+
 import DialogEditor from "./Editor.vue";
+
 
 export default {
     components: {
@@ -120,14 +138,14 @@ export default {
                         dialogTitle:"",//初始化标题
                         isAddNew:true,//初始化是否新增\修改
                     },
-                }
+                },
             },
            
 
         };
     },
     mounted(){
-    
+        this.SelectData();
     },
     methods: {
         ClearSelectRomeData(){
@@ -137,7 +155,42 @@ export default {
             self.SelectData();
         },
         SelectData(){
+            let self = this;
+            self.RomeData.tableData= [];
+            self.$axios.get('/api/ProjectManagement/SelectData',{
+                params:{
+                    'sysType':'API',
+                    'proName':self.RomeData.proName,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.id =d.id;
+                        obj.proName = d.proName;
+                        obj.remarks = d.remarks;
+                        obj.updateTime = d.updateTime;
+                        obj.userName = d.userName;
+                        obj.createUserName = d.createUserName;
+                        obj.isEdit = d.isEdit;
+                        obj.isDelete = d.isDelete;
 
+                        self.RomeData.tableData.push(obj);
+                    });
+                    if(self.RomeData.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                }
+                // console.log(self.tableData);
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
         closeEditDialog(){
             this.dialog.editor.dialogVisible =false;
@@ -149,6 +202,44 @@ export default {
                 isAddNew:true,//初始化是否新增\修改
             }
             self.dialog.editor.dialogVisible=true;
+        },
+        handleEdit(index,row){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑项目",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                proId:row.id,
+                proName:row.proName,
+                remarks:row.remarks,
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                   this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/ProjectManagement/DeleteData',Qs.stringify({
+                "sysType":'API',
+                'proId':id,
+            })).then(res => {
+                if(res.data.statusCode ==2003){
+                    self.$message.success('项目删除成功!');
+                    self.SelectData();
+                }
+                else{
+                    self.$message.error('项目删除失败:'+ res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
         pageSizeChange(pageSize) {
             let self = this;

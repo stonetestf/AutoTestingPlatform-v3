@@ -33,8 +33,22 @@ function GetRoleNameItems(){
     })
 }
 
+function GetRoleUserNameItems(){
+    return Vue.prototype.$axios.get('/api/ProjectManagement/GetRoleUserNameItems',{
+        params:{
+            // 'data':{}
+        }
+    }).then(res => {
+        if(res.data.statusCode == 2000){
+            // console.log(res.data.itemsData)
+            return res.data.itemsData;
+        }
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
 
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetRoleUserNameItems
   };
   

@@ -7,7 +7,7 @@
             <el-input placeholder="请输入用户名" v-model="RomeData.userName"></el-input>
         </el-form-item>
         <el-form-item label="密码" prop="passWord">
-          <el-input  placeholder="请输入密码" show-password v-model="RomeData.passWord"  @keyup.enter.native="loginIn()"></el-input>
+          <el-input  placeholder="请输入密码" show-password v-model="RomeData.passWord"  @keyup.enter.native="LoginIn()"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="LoginIn()">登录</el-button>

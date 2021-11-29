@@ -47,7 +47,7 @@ def load_user_info(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'home', 'load_user_info', errorMsg)
+        cls_Logging.record_error_info('HOME', 'home', 'load_user_info', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
         if obj_db_UserTable:
@@ -94,7 +94,7 @@ def save_user_info(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'home', 'save_user_info', errorMsg)
+        cls_Logging.record_error_info('HOME', 'home', 'save_user_info', errorMsg)
     else:
         obj_db_user = db_UserTable.objects.filter(id=userId)
         if obj_db_user:
@@ -139,14 +139,14 @@ def get_home_permissions(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'home', 'get_home_permissions', errorMsg)
+        cls_Logging.record_error_info('HOME', 'home', 'get_home_permissions', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0)
         obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='Home').order_by('sortNum')  # 1级菜单
         obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
         menuTable = []
         if obj_db_UserBindRole:
-            roleId = obj_db_UserBindRole[0].id
+            roleId = obj_db_UserBindRole[0].role_id
             for item_level_1 in obj_level_1_Menu:
                 children = []
                 # 2级菜单
@@ -184,19 +184,19 @@ def get_api_permissions(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Api', 'home', 'get_api_permissions', errorMsg)
+        cls_Logging.record_error_info('API', 'home', 'get_api_permissions', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0)
-        obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='Api').order_by('sortNum')  # 1级菜单
+        obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='API').order_by('sortNum')  # 1级菜单
         obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
         menuTable = []
         if obj_db_UserBindRole:
-            roleId = obj_db_UserBindRole[0].id
+            roleId = obj_db_UserBindRole[0].role_id
             for item_level_1 in obj_level_1_Menu:
                 children = []
                 # 2级菜单
                 obj_level_2_Menu = obj_db_Router.filter(
-                    level=2, belogId=item_level_1.id, sysType='Api').order_by('index')
+                    level=2, belogId=item_level_1.id, sysType='API').order_by('index')
                 for item_level_2 in obj_level_2_Menu:
                     obj_db_RoleBindMenu = db_RoleBindMenu.objects.filter(is_del=0, sysType='Api', role_id=roleId)
                     for item_bindMenu in obj_db_RoleBindMenu:
@@ -209,7 +209,7 @@ def get_api_permissions(request):
                 menuTable.append({'index': str(item_level_1.sortNum),
                                   'level': item_level_1.level,
                                   'menuName': item_level_1.menuName,
-                                  'disPlay': False if children or item_level_1.menuName == 'Home' else True,
+                                  'disPlay': False if children or item_level_1.menuName == 'HOME' else True,
                                   'icon': item_level_1.icon,
                                   'children': children})
         else:
@@ -234,7 +234,7 @@ def get_router_path(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'home', 'get_router_path', errorMsg)
+        cls_Logging.record_error_info('HOME', 'home', 'get_router_path', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(sysType=sysType, index=index, is_del=0)
         if obj_db_Router:
@@ -257,7 +257,7 @@ def get_user_statistics_info(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('Home', 'home', 'get_router_path', errorMsg)
+        cls_Logging.record_error_info('HOME', 'home', 'get_router_path', errorMsg)
     else:
         obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId, is_del=0)
         obj_db_OperateInfo = db_OperateInfo.objects.filter(is_read=0)
