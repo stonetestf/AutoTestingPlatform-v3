@@ -14,7 +14,7 @@ class BasicRole(models.Model):  # 基础角色
 class RoleBindMenu(models.Model):  # 角色绑定路由
     role = models.ForeignKey("BasicRole", to_field='id', on_delete=models.CASCADE)  # 基础角色ID
     router = models.ForeignKey("routerPar.Router", to_field='id', on_delete=models.CASCADE)  # 路由ID
-    sysType = models.CharField("归属页面", max_length=10, null=False)
+    sysType = models.CharField("所属系统", max_length=10, null=False)
     uid = models.ForeignKey("login.UserTable", to_field='id', on_delete=models.CASCADE)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     createTime = models.DateTimeField('创建时间', auto_now=True)

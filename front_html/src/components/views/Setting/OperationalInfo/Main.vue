@@ -157,8 +157,8 @@ export default {
             SelectRomeData:{
                 sysType:'',
                 sysTypeOption:[
-                    {'label':'登录','value':'Login'},
-                    {'label':'Home','value':'Home'},
+                    {'label':'登录','value':'LOGIN'},
+                    {'label':'Home','value':'HOME'},
                     {'label':'UI','value':'UI'},
                     {'label':'API','value':'API'},
                     {'label':'PTS','value':'PTS'},

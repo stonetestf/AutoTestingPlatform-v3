@@ -3,7 +3,7 @@ from django.db import models
 
 # Create your models here.
 class OperateInfo(models.Model):  # 操作日志
-    sysType = models.CharField('系统类型(ALL(所有系统通用)/Login/Home/API/UI/PTS)', max_length=10, null=False)
+    sysType = models.CharField('系统类型(ALL(所有系统通用)/LOGIN/HOME/API/UI/PTS)', max_length=10, null=False)
     level = models.IntegerField("提醒等级(错误(1),警告(2),新增和修改(3),其他(4))", null=False)
     remindType = models.CharField('提醒类别 Error,Warning,Change(Add,Edit),Other', max_length=10, null=False)
     toPage = models.CharField('所属页面', max_length=100, null=True)

@@ -176,6 +176,52 @@ def get_home_permissions(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 获取API页面的菜单权限
+def get_api_permissions(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('Api', 'home', 'get_api_permissions', errorMsg)
+    else:
+        obj_db_Router = db_Router.objects.filter(is_del=0)
+        obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='Api').order_by('sortNum')  # 1级菜单
+        obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
+        menuTable = []
+        if obj_db_UserBindRole:
+            roleId = obj_db_UserBindRole[0].id
+            for item_level_1 in obj_level_1_Menu:
+                children = []
+                # 2级菜单
+                obj_level_2_Menu = obj_db_Router.filter(
+                    level=2, belogId=item_level_1.id, sysType='Api').order_by('index')
+                for item_level_2 in obj_level_2_Menu:
+                    obj_db_RoleBindMenu = db_RoleBindMenu.objects.filter(is_del=0, sysType='Api', role_id=roleId)
+                    for item_bindMenu in obj_db_RoleBindMenu:
+                        if item_bindMenu.router.id == item_level_2.id:
+                            children.append({
+                                'index': str(item_level_2.index),
+                                'menuName': item_level_2.menuName,
+                                'path':item_level_2.routerPath,
+                            })
+                menuTable.append({'index': str(item_level_1.sortNum),
+                                  'level': item_level_1.level,
+                                  'menuName': item_level_1.menuName,
+                                  'disPlay': False if children or item_level_1.menuName == 'Home' else True,
+                                  'icon': item_level_1.icon,
+                                  'children': children})
+        else:
+            pass
+        response['statusCode'] = 2000
+        # response['menuDisPlqy'] = menuDisPlqy
+        response['menuTable'] = menuTable
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
 @require_http_methods(["GET"])  # 返回路由地址
 def get_router_path(request):
     response = {}
@@ -228,7 +274,7 @@ def get_user_statistics_info(request):
                     changeCount += 1
             errorCount += obj_db_OperateInfo.count()
             response['statusCode'] = 2000
-            response['message'] = f"当前您有未读信息: <br>错误信息({errorCount}),更变推送信息({changeCount}),<br>请注意查收!"
+            response['message'] = f"当前您的信息: <br>错误信息({errorCount}),更变推送信息({changeCount}),<br>请注意查收!"
 
     return JsonResponse(response)
 

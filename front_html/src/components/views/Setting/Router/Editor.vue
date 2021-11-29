@@ -69,7 +69,7 @@ export default {
                 routerId:'',
                 sysType:'',
                 sysTypeOption:[
-                    {'label':'Home','value':'Home'},
+                    {'label':'Home','value':'HOME'},
                     {'label':'UI','value':'UI'},
                     {'label':'API','value':'API'},
                     {'label':'PTS','value':'PTS'},

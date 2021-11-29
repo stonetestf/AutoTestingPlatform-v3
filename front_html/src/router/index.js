@@ -8,6 +8,11 @@ import Role from '@/components/views/Setting/Role/Main'//角色管理
 import UserTable from '@/components/views/Setting/UserTable/Main'//用户管理
 import OperationalInfo from '@/components/views/Setting/OperationalInfo/Main'//登录日志
 
+//API 接口
+import ApiHome from '@/components/views/SysType/Api/Home'
+import ApiMain from '@/components/views/SysType/Api/Main'
+import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagement/Main'
+
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -22,14 +27,24 @@ export default new Router({
   mode: 'history',//去掉URL中的#/
   routes: [
     {path: '/',name: 'login',component: login},
-     //Home页面
-     {path: '/Main',name: 'Home',component: Home,children:[
-      {path: '/Choose',name: 'Choose',component: Choose},
-      {path: '/Setting/Router/Main',name: 'Main',component: RouterPar},
-      {path: '/Setting/Role/Main',name: 'Main',component: Role},
-      {path: '/Setting/UserTable/Main',name: 'Main',component: UserTable},
-      {path: '/Setting/OperationalInfo/Main',name: 'Main',component: OperationalInfo},
-       
-     ]}
+    //Home页面
+    {path: '/Main',name: 'Home',component: Home,
+      children:[
+        {path: '/Choose',name: 'Choose',component: Choose},
+        {path: '/Setting/Router/Main',name: 'Main',component: RouterPar},
+        {path: '/Setting/Role/Main',name: 'Main',component: Role},
+        {path: '/Setting/UserTable/Main',name: 'Main',component: UserTable},
+        {path: '/Setting/OperationalInfo/Main',name: 'Main',component: OperationalInfo},
+      ]
+    },
+    //API
+    {path: '/SysType/Api/Home',name: 'ApiHome',component: ApiHome,
+      children:[
+        {path: '/SysType/Api/Main',name: 'ApiMain',component: ApiMain},
+        {path: '/SysType/Api/ProjectManagement/Main',name: 'Api_ProjectManagement',component: Api_ProjectManagement,
+          meta:{name: '项目维护',url:'/SysType/Api/ProjectManagement/Main',comp:'Api_ProjectManagement'}
+        },
+      ]
+    }
   ]
 })

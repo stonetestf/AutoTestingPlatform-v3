@@ -93,7 +93,7 @@
                     <div style="margin-left:65px">
                         <el-row :gutter="290">
                             <el-col :span="4">
-                                <el-card class="btn" shadow="hover" @click.native="FromIntTest">
+                                <el-card class="btn" shadow="hover" @click.native="handleClick('API')">
                                     <el-image
                                         style="width: 150px; height: 150px"
                                         :src="IconImg.api"
@@ -103,7 +103,7 @@
                                 </el-card>
                             </el-col>
                             <el-col :span="4">
-                                <el-card class="btn" shadow="hover" @click.native="FromFunTest">
+                                <el-card class="btn" shadow="hover" @click.native="handleClick('UI')">
                                     <el-image
                                         style="width: 150px; height: 150px"
                                         :src="IconImg.ui"
@@ -113,7 +113,7 @@
                                 </el-card>
                             </el-col>
                             <el-col :span="4">
-                                <el-card class="btn" shadow="hover" @click.native="FromPerTest">
+                                <el-card class="btn" shadow="hover" @click.native="handleClick('')">
                                     <el-image
                                         style="width: 150px; height: 150px"
                                         :src="IconImg.pts"
@@ -346,23 +346,13 @@ var echarts = require('echarts');
             if (socket.readyState == WebSocket.OPEN) socket.onopen();       
         },
 
+        handleClick(val){//跳转类
+            if(val=='API'){
+                this.$router.push({path:'/SysType/Api/Home'});
+            }else if(val=='UI'){
 
-
-
-
-        //跳转类
-        // FromIntTest(){
-        //     // this.$router.push('/Home_int');
-        //     this.$router.push({ path:'/TestType_Int/Home'});
-        // },
-        // FromFunTest(){
-        //     // this.$router.push('/Home_fun');
-        //     this.$router.push({ path:'/TestType_Fun/Home'});
-        // },
-        // FromPerTest(){
-        //     this.$router.push({ path:'/TestType_Per/Home'});
-        // }
-
+            }
+        },
     }
   };
 </script>

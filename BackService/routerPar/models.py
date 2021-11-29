@@ -3,7 +3,7 @@ from django.db import models
 
 # Create your models here.
 class Router(models.Model):  # 路由菜单
-    sysType = models.CharField("所属页面(Home/API/UI/PTS)", max_length=10, null=True)
+    sysType = models.CharField("所属页面(HOME/API/UI/PTS)", max_length=10, null=True)
     level = models.IntegerField("菜单级别 1,2", null=False)
     index = models.CharField("菜单index", max_length=50, null=True)
     menuName = models.CharField("菜单名称", max_length=50, null=True)

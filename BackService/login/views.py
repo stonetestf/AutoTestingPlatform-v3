@@ -92,7 +92,7 @@ def login_in(request):
 
                 token = db_Token.objects.create(user=obj_db_Djuser)  # 生成用户的token值
                 db_OperateInfo.objects.create(
-                    level=4, sysType='Login',
+                    level=4, sysType='LOGIN',
                     toPage='登录页',
                     toFun='登录',
                     uid_id=obj_db_UserTable[0].id,

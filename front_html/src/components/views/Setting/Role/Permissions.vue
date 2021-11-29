@@ -56,7 +56,7 @@ export default {
                 roleId:'',
                 sysType:'Home',
                 sysTypeOptions:[
-                    {'label':'Home','value':'Home'},
+                    {'label':'Home','value':'HOME'},
                     {'label':'功能测试','value':'UI'},
                     {'label':'接口测试','value':'API'},
                     {'label':'性能测试','value':'PTS'},
