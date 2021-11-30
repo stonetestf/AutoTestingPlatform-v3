@@ -4,15 +4,13 @@ import createPersistedState from "vuex-persistedstate" //刷新也不会清除vu
 
 Vue.use(Vuex); //使用 vuex
 const store = new Vuex.Store({
-  
   // 如果此刻想配置多个选项，将plugins写成一个一维数组，不然会报错,刷新也不会清除vuex信息
   plugins:[createPersistedState()],
   state: {
     isDebug:true,
-    nickName:"",
+    userImage:'',
     version:'211122',
     // userImage:'',
-    // tokenValue: "",
     
     //测试
     // userName:'',
@@ -27,9 +25,10 @@ const store = new Vuex.Store({
     WebSock:'ws://192.168.2.12:9090',
   },
   mutations: {
-    // userId(state,payload){
-    //   state.userId = payload;
-    // }
+    //vueX 不能直接赋值，必须在这里声明
+    userImage(state,payload){
+      state.userImage = payload;
+    }
   }
 })
 

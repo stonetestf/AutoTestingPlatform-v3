@@ -1,5 +1,6 @@
 from django.conf import settings
 from info.models import OperateInfo as db_OperateInfo
+from login.models import UserTable as db_UserTable
 
 import logging
 import json
@@ -108,8 +109,10 @@ class Logging(object):
         :return:
         """
         try:
+            obj_db_UserTable = db_UserTable.objects.filter(userName="admin")
             db_OperateInfo.objects.create(
-                sysType=sysType, level=1, remindType='Error', toPage=toPage, toFun=toFun, info=info, is_read=0
+                sysType=sysType, level=1, remindType='Error', toPage=toPage, toFun=toFun, info=info, is_read=0,
+                uid_id=obj_db_UserTable[0].id
             )
         except BaseException as e:
             self.print_log('error', 'record_error_info', str(e))

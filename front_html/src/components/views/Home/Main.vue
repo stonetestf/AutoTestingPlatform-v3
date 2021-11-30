@@ -212,10 +212,9 @@ export default {
       }).then(res => {
         if(res.data.statusCode==2000){
           this.$cookies.set('nickName',res.data.baseInfo.nickName,"0") 
-          self.RomeData.nickName =this.$cookies.get('nickName');
-          
+          self.RomeData.nickName = this.$cookies.get('nickName');
           if(res.data.baseInfo.userImg){
-            store.state.userImage = res.data.baseInfo.userImg;
+            self.$store.commit("userImage",res.data.baseInfo.userImg);
             self.RomeData.userImage = 'data:image/png;base64,'+store.state.userImage ;
           }
           self.$router.push('/Choose');

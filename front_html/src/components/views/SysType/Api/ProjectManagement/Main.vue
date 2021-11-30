@@ -35,8 +35,14 @@
                             </el-table-column>
                             <el-table-column
                                 label="关联成员"
-                                align= "center"
-                                prop="methodName">
+                                align= "center">
+                                <template slot-scope="scope">
+                                    <el-tag type="info" style="margin:0 5px"
+                                        v-for="item in scope.row.bindMembers"
+                                        :index="item.id" :key="item.name"
+                                        >{{item.name}}
+                                    </el-tag>
+                                </template>
                             </el-table-column>
                             <el-table-column
                                 label="更新时间"
@@ -58,16 +64,23 @@
                             </el-table-column>
                             <el-table-column
                                 align="center"
-                                width="210px">
+                                width="250px">
                                 <template slot="header">
                                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                                 </template>
                                 <template slot-scope="scope" style="width:100px">
                                     <el-button-group>
                                         <el-button
+                                            :disabled="scope.row.isEnterInto"
                                             size="mini"
                                             type="success"
                                             @click="handleEdit(scope.$index, scope.row)">进入
+                                        </el-button>
+                                        <el-button
+                                            :disabled="scope.row.isMembers"
+                                            size="mini"
+                                            type="warning"
+                                            @click="handleMembers(scope.$index, scope.row)">成员
                                         </el-button>
                                         <el-button
                                             :disabled="scope.row.isEdit"
@@ -106,6 +119,14 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+            <dialog-members
+                @closeDialog="closeMembersDialog" 
+                :isVisible="dialog.members.dialogVisible" 
+                :dialogPara="dialog.members.dialogPara"
+                @Succeed="SelectData">
+            </dialog-members>
+        </template>
     </div>
 </template>
 
@@ -114,11 +135,12 @@ import Qs from 'qs'
 import { PrintConsole } from '../../../../js/Logger';
 
 import DialogEditor from "./Editor.vue";
+import DialogMembers from "./Members.vue";
 
 
 export default {
     components: {
-        DialogEditor
+        DialogEditor,DialogMembers
     },
     data() {
         return {
@@ -133,6 +155,13 @@ export default {
             },
             dialog:{
                 editor:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                members:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -171,9 +200,12 @@ export default {
                         obj.id =d.id;
                         obj.proName = d.proName;
                         obj.remarks = d.remarks;
+                        obj.bindMembers=d.bindMembers;
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;
                         obj.createUserName = d.createUserName;
+                        obj.isEnterInto=d.isEnterInto;
+                        obj.isMembers=d.isMembers;
                         obj.isEdit = d.isEdit;
                         obj.isDelete = d.isDelete;
 
@@ -202,6 +234,17 @@ export default {
                 isAddNew:true,//初始化是否新增\修改
             }
             self.dialog.editor.dialogVisible=true;
+        },
+        closeMembersDialog(){
+            this.dialog.members.dialogVisible =false;
+        },
+        handleMembers(index,row){
+            let self = this;
+            self.dialog.members.dialogPara={
+                dialogTitle:"成员维护",//初始化标题
+                proId:row.id,
+            }
+            self.dialog.members.dialogVisible=true;
         },
         handleEdit(index,row){
             let self = this;

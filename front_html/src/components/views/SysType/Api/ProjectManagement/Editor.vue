@@ -82,6 +82,7 @@ export default {
     methods: {
         dialogClose(done){//用于调用父页面方法
             this.$emit('closeDialog');
+            this.$emit('Succeed');//回调查询
         },
         ClearRomeData(){
             let self = this;

@@ -152,29 +152,29 @@
         </el-main>
       </el-container>
     </template>
-    <!-- <template>
+    <template>
       <dialog-user-info
           @closeDialog="closeDialog_UserInfo" 
           :isVisible="dialog.userinfo.dialogVisible" 
           :dialogPara="dialog.userinfo.dialogPara">
       </dialog-user-info>
-    </template> -->
-    <!-- <template>
+    </template>
+    <template>
       <dialog-remind-info
           @closeDialog="closeRemindInfoDialog" 
           :isVisible="dialog.remindInfo.dialogVisible" 
           :dialogPara="dialog.remindInfo.dialogPara"
           @getData="updateRemindNum($event)">
       </dialog-remind-info>
-    </template> -->
+    </template>
   </div>
 </template>
 
 <script>
 import store from '../../../../store/index';
 import {PrintConsole} from "../../../js/Logger.js";
-// import DialogUserInfo from "../../Home/UserInfo.vue";
-// import DialogRemindInfo from "../../Home/RemindInfo.vue";
+import DialogUserInfo from "../../Home/UserInfo.vue";
+import DialogRemindInfo from "../../Home/RemindInfo.vue";
 
 //所有需要在tabs中显示的页面都必须在这里引用一次
 import ApiMain from '@/components/views/SysType/Api/Main'
@@ -182,8 +182,7 @@ import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagem
 
 export default {
   components: {
-    Api_ProjectManagement
-    // DialogUserInfo,DialogRemindInfo
+    Api_ProjectManagement,DialogUserInfo,DialogRemindInfo
   },
   data() {
     return {
@@ -217,32 +216,27 @@ export default {
         
         celery:'exception',//异步服务
         celeryBeat:'exception',//定时任务服务
-            // MemStatus:'success'
         },
-      // dialog:{
-      //   userinfo:{
-      //     dialogVisible:false,
-      //     dialogPara:{
-      //       dialogTitle:"",//初始化标题
-      //     },
-      //   },
-      //   remindInfo:{
-      //     dialogVisible:false,
-      //     dialogPara:{
-      //       dialogTitle:"",//初始化标题
-      //     },
-      //   }
-      // },
+      dialog:{
+        userinfo:{
+          dialogVisible:false,
+          dialogPara:{
+            dialogTitle:"",//初始化标题
+          },
+        },
+        remindInfo:{
+          dialogVisible:false,
+          dialogPara:{
+            dialogTitle:"",//初始化标题
+          },
+        }
+      },
     }
   },
   mounted (){
     this.getBreadcrumb();
     this.GetApiPermissions();
     this.LoadUserInfo();
-    
-    // this.GetHomePermissions();
-    // this.getUserStatisticsInfo();
-
   },
   beforeDestroy(){//生命周期-离开时
 
@@ -384,18 +378,19 @@ export default {
       this.$router.push({ path: val[0].path})
     },
 
-    // closeDialog_UserInfo(){
-    //   this.dialog.userinfo.dialogVisible =false;
-    // },
-    // OpenDialog_UserInfo(){
-    //   let self = this;
-    //   self.dialog.userinfo.dialogPara={
-    //     dialogTitle:"个人信息",//初始化标题
-    //   }
-    //   self.dialog.userinfo.dialogVisible=true;
-    // },
+    closeDialog_UserInfo(){
+      this.dialog.userinfo.dialogVisible =false;
+    },
+    OpenDialog_UserInfo(){
+      let self = this;
+      self.dialog.userinfo.dialogPara={
+        dialogTitle:"个人信息",//初始化标题
+      }
+      self.dialog.userinfo.dialogVisible=true;
+    },
     LoadUserInfo(){//基本信息
       let self = this;
+      PrintConsole(store.state)
       self.RomeData.nickName = self.$cookies.get('nickName');
       self.RomeData.userImage = 'data:image/png;base64,'+store.state.userImage;
       self.$router.push('/SysType/Api/Main');
@@ -448,57 +443,21 @@ export default {
             console.log(error);
           })
     },
-    // getUserStatisticsInfo(){
-    //   let self = this;
-    //   self.$axios.get('/api/home/GetUserStatisticsInfo', {
-    //     params:{}
-    //   }).then(res => {
-    //     if(res.data.statusCode==2000){
-    //       self.$notify({
-    //         title: '欢迎 '+store.state.userName+' 登录',
-    //         dangerouslyUseHTMLString: true,
-    //         message: res.data.message,
-    //         position: 'bottom-right'
-    //       });
-    //     }else{
-    //       self.$message.error('用户统计数据获取失败:'+res.data.errorMsg);
-    //     }
-    //   }).catch(function (error) {
-    //     console.log(error);
-    //   })
        
-    // },
-    // OpenRemindInfo(){
-    //   let self = this;
-    //   self.dialog.remindInfo.dialogPara={
-    //     dialogTitle:"",//初始化标题
-    //   }
-    //   self.dialog.remindInfo.dialogVisible=true;
-    // },
-    // closeRemindInfoDialog(){
-    //   this.dialog.remindInfo.dialogVisible =false;
-    // },
-    // updateRemindNum(event){//关闭推送消失时，回调传参数给首页的提醒数量
-    //   PrintConsole(event);
-    //   this.RomeData.remindNum=event;
-    // },
-    // SelectRemindInfoData(){//刷新列表数据
-    //   let self = this;
-    //   self.$axios.get('/api/info/UserOperationalInfo',{
-    //       params:{
-    //         'current':1,
-    //         'pageSize':9999
-    //       }
-    //   }).then(res => {
-    //     if(res.data.statusCode==2000){
-    //         self.RomeData.remindNum = res.data.Total;
-    //     }else{
-    //         // self.$message.error('操作信息获取失败:'+res.data.errorMsg);
-    //     }
-    //   }).catch(function (error) {
-    //       console.log(error);
-    //   })
-    // }
+    OpenRemindInfo(){
+      let self = this;
+      self.dialog.remindInfo.dialogPara={
+        dialogTitle:"",//初始化标题
+      }
+      self.dialog.remindInfo.dialogVisible=true;
+    },
+    closeRemindInfoDialog(){
+      this.dialog.remindInfo.dialogVisible =false;
+    },
+    updateRemindNum(event){//关闭推送消失时，回调传参数给首页的提醒数量
+      PrintConsole(event);
+      this.RomeData.remindNum=event;
+    },
   }
 }
 

@@ -263,7 +263,7 @@ def get_user_statistics_info(request):
         obj_db_OperateInfo = db_OperateInfo.objects.filter(is_read=0)
         obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
         if obj_db_UserBindRole:
-            if obj_db_UserBindRole[0].role.dataType == 0:  # 系统级别角色可以理解为超级管理
+            if obj_db_UserBindRole[0].role.is_admin == 1:  # 是否超级管理
                 obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType='Error')
             else:
                 obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId, remindType='Warning')

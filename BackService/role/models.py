@@ -5,6 +5,7 @@ from django.db import models
 class BasicRole(models.Model):  # 基础角色
     roleName = models.CharField("角色名称", max_length=10, null=True)
     uid = models.ForeignKey("login.UserTable", to_field='id', on_delete=models.CASCADE)
+    is_admin = models.IntegerField("是否是管理组(1:是,0:不是)", null=False)
     dataType = models.IntegerField("数据类别(0:系统级别,不可删除/1:普通级别,可删除)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     createTime = models.DateTimeField('创建时间', auto_now=True)

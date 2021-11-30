@@ -56,7 +56,8 @@ def select_operational_info(request):
             obj_db_OperateInfo = obj_db_OperateInfo.filter(sysType=sysType)
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
         if remindType:
-            obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType__in=('Add', 'Edit'))
+            # obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType__in=('Add', 'Edit'))
+            obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType=remindType)
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
         if isRead:
             obj_db_OperateInfo = obj_db_OperateInfo.filter(is_read=isRead)

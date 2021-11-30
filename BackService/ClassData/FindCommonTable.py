@@ -1,6 +1,7 @@
 # Create your db here.
 from rest_framework.authtoken.models import Token as db_Token
 from login.models import UserTable as db_UserTable
+from login.models import UserBindRole as db_UserBindRole
 
 
 # Create reference here.
@@ -20,5 +21,13 @@ class FindTable(object):
                 return obj_db_UserTable[0].id
             else:
                 return None
+        else:
+            return None
+
+    def get_roleId(self,userId):
+        obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0,user_id=userId)
+        if obj_db_UserBindRole:
+            return obj_db_UserBindRole[0].role_id
+
         else:
             return None

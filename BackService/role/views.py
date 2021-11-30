@@ -45,7 +45,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('HOME', 'role','select_data', errorMsg)
+        cls_Logging.record_error_info('HOME', 'role', 'select_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0).order_by('updateTime').order_by('dataType')
         select_db_BasicRole = obj_db_BasicRole[minSize: maxSize]
@@ -55,7 +55,7 @@ def select_data(request):
         for i in select_db_BasicRole:
             # region 绑定用户
             bindUsers = ""
-            obj_db_UserBindRole = db_UserBindRole.objects.filter(role_id=i.id,is_del=0)
+            obj_db_UserBindRole = db_UserBindRole.objects.filter(role_id=i.id, is_del=0)
             for index, item_BindRole in enumerate(obj_db_UserBindRole, 1):
                 bindUsers += item_BindRole.user.userName
                 if obj_db_UserBindRole.count() - index != 0:
@@ -87,7 +87,7 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('HOME', 'role','save_data', errorMsg)
+        cls_Logging.record_error_info('HOME', 'role', 'save_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del='0', roleName=roleName)
         if obj_db_BasicRole:
@@ -97,6 +97,7 @@ def save_data(request):
                 roleName=roleName,
                 dataType=1,
                 uid_id=userId,
+                is_admin=0,
                 is_del=0,
             )
             response['statusCode'] = 2001
@@ -116,10 +117,10 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('HOME', 'role','save_data', errorMsg)
+        cls_Logging.record_error_info('HOME', 'role', 'save_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(id=roleId)
-        if obj_db_BasicRole[0].dataType == 0:  # 系统级别数据
+        if obj_db_BasicRole[0].is_admin == 1:  # 系统级别数据
             response['errorMsg'] = '系统级别角色不可修改!'
         else:
             obj_db_BasicRole = db_BasicRole.objects.filter(roleName=roleName, is_del='0')
@@ -153,25 +154,39 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('HOME', 'role','delete_data', errorMsg)
+        cls_Logging.record_error_info('HOME', 'role', 'delete_data', errorMsg)
     else:
-        obj_db_BasicRole = db_BasicRole.objects.filter(is_del='0', id=roleId)
+        obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0, id=roleId)
         if obj_db_BasicRole:
-            try:
-                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    obj_db_BasicRole.update(
-                        is_del=1,
-                        uid_id=userId,
-                        updateTime=cls_Common.get_date_time()
-                    )
-                    db_UserBindRole.objects.filter(is_del=0, role_id=roleId).update(
-                        is_del=1,
-                        updateTime=cls_Common.get_date_time()
-                    )
-            except BaseException as e:  # 自动回滚，不需要任何操作
-                response['errorMsg'] = f"删除角色失败:{e}"
+            if obj_db_BasicRole[0].dataType == 0:
+                response['errorMsg'] = f"当前角色为系统级别,不可删除!"
             else:
-                response['statusCode'] = 2003
+                select_db_BasicRole = db_BasicRole.objects.filter(is_del=0, roleName='游客')
+                if select_db_BasicRole:
+                    touristsId = select_db_BasicRole[0].id
+                else:
+                    touristsId = db_BasicRole.objects.create(
+                        roleName='游客',
+                        dataType=0,
+                        uid_id=userId,
+                        is_admin=0,
+                        is_del=0,
+                    )
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        obj_db_BasicRole.update(
+                            is_del=1,
+                            uid_id=userId,
+                            updateTime=cls_Common.get_date_time()
+                        )
+                        db_UserBindRole.objects.filter(is_del=0, role_id=roleId).update(
+                            role_id=touristsId,
+                            updateTime=cls_Common.get_date_time()
+                        )
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"删除角色失败:{e}"
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = "该数据不存在于数据库中!"
     return JsonResponse(response)
@@ -222,7 +237,7 @@ def get_menu_list(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('HOME', 'role','get_menulist', errorMsg)
+        cls_Logging.record_error_info('HOME', 'role', 'get_menulist', errorMsg)
     else:
         # 根据 归属页面查询出这个页面下所有的菜单
         obj_db_Router = db_Router.objects.filter(is_del=0).order_by('sortNum')
@@ -264,7 +279,7 @@ def save_role_permissions(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('HOME',  'role','save_role_permissions', errorMsg)
+        cls_Logging.record_error_info('HOME', 'role', 'save_role_permissions', errorMsg)
     else:
         try:
             with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用

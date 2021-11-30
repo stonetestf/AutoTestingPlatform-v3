@@ -6,5 +6,8 @@ urlpatterns = [
     url(r'SaveData', views.save_data, name='SaveData'),
     url(r'EditData', views.edit_data, name='EditData'),
     url(r'DeleteData', views.delete_data, name='DeleteData'),
-    url(r'GetRoleUserNameItems', views.get_role_user_name_items, name='GetRoleUserNameItems'),
+    url(r'SelectJoinData', views.select_join_data, name='SelectJoinData'),
+    url(r'SelectNotInJoinData', views.select_not_in_join_data, name='SelectNotInJoinData'),
+    url(r'JoinMembers', views.join_members, name='JoinMembers'),
+    url(r'DeleteMembers', views.delete_members, name='DeleteMembers'),
 ]
