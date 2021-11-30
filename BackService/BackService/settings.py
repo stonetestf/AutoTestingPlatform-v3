@@ -69,7 +69,8 @@ INSTALLED_APPS = [
     'routerPar',
     'role',
     'userManagement',
-    'ProjectManagement'
+    'ProjectManagement',
+    'PageManagement',
 ]
 WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets
 # endregion

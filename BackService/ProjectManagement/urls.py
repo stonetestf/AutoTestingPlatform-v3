@@ -10,4 +10,5 @@ urlpatterns = [
     url(r'SelectNotInJoinData', views.select_not_in_join_data, name='SelectNotInJoinData'),
     url(r'JoinMembers', views.join_members, name='JoinMembers'),
     url(r'DeleteMembers', views.delete_members, name='DeleteMembers'),
+    url(r'VerifyEnterInto', views.verify_enter_into, name='VerifyEnterInto'),
 ]

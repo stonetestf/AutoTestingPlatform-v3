@@ -391,3 +391,26 @@ def delete_members(request):
         else:
             response['errorMsg'] = "当前选择成员不存在于此项目中,请刷新后重新尝试!"
     return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 验证用户是否有进入此项目的权限
+def verify_enter_into(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'ProjectManagement', 'verify_enter_into', errorMsg)
+    else:
+        obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0,uid_id=userId,pid_id=proId)
+        if obj_db_ProBindMembers:
+            response['statusCode'] = 2000
+        else:
+            response['errorMsg'] = "当前用户不在此项目的成员列表中,不可进入!"
+    return JsonResponse(response)

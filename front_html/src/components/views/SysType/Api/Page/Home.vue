@@ -11,7 +11,7 @@
                 background-color="#545c64"
                 text-color="#fff"
                 active-text-color="#ffd04b">
-                <el-menu-item index='/SysType/Api/Main' >
+                <el-menu-item index='/SysType/Api/Page/Main' >
                   <template slot="title" >
                     <i class="el-icon-s-home"></i>
                     <a>首页</a>
@@ -152,54 +152,55 @@
         </el-main>
       </el-container>
     </template>
-    <template>
+    <!-- <template>
       <dialog-user-info
           @closeDialog="closeDialog_UserInfo" 
           :isVisible="dialog.userinfo.dialogVisible" 
           :dialogPara="dialog.userinfo.dialogPara">
       </dialog-user-info>
-    </template>
-    <template>
+    </template> -->
+    <!-- <template>
       <dialog-remind-info
           @closeDialog="closeRemindInfoDialog" 
           :isVisible="dialog.remindInfo.dialogVisible" 
           :dialogPara="dialog.remindInfo.dialogPara"
           @getData="updateRemindNum($event)">
       </dialog-remind-info>
-    </template>
+    </template> -->
   </div>
 </template>
 
 <script>
-import store from '../../../../store/index';
-import {PrintConsole} from "../../../js/Logger.js";
-import DialogUserInfo from "../../Home/UserInfo.vue";
-import DialogRemindInfo from "../../Home/RemindInfo.vue";
+import store from '../../../../../store/index';
+import {PrintConsole} from "../../../../js/Logger.js";
+// import DialogUserInfo from "../../Home/UserInfo.vue";
+// import DialogRemindInfo from "../../Home/RemindInfo.vue";
 
 //所有需要在tabs中显示的页面都必须在这里引用一次
-import ApiMain from '@/components/views/SysType/Api/Main'
-import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagement/Main'
+import ApiPageMain from '@/components/views/SysType/Api/Page/Main';
+import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
+import Api_FunManagement from '@/components/views/SysType/Api/Page/FunMaintenancet/Main';
 
 export default {
   components: {
-    Api_ProjectManagement,DialogUserInfo,DialogRemindInfo
+      Api_PageManagement,Api_FunManagement
+    // Api_ProjectManagement,DialogUserInfo,DialogRemindInfo
   },
   data() {
     return {
       activeTab: '1',
-      tabIndex: 1,
       tabsItem: [
         {
           title: '首页',
           name: '1',
           closable: false,
           ref: 'tabs',
-          content: ApiMain
+          content: ApiPageMain
       }],
       tabsPath: [
         {
         name: "1",
-        path: '/SysType/Api/Main'
+        path: '/SysType/Api/Page/Main'
       }
       ],
       levelList: [],//面包屑
@@ -239,14 +240,13 @@ export default {
     this.getBreadcrumb();
     this.GetApiPermissions();
     this.LoadUserInfo();
-    this.CreateSocket();
+    // this.CreateSocket();
   },
   beforeDestroy(){//生命周期-离开时
-      this.ServerPerformance.socket.close(); //关闭TCP连接
+    //   this.ServerPerformance.socket.close(); //关闭TCP连接
   },
   watch: {
     $route: function (to) {
-      //刷新时并不会调用此地方
       this.getBreadcrumb();//面包屑
       //监听路由的变化，动态生成tabs
       // console.log('to',to);
@@ -310,49 +310,17 @@ export default {
       PrintConsole(matched);
       matched.forEach(d=>{
         // console.log('d',d)
-        if(d.path=='/SysType/Api/Home'){
-          this.levelList.push({path: '/Choose', meta: { title: '测试系统'}})
-          this.levelList.push({path: '', meta: {title: '接口测试' }})
+        if(d.path=='/SysType/Api/Page/Home'){
+            this.levelList.push({path: '/Choose', meta: { title: '测试系统'}})
+            this.levelList.push({path: '/SysType/Api/Main', meta: {title: '接口测试' }})
+            this.levelList.push({path: '', meta: {title:this.$cookies.get('proName')}})
           // this.levelList.push({path: '', meta: {title: '项目管理' }})
           // this.levelList.push({path: '/TestType_Fun/index', meta: { title: '首页' }})
         }
         else{
-          this.levelList.push({path: d.path, meta: { title: d.meta.name }});
+          this.levelList.push({path: d.path, meta: { title: d.meta.name }})
         }
-      });
-      // PrintConsole('levelList');
-      // PrintConsole(this.levelList);
-      // this.levelList.forEach(d=>{
-      //   if(d.path=='/Choose' || d.path==''){
-
-      //   }else{
-      //     let tempCaseTable = this.tabsItem.find(item=>
-      //       item.title == d.meta.title
-      //     );
-      //     if(tempCaseTable){
-
-      //     }else{
-      //       PrintConsole(tempCaseTable);
-      //       let newActiveIndex = ++this.tabIndex + "";
-      //       //动态双向追加tabs
-      //       this.tabsItem.push({
-      //         title: d.meta.title,
-      //         name: String(newActiveIndex),
-      //         closable: true,
-      //         flag:false,
-      //         ref: "tabs",
-      //         content: d.meta.comp,
-      //       });
-      //       this.activeTab = newActiveIndex;
-      //       if (this.tabsPath.indexOf(d.path) == -1) {
-      //         this.tabsPath.push({
-      //           name: newActiveIndex,
-      //           path: d.path,
-      //         });
-      //       }
-      //     }
-      //   }
-      // });
+      })
     },
     QuitUser(){
       this.$cookies.remove('token');
@@ -399,93 +367,93 @@ export default {
       let val = this.tabsPath.filter(item => thisTab.name == item.name)
       this.$router.push({ path: val[0].path})
     },
-    CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据
-      let self = this;
-      var socket = new WebSocket(store.state.WebSock+'/api/home/GetServerIndicators');
-      self.ServerPerformance.socket = socket;
+    // CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据
+    //   let self = this;
+    //   var socket = new WebSocket(store.state.WebSock+'/api/home/GetServerIndicators');
+    //   self.ServerPerformance.socket = socket;
       
-      socket.onopen = function () {
-          PrintConsole('WebSocket open');//成功连接上Websocket
-          var data ={};
-          data.Message = 'Start';
-          data.Params = {
-              'token':self.$cookies.get('token')
-          }
-          socket.send(JSON.stringify(data));//发送数据到服务端
-      };
-      socket.onmessage = function (e) {
-          // PrintConsole('message: ' + e.data);//打印服务端返回的数据
-          let retData = JSON.parse(e.data)
-          let cpu = retData.cpu;
-          self.ServerPerformance.cpu=cpu;
-          if(cpu>=80 && cpu<90){
-            self.ServerPerformance.cpuStatus='warning';
-          }
-          else if(cpu>=90){
-            self.ServerPerformance.cpuStatus='exception';
-          }
-          else{
-            self.ServerPerformance.cpuStatus='success';
-          }
+    //   socket.onopen = function () {
+    //       PrintConsole('WebSocket open');//成功连接上Websocket
+    //       var data ={};
+    //       data.Message = 'Start';
+    //       data.Params = {
+    //           'token':self.$cookies.get('token')
+    //       }
+    //       socket.send(JSON.stringify(data));//发送数据到服务端
+    //   };
+    //   socket.onmessage = function (e) {
+    //       PrintConsole('message: ' + e.data);//打印服务端返回的数据
+    //       let retData = JSON.parse(e.data)
+    //       let cpu = retData.cpu;
+    //       self.ServerPerformance.cpu=cpu;
+    //       if(cpu>=80 && cpu<90){
+    //         self.ServerPerformance.cpuStatus='warning';
+    //       }
+    //       else if(cpu>=90){
+    //         self.ServerPerformance.cpuStatus='exception';
+    //       }
+    //       else{
+    //         self.ServerPerformance.cpuStatus='success';
+    //       }
 
-          let mem = retData.mem;
-          self.ServerPerformance.mem=mem;
-          if(mem>=80 && mem<90){
-            self.ServerPerformance.memStatus='warning';
-          }
-          else if(mem>=90){
-            self.ServerPerformance.memStatus='exception';
-          }
-          else{
-            self.ServerPerformance.memStatus='success';
-          }
+    //       let mem = retData.mem;
+    //       self.ServerPerformance.mem=mem;
+    //       if(mem>=80 && mem<90){
+    //         self.ServerPerformance.memStatus='warning';
+    //       }
+    //       else if(mem>=90){
+    //         self.ServerPerformance.memStatus='exception';
+    //       }
+    //       else{
+    //         self.ServerPerformance.memStatus='success';
+    //       }
 
-          var data ={};
-          data.Message = 'Heartbeat';
-          data.Params = {
-              'time':'Date()'
-          }
-          socket.send(JSON.stringify(data));//发送数据到服务端
-          //celery服务
-          if(retData.celery){
-              self.ServerPerformance.celery = 'success';
-          }else{
-              self.ServerPerformance.celery = 'exception';
-          }
-          if(retData.celeryBeat){
-              self.ServerPerformance.celeryBeat = 'success';
-          }else{
-              self.ServerPerformance.celeryBeat = 'exception';
-          }
-      };
-      socket.onclose=function(e){
-          PrintConsole("关闭TCP连接onclose",e);
-          socket.close(); //关闭TCP连接
-          // //10次重连
-          // for(let i=1;i<=11;i++){
-          //     PrintConsole("正在重连",i);
-          //     self.CreateSocket();
-          // }
-      };
-      if (socket.readyState == WebSocket.OPEN) socket.onopen();       
-    },
+    //       var data ={};
+    //       data.Message = 'Heartbeat';
+    //       data.Params = {
+    //           'time':'Date()'
+    //       }
+    //       socket.send(JSON.stringify(data));//发送数据到服务端
+    //       //celery服务
+    //       if(retData.celery){
+    //           self.ServerPerformance.celery = 'success';
+    //       }else{
+    //           self.ServerPerformance.celery = 'exception';
+    //       }
+    //       if(retData.celeryBeat){
+    //           self.ServerPerformance.celeryBeat = 'success';
+    //       }else{
+    //           self.ServerPerformance.celeryBeat = 'exception';
+    //       }
+    //   };
+    //   socket.onclose=function(e){
+    //       PrintConsole("关闭TCP连接onclose",e);
+    //       socket.close(); //关闭TCP连接
+    //       // //10次重连
+    //       // for(let i=1;i<=11;i++){
+    //       //     PrintConsole("正在重连",i);
+    //       //     self.CreateSocket();
+    //       // }
+    //   };
+    //   if (socket.readyState == WebSocket.OPEN) socket.onopen();       
+    // },
 
-    closeDialog_UserInfo(){
-      this.dialog.userinfo.dialogVisible =false;
-    },
-    OpenDialog_UserInfo(){
-      let self = this;
-      self.dialog.userinfo.dialogPara={
-        dialogTitle:"个人信息",//初始化标题
-      }
-      self.dialog.userinfo.dialogVisible=true;
-    },
+    // closeDialog_UserInfo(){
+    //   this.dialog.userinfo.dialogVisible =false;
+    // },
+    // OpenDialog_UserInfo(){
+    //   let self = this;
+    //   self.dialog.userinfo.dialogPara={
+    //     dialogTitle:"个人信息",//初始化标题
+    //   }
+    //   self.dialog.userinfo.dialogVisible=true;
+    // },
     LoadUserInfo(){//基本信息
       let self = this;
-      // PrintConsole(store.state)
+      PrintConsole(store.state)
       self.RomeData.nickName = self.$cookies.get('nickName');
       self.RomeData.userImage = 'data:image/png;base64,'+store.state.userImage;
-      self.$router.push('/SysType/Api/Main');
+      self.$router.push('/SysType/Api/Page/Main');
     },
     GetApiPermissions(){//加载用户菜单和权限信息
       let self = this;
@@ -494,7 +462,7 @@ export default {
       }).then(res => {
         if(res.data.statusCode==2000){
           res.data.menuTable.forEach(d=>{
-            if(d.menuName=='所属项目'){
+            if(d.menuName!='所属项目'){
               let obj = {};
               obj.index = d.index;
               obj.menuName = d.menuName;
@@ -504,13 +472,6 @@ export default {
               self.RomeData.menuTable.push(obj);
             }
           });
-          // self.RomeData.menuTable = res.data.menuTable;
-          // res.data.menuTable.forEach(d => {
-          //   if(d.menuName=='Setting'){
-          //     self.MenuDisPlay.Setting = d.disPlay;
-          //     self.MenuTable.Setting = d.children;
-          //   }
-          // });
         }else{
           self.$message.error('API权限获取失败:'+res.data.errorMsg);
         }
@@ -519,20 +480,20 @@ export default {
       })
     },
        
-    OpenRemindInfo(){
-      let self = this;
-      self.dialog.remindInfo.dialogPara={
-        dialogTitle:"",//初始化标题
-      }
-      self.dialog.remindInfo.dialogVisible=true;
-    },
-    closeRemindInfoDialog(){
-      this.dialog.remindInfo.dialogVisible =false;
-    },
-    updateRemindNum(event){//关闭推送消失时，回调传参数给首页的提醒数量
-      PrintConsole(event);
-      this.RomeData.remindNum=event;
-    },
+    // OpenRemindInfo(){
+    //   let self = this;
+    //   self.dialog.remindInfo.dialogPara={
+    //     dialogTitle:"",//初始化标题
+    //   }
+    //   self.dialog.remindInfo.dialogVisible=true;
+    // },
+    // closeRemindInfoDialog(){
+    //   this.dialog.remindInfo.dialogVisible =false;
+    // },
+    // updateRemindNum(event){//关闭推送消失时，回调传参数给首页的提醒数量
+    //   PrintConsole(event);
+    //   this.RomeData.remindNum=event;
+    // },
   }
 }
 

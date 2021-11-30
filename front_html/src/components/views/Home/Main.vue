@@ -269,7 +269,7 @@ export default {
       }).then(res => {
         if(res.data.statusCode==2000){
           self.$notify({
-            title: '欢迎 '+store.state.userName+' 登录',
+            title: '欢迎 '+self.$cookies.get('userName')+' 登录',
             dangerouslyUseHTMLString: true,
             message: res.data.message,
             position: 'bottom-right'

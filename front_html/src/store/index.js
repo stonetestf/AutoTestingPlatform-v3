@@ -10,7 +10,6 @@ const store = new Vuex.Store({
     isDebug:true,
     userImage:'',
     version:'211122',
-    // userImage:'',
     
     //测试
     // userName:'',
@@ -28,7 +27,7 @@ const store = new Vuex.Store({
     //vueX 不能直接赋值，必须在这里声明
     userImage(state,payload){
       state.userImage = payload;
-    }
+    },
   }
 })
 

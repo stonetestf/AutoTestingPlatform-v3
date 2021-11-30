@@ -6,6 +6,7 @@ from django.contrib.auth import hashers
 from dwebsocket.decorators import accept_websocket
 from time import sleep
 
+
 import json
 import psutil
 
@@ -317,7 +318,7 @@ def get_server_indicators(request):
                             # region Celery
                             celery = False
                             celeryBeat = False
-                            perform_Celery = cls_Common.run_command("ps -ef |grep worker",False)
+                            perform_Celery = cls_Common.run_command("ps -ef |grep worker", False)
                             debug_worker = []  # 在Debug模式下有点奇葩所以要计数下
                             for i in perform_Celery:
                                 if "celery -A BackGround worker -l info" in i:
@@ -328,7 +329,7 @@ def get_server_indicators(request):
                                     if len(debug_worker) >= 3:
                                         celery = True
                                         break
-                            perform_CeleryBeat = cls_Common.run_command("ps -ef |grep beat",False)
+                            perform_CeleryBeat = cls_Common.run_command("ps -ef |grep beat", False)
                             for i in perform_CeleryBeat:
                                 if "celery -A BackGround beat -l info" in i:
                                     celeryBeat = True
@@ -342,9 +343,10 @@ def get_server_indicators(request):
                                 'pushCount': pushCount,
                                 'cpu': cpu,
                                 'mem': mem,
-                                'celery':celery,
-                                'celeryBeat':celeryBeat,
+                                'celery': celery,
+                                'celeryBeat': celeryBeat,
                             }
 
                         request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
                         sleep(1)
+

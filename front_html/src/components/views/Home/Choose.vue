@@ -155,18 +155,13 @@ var echarts = require('echarts');
             socket:'',
             myChartCPU:'',
             myChartMEM:'',
-            // cpu:0,
-            // mem:0,
             celery:'exception',//异步服务
             celeryBeat:'exception',//定时任务服务
-            // MemStatus:'success'
         },
       };
     },
     beforeDestroy(){//生命周期-离开时
         this.ServerPerformance.socket.close(); //关闭TCP连接
-        
-        clearInterval(this.HeartbeatData);
     },
     mounted(){
         this.ServerPerformance.myChartCPU = echarts.init(document.getElementById('cpuIndicators'));//初始化

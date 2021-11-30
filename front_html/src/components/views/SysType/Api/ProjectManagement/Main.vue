@@ -74,7 +74,7 @@
                                             :disabled="scope.row.isEnterInto"
                                             size="mini"
                                             type="success"
-                                            @click="handleEdit(scope.$index, scope.row)">进入
+                                            @click="handleEnterInto(scope.$index, scope.row)">进入
                                         </el-button>
                                         <el-button
                                             :disabled="scope.row.isMembers"
@@ -237,6 +237,25 @@ export default {
         },
         closeMembersDialog(){
             this.dialog.members.dialogVisible =false;
+        },
+        handleEnterInto(index,row){//进入
+            let self = this;
+            self.$axios.get('/api/ProjectManagement/VerifyEnterInto',{
+                params:{
+                    'proId':row.id,
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    self.$cookies.set('proId',row.id,"0") 
+                    self.$cookies.set('proName',row.proName,"0") 
+                    self.$router.push({path:'/SysType/Api/Page/Home'});
+                }else{
+                    self.$message.error('验证进入项目权限失败:'+res.data.errorMsg);
+                }
+                // console.log(self.tableData);
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
         handleMembers(index,row){
             let self = this;

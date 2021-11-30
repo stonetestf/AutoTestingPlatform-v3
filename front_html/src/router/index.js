@@ -13,6 +13,11 @@ import ApiHome from '@/components/views/SysType/Api/Home'
 import ApiMain from '@/components/views/SysType/Api/Main'
 import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagement/Main'
 
+import ApiPageHome from '@/components/views/SysType/Api/Page/Home'
+import ApiPageMain from '@/components/views/SysType/Api/Page/Main'
+import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
+import Api_FunManagement from '@/components/views/SysType/Api/Page/FunMaintenancet/Main';
+
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -37,12 +42,24 @@ export default new Router({
         {path: '/Setting/OperationalInfo/Main',name: 'Main',component: OperationalInfo},
       ]
     },
-    //API
+    //API入口
     {path: '/SysType/Api/Home',name: 'ApiHome',component: ApiHome,
       children:[
         {path: '/SysType/Api/Main',name: 'ApiMain',component: ApiMain},
         {path: '/SysType/Api/ProjectManagement/Main',name: 'Api_ProjectManagement',component: Api_ProjectManagement,
           meta:{name: '项目维护',url:'/SysType/Api/ProjectManagement/Main',comp:'Api_ProjectManagement'}
+        },
+      ]
+    },
+    //API主体
+    {path: '/SysType/Api/Page/Home',name: 'ApiPageHome',component: ApiPageHome,
+      children:[
+        {path: '/SysType/Api/Page/Main',name: 'ApiPageMain',component: ApiPageMain},
+        {path: '/SysType/Api/Page/PageManagement/Main',name: 'Api_PageManagement',component: Api_PageManagement,
+          meta:{name: '页面维护',url:'/SysType/Api/Page/PageManagement/Main',comp:'Api_PageManagement'}
+        },
+        {path: '/SysType/Api/Page/FunMaintenancet/Main',name: 'Api_FunManagement',component: Api_FunManagement,
+          meta:{name: '功能维护',url:'/SysType/Api/Page/FunMaintenancet/Main',comp:'Api_FunManagement'}
         },
       ]
     }
