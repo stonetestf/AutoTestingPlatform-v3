@@ -6,7 +6,7 @@
         :before-close="dialogClose"
         width="500px">
         <el-form ref="RomeData" :rules="rules" :model="RomeData"  label-width="85px" @submit.native.prevent>
-            <el-form-item label="所属页面:">
+            <el-form-item label="所属页面:" prop="pageId">
                 <el-select v-model="RomeData.pageId" clearable placeholder="请选择" style="width:200px;float:left" @click.native="GetPageNameOption()">
                     <el-option
                         v-for="item in RomeData.pageNameOption"
@@ -55,6 +55,7 @@ export default {
                     { required: true, message: '请输入功能名称', trigger: 'blur' },
                     { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
                 ],
+                pageId:[{required: true, message: '请选择所属页面', trigger: 'change' }]
             }
         };
     },
