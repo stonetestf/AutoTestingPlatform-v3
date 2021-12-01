@@ -6,8 +6,18 @@
         :before-close="dialogClose"
         width="500px">
         <el-form ref="RomeData" :rules="rules" :model="RomeData"  label-width="85px" @submit.native.prevent>
-            <el-form-item label="页面名称:" prop="pageName" >
-                <el-input v-model.trim="RomeData.pageName "></el-input>
+            <el-form-item label="所属页面:">
+                <el-select v-model="RomeData.pageId" clearable placeholder="请选择" style="width:200px;float:left" @click.native="GetPageNameOption()">
+                    <el-option
+                        v-for="item in RomeData.pageNameOption"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="功能名称:" prop="funName" >
+                <el-input v-model.trim="RomeData.funName "></el-input>
             </el-form-item>
             <el-form-item label="备注:">
                 <el-input  
@@ -23,9 +33,9 @@
 </template>
 
 <script>
-// import store from '../../../../store/index'
 import Qs from 'qs';
 import {PrintConsole} from "../../../../../js/Logger.js";
+import {GetPageNameItems} from "../../../../../js/GetSelectTable.js";
 
 export default {
     data() {
@@ -34,13 +44,15 @@ export default {
             dialogVisible:false,
             isAddNew:true,//是否是新增窗口
             RomeData:{
+                funId:'',
                 pageId:'',
-                pageName:'',
+                pageNameOption:[],
+                funName:'',
                 remarks:'',
             },
             rules: {
-                pageName: [
-                    { required: true, message: '请输入页面名称', trigger: 'blur' },
+                funName: [
+                    { required: true, message: '请输入功能名称', trigger: 'blur' },
                     { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
                 ],
             }
@@ -72,8 +84,10 @@ export default {
                 
                 if(newval.isAddNew==false){//进入编辑状态
                     let self = this;
+                    self.GetPageNameOption();
+                    self.RomeData.funId = newval.funId;
                     self.RomeData.pageId =newval.pageId;
-                    self.RomeData.pageName =newval.pageName;
+                    self.RomeData.funName =newval.funName;
                     self.RomeData.remarks =newval.remarks;
                 }
             }
@@ -86,8 +100,14 @@ export default {
         ClearRomeData(){
             let self = this;
             self.resetForm('RomeData');
-            self.RomeData.pageName='';
+            self.RomeData.pageId='';
+            self.RomeData.funName='';
             self.RomeData.remarks='';
+        },
+        GetPageNameOption(){
+            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+                this.RomeData.pageNameOption = d;
+            });
         },
         resetForm(formName) {//清除正则验证
             if (this.$refs[formName] !== undefined) {
@@ -97,40 +117,42 @@ export default {
         SaveData(){
             let self = this;
             if(self.isAddNew){
-                self.$axios.post('/api/PageManagement/SaveData',Qs.stringify({
+                self.$axios.post('/api/FunManagement/SaveData',Qs.stringify({
                     'sysType':'API',
                     'proId':self.$cookies.get('proId'),
-                    'pageName':self.RomeData.pageName,
+                    'pageId':self.RomeData.pageId,
+                    'funName':self.RomeData.funName,
                     'remarks':self.RomeData.remarks,
                 })).then(res => {
                 if(res.data.statusCode==2001){
-                    self.$message.success('新增页面成功');
+                    self.$message.success('新增功能成功');
                     self.dialogVisible = false;//关闭新增弹窗
                     self.$emit('closeDialog');
                     self.$emit('Succeed');//回调查询
                 }
                 else{
-                    self.$message.error('新增页面失败:'+res.data.errorMsg);
+                    self.$message.error('新增功能失败:'+res.data.errorMsg);
                 }
                 }).catch(function (error) {
                     console.log(error);
                 })
             }else{
-                self.$axios.post('/api/PageManagement/EditData',Qs.stringify({
+                self.$axios.post('/api/FunManagement/EditData',Qs.stringify({
                     'sysType':'API',
                     'proId':self.$cookies.get('proId'),
+                    'funId':self.RomeData.funId,
                     'pageId':self.RomeData.pageId,
-                    'pageName':self.RomeData.pageName,
+                    'funName':self.RomeData.funName,
                     'remarks':self.RomeData.remarks,
                 })).then(res => {
                 if(res.data.statusCode==2002){
-                    self.$message.success('修改页面成功!');
+                    self.$message.success('修改功能成功!');
                     self.dialogVisible = false;//关闭新增弹窗
                     self.$emit('closeDialog');
                     self.$emit('Succeed');//回调查询
                 }
                 else{
-                    self.$message.error('修改页面失败:'+res.data.errorMsg);
+                    self.$message.error('修改功能失败:'+res.data.errorMsg);
                 }
                 }).catch(function (error) {
                     console.log(error);
