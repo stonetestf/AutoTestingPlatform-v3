@@ -64,7 +64,7 @@
                             </el-table-column>
                             <el-table-column
                                 align="center"
-                                width="250px">
+                                width="255px">
                                 <template slot="header">
                                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                                 </template>

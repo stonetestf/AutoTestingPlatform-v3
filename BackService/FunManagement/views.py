@@ -5,7 +5,7 @@ from django.db import transaction
 import json
 
 # Create your db here.
-from PageManagement.models import PageManagement as db_PageManagement
+from FunManagement.models import FunManagement as db_FunManagement
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -35,7 +35,8 @@ def select_data(request):
         objData = cls_object_maker(responseData)
         sysType = objData.sysType
         proId = objData.proId
-        pageName = objData.pageName
+        pageId = objData.pageId
+        funName = objData.funName
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -46,24 +47,30 @@ def select_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'PageMaintenancet', 'select_data', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(
+        obj_db_FunManagement = db_FunManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
-        select_db_PageManagement = obj_db_PageManagement[minSize: maxSize]
-        if pageName:
-            obj_db_PageManagement = obj_db_PageManagement.filter(pageName__icontains=pageName)
-            select_db_PageManagement = obj_db_PageManagement[minSize: maxSize]
-        for i in select_db_PageManagement:
+        select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
+        if pageId:
+            obj_db_FunManagement = obj_db_FunManagement.filter(page_id=pageId)
+            select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
+        if funName:
+            obj_db_FunManagement = obj_db_FunManagement.filter(funName__icontains=funName)
+            select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
+        for i in select_db_FunManagement:
             dataList.append(
                 {"id": i.id,
-                 "pageName": i.pageName,
+                 "pageId": i.page_id,
+                 "pageName": i.page.pageName,
+                 "funName": i.funName,
                  "remarks": i.remarks,
+                 "intNum": 0,
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  "userName": i.uid.userName,
                  }
             )
 
         response['TableData'] = dataList
-        response['Total'] = obj_db_PageManagement.count()
+        response['Total'] = obj_db_FunManagement.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 
@@ -77,24 +84,26 @@ def save_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
         proId = request.POST['proId']
-        pageName = request.POST['pageName']
+        pageId = request.POST['pageId']
+        funName = request.POST['funName']
         remarks = request.POST['remarks']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'data_save', errorMsg)
+        cls_Logging.record_error_info('API', 'FunManagement', 'data_save', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(
-            is_del=0, sysType=sysType, pid_id=proId,pageName=pageName)
-        if obj_db_PageManagement:
-            response['errorMsg'] = "当前所属项目下已有相同的所属页面存在,请更改!"
+        obj_db_FunManagement = db_FunManagement.objects.filter(
+            is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, funName=funName)
+        if obj_db_FunManagement:
+            response['errorMsg'] = "当前所属页面下已有相同的功能名称存在,请更改!"
         else:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    db_PageManagement.objects.create(
+                    db_FunManagement.objects.create(
                         sysType=sysType,
                         pid_id=proId,
-                        pageName=pageName,
+                        page_id=pageId,
+                        funName=funName,
                         remarks=remarks,
                         is_del=0,
                         uid_id=userId,
@@ -112,41 +121,44 @@ def save_data(request):
 @require_http_methods(["POST"])
 def edit_data(request):
     response = {}
-    update_db_PageManagement = None
+    update_db_FunManagement = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
+        funId = int(request.POST['funId'])
         proId = request.POST['proId']
-        pageId = int(request.POST['pageId'])
-        pageName = request.POST['pageName']
+        pageId = request.POST['pageId']
+        funName = request.POST['funName']
         remarks = request.POST['remarks']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'edit_data', errorMsg)
+        cls_Logging.record_error_info('API', 'FunManagement', 'edit_data', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId, is_del=0)
-        if obj_db_PageManagement:
-            select_db_PageManagement = db_PageManagement.objects.filter(
-                sysType=sysType,pid_id=proId,pageName=pageName, is_del=0)
-            if select_db_PageManagement:
-                if pageId == select_db_PageManagement[0].id:  # 自己修改自己
-                    update_db_PageManagement = db_PageManagement.objects.filter(is_del=0, id=pageId).update(
-                        pageName=pageName,
+        obj_db_FunManagement = db_FunManagement.objects.filter(id=funId, is_del=0)
+        if obj_db_FunManagement:
+            select_db_FunManagement = db_FunManagement.objects.filter(
+                sysType=sysType, pid_id=proId, page_id=pageId, funName=funName, is_del=0)
+            if select_db_FunManagement:
+                if funId == select_db_FunManagement[0].id:  # 自己修改自己
+                    update_db_FunManagement = db_FunManagement.objects.filter(is_del=0, id=funId).update(
+                        page_id=pageId,
+                        funName=funName,
                         uid_id=userId,
                         remarks=remarks,
                         updateTime=cls_Common.get_date_time())
                 else:
-                    response['errorMsg'] = '当前项目下已有重复页面名称,请更改!'
+                    response['errorMsg'] = '当前页面下已有重复功能名称,请更改!'
             else:
-                update_db_PageManagement = db_PageManagement.objects.filter(is_del=0, id=pageId).update(
-                    pageName=pageName,
+                update_db_FunManagement = db_FunManagement.objects.filter(is_del=0, id=funId).update(
+                    page_id=pageId,
+                    funName=funName,
                     uid_id=userId,
                     remarks=remarks,
                     updateTime=cls_Common.get_date_time())
         else:
-            response['errorMsg'] = '未找当前所属页面,请刷新后重新尝试!'
-    if update_db_PageManagement:
+            response['errorMsg'] = '未找当前所属功能数据,请刷新后重新尝试!'
+    if update_db_FunManagement:
         response['statusCode'] = 2002
     return JsonResponse(response)
 
@@ -158,45 +170,20 @@ def delete_data(request):
     response = {}
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
-        pageId = request.POST['pageId']
+        funId = request.POST['funId']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'delete_data', errorMsg)
+        cls_Logging.record_error_info('API', 'FunManagement', 'delete_data', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId,is_del=0)
-        if obj_db_PageManagement:
-            obj_db_PageManagement.update(
+        obj_db_FunManagement = db_FunManagement.objects.filter(id=funId)
+        if obj_db_FunManagement:
+            obj_db_FunManagement.update(
                 is_del=1,
                 updateTime=cls_Common.get_date_time(),
-                uid_id=userId,
+                uid_id=userId
             )
             response['statusCode'] = 2003
         else:
-            response['errorMsg'] = '未找到当前所属页面,请刷新后重新尝试!'
-    return JsonResponse(response)
-
-
-@cls_Logging.log
-@cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])
-def get_page_name_items(request):
-    response = {}
-    dataList = []
-    try:
-        responseData = json.loads(json.dumps(request.GET))
-        objData = cls_object_maker(responseData)
-        proId = objData.proId
-    except BaseException as e:
-        errorMsg = f"入参错误:{e}"
-        response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageMaintenancet', 'get_page_name_items', errorMsg)
-    else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0,pid_id=proId).order_by('-updateTime')
-        for i in obj_db_PageManagement:
-            dataList.append({
-                'label': i.pageName, 'value': i.id
-            })
-        response['itemsData'] = dataList
-        response['statusCode'] = 2000
+            response['errorMsg'] = '未找到当前功能数据,请刷新后重新尝试!'
     return JsonResponse(response)

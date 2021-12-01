@@ -179,7 +179,7 @@ import {PrintConsole} from "../../../../js/Logger.js";
 //所有需要在tabs中显示的页面都必须在这里引用一次
 import ApiPageMain from '@/components/views/SysType/Api/Page/Main';
 import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
-import Api_FunManagement from '@/components/views/SysType/Api/Page/FunMaintenancet/Main';
+import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';
 
 export default {
   components: {
@@ -189,6 +189,7 @@ export default {
   data() {
     return {
       activeTab: '1',
+      tabIndex:1,
       tabsItem: [
         {
           title: '首页',

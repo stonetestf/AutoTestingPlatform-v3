@@ -200,7 +200,7 @@ def edit_data(request):
                 else:
                     response['errorMsg'] = '当前用户未绑定角色组!'
             if is_edit:
-                obj_db_ProManagement = db_ProManagement.objects.filter(proName=proName, is_del=0)
+                obj_db_ProManagement = db_ProManagement.objects.filter(sysType=sysType,proName=proName, is_del=0)
                 if obj_db_ProManagement:
                     if proId == obj_db_ProManagement[0].id:  # 自己修改自己
                         update_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=proId).update(

@@ -33,7 +33,21 @@ function GetRoleNameItems(){
     })
 }
 
+function GetPageNameItems(proId){
+    return Vue.prototype.$axios.get('/api/PageManagement/GetPageNameItems',{
+        params:{
+            'proId':proId,
+        }
+    }).then(res => {
+        if(res.data.statusCode == 2000){
+            // console.log(res.data.itemsData)
+            return res.data.itemsData;
+        }
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems,
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems
   };
   

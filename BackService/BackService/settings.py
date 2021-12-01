@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'userManagement',
     'ProjectManagement',
     'PageManagement',
+    'FunManagement'
 ]
 WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets
 # endregion

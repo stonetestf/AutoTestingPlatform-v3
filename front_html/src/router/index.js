@@ -16,7 +16,7 @@ import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagem
 import ApiPageHome from '@/components/views/SysType/Api/Page/Home'
 import ApiPageMain from '@/components/views/SysType/Api/Page/Main'
 import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
-import Api_FunManagement from '@/components/views/SysType/Api/Page/FunMaintenancet/Main';
+import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';
 
 
 import Router from 'vue-router'
@@ -58,8 +58,8 @@ export default new Router({
         {path: '/SysType/Api/Page/PageManagement/Main',name: 'Api_PageManagement',component: Api_PageManagement,
           meta:{name: '页面维护',url:'/SysType/Api/Page/PageManagement/Main',comp:'Api_PageManagement'}
         },
-        {path: '/SysType/Api/Page/FunMaintenancet/Main',name: 'Api_FunManagement',component: Api_FunManagement,
-          meta:{name: '功能维护',url:'/SysType/Api/Page/FunMaintenancet/Main',comp:'Api_FunManagement'}
+        {path: '/SysType/Api/Page/FunManagement/Main',name: 'Api_FunManagement',component: Api_FunManagement,
+          meta:{name: '功能维护',url:'/SysType/Api/Page/FunManagement/Main',comp:'Api_FunManagement'}
         },
       ]
     }

@@ -6,5 +6,4 @@ urlpatterns = [
     url(r'SaveData', views.save_data, name='SaveData'),
     url(r'EditData', views.edit_data, name='EditData'),
     url(r'DeleteData', views.delete_data, name='DeleteData'),
-    url(r'GetPageNameItems', views.get_page_name_items, name='GetPageNameItems'),
 ]

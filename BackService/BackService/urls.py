@@ -26,6 +26,7 @@ import userManagement.urls
 import info.urls
 import ProjectManagement.urls
 import PageManagement.urls
+import FunManagement.urls
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
@@ -38,5 +39,6 @@ urlpatterns = [
     url('api/info/', include(info.urls)),
     url('api/ProjectManagement/', include(ProjectManagement.urls)),
     url('api/PageManagement/', include(PageManagement.urls)),
+    url('api/FunManagement/', include(FunManagement.urls)),
 
 ]
