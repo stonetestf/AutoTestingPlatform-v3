@@ -187,3 +187,30 @@ def delete_data(request):
         else:
             response['errorMsg'] = '未找到当前功能数据,请刷新后重新尝试!'
     return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def get_fun_name_items(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        proId = objData.proId
+        pageId = objData.pageId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'FunManagement', 'get_fun_name_items', errorMsg)
+    else:
+        obj_db_FunManagement = db_FunManagement.objects.filter(
+            is_del=0,pid_id=proId,page_id=pageId).order_by('-updateTime')
+        for i in obj_db_FunManagement:
+            dataList.append({
+                'label': i.funName, 'value': i.id
+            })
+        response['itemsData'] = dataList
+        response['statusCode'] = 2000
+    return JsonResponse(response)

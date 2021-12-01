@@ -47,7 +47,38 @@ function GetPageNameItems(proId){
         console.log(error);
     })
 }
+
+function GetFunNameItems(proId,pageId){
+    return Vue.prototype.$axios.get('/api/FunManagement/GetFunNameItems',{
+        params:{
+            'proId':proId,
+            'pageId':pageId,
+        }
+    }).then(res => {
+        if(res.data.statusCode == 2000){
+            // console.log(res.data.itemsData)
+            return res.data.itemsData;
+        }
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
+
+function GetUserNameItems(){
+    return Vue.prototype.$axios.get('/api/userManagement/GetUserNameItems',{
+        params:{
+  
+        }
+    }).then(res => {
+        if(res.data.statusCode == 2000){
+            // console.log(res.data.itemsData)
+            return res.data.itemsData;
+        }
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems
   };
   

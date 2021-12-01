@@ -177,12 +177,13 @@ import DialogUserInfo from "../../Home/UserInfo.vue";
 import DialogRemindInfo from "../../Home/RemindInfo.vue";
 
 //所有需要在tabs中显示的页面都必须在这里引用一次
-import ApiMain from '@/components/views/SysType/Api/Main'
-import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagement/Main'
+import ApiMain from '@/components/views/SysType/Api/Main';
+import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagement/Main';
 
 export default {
   components: {
-    Api_ProjectManagement,DialogUserInfo,DialogRemindInfo
+    DialogUserInfo,DialogRemindInfo,
+    Api_ProjectManagement
   },
   data() {
     return {

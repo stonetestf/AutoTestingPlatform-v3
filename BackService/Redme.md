@@ -9,3 +9,7 @@
 ### 安装mysqlcen错误处理
     yum install mysql-devel gcc gcc-devel python-devel
     pip3 install mysqlclient
+
+
+## 运行说明
+    /usr/local/nginx/sbin/nginx

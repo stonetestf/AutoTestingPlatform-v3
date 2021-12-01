@@ -184,7 +184,7 @@ def edit_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'ProjectManagement', 'edit_data', errorMsg)
     else:
-        obj_db_ProManagement = db_ProManagement.objects.filter(id=proId)
+        obj_db_ProManagement = db_ProManagement.objects.filter(id=proId,is_del=0)
         if obj_db_ProManagement:
             # 查询当前修改的用户是不是创建者
             if userId == obj_db_ProManagement[0].cuid:

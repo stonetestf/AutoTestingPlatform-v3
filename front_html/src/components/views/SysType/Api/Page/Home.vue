@@ -152,39 +152,40 @@
         </el-main>
       </el-container>
     </template>
-    <!-- <template>
+    <template>
       <dialog-user-info
-          @closeDialog="closeDialog_UserInfo" 
+          @closeDialog="closeUserInfoDialog" 
           :isVisible="dialog.userinfo.dialogVisible" 
           :dialogPara="dialog.userinfo.dialogPara">
       </dialog-user-info>
-    </template> -->
-    <!-- <template>
+    </template>
+    <template>
       <dialog-remind-info
           @closeDialog="closeRemindInfoDialog" 
           :isVisible="dialog.remindInfo.dialogVisible" 
-          :dialogPara="dialog.remindInfo.dialogPara"
-          @getData="updateRemindNum($event)">
+          :dialogPara="dialog.remindInfo.dialogPara">
       </dialog-remind-info>
-    </template> -->
+    </template>
   </div>
 </template>
 
 <script>
 import store from '../../../../../store/index';
 import {PrintConsole} from "../../../../js/Logger.js";
-// import DialogUserInfo from "../../Home/UserInfo.vue";
-// import DialogRemindInfo from "../../Home/RemindInfo.vue";
+import DialogUserInfo from "../../../Home/UserInfo.vue";
+import DialogRemindInfo from "../../../Home/RemindInfo.vue";
 
 //所有需要在tabs中显示的页面都必须在这里引用一次
 import ApiPageMain from '@/components/views/SysType/Api/Page/Main';
 import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
 import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';
+import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';
+
 
 export default {
   components: {
-      Api_PageManagement,Api_FunManagement
-    // Api_ProjectManagement,DialogUserInfo,DialogRemindInfo
+    DialogUserInfo,DialogRemindInfo,
+    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance
   },
   data() {
     return {
@@ -333,7 +334,7 @@ export default {
         self.QuitUser();
       }
       else if(command=="userinfo"){
-        self.OpenDialog_UserInfo();
+        self.OpenUserInfoDialog();
       }
     },
     //选项卡
@@ -439,16 +440,16 @@ export default {
     //   if (socket.readyState == WebSocket.OPEN) socket.onopen();       
     // },
 
-    // closeDialog_UserInfo(){
-    //   this.dialog.userinfo.dialogVisible =false;
-    // },
-    // OpenDialog_UserInfo(){
-    //   let self = this;
-    //   self.dialog.userinfo.dialogPara={
-    //     dialogTitle:"个人信息",//初始化标题
-    //   }
-    //   self.dialog.userinfo.dialogVisible=true;
-    // },
+    closeUserInfoDialog(){
+      this.dialog.userinfo.dialogVisible =false;
+    },
+    OpenUserInfoDialog(){
+      let self = this;
+      self.dialog.userinfo.dialogPara={
+        dialogTitle:"个人信息",//初始化标题
+      }
+      self.dialog.userinfo.dialogVisible=true;
+    },
     LoadUserInfo(){//基本信息
       let self = this;
       PrintConsole(store.state)
@@ -480,21 +481,16 @@ export default {
         console.log(error);
       })
     },
-       
-    // OpenRemindInfo(){
-    //   let self = this;
-    //   self.dialog.remindInfo.dialogPara={
-    //     dialogTitle:"",//初始化标题
-    //   }
-    //   self.dialog.remindInfo.dialogVisible=true;
-    // },
-    // closeRemindInfoDialog(){
-    //   this.dialog.remindInfo.dialogVisible =false;
-    // },
-    // updateRemindNum(event){//关闭推送消失时，回调传参数给首页的提醒数量
-    //   PrintConsole(event);
-    //   this.RomeData.remindNum=event;
-    // },
+    OpenRemindInfo(){
+      let self = this;
+      self.dialog.remindInfo.dialogPara={
+        dialogTitle:"",//初始化标题
+      }
+      self.dialog.remindInfo.dialogVisible=true;
+    },
+    closeRemindInfoDialog(){
+      this.dialog.remindInfo.dialogVisible =false;
+    },
   }
 }
 

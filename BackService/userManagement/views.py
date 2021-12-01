@@ -10,6 +10,7 @@ import json
 from login.models import UserTable as db_UserTable
 from login.models import UserBindRole as db_UserBindRole
 from django.contrib.auth.models import User as db_DjUser
+from role.models import BasicRole as db_BasicRole
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -252,4 +253,23 @@ def edit_data(request):
                 response['statusCode'] = 2002
         else:
             response['errorMsg'] = "该用户不在数据库中!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def get_user_name_items(request):
+    response = {}
+    dataList = []
+
+    obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0)
+    for item_role in obj_db_BasicRole:
+        children = []
+        obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, role_id=item_role.id)
+        for i in obj_db_UserBindRole:
+            children.append({'label': f'{i.user.userName}({i.user.nickName})', 'value': i.user_id})
+        dataList.append({'label': item_role.roleName, 'value': item_role.id, 'children': children})
+    response['itemsData'] = dataList
+    response['statusCode'] = 2000
     return JsonResponse(response)

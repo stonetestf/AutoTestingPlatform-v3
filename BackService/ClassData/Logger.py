@@ -1,5 +1,7 @@
 from django.conf import settings
+from django.db import transaction
 from info.models import OperateInfo as db_OperateInfo
+from info.models import PushInfo as db_PushInfo
 from login.models import UserTable as db_UserTable
 
 import logging
@@ -116,6 +118,40 @@ class Logging(object):
             )
         except BaseException as e:
             self.print_log('error', 'record_error_info', str(e))
+
+    # 添加操作信息
+    def record_operation_info(self, sysType,level,remindType,toPro, toPage, toFun,userId, info,CUFront=None,CURear=None):
+        """
+        :param sysType: 系统类型
+        :param level: "提醒等级(错误(1),警告(2),新增/修改/删除(3))"
+        :param remindType: 提醒(警告/新增/修改/删除/其他)
+        :param toPage:
+        :param toFun:
+        :param info:
+        :param userId: 创建者
+        :return:
+        """
+        try:
+            save_db_OperateInfo = db_OperateInfo.objects.create(
+                sysType=sysType, level=level, remindType=remindType,
+                toPro=toPro, toPage=toPage, toFun=toFun, info=info, CUFront=CUFront,CURear=CURear,
+                is_read=0,uid_id=userId
+            )
+        except BaseException as e:
+            self.print_log('error', 'record_operation_info', str(e))
+            return None
+        else:
+            return save_db_OperateInfo.id
+
+    # 推送用户
+    def push_to_user(self,operationId, pushToUserId):
+        try:
+            db_PushInfo.objects.create(
+                uid_id=pushToUserId,
+                oinfo_id=operationId,
+            )
+        except BaseException as e:
+            self.print_log('error', 'push_to_user', str(e))
 
     def print_log(self, logType, methods, msg):  # 打印log信息
         """

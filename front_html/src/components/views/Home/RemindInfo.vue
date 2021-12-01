@@ -4,7 +4,7 @@
         :visible.sync="dialogVisible"
         :close-on-click-modal=false
         :before-close="dialogClose"
-        width="1800px">
+        width="1600px">
         <!-- <div style="margin-top:-20px;margin-left:1600px;">
           <el-button type="info" @click="ReadErrorMsg(0)">已读</el-button>
         </div>
@@ -52,15 +52,15 @@
                     prop="toFun">
                 </el-table-column>
                 <el-table-column
-                    label="信息"
+                    label="编号:信息"
                     align= "center"
                     prop="info">
                 </el-table-column>
-                <el-table-column
+                <!-- <el-table-column
                     label="修改信息"
                     align= "center"
                     prop="editInfo">
-                </el-table-column>
+                </el-table-column> -->
                 <el-table-column
                     label="推送者"
                     align= "center"

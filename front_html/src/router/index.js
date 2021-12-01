@@ -17,6 +17,7 @@ import ApiPageHome from '@/components/views/SysType/Api/Page/Home'
 import ApiPageMain from '@/components/views/SysType/Api/Page/Main'
 import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
 import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';
+import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';
 
 
 import Router from 'vue-router'
@@ -60,6 +61,9 @@ export default new Router({
         },
         {path: '/SysType/Api/Page/FunManagement/Main',name: 'Api_FunManagement',component: Api_FunManagement,
           meta:{name: '功能维护',url:'/SysType/Api/Page/FunManagement/Main',comp:'Api_FunManagement'}
+        },
+        {path: '/WorkorderManagement/WorkorderMaintenance/Main',name: 'Api_WorkorderMaintenance',component: Api_WorkorderMaintenance,
+          meta:{name: '工单维护',url:'/WorkorderManagement/WorkorderMaintenance/Main',comp:'Api_WorkorderMaintenance'}
         },
       ]
     }
