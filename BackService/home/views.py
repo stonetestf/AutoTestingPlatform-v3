@@ -261,7 +261,7 @@ def get_user_statistics_info(request):
         cls_Logging.record_error_info('HOME', 'home', 'get_router_path', errorMsg)
     else:
         obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId, is_del=0)
-        obj_db_OperateInfo = db_OperateInfo.objects.filter(is_read=0)
+        obj_db_OperateInfo = db_OperateInfo.objects.filter()
         obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
         if obj_db_UserBindRole:
             if obj_db_UserBindRole[0].role.is_admin == 1:  # 是否超级管理
@@ -269,9 +269,9 @@ def get_user_statistics_info(request):
             else:
                 obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId, remindType='Warning')
             for i in obj_db_PushInfo:
-                if i.oinfo.remindType == 'Error' and i.oinfo.is_read == 0:
+                if i.oinfo.remindType == 'Error' and i.is_read == 0:
                     errorCount += 1
-                elif i.oinfo.remindType in ('Add', 'Edit') and i.oinfo.is_read == 0:
+                elif i.oinfo.remindType in ('Add', 'Edit') and i.is_read == 0:
                     changeCount += 1
             errorCount += obj_db_OperateInfo.count()
             response['statusCode'] = 2000

@@ -24,7 +24,7 @@
                                 </el-option>
                             </el-select>
                         </el-form-item>
-                        <el-form-item label="读取状态:">
+                        <!-- <el-form-item label="读取状态:">
                             <el-select v-model="SelectRomeData.isRead" clearable placeholder="请选择" style="width:150px;float:left;">
                                 <el-option
                                     v-for="item in SelectRomeData.isReadOption"
@@ -33,7 +33,7 @@
                                     :value="item.value">
                                 </el-option>
                             </el-select>
-                        </el-form-item>
+                        </el-form-item> -->
                         <!-- <el-form-item label="事件名称:">
                             <el-input clearable v-model.trim="SelectRomeData.eventName"></el-input>
                         </el-form-item> -->
@@ -46,21 +46,30 @@
                         :data="tableData"
                         height="596px"
                         border>
-                        <el-table-column
+                        <!-- <el-table-column
                             label="ID"
                             align= "center"
                             width="80px"
                             prop="id">
-                        </el-table-column>
+                        </el-table-column> -->
                         <el-table-column
                             label="所属系统"
-                            width="100px"
+                            width="80px"
                             align= "center"
                             prop="sysType">
                         </el-table-column>  
                         <el-table-column
+                            label="触发类型"
+                            align= "center"
+                            width="80px">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.triggerType=='push'">推送</el-tag>
+                                <el-tag type="info" v-else>系统</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
                             label="提醒类别"
-                            width="150px"
+                            width="80px"
                             align= "center">
                             <template slot-scope="scope">
                                 <el-tag type="danger" v-if="scope.row.level==1">{{scope.row.remindType}}</el-tag>
@@ -68,6 +77,12 @@
                                 <el-tag type="success" v-else-if="scope.row.level==3">{{scope.row.remindType}}</el-tag>
                                 <el-tag v-else>{{scope.row.remindType}}</el-tag>
                             </template>
+                        </el-table-column>  
+                        <el-table-column
+                            label="所属项目"
+                            width="150px"
+                            align= "center"
+                            prop="toPro">
                         </el-table-column>  
                         <el-table-column
                             label="所属页面"
@@ -82,37 +97,31 @@
                             prop="toFun">
                         </el-table-column>
                         <el-table-column
-                            label="信息"
+                            label="系统:(信息)/推送:(编号:工单名称)"
                             align= "center"
                             prop="info">
                         </el-table-column>
-                        <!-- <el-table-column
+                        <el-table-column
                             label="修改信息"
-                            align= "center"
-                            prop="editInfo">
-                        </el-table-column> -->
-                        <!-- <el-table-column
-                            label="是否已读"
-                            width="100px"
-                            align= "center">
+                            show-overflow-tooltip
+                            align= "left">
                             <template slot-scope="scope">
-                                <el-tag type="success" v-if="scope.row.is_read==0">未读</el-tag>
-                                <el-tag v-else>已读</el-tag>
+                                <div v-html="scope.row.editInfo"></div>
                             </template>
-                        </el-table-column> -->
+                        </el-table-column>
                         <el-table-column
                             label="操作时间"
-                            width="200px"
+                            width="160px"
                             align= "center"
                             prop="createTime">
                         </el-table-column>
                         <el-table-column
                             label="创建者"
                             align= "center"
-                            width="100px"
+                            width="150px"
                             prop="userName">
                         </el-table-column>
-                        <el-table-column
+                        <!-- <el-table-column
                             label="操作"
                             align="center"
                             width="100px">
@@ -125,7 +134,7 @@
                                 </el-button>
                                 <el-button v-else size="mini" type="info" disabled>已读</el-button>
                             </template>
-                        </el-table-column>
+                        </el-table-column> -->
                     </el-table>
                 </template>
                 <template>
@@ -163,17 +172,18 @@ export default {
                     {'label':'API','value':'API'},
                     {'label':'PTS','value':'PTS'},
                 ],
-                isRead:'',
-                isReadOption:[
-                    {'label':'已读','value':'1'},
-                    {'label':'未读','value':'0'},
-                ],
+                // isRead:'',
+                // isReadOption:[
+                //     {'label':'已读','value':'1'},
+                //     {'label':'未读','value':'0'},
+                // ],
                 remindType:'',
                 remindTypeOption:[
                     {'label':'Error','value':'Error'},
                     {'label':'Warning','value':'Warning'},
-                    {'label':'Change','value':'Change'},
-                    {'label':'Other','value':'Other'},
+                    {'label':'Add','value':'Add'},
+                    {'label':'Edit','value':'Edit'},
+                    {'label':'Delete','value':'Delete'},
                 ],
             },
             page: { 
@@ -194,7 +204,7 @@ export default {
                 params:{
                     'sysType':self.SelectRomeData.sysType,
                     'remindType':self.SelectRomeData.remindType,
-                    'isRead':self.SelectRomeData.isRead,
+                    // 'isRead':self.SelectRomeData.isRead,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -203,15 +213,16 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
+                        obj.triggerType=d.triggerType;
                         obj.level=d.level;
                         obj.remindType=d.remindType;
                         obj.sysType = d.sysType;
+                        obj.toPro=d.toPro;
                         obj.toPage = d.toPage;
                         obj.toFun = d.toFun;
                         obj.info=d.info;
-                        // obj.CUFront = d.CUFront;
-                        // obj.CURear = d.CURear;
-                        obj.is_read=d.is_read;
+                        obj.editInfo = d.editInfo;
+                        // obj.is_read=d.is_read;
                         obj.createTime = d.createTime;
                         obj.userName = d.userName;
 
@@ -229,22 +240,22 @@ export default {
                 console.log(error);
             })
         },
-        handleIsRead(index,row){
-            let self = this;
-            self.$axios.post('/api/info/EditIsReadState',Qs.stringify({
-                'infoId':row.id,
-                'types':'1',
-            })).then(res => {
-                if(res.data.statusCode==2002){
-                    self.SelectData();
-                }
-                else{
-                    self.$message.error(res.data.errorMsg);
-                }
-            }).catch(function (error) {
-                console.log(error);
-            })
-        },
+        // handleIsRead(index,row){
+        //     let self = this;
+        //     self.$axios.post('/api/info/EditIsReadState',Qs.stringify({
+        //         'infoId':row.id,
+        //         'types':'1',
+        //     })).then(res => {
+        //         if(res.data.statusCode==2002){
+        //             self.SelectData();
+        //         }
+        //         else{
+        //             self.$message.error(res.data.errorMsg);
+        //         }
+        //     }).catch(function (error) {
+        //         console.log(error);
+        //     })
+        // },
         ClearSelectRomeData(){
             let self = this;
             self.SelectRomeData.sysType='';
@@ -270,6 +281,8 @@ export default {
 </script>
 
 <style>
-
+/* .el-table .cell {
+    white-space: pre-line;
+} */
 
 </style>

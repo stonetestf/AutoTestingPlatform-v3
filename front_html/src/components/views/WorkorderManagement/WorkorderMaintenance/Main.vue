@@ -117,15 +117,22 @@
                                 <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                             </template>
                             <template slot-scope="scope" style="width:100px">
-                                <el-button
-                                    size="mini"
-                                    @click="handleEdit(scope.$index, scope.row)">Edit
-                                </el-button>
-                                <el-button
-                                    size="mini"
-                                    type="danger"
-                                    @click="handleDelete(scope.$index, scope.row)">Delete
-                                </el-button>
+                                <!-- <el-button-group> -->
+                                    <!-- <el-button
+                                        size="mini"
+                                        type="warning"
+                                        @click="handleLifeCycle(scope.$index, scope.row)">生命周期
+                                    </el-button> -->
+                                    <el-button
+                                        size="mini"
+                                        @click="handleEdit(scope.$index, scope.row)">Edit
+                                    </el-button>
+                                    <el-button
+                                        size="mini"
+                                        type="danger"
+                                        @click="handleDelete(scope.$index, scope.row)">Delete
+                                    </el-button>
+                                <!-- </el-button-group> -->
                             </template>
                             </el-table-column>
                         </el-table>
@@ -305,6 +312,9 @@ export default {
                 }).catch(() => {       
             });
         },
+        // handleLifeCycle(index,row){//生命周期
+
+        // },
         DeleteData(id){
             let self = this;
             self.$axios.post('/api/WorkorderManagement/DeleteData',Qs.stringify({

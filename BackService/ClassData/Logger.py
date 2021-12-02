@@ -113,29 +113,33 @@ class Logging(object):
         try:
             obj_db_UserTable = db_UserTable.objects.filter(userName="admin")
             db_OperateInfo.objects.create(
-                sysType=sysType, level=1, remindType='Error', toPage=toPage, toFun=toFun, info=info, is_read=0,
+                sysType=sysType, level=1, triggerType='System',remindType='Error', toPage=toPage, toFun=toFun, info=info,
                 uid_id=obj_db_UserTable[0].id
             )
         except BaseException as e:
             self.print_log('error', 'record_error_info', str(e))
 
     # 添加操作信息
-    def record_operation_info(self, sysType,level,remindType,toPro, toPage, toFun,userId, info,CUFront=None,CURear=None):
+    def record_operation_info(self, sysType,triggerType,level,remindType,toPro, toPage, toFun,userId, info,
+                              CUFront=None,CURear=None):
         """
+        :param triggerType:
         :param sysType: 系统类型
         :param level: "提醒等级(错误(1),警告(2),新增/修改/删除(3))"
         :param remindType: 提醒(警告/新增/修改/删除/其他)
+        :param toPro:
         :param toPage:
         :param toFun:
         :param info:
         :param userId: 创建者
+        :param CUFront:
+        :param CURear:
         :return:
         """
         try:
             save_db_OperateInfo = db_OperateInfo.objects.create(
-                sysType=sysType, level=level, remindType=remindType,
-                toPro=toPro, toPage=toPage, toFun=toFun, info=info, CUFront=CUFront,CURear=CURear,
-                is_read=0,uid_id=userId
+                sysType=sysType,triggerType=triggerType, level=level, remindType=remindType,
+                toPro=toPro, toPage=toPage, toFun=toFun, info=info, CUFront=CUFront,CURear=CURear,uid_id=userId
             )
         except BaseException as e:
             self.print_log('error', 'record_operation_info', str(e))
@@ -149,6 +153,7 @@ class Logging(object):
             db_PushInfo.objects.create(
                 uid_id=pushToUserId,
                 oinfo_id=operationId,
+                is_read=0,
             )
         except BaseException as e:
             self.print_log('error', 'push_to_user', str(e))

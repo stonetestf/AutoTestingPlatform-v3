@@ -6,15 +6,18 @@
     :visible.sync="dialogVisible"
     direction='rtl'
     :before-close="dialogClose">
-      <el-card style="height:860px">
-        <template>
-            <div class="table"
-                v-loading="loading"
-                element-loading-text="拼命加载中"
-                element-loading-spinner="el-icon-loading">
-                <div class="father" style="width: 100%; height: 600px;">
-                    <div class="son" style="width: 650px; height: 450px;">
-                        <!-- <el-card style="width:700px" shadow="never"> -->
+        <el-tabs 
+        type="border-card" 
+        v-model="activeName" 
+        @tab-click="handleClick" 
+        style="height:860px"
+        v-loading="loading"
+        element-loading-text="拼命加载中"
+        element-loading-spinner="el-icon-loading">
+            <el-tab-pane label="基本信息" name="basicInfo">
+                <div class="table">
+                    <div class="father" style="width: 100%; height: 600px;">
+                        <div class="son" style="width: 650px; height: 450px;">
                             <el-form ref="RomeData" :inline="true" :rules="rules" :model="RomeData"  label-width="100px">
                                 <el-form-item label="工单类型:" prop="workType">
                                     <el-select v-model="RomeData.workType" clearable placeholder="请选择" style="width:200px;float:left;">
@@ -64,7 +67,7 @@
                                         <el-input type="textarea" 
                                         :autosize="{ minRows: 10, maxRows: 10}"
                                         v-model="RomeData.workMessage"
-                                         style="width:515px"></el-input>
+                                        style="width:515px"></el-input>
                                     </el-form-item>
                                 </div>
                                 <el-form-item label="推送To:">
@@ -87,12 +90,40 @@
                                     <el-button @click="ClearRomeData()">重置</el-button>
                                 </div>
                             </el-form>
-                        <!-- </el-card> -->
+                        </div>
                     </div>
                 </div>
-            </div>
-        </template>
-      </el-card>
+            </el-tab-pane>
+            <el-tab-pane label="生命周期" name="lifeCycle" v-if="isAddNew==false">
+                <div style=" height:760px;overflow:auto">
+                    <el-timeline style="text-align: left;" :reverse=false>
+                        <el-timeline-item 
+                        placement="top"
+                        v-for="(activity, index) in RomeData.activities"
+                        :key="index"
+                        :timestamp="activity.timestamp">
+                        <el-card style="width:600px">
+                            <h4>{{activity.title}}</h4>
+                            <p>{{activity.content}}</p>
+                        </el-card>
+                        </el-timeline-item>
+                    </el-timeline>
+                </div>
+                <!-- <el-timeline>
+                    <el-timeline-item
+                        v-for="(activity, index) in RomeData.activities"
+                        :key="index"
+                        :timestamp="activity.timestamp">
+                        {{activity.content}}
+                    </el-timeline-item>
+                </el-timeline> -->
+            </el-tab-pane>
+        <!-- <el-card style="height:860px">
+            <template>
+                
+            </template>
+        </el-card> -->
+        </el-tabs>
     </el-drawer>
 </template>
 
@@ -112,6 +143,7 @@ export default {
             dialogTitle:"",
             dialogVisible:false,
             isAddNew:true,//是否是新增窗口
+            activeName:'basicInfo',
             loading:false,
             RomeData:{
                 workId:'',
@@ -137,6 +169,7 @@ export default {
                 props: { multiple: true },
                 pushTo:[],
                 userNameOptions:[],
+                activities:[],
             },
             rules:{
                 workType:[{required: true, message: '请选择工单类型', trigger: 'change' }],
@@ -215,9 +248,38 @@ export default {
         dialogClose(done){//用于调用父页面方法
             this.$emit('closeDialog');
         },
+        handleClick(tab, event) {
+            PrintConsole(tab);
+            if(tab.name=="lifeCycle"){
+                this.SelectLifeCycle();
+            }
+        },
+        SelectLifeCycle(){//查询生命周期
+            let self = this;
+            self.loading=true;
+            self.$axios.get('/api/WorkorderManagement/SelectLifeCycle',{
+                params:{
+                    'workId':self.RomeData.workId,
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    self.RomeData.activities=res.data.dataTabel;
+                    
+                    self.loading=false;
+                }else{
+                    self.$message.error('获取生命周期失败:'+res.data.errorMsg);
+                    self.loading=false;
+                }
+                // console.log(self.tableData);
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+            })
+        },
         ClearRomeData(){
             let self = this;
             self.resetForm('RomeData');
+            self.activeName='basicInfo';
             self.RomeData.workType='';
             self.RomeData.workState='';
             self.RomeData.pageId='';
@@ -335,4 +397,7 @@ export default {
 .table {display: table; width: 100%;}
 .father {display: table-cell; vertical-align: middle;}
 .son {margin: auto;}
+.test{
+    text-align: left;
+}
 </style>

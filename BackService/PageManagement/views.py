@@ -100,6 +100,14 @@ def save_data(request):
                         uid_id=userId,
                         cuid=userId
                     )
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Add',
+                        cls_FindTable.get_pro_name(proId), None, None,
+                        userId,
+                        pageName
+                    )
+                    # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:

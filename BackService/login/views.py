@@ -96,8 +96,7 @@ def login_in(request):
                     toPage='登录页',
                     toFun='登录',
                     uid_id=obj_db_UserTable[0].id,
-                    remindType='Other',
-                    is_read=1)
+                    remindType='Other')
                 response['code'] = 1001  # 登录时传给vue拦截器验证用的
                 response['statusCode'] = 2000
                 response['nickName'] = obj_db_UserTable[0].nickName

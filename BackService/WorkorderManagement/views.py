@@ -9,6 +9,7 @@ import ast
 from login.models import UserTable as db_UserTable
 from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
+from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -146,12 +147,20 @@ def save_data(request):
                         cuid=userId
                     )
                     # 添加操作信息
-                    operationInfoId = cls_Logging.record_operation_info('API', 3,
-                                                                        f"A-{save_db_WorkorderManagement}:{workType}",
-                                                                        cls_FindTable.get_pro_name(proId),
-                                                                        cls_FindTable.get_page_name(pageId),
-                                                                        cls_FindTable.get_fun_name(funId),
-                                                                        userId, workName)
+                    operationInfoId = cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, "Add",
+                        cls_FindTable.get_pro_name(proId),
+                        cls_FindTable.get_page_name(pageId),
+                        cls_FindTable.get_fun_name(funId),
+                        userId,
+                        f'A-{save_db_WorkorderManagement.id}:{workName}'
+                    )
+                    # 添加工单的生命周期
+                    db_WorkLifeCycle.objects.create(
+                        work_id=save_db_WorkorderManagement.id,
+                        operationType='Add',
+                        uid_id=userId,
+                    )
                     if pushTo:  # 如果有推送To信息,就保存
                         product_list_to_insert = list()
                         for i in pushToList:
@@ -260,17 +269,40 @@ def edit_data(request):
                             uid_id=userId,
                             updateTime=cls_Common.get_date_time()
                         )
-                        if pushTo:  # 如果有推送To信息,就保存
-                            db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
-                                is_del=1, updateTime=cls_Common.get_date_time())
-                            product_list_to_insert = list()
-                            for i in pushToList:
-                                product_list_to_insert.append(db_WorkBindPushToUsers(
-                                    work_id=workId,
-                                    uid_id=i,
-                                    is_del=0
-                                ))
-                            db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
+                        # 添加操作信息
+                        oldData = list(obj_db_WorkorderManagement.values())
+                        newData = dict(request.POST)
+                        operationInfoId = cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Edit',
+                            cls_FindTable.get_pro_name(proId),
+                            cls_FindTable.get_page_name(pageId),
+                            cls_FindTable.get_fun_name(funId),
+                            userId,
+                            f'A-{workId}:{workName}',
+                            oldData, newData
+                        )
+                        # 添加工单的生命周期
+                        db_WorkLifeCycle.objects.create(
+                            work_id=workId,
+                            operationType='Edit',
+                            operationInfo=newData,
+                            uid_id=userId,
+                        )
+
+                        if userId == obj_db_WorkorderManagement[0].cuid:
+                            if pushTo:  # 如果有推送To信息,就保存
+                                db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
+                                    is_del=1, updateTime=cls_Common.get_date_time())
+                                product_list_to_insert = list()
+                                for i in pushToList:
+                                    # 添加推送to数据
+                                    cls_Logging.push_to_user(operationInfoId, i)
+                                    product_list_to_insert.append(db_WorkBindPushToUsers(
+                                        work_id=workId,
+                                        uid_id=i,
+                                        is_del=0
+                                    ))
+                                db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f'工单修改失败:{e}'
                 else:
@@ -301,10 +333,57 @@ def delete_data(request):
                     db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Delete',
+                        cls_FindTable.get_pro_name(obj_db_WorkorderManagement[0].pid_id),
+                        cls_FindTable.get_page_name(obj_db_WorkorderManagement[0].page_id),
+                        cls_FindTable.get_fun_name(obj_db_WorkorderManagement[0].fun_id),
+                        userId,
+                        obj_db_WorkorderManagement[0].workName,
+                    )
+                    # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f"当前工单删除失败:{e}"
             else:
                 response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前工单信息,请刷新后重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def select_life_cycle(request):  # 获取当前工单的生命周期
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        workId = objData.workId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'WorkorderManagement', 'select_life_cycle', errorMsg)
+    else:
+        obj_db_WorkLifeCycle = db_WorkLifeCycle.objects.filter(work_id=workId).order_by('updateTime')
+        for i in obj_db_WorkLifeCycle:
+            title = None
+            content = None
+            operationType = i.operationType
+            i.operationInfo = i.operationInfo
+            match operationType:
+                case "Add":
+                    title = f'创建工单 {i.uid.userName}({i.uid.nickName})'
+                case "Edit":
+                    title = f'修改工单 {i.uid.userName}({i.uid.nickName})'
+                    content = i.operationInfo
+            dataList.append({
+                'title': title,
+                'content': content,
+                'timestamp': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+            })
+        response['statusCode'] = 2000
+        response['dataTabel'] = dataList
     return JsonResponse(response)

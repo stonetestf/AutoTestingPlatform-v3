@@ -151,12 +151,21 @@ def save_data(request):
                             uid_id=userId,
                             cuid=userId
                         )
+                        # 绑定默认创建人到项目成员中
                         db_ProBindMembers.objects.create(
                             pid_id=save_db_ProManagement.id,
                             role_id=roleId,
                             uid_id=userId,
                             is_del=0
                         )
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Add',
+                            None,None,None,
+                            userId,
+                            proName
+                        )
+                        # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f'保存失败:{e}'
                 else:
@@ -185,6 +194,8 @@ def edit_data(request):
         cls_Logging.record_error_info('API', 'ProjectManagement', 'edit_data', errorMsg)
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId,is_del=0)
+        oldData = list(obj_db_ProManagement.values())
+        newData = dict(request.POST)
         if obj_db_ProManagement:
             # 查询当前修改的用户是不是创建者
             if userId == obj_db_ProManagement[0].cuid:
@@ -209,6 +220,15 @@ def edit_data(request):
                             uid_id=userId,
                             remarks=remarks,
                             updateTime=cls_Common.get_date_time())
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Edit',
+                            None, None, None,
+                            userId,
+                            proName,
+                            oldData,newData
+                        )
+                        # endregion
                     else:
                         response['errorMsg'] = '已有重复角色,请更改!'
                 else:
@@ -218,6 +238,15 @@ def edit_data(request):
                         uid_id=userId,
                         remarks=remarks,
                         updateTime=cls_Common.get_date_time())
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Edit',
+                        None, None, None,
+                        userId,
+                        proName,
+                        oldData, newData
+                    )
+                    # endregion
         else:
             response['errorMsg'] = '未找到当前项目,请刷新后重新尝试!'
     if update_db_ProManagement:
@@ -255,11 +284,24 @@ def delete_data(request):
                 else:
                     response['errorMsg'] = '当前用户未绑定角色组!'
             if is_edit:
-                db_ProManagement.objects.filter(id=proId).update(
-                    is_del=1,
-                    updateTime=cls_Common.get_date_time()
-                )
-                response['statusCode'] = 2003
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        db_ProManagement.objects.filter(id=proId).update(
+                            is_del=1,
+                            updateTime=cls_Common.get_date_time()
+                        )
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Delete',
+                            None, None, None,
+                            userId,
+                            obj_db_ProManagement[0].proName,
+                        )
+                        # endregion
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'删除失败:{e}'
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前项目,请刷新后重新尝试!'
     return JsonResponse(response)

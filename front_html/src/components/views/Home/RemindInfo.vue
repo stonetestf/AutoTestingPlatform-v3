@@ -4,7 +4,7 @@
         :visible.sync="dialogVisible"
         :close-on-click-modal=false
         :before-close="dialogClose"
-        width="1600px">
+        width="1800px">
         <!-- <div style="margin-top:-20px;margin-left:1600px;">
           <el-button type="info" @click="ReadErrorMsg(0)">已读</el-button>
         </div>
@@ -17,17 +17,20 @@
               :data="RomeData.tableData"
               height="550px"
               border>
-                <!-- <el-table-column
-                    label="ID"
-                    align= "center"
-                    width="80px"
-                    prop="id">
-                </el-table-column> -->
                 <el-table-column
                     label="系统类型"
                     width="100px"
                     align= "center"
                     prop="sysType">
+                </el-table-column>
+                <el-table-column
+                    label="触发类型"
+                    align= "center"
+                    width="100px">
+                    <template slot-scope="scope">
+                        <el-tag type="success" v-if="scope.row.triggerType=='push'">推送</el-tag>
+                        <el-tag type="info" v-else>系统</el-tag>
+                    </template>
                 </el-table-column>
                 <el-table-column
                     label="提醒类别"
@@ -38,6 +41,12 @@
                         <el-tag type="warning" v-else-if="scope.row.level==2">{{scope.row.remindType}}</el-tag>
                         <el-tag type="success" v-else-if="scope.row.level==3">{{scope.row.remindType}}</el-tag>
                     </template>
+                </el-table-column>  
+                <el-table-column
+                    label="所属项目"
+                    width="150px"
+                    align= "center"
+                    prop="toPro">
                 </el-table-column>  
                 <el-table-column
                     label="所属页面"
@@ -52,7 +61,7 @@
                     prop="toFun">
                 </el-table-column>
                 <el-table-column
-                    label="编号:信息"
+                    label="系统:(信息)/推送:(编号:工单名称)"
                     align= "center"
                     prop="info">
                 </el-table-column>
@@ -166,9 +175,11 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
+                        obj.triggerType=d.triggerType;
                         obj.level=d.level;
                         obj.remindType=d.remindType;
                         obj.sysType = d.sysType;
+                        obj.toPro=d.toPro;
                         obj.toPage = d.toPage;
                         obj.toFun = d.toFun;
                         obj.info=d.info;

@@ -25,3 +25,12 @@ class WorkBindPushToUsers(models.Model):  # 新增工单时填写的推送To的�
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
+
+
+class WorkLifeCycle(models.Model):  # 工单生命周期
+    work = models.ForeignKey(to='WorkorderManagement', to_field='id', on_delete=models.CASCADE)
+    operationType = models.CharField("操作类型(Add,Edit,Close)", max_length=10, null=False)
+    operationInfo = models.TextField("操作信息字典类型",null=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+    updateTime = models.DateTimeField('修改时间', auto_now=True)
+
