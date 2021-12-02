@@ -23,11 +23,11 @@
                                 <div class="son" style="width:1100px; height: 150px;">
                                     <div style="margin-top:20px;">
                                         <el-card shadow="never">
-                                            <el-form ref="ApiRomeData" :inline="true" :rules="ApiRomeData.rules" :model="ApiRomeData"  label-width="100px">
+                                            <el-form ref="BasicRomeData" :inline="true" :rules="BasicRomeData.rules" :model="BasicRomeData"  label-width="100px">
                                                 <el-form-item label="所属页面:" prop="pageId">
-                                                    <el-select v-model="ApiRomeData.pageId" clearable placeholder="请选择" @click.native="GetProNameOption()">
+                                                    <el-select v-model="BasicRomeData.pageId" clearable placeholder="请选择" @click.native="GetPageNameOption()">
                                                         <el-option
-                                                            v-for="item in ApiRomeData.pageNameOption"
+                                                            v-for="item in BasicRomeData.pageNameOption"
                                                             :key="item.value"
                                                             :label="item.label"
                                                             :value="item.value">
@@ -35,9 +35,9 @@
                                                     </el-select>
                                                 </el-form-item>
                                                 <el-form-item label="所属功能:" prop="funId">
-                                                    <el-select v-model="ApiRomeData.funId" clearable placeholder="请选择" @click.native="GetProNameOption()">
+                                                    <el-select v-model="BasicRomeData.funId" clearable placeholder="请选择" @click.native="GetFunNameOption()">
                                                         <el-option
-                                                            v-for="item in ApiRomeData.funNameOption"
+                                                            v-for="item in BasicRomeData.funNameOption"
                                                             :key="item.value"
                                                             :label="item.label"
                                                             :value="item.value">
@@ -45,9 +45,9 @@
                                                     </el-select>
                                                 </el-form-item>
                                                 <el-form-item label="页面环境:" prop="environmentId">
-                                                    <el-select v-model="ApiRomeData.environmentId" clearable placeholder="请选择" @click.native="GetProNameOption()">
+                                                    <el-select v-model="BasicRomeData.environmentId" clearable placeholder="请选择" @click.native="GetPageEnvironmentNameOption()">
                                                         <el-option
-                                                            v-for="item in ApiRomeData.environmentNameOption"
+                                                            v-for="item in BasicRomeData.environmentNameOption"
                                                             :key="item.value"
                                                             :label="item.label"
                                                             :value="item.value">
@@ -55,12 +55,12 @@
                                                     </el-select>
                                                 </el-form-item>
                                                 <el-form-item label="接口名称:" prop="apiName">
-                                                    <el-input placeholder="请输入接口名称" v-model="ApiRomeData.apiName" style="width:550px;"></el-input>
+                                                    <el-input placeholder="请输入接口名称" v-model="BasicRomeData.apiName" style="width:550px;"></el-input>
                                                 </el-form-item>
                                                 <el-form-item label="接口状态:" prop="apiState">
-                                                    <el-select v-model="ApiRomeData.apiState" clearable placeholder="请选择" >
+                                                    <el-select v-model="BasicRomeData.apiState" clearable placeholder="请选择" >
                                                         <el-option
-                                                            v-for="item in ApiRomeData.apiStateOption"
+                                                            v-for="item in BasicRomeData.apiStateOption"
                                                             :key="item.value"
                                                             :label="item.label"
                                                             :value="item.value">
@@ -75,7 +75,94 @@
                         </div>
                     </template>
                     <template v-else-if="StepsRomeData.active==1">
+                        <el-form ref="EditApiRomeData" :model="EditApiRomeData" label-width="100px">
+                            <el-form-item>
+                                <el-input placeholder="请输入接口地址" style="margin-left:-90px;" v-model="EditApiRomeData.requestUrl">
+                                    <el-select v-model="EditApiRomeData.requestType" slot="prepend" style="width:97px">
+                                        <el-option
+                                            v-for="item in EditApiRomeData.requestTypeOption"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-input>
+                                <el-button type="primary" @click="SendRequest()">Send</el-button>
+                            </el-form-item>
+                            <el-tabs v-model="EditApiRomeData.activeName" @tab-click="handleClick" style="margin-top:-10px">
+                                <el-tab-pane :label="EditApiRomeData.headersName" name="Headers">
+                                    <el-table
+                                        :data="EditApiRomeData.headersRomeData.tableData"
+                                        border
+                                        height="563">
+                                        <el-table-column
+                                            label="启用"
+                                            width="70px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="参数名"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-input v-model="scope.row.key" placeholder="Key"></el-input>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="参数值"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-input v-model="scope.row.value" placeholder="Value"></el-input>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="备注"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-input v-model="scope.row.remarks" placeholder="Remark"></el-input>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            align="center"
+                                            width="65px">
+                                        <template slot="header">
+                                            <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="CreateNewHeadersData()"></el-button>
+                                        </template>
+                                        <template slot-scope="scope" style="width:100px">
+                                        <el-button
+                                            size="mini"
+                                            icon="el-icon-delete"
+                                            type="danger"
+                                            @click="handleHeadersDelete(scope.$index, scope.row)"></el-button>
+                                        </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.paramsName" name="Params">
+    
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.bodyName" name="Body">
 
+                                </el-tab-pane>
+                                <el-tab-pane label="File" name="File">
+
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.extractName" name="Extract">
+
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.validateName" name="Validate">
+
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.preOperationName" name="PreOperation">
+
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.rearOperationName" name="RearOperation">
+
+                                </el-tab-pane>
+                            </el-tabs>
+                        </el-form>
                     </template>
                     <template v-else>
                     </template>
@@ -90,6 +177,10 @@
 
 <script>
 
+import {PrintConsole} from "../../../../../../js/Logger.js";
+import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
 
 export default {
     components: {
@@ -108,7 +199,7 @@ export default {
                 disPlay_Next:true,
                 disPlay_Previous:false,
             },
-            ApiRomeData:{
+            BasicRomeData:{
                 pageId:'',
                 pageNameOption:[],
                 funId:'',
@@ -122,9 +213,37 @@ export default {
                     {'label':'禁用','value':'1'},
                 ],
                 rules:{
-
+                    pageId:[{ required: true, message: '请选择所属页面', trigger: 'change' }],
+                    funId:[{ required: true, message: '请选择所属功能', trigger: 'change' }],
+                    environmentId:[{ required: true, message: '请选择环境地址', trigger: 'change' }],
+                    apiName:[
+                        { required: true, message: '请输入接口名称', trigger: 'blur' },
+                        { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
+                    ],
+                    apiState:[{ required: true, message: '请选择状态', trigger: 'change' }],
                 },
-            }
+            },
+            EditApiRomeData:{
+                requestUrl:'',
+                requestType:'GET',
+                requestTypeOption:[
+                    {'label':'GET','value':'GET'},
+                    {'label':'POST','value':'POST'},
+                ],
+                activeName:'Headers',
+                headersName:'Headers',
+                paramsName:'Params',
+                bodyName:'Body',
+                extractName:'Extract/提取',
+                validateName:'Validate/断言',
+                preOperationName:'前置操作',
+                rearOperationName:'后置操作',
+                headersRomeData:{
+                    index:0,
+                    tableData:[],
+                },
+
+            },
         };
     },
     mounted(){
@@ -146,8 +265,10 @@ export default {
         dialogPara:{
             handler(newval,oldval)
             {
-                console.log(newval);
+                PrintConsole(newval);
                 this.ClearStepsRomeData();
+                this.ClearBasicRomeData();
+                this.ClearEditApiRomeData();
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew
 
@@ -175,6 +296,25 @@ export default {
             }
             console.log('步骤',this.StepsRomeData.active)
         },
+        'BasicRomeData.pageId': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
+            let self = this;
+            if(newVal!=oldVal){
+                self.BasicRomeData.funId='';
+                self.BasicRomeData.funNameOption=[];
+            }
+        },
+        'EditApiRomeData.headersRomeData.index': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.EditApiRomeData.headersRomeData.tableData.length;
+                if(dataLength==0){
+                    self.EditApiRomeData.headersName='Headers';
+                }else{
+                    self.EditApiRomeData.headersName='Headers('+dataLength+')';
+                }
+                
+            }
+        },
     },
     methods: {
         dialogClose(done){//用于调用父页面方法
@@ -183,7 +323,7 @@ export default {
         //导航条事件
         next() {//下一步
             let self = this;
-            console.log('当前',self.StepsRomeData.active)
+            PrintConsole('当前',self.StepsRomeData.active)
             if(self.StepsRomeData.active==0){//基本用例数据
                 self.StepsRomeData.active++;
                 // this.$refs['BasicRomeData'].validate((valid) => {
@@ -207,7 +347,7 @@ export default {
             else{
                 self.StepsRomeData.active--;
             }
-            console.log('步骤',this.StepsRomeData.active)
+            PrintConsole('步骤',this.StepsRomeData.active)
         },
         ClearStepsRomeData(){
             let self = this;
@@ -223,6 +363,84 @@ export default {
             self.$emit('closeDialog');
             self.$emit('Succeed');//回调查询   
         },
+
+        //基本信息
+        ClearBasicRomeData(){
+            let self = this;
+            self.resetForm('BasicRomeData');
+
+        },
+        GetPageNameOption(){
+            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+                this.BasicRomeData.pageNameOption = d;
+            });
+        },
+        GetFunNameOption(){
+            if(this.BasicRomeData.pageId){
+                GetFunNameItems(this.$cookies.get('proId'),this.BasicRomeData.pageId).then(d=>{
+                    this.BasicRomeData.funNameOption = d;
+                });
+            }else{
+                this.$message.warning('请先选择所属页面!');
+            }
+        },
+        GetPageEnvironmentNameOption(){
+            GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{
+                this.BasicRomeData.environmentNameOption = d;
+            });
+        },
+        resetForm(formName) {//清除正则验证
+            if (this.$refs[formName] !== undefined) {
+                PrintConsole('清除正则验证')
+                this.$refs[formName].resetFields();
+            }
+        },
+
+        //编辑接口信息
+        ClearEditApiRomeData(){
+            let self = this;
+            self.EditApiRomeData.requestType='GET';
+            self.EditApiRomeData.activeName='Headers';
+            self.EditApiRomeData.headersName='Headers';
+            self.EditApiRomeData.paramsName='Params';
+            self.EditApiRomeData.bodyName='Body';
+            self.EditApiRomeData.extractName='Extract/提取';
+            self.EditApiRomeData.validateName='Validate/断言';
+            self.EditApiRomeData.preOperationName='前置操作';
+            self.EditApiRomeData.rearOperationName='后置操作';
+
+            //headersRomeData
+            self.EditApiRomeData.headersRomeData.tableData=[];
+            self.EditApiRomeData.headersRomeData.index=0;
+        },
+        handleClick(tab, event){
+            PrintConsole(tab);
+        },
+
+        //headersRomeData
+        CreateNewHeadersData(){
+            let self = this;
+            let obj = {};
+            obj.index = self.EditApiRomeData.headersRomeData.index;
+            obj.state = true;
+            obj.key = '';
+            obj.value='';
+            obj.remarks='';
+
+            self.EditApiRomeData.headersRomeData.tableData.push(obj);
+            self.EditApiRomeData.headersRomeData.index+=1;
+        },
+        handleHeadersDelete(index,row){
+            PrintConsole('handleHeadersDelete',row);
+            let self = this;
+            self.EditApiRomeData.headersRomeData.tableData.splice(index, 1)//删除列表中的数据
+        
+            self.EditApiRomeData.headersRomeData.tableData.forEach((item,i)=>{
+                self.EditApiRomeData.headersRomeData.tableData[i].index = i;
+            });
+
+            self.EditApiRomeData.headersRomeData.index -=1 ;
+        },
     }
 };
 </script>
@@ -231,5 +449,4 @@ export default {
 .table {display: table; width: 100%;}
 .father {display: table-cell; vertical-align: middle;}
 .son {margin: auto;}
-
 </style>

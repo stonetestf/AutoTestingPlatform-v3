@@ -48,7 +48,7 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'PageEnvironment', 'select_data', errorMsg)
     else:
         obj_db_PageEnvironment = db_PageEnvironment.objects.filter(
-            is_del=0, sysType=sysType,pid_id=proId).order_by('-updateTime')
+            is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
         select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
         if environmentName:
             obj_db_PageEnvironment = obj_db_PageEnvironment.filter(environmentName__icontains=environmentName)
@@ -60,7 +60,7 @@ def select_data(request):
             dataList.append(
                 {"id": i.id,
                  "environmentName": i.environmentName,
-                 "environmentUrl":i.environmentUrl,
+                 "environmentUrl": i.environmentUrl,
                  "remarks": i.remarks,
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  "userName": i.uid.userName,
@@ -114,7 +114,7 @@ def save_data(request):
                         'API', 'Manual', 3, 'Add',
                         cls_FindTable.get_pro_name(proId), None, None,
                         userId,
-                        '新增页面环境',CUFront=dict(request.POST)
+                        '新增页面环境', CUFront=dict(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -146,7 +146,7 @@ def edit_data(request):
         obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId, is_del=0)
         if obj_db_PageEnvironment:
             select_db_PageEnvironment = db_PageEnvironment.objects.filter(
-                sysType=sysType,pid_id=proId,environmentName=environmentName, is_del=0)
+                sysType=sysType, pid_id=proId, environmentName=environmentName, is_del=0)
             if select_db_PageEnvironment:
                 if environmentId == select_db_PageEnvironment[0].id:  # 自己修改自己
                     is_Edit = True
@@ -210,9 +210,9 @@ def delete_data(request):
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Delete',
-                        cls_FindTable.get_pro_name(obj_db_PageEnvironment[0].pid_id),None, None,
+                        cls_FindTable.get_pro_name(obj_db_PageEnvironment[0].pid_id), None, None,
                         userId,
-                        '删除页面环境',CUFront=dict(request.POST)
+                        '删除页面环境', CUFront=dict(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -221,4 +221,29 @@ def delete_data(request):
                 response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前页面环境,请刷新后重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def get_page_environment_name_items(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'PageEnvironment', 'get_page_environment_name_items', errorMsg)
+    else:
+        obj_db_PageEnvironment = db_PageEnvironment.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
+        for i in obj_db_PageEnvironment:
+            dataList.append({
+                'label': i.environmentName, 'value': i.id
+            })
+        response['itemsData'] = dataList
+        response['statusCode'] = 2000
     return JsonResponse(response)

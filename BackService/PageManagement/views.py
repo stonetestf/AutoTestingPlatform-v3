@@ -6,6 +6,7 @@ import json
 
 # Create your db here.
 from PageManagement.models import PageManagement as db_PageManagement
+from FunManagement.models import FunManagement as db_FunManagement
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -187,26 +188,30 @@ def delete_data(request):
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId)
         if obj_db_PageManagement:
-            try:
-                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    obj_db_PageManagement.update(
-                        is_del=1,
-                        updateTime=cls_Common.get_date_time(),
-                        uid_id=userId,
-                    )
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Delete',
-                        cls_FindTable.get_pro_name(obj_db_PageManagement[0].pid_id),
-                        obj_db_PageManagement[0].pageName, None,
-                        userId,
-                        '删除页面',CUFront=dict(request.POST)
-                    )
-                    # endregion
-            except BaseException as e:  # 自动回滚，不需要任何操作
-                response['errorMsg'] = f'数据删除失败:{e}'
+            obj_db_FunManagement = db_FunManagement.objects.filter(is_del=0,page_id=pageId)
+            if obj_db_FunManagement:
+                response['errorMsg'] = '当前所属页面下已有所属功能数据,请删除下级所属功能后在重新尝试删除'
             else:
-                response['statusCode'] = 2003
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        obj_db_PageManagement.update(
+                            is_del=1,
+                            updateTime=cls_Common.get_date_time(),
+                            uid_id=userId,
+                        )
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Delete',
+                            cls_FindTable.get_pro_name(obj_db_PageManagement[0].pid_id),
+                            obj_db_PageManagement[0].pageName, None,
+                            userId,
+                            '删除页面',CUFront=dict(request.POST)
+                        )
+                        # endregion
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'数据删除失败:{e}'
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前所属页面,请刷新后重新尝试!'
     return JsonResponse(response)

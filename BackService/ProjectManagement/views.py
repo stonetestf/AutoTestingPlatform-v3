@@ -9,6 +9,7 @@ from login.models import UserTable as db_UserTable
 from login.models import UserBindRole as db_UserBindRole
 from ProjectManagement.models import ProManagement as db_ProManagement
 from ProjectManagement.models import ProBindMembers as db_ProBindMembers
+from PageManagement.models import PageManagement as db_PageManagement
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -270,38 +271,42 @@ def delete_data(request):
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId)
         if obj_db_ProManagement:
-            # 查询当前修改的用户是不是创建者
-            if userId == obj_db_ProManagement[0].cuid:
-                is_edit = True
+            obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0,pid_id=proId)
+            if obj_db_PageManagement:
+                response['errorMsg'] = '当前项目下有所属页面数据,请删除下级所属页面后在重新尝试删除!'
             else:
-                # 查询当前修改的用户是不是管理员成功
-                obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId)
-                if obj_db_UserBindRole:
-                    if obj_db_UserBindRole[0].role.is_admin == 1:
-                        is_edit = True
+                # 查询当前修改的用户是不是创建者
+                if userId == obj_db_ProManagement[0].cuid:
+                    is_edit = True
+                else:
+                    # 查询当前修改的用户是不是管理员成功
+                    obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId)
+                    if obj_db_UserBindRole:
+                        if obj_db_UserBindRole[0].role.is_admin == 1:
+                            is_edit = True
+                        else:
+                            response['errorMsg'] = '您当前没有权限对此进行操作,只有创建者或超管组才有此操作权限!'
                     else:
-                        response['errorMsg'] = '您当前没有权限对此进行操作,只有创建者或超管组才有此操作权限!'
-                else:
-                    response['errorMsg'] = '当前用户未绑定角色组!'
-            if is_edit:
-                try:
-                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        obj_db_ProManagement.update(
-                            is_del=1,
-                            updateTime=cls_Common.get_date_time()
-                        )
-                        # region 添加操作信息
-                        cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Delete',
-                            obj_db_ProManagement[0].proName, None, None,
-                            userId,
-                            '删除项目',CUFront=dict(request.POST)
-                        )
-                        # endregion
-                except BaseException as e:  # 自动回滚，不需要任何操作
-                    response['errorMsg'] = f'删除失败:{e}'
-                else:
-                    response['statusCode'] = 2003
+                        response['errorMsg'] = '当前用户未绑定角色组!'
+                if is_edit:
+                    try:
+                        with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                            obj_db_ProManagement.update(
+                                is_del=1,
+                                updateTime=cls_Common.get_date_time()
+                            )
+                            # region 添加操作信息
+                            cls_Logging.record_operation_info(
+                                'API', 'Manual', 3, 'Delete',
+                                obj_db_ProManagement[0].proName, None, None,
+                                userId,
+                                '删除项目',CUFront=dict(request.POST)
+                            )
+                            # endregion
+                    except BaseException as e:  # 自动回滚，不需要任何操作
+                        response['errorMsg'] = f'删除失败:{e}'
+                    else:
+                        response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前项目,请刷新后重新尝试!'
     return JsonResponse(response)

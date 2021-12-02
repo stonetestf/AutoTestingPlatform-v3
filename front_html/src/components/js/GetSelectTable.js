@@ -64,6 +64,21 @@ function GetFunNameItems(proId,pageId){
     })
 }
 
+function GetPageEnvironmentNameItems(proId){
+    return Vue.prototype.$axios.get('/api/PageEnvironment/GetPageEnvironmentNameItems',{
+        params:{
+            'proId':proId,
+        }
+    }).then(res => {
+        if(res.data.statusCode == 2000){
+            // console.log(res.data.itemsData)
+            return res.data.itemsData;
+        }
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
+
 function GetUserNameItems(){
     return Vue.prototype.$axios.get('/api/userManagement/GetUserNameItems',{
         params:{
@@ -79,6 +94,6 @@ function GetUserNameItems(){
     })
 }
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems
   };
   
