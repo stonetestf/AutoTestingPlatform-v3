@@ -158,12 +158,6 @@ def edit_data(request):
             if is_Edit:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        obj_db_FunManagement.update(
-                            page_id=pageId,
-                            funName=funName,
-                            uid_id=userId,
-                            remarks=remarks,
-                            updateTime=cls_Common.get_date_time())
                         # region 添加操作信息
                         oldData = list(obj_db_FunManagement.values())
                         newData = dict(request.POST)
@@ -173,9 +167,15 @@ def edit_data(request):
                             cls_FindTable.get_page_name(pageId), funName,
                             userId,
                             '修改功能',
-                            oldData,newData
+                            oldData, newData
                         )
                         # endregion
+                        obj_db_FunManagement.update(
+                            page_id=pageId,
+                            funName=funName,
+                            uid_id=userId,
+                            remarks=remarks,
+                            updateTime=cls_Common.get_date_time())
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f'数据修改失败:{e}'
                 else:

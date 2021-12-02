@@ -232,12 +232,6 @@ def edit_data(request):
                     else:
                         response['errorMsg'] = '已有重复角色,请更改!'
                 else:
-                    update_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=proId).update(
-                        sysType=sysType,
-                        proName=proName,
-                        uid_id=userId,
-                        remarks=remarks,
-                        updateTime=cls_Common.get_date_time())
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Edit',
@@ -247,6 +241,12 @@ def edit_data(request):
                         oldData, newData
                     )
                     # endregion
+                    update_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=proId).update(
+                        sysType=sysType,
+                        proName=proName,
+                        uid_id=userId,
+                        remarks=remarks,
+                        updateTime=cls_Common.get_date_time())
         else:
             response['errorMsg'] = '未找到当前项目,请刷新后重新尝试!'
     if update_db_ProManagement:

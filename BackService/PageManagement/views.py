@@ -147,11 +147,6 @@ def edit_data(request):
             if is_Edit:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        db_PageManagement.objects.filter(is_del=0, id=pageId).update(
-                            pageName=pageName,
-                            uid_id=userId,
-                            remarks=remarks,
-                            updateTime=cls_Common.get_date_time())
                         # region 添加操作信息
                         oldData = list(obj_db_PageManagement.values())
                         newData = dict(request.POST)
@@ -160,9 +155,14 @@ def edit_data(request):
                             cls_FindTable.get_pro_name(proId), pageName, None,
                             userId,
                             '修改页面',
-                            oldData,newData
+                            oldData, newData
                         )
                         # endregion
+                        db_PageManagement.objects.filter(is_del=0, id=pageId).update(
+                            pageName=pageName,
+                            uid_id=userId,
+                            remarks=remarks,
+                            updateTime=cls_Common.get_date_time())
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f'数据修改失败:{e}'
                 else:

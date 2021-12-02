@@ -257,6 +257,20 @@ def edit_data(request):
             if is_edit:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region添加操作信息
+                        oldData = list(obj_db_WorkorderManagement.values())
+                        newData = dict(request.POST)
+                        operationInfoId = cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Edit',
+                            cls_FindTable.get_pro_name(proId),
+                            cls_FindTable.get_page_name(pageId),
+                            cls_FindTable.get_fun_name(funId),
+                            userId,
+                            f'A-{workId}:{workName}',
+                            oldData, newData
+                        )
+                        # endregion
+                        # region 基本信息
                         obj_db_WorkorderManagement.update(
                             sysType=sysType,
                             pid_id=proId,
@@ -269,26 +283,16 @@ def edit_data(request):
                             uid_id=userId,
                             updateTime=cls_Common.get_date_time()
                         )
-                        # 添加操作信息
-                        oldData = list(obj_db_WorkorderManagement.values())
-                        newData = dict(request.POST)
-                        operationInfoId = cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Edit',
-                            cls_FindTable.get_pro_name(proId),
-                            cls_FindTable.get_page_name(pageId),
-                            cls_FindTable.get_fun_name(funId),
-                            userId,
-                            f'A-{workId}:{workName}',
-                            oldData, newData
-                        )
-                        # 添加工单的生命周期
+                        # endregion
+                        # region 添加工单的生命周期
                         db_WorkLifeCycle.objects.create(
                             work_id=workId,
                             operationType='Edit',
                             operationInfo=newData,
                             uid_id=userId,
                         )
-
+                        # endregion
+                        # 在修改时如果正在修改的人是创建人才会重新推送信息
                         if userId == obj_db_WorkorderManagement[0].cuid:
                             if pushTo:  # 如果有推送To信息,就保存
                                 db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
