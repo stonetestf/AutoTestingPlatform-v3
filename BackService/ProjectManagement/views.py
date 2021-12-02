@@ -163,7 +163,7 @@ def save_data(request):
                             'API', 'Manual', 3, 'Add',
                             proName,None,None,
                             userId,
-                            None
+                            '新增项目',CUFront=dict(request.POST)
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -295,7 +295,7 @@ def delete_data(request):
                             'API', 'Manual', 3, 'Delete',
                             obj_db_ProManagement[0].proName, None, None,
                             userId,
-                            None,
+                            '删除项目',CUFront=dict(request.POST)
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作

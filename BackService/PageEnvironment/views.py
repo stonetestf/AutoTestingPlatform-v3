@@ -5,7 +5,7 @@ from django.db import transaction
 import json
 
 # Create your db here.
-from PageManagement.models import PageManagement as db_PageManagement
+from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -35,7 +35,8 @@ def select_data(request):
         objData = cls_object_maker(responseData)
         sysType = objData.sysType
         proId = objData.proId
-        pageName = objData.pageName
+        environmentName = objData.environmentName
+        environmentUrl = objData.environmentUrl
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -44,18 +45,22 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageMaintenancet', 'select_data', errorMsg)
+        cls_Logging.record_error_info('API', 'PageEnvironment', 'select_data', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(
-            is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
-        select_db_PageManagement = obj_db_PageManagement[minSize: maxSize]
-        if pageName:
-            obj_db_PageManagement = obj_db_PageManagement.filter(pageName__icontains=pageName)
-            select_db_PageManagement = obj_db_PageManagement[minSize: maxSize]
-        for i in select_db_PageManagement:
+        obj_db_PageEnvironment = db_PageEnvironment.objects.filter(
+            is_del=0, sysType=sysType,pid_id=proId).order_by('-updateTime')
+        select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
+        if environmentName:
+            obj_db_PageEnvironment = obj_db_PageEnvironment.filter(environmentName__icontains=environmentName)
+            select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
+        if environmentUrl:
+            obj_db_PageEnvironment = obj_db_PageEnvironment.filter(environmentUrl__icontains=environmentUrl)
+            select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
+        for i in select_db_PageEnvironment:
             dataList.append(
                 {"id": i.id,
-                 "pageName": i.pageName,
+                 "environmentName": i.environmentName,
+                 "environmentUrl":i.environmentUrl,
                  "remarks": i.remarks,
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  "userName": i.uid.userName,
@@ -63,7 +68,7 @@ def select_data(request):
             )
 
         response['TableData'] = dataList
-        response['Total'] = obj_db_PageManagement.count()
+        response['Total'] = obj_db_PageEnvironment.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 
@@ -77,24 +82,28 @@ def save_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
         proId = request.POST['proId']
-        pageName = request.POST['pageName']
+        environmentName = request.POST['environmentName']
+        environmentUrl = request.POST['environmentUrl']
         remarks = request.POST['remarks']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'data_save', errorMsg)
+        cls_Logging.record_error_info('API', 'PageEnvironment', 'data_save', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(
-            is_del=0, sysType=sysType, pid_id=proId,pageName=pageName)
-        if obj_db_PageManagement:
-            response['errorMsg'] = "当前所属项目下已有相同的所属页面存在,请更改!"
+        obj_db_PageEnvironment = db_PageEnvironment.objects.filter(
+            is_del=0, sysType=sysType, pid_id=proId)
+        if obj_db_PageEnvironment.filter(environmentName=environmentName):
+            response['errorMsg'] = "当前所属项目下已有相同的环境名称存在,请更改!"
+        elif obj_db_PageEnvironment.filter(environmentUrl=environmentUrl):
+            response['errorMsg'] = "当前所属项目下已有相同的环境地址存在,请更改!"
         else:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    db_PageManagement.objects.create(
+                    db_PageEnvironment.objects.create(
                         sysType=sysType,
                         pid_id=proId,
-                        pageName=pageName,
+                        environmentName=environmentName,
+                        environmentUrl=environmentUrl,
                         remarks=remarks,
                         is_del=0,
                         uid_id=userId,
@@ -103,9 +112,9 @@ def save_data(request):
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Add',
-                        cls_FindTable.get_pro_name(proId), pageName, None,
+                        cls_FindTable.get_pro_name(proId), None, None,
                         userId,
-                        '新增页面',CUFront=dict(request.POST)
+                        '新增页面环境',CUFront=dict(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -124,42 +133,47 @@ def edit_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
+        environmentId = int(request.POST['environmentId'])
         proId = request.POST['proId']
-        pageId = int(request.POST['pageId'])
-        pageName = request.POST['pageName']
+        environmentName = request.POST['environmentName']
+        environmentUrl = request.POST['environmentUrl']
         remarks = request.POST['remarks']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'edit_data', errorMsg)
+        cls_Logging.record_error_info('API', 'PageEnvironment', 'edit_data', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId, is_del=0)
-        if obj_db_PageManagement:
-            select_db_PageManagement = db_PageManagement.objects.filter(
-                sysType=sysType,pid_id=proId,pageName=pageName, is_del=0)
-            if select_db_PageManagement:
-                if pageId == select_db_PageManagement[0].id:  # 自己修改自己
+        obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId, is_del=0)
+        if obj_db_PageEnvironment:
+            select_db_PageEnvironment = db_PageEnvironment.objects.filter(
+                sysType=sysType,pid_id=proId,environmentName=environmentName, is_del=0)
+            if select_db_PageEnvironment:
+                if environmentId == select_db_PageEnvironment[0].id:  # 自己修改自己
                     is_Edit = True
                 else:
-                    response['errorMsg'] = '当前项目下已有重复页面名称,请更改!'
+                    response['errorMsg'] = '当前项目下已有重复环境名称,请更改!'
             else:
                 is_Edit = True
             if is_Edit:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        db_PageManagement.objects.filter(is_del=0, id=pageId).update(
-                            pageName=pageName,
+                        obj_db_PageEnvironment.update(
+                            sysType=sysType,
+                            pid_id=proId,
+                            environmentName=environmentName,
+                            environmentUrl=environmentUrl,
                             uid_id=userId,
                             remarks=remarks,
                             updateTime=cls_Common.get_date_time())
+
                         # region 添加操作信息
-                        oldData = list(obj_db_PageManagement.values())
+                        oldData = list(obj_db_PageEnvironment.values())
                         newData = dict(request.POST)
                         cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Edit',
-                            cls_FindTable.get_pro_name(proId), pageName, None,
+                            cls_FindTable.get_pro_name(proId), None, None,
                             userId,
-                            '修改页面',
+                            '修改页面环境',
                             oldData,newData
                         )
                         # endregion
@@ -168,7 +182,7 @@ def edit_data(request):
                 else:
                     response['statusCode'] = 2002
         else:
-            response['errorMsg'] = '未找当前所属页面,请刷新后重新尝试!'
+            response['errorMsg'] = '未找当前页面环境,请刷新后重新尝试!'
     return JsonResponse(response)
 
 
@@ -179,17 +193,17 @@ def delete_data(request):
     response = {}
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
-        pageId = request.POST['pageId']
+        environmentId = request.POST['environmentId']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'delete_data', errorMsg)
+        cls_Logging.record_error_info('API', 'PageEnvironment', 'delete_data', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId)
-        if obj_db_PageManagement:
+        obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId)
+        if obj_db_PageEnvironment:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    obj_db_PageManagement.update(
+                    obj_db_PageEnvironment.update(
                         is_del=1,
                         updateTime=cls_Common.get_date_time(),
                         uid_id=userId,
@@ -197,10 +211,9 @@ def delete_data(request):
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Delete',
-                        cls_FindTable.get_pro_name(obj_db_PageManagement[0].pid_id),
-                        obj_db_PageManagement[0].pageName, None,
+                        cls_FindTable.get_pro_name(obj_db_PageEnvironment[0].pid_id),None, None,
                         userId,
-                        '删除页面',CUFront=dict(request.POST)
+                        '删除页面环境',CUFront=dict(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -208,30 +221,5 @@ def delete_data(request):
             else:
                 response['statusCode'] = 2003
         else:
-            response['errorMsg'] = '未找到当前所属页面,请刷新后重新尝试!'
-    return JsonResponse(response)
-
-
-@cls_Logging.log
-@cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])
-def get_page_name_items(request):
-    response = {}
-    dataList = []
-    try:
-        responseData = json.loads(json.dumps(request.GET))
-        objData = cls_object_maker(responseData)
-        proId = objData.proId
-    except BaseException as e:
-        errorMsg = f"入参错误:{e}"
-        response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageMaintenancet', 'get_page_name_items', errorMsg)
-    else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0,pid_id=proId).order_by('-updateTime')
-        for i in obj_db_PageManagement:
-            dataList.append({
-                'label': i.pageName, 'value': i.id
-            })
-        response['itemsData'] = dataList
-        response['statusCode'] = 2000
+            response['errorMsg'] = '未找到当前页面环境,请刷新后重新尝试!'
     return JsonResponse(response)

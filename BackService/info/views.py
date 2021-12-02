@@ -64,9 +64,11 @@ def select_operational_info(request):
         #     select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
 
         for i in select_db_OperateInfo:
-            editInfo = None
-            if i.CUFront or i.CURear:
-                editInfo = f"{i.CUFront}<br>{i.CURear}"
+            editInfo = ""
+            if i.CUFront:
+                editInfo += f"{i.CUFront}"
+            if i.CURear:
+                editInfo += f"<br>{i.CURear}"
             dataList.append({
                 'id': i.id,
                 'triggerType':i.triggerType,

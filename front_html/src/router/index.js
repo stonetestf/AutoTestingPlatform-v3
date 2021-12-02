@@ -15,10 +15,12 @@ import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagem
 
 import ApiPageHome from '@/components/views/SysType/Api/Page/Home'
 import ApiPageMain from '@/components/views/SysType/Api/Page/Main'
-import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
-import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';
-import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';
+import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';//所属页面
+import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';//所属功能
+import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';//工单维护
+import Api_ApiMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/ApiMaintenance/Main';//接口维护
 
+import Api_PageEnvironment from '@/components/views/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -64,6 +66,12 @@ export default new Router({
         },
         {path: '/WorkorderManagement/WorkorderMaintenance/Main',name: 'Api_WorkorderMaintenance',component: Api_WorkorderMaintenance,
           meta:{name: '工单维护',url:'/WorkorderManagement/WorkorderMaintenance/Main',comp:'Api_WorkorderMaintenance'}
+        },
+        {path: '/SysType/Api/Page/CaseManagement/ApiMaintenance/Main',name: 'Api_ApiMaintenance',component: Api_ApiMaintenance,
+          meta:{name: '接口维护',url:'/SysType/Api/Page/CaseManagement/ApiMaintenance/Main',comp:'Api_ApiMaintenance'}
+        },
+        {path: '/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main',name: 'Api_PageEnvironment',component: Api_PageEnvironment,
+          meta:{name: '页面环境',url:'/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main',comp:'Api_PageEnvironment'}
         },
       ]
     }

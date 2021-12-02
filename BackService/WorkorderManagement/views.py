@@ -153,7 +153,8 @@ def save_data(request):
                         cls_FindTable.get_page_name(pageId),
                         cls_FindTable.get_fun_name(funId),
                         userId,
-                        f'A-{save_db_WorkorderManagement.id}:{workName}'
+                        f'A-{save_db_WorkorderManagement.id}:{workName}',
+                        CUFront=dict(request.POST)
                     )
                     # 添加工单的生命周期
                     db_WorkLifeCycle.objects.create(
@@ -339,7 +340,7 @@ def delete_data(request):
                         cls_FindTable.get_page_name(obj_db_WorkorderManagement[0].page_id),
                         cls_FindTable.get_fun_name(obj_db_WorkorderManagement[0].fun_id),
                         userId,
-                        obj_db_WorkorderManagement[0].workName,
+                        obj_db_WorkorderManagement[0].workName,CUFront=dict(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作

@@ -180,12 +180,14 @@ import ApiPageMain from '@/components/views/SysType/Api/Page/Main';
 import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
 import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';
 import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';
+import Api_ApiMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/ApiMaintenance/Main';//接口维护
+import Api_PageEnvironment from '@/components/views/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
-    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance
+    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment
   },
   data() {
     return {
