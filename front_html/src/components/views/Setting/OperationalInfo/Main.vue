@@ -1,6 +1,6 @@
 <template>
     <div ref="tab-main"  id="tab-main">
-        <el-tabs type="border-card" style="height:811px">
+        <el-tabs type="border-card" style="height:850px">
             <el-tab-pane label="操作信息">
                 <template>
                     <el-form :inline="true" class="demo-form-inline" method="post">
@@ -44,14 +44,14 @@
                 <template>
                     <el-table
                         :data="tableData"
-                        height="596px"
+                        height="647px"
                         border>
-                        <!-- <el-table-column
+                        <el-table-column
                             label="ID"
                             align= "center"
                             width="80px"
                             prop="id">
-                        </el-table-column> -->
+                        </el-table-column>
                         <el-table-column
                             label="所属系统"
                             width="80px"

@@ -35,21 +35,21 @@ class FindTable(object):
             return None
 
     def get_pro_name(self, proId):
-        obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=proId)
+        obj_db_ProManagement = db_ProManagement.objects.filter(id=proId)
         if obj_db_ProManagement:
             return obj_db_ProManagement[0].proName
         else:
             return None
 
     def get_page_name(self, pageId):
-        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, id=pageId)
+        obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId)
         if obj_db_PageManagement:
             return obj_db_PageManagement[0].pageName
         else:
             return None
 
     def get_fun_name(self, funId):
-        obj_db_FunManagement = db_FunManagement.objects.filter(is_del=0, id=funId)
+        obj_db_FunManagement = db_FunManagement.objects.filter(id=funId)
         if obj_db_FunManagement:
             return obj_db_FunManagement[0].funName
         else:

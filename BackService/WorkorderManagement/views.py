@@ -172,7 +172,6 @@ def save_data(request):
                                 is_del=0
                             ))
                         db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
-
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:
@@ -367,7 +366,7 @@ def select_life_cycle(request):  # 获取当前工单的生命周期
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'WorkorderManagement', 'select_life_cycle', errorMsg)
     else:
-        obj_db_WorkLifeCycle = db_WorkLifeCycle.objects.filter(work_id=workId).order_by('updateTime')
+        obj_db_WorkLifeCycle = db_WorkLifeCycle.objects.filter(work_id=workId).order_by('-updateTime')
         for i in obj_db_WorkLifeCycle:
             title = None
             content = None

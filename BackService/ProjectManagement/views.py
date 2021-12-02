@@ -161,9 +161,9 @@ def save_data(request):
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Add',
-                            None,None,None,
+                            proName,None,None,
                             userId,
-                            proName
+                            None
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -223,9 +223,9 @@ def edit_data(request):
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Edit',
-                            None, None, None,
+                            proName, None, None,
                             userId,
-                            proName,
+                            "修改项目",
                             oldData,newData
                         )
                         # endregion
@@ -241,9 +241,9 @@ def edit_data(request):
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Edit',
-                        None, None, None,
+                        proName, None, None,
                         userId,
-                        proName,
+                        None,
                         oldData, newData
                     )
                     # endregion
@@ -286,16 +286,16 @@ def delete_data(request):
             if is_edit:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        db_ProManagement.objects.filter(id=proId).update(
+                        obj_db_ProManagement.update(
                             is_del=1,
                             updateTime=cls_Common.get_date_time()
                         )
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Delete',
-                            None, None, None,
+                            obj_db_ProManagement[0].proName, None, None,
                             userId,
-                            obj_db_ProManagement[0].proName,
+                            None,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作

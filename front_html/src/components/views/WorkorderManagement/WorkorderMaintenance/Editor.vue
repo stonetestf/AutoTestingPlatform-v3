@@ -96,7 +96,7 @@
             </el-tab-pane>
             <el-tab-pane label="生命周期" name="lifeCycle" v-if="isAddNew==false">
                 <div style=" height:760px;overflow:auto">
-                    <el-timeline style="text-align: left;" :reverse=false>
+                    <el-timeline style="text-align: left;">
                         <el-timeline-item 
                         placement="top"
                         v-for="(activity, index) in RomeData.activities"
@@ -169,6 +169,7 @@ export default {
                 props: { multiple: true },
                 pushTo:[],
                 userNameOptions:[],
+                reverse:false,
                 activities:[],
             },
             rules:{

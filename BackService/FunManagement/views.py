@@ -109,6 +109,15 @@ def save_data(request):
                         uid_id=userId,
                         cuid=userId
                     )
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Add',
+                        cls_FindTable.get_pro_name(proId),
+                        cls_FindTable.get_page_name(pageId), funName,
+                        userId,
+                        None,
+                    )
+                    # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:
@@ -121,7 +130,7 @@ def save_data(request):
 @require_http_methods(["POST"])
 def edit_data(request):
     response = {}
-    update_db_FunManagement = None
+    is_Edit = False
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -141,25 +150,38 @@ def edit_data(request):
                 sysType=sysType, pid_id=proId, page_id=pageId, funName=funName, is_del=0)
             if select_db_FunManagement:
                 if funId == select_db_FunManagement[0].id:  # 自己修改自己
-                    update_db_FunManagement = db_FunManagement.objects.filter(is_del=0, id=funId).update(
-                        page_id=pageId,
-                        funName=funName,
-                        uid_id=userId,
-                        remarks=remarks,
-                        updateTime=cls_Common.get_date_time())
+                    is_Edit = True
                 else:
                     response['errorMsg'] = '当前页面下已有重复功能名称,请更改!'
             else:
-                update_db_FunManagement = db_FunManagement.objects.filter(is_del=0, id=funId).update(
-                    page_id=pageId,
-                    funName=funName,
-                    uid_id=userId,
-                    remarks=remarks,
-                    updateTime=cls_Common.get_date_time())
+                is_Edit = True
+            if is_Edit:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        obj_db_FunManagement.update(
+                            page_id=pageId,
+                            funName=funName,
+                            uid_id=userId,
+                            remarks=remarks,
+                            updateTime=cls_Common.get_date_time())
+                        # region 添加操作信息
+                        oldData = list(obj_db_FunManagement.values())
+                        newData = dict(request.POST)
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Edit',
+                            cls_FindTable.get_pro_name(proId),
+                            cls_FindTable.get_page_name(pageId), funName,
+                            userId,
+                            None,
+                            oldData,newData
+                        )
+                        # endregion
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'数据修改失败:{e}'
+                else:
+                    response['statusCode'] = 2002
         else:
             response['errorMsg'] = '未找当前所属功能数据,请刷新后重新尝试!'
-    if update_db_FunManagement:
-        response['statusCode'] = 2002
     return JsonResponse(response)
 
 
@@ -183,6 +205,16 @@ def delete_data(request):
                 updateTime=cls_Common.get_date_time(),
                 uid_id=userId
             )
+            # region 添加操作信息
+            cls_Logging.record_operation_info(
+                'API', 'Manual', 3, 'Delete',
+                cls_FindTable.get_pro_name(obj_db_FunManagement[0].pid_id),
+                cls_FindTable.get_page_name(obj_db_FunManagement[0].page_id),
+                cls_FindTable.get_fun_name(funId),
+                userId,
+                None,
+            )
+            # endregion
             response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前功能数据,请刷新后重新尝试!'
@@ -206,7 +238,7 @@ def get_fun_name_items(request):
         cls_Logging.record_error_info('API', 'FunManagement', 'get_fun_name_items', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(
-            is_del=0,pid_id=proId,page_id=pageId).order_by('-updateTime')
+            is_del=0, pid_id=proId, page_id=pageId).order_by('-updateTime')
         for i in obj_db_FunManagement:
             dataList.append({
                 'label': i.funName, 'value': i.id

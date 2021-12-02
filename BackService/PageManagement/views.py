@@ -103,9 +103,9 @@ def save_data(request):
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Add',
-                        cls_FindTable.get_pro_name(proId), None, None,
+                        cls_FindTable.get_pro_name(proId), pageName, None,
                         userId,
-                        pageName
+                        None
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -120,7 +120,7 @@ def save_data(request):
 @require_http_methods(["POST"])
 def edit_data(request):
     response = {}
-    update_db_PageManagement = None
+    is_Edit = False
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -139,23 +139,36 @@ def edit_data(request):
                 sysType=sysType,pid_id=proId,pageName=pageName, is_del=0)
             if select_db_PageManagement:
                 if pageId == select_db_PageManagement[0].id:  # 自己修改自己
-                    update_db_PageManagement = db_PageManagement.objects.filter(is_del=0, id=pageId).update(
-                        pageName=pageName,
-                        uid_id=userId,
-                        remarks=remarks,
-                        updateTime=cls_Common.get_date_time())
+                    is_Edit = True
                 else:
                     response['errorMsg'] = '当前项目下已有重复页面名称,请更改!'
             else:
-                update_db_PageManagement = db_PageManagement.objects.filter(is_del=0, id=pageId).update(
-                    pageName=pageName,
-                    uid_id=userId,
-                    remarks=remarks,
-                    updateTime=cls_Common.get_date_time())
+                is_Edit = True
+            if is_Edit:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        db_PageManagement.objects.filter(is_del=0, id=pageId).update(
+                            pageName=pageName,
+                            uid_id=userId,
+                            remarks=remarks,
+                            updateTime=cls_Common.get_date_time())
+                        # region 添加操作信息
+                        oldData = list(obj_db_PageManagement.values())
+                        newData = dict(request.POST)
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Edit',
+                            cls_FindTable.get_pro_name(proId), pageName, None,
+                            userId,
+                            None,
+                            oldData,newData
+                        )
+                        # endregion
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'数据修改失败:{e}'
+                else:
+                    response['statusCode'] = 2002
         else:
             response['errorMsg'] = '未找当前所属页面,请刷新后重新尝试!'
-    if update_db_PageManagement:
-        response['statusCode'] = 2002
     return JsonResponse(response)
 
 
@@ -172,14 +185,28 @@ def delete_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'PageManagement', 'delete_data', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId,is_del=0)
+        obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId)
         if obj_db_PageManagement:
-            obj_db_PageManagement.update(
-                is_del=1,
-                updateTime=cls_Common.get_date_time(),
-                uid_id=userId,
-            )
-            response['statusCode'] = 2003
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    obj_db_PageManagement.update(
+                        is_del=1,
+                        updateTime=cls_Common.get_date_time(),
+                        uid_id=userId,
+                    )
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Delete',
+                        cls_FindTable.get_pro_name(obj_db_PageManagement[0].pid_id),
+                        obj_db_PageManagement[0].pageName, None,
+                        userId,
+                        None,
+                    )
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'数据删除失败:{e}'
+            else:
+                response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前所属页面,请刷新后重新尝试!'
     return JsonResponse(response)
