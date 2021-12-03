@@ -91,10 +91,283 @@
                             </el-form-item>
                             <el-tabs v-model="EditApiRomeData.activeName" @tab-click="handleClick" style="margin-top:-10px">
                                 <el-tab-pane :label="EditApiRomeData.headersName" name="Headers">
+                                    <div v-if="EditApiRomeData.headersRomeData.editModel=='From'">
+                                        <el-table
+                                            :data="EditApiRomeData.headersRomeData.tableData"
+                                            border
+                                            height="610">
+                                            <el-table-column
+                                                label="启用"
+                                                width="70px"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="参数名"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-input v-model="scope.row.key" placeholder="参数名"></el-input>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="参数值"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-input v-model="scope.row.value" placeholder="参数值"></el-input>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="备注"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-input v-model="scope.row.remarks" placeholder="备注"></el-input>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                align="center"
+                                                width="120px">
+                                            <template slot="header">
+                                                <el-button-group>
+                                                    <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="CreateNewHeadersData()"></el-button>
+                                                    <el-button type="warning" size="mini" @click="changesHeadersEditModel()">Bulk</el-button>
+                                                </el-button-group>
+                                            </template>
+                                            <template slot-scope="scope" style="width:100px">
+                                                <el-button
+                                                    size="mini"
+                                                    icon="el-icon-delete"
+                                                    type="danger"
+                                                    @click="handleHeadersDelete(scope.$index, scope.row)"></el-button>
+                                            </template>
+                                            </el-table-column>
+                                        </el-table>
+                                    </div>
+                                    <div v-else>
+                                        <el-card>
+                                            <div slot="header" style="height:20px">
+                                                <el-row style="margin-top:-8px">
+                                                    <el-col :span="12">
+                                                        <div style="float:left;margin-top:3px">
+                                                            <span style="font-size:15px">格式:启用状态,参数名,参数值,备注</span>
+                                                        </div>
+                                                        </el-col>
+                                                    <el-col :span="12">
+                                                        <div style="float:right">
+                                                            <el-button type="primary" size="mini" @click="changesHeadersEditModel()">确定</el-button>
+                                                            <el-button size="mini" @click="cancelHeadersBulkEdit()">取消</el-button>
+                                                        </div>
+                                                    </el-col>
+                                                </el-row>
+                                            </div>
+                                            <div>
+                                                <el-input
+                                                    type="textarea"
+                                                    :autosize="{ minRows: 24, maxRows: 24}"
+                                                    v-model="EditApiRomeData.headersRomeData.bulkEdit">
+                                                </el-input>
+                                            </div>
+                                        </el-card>
+                                    </div>
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.paramsName" name="Params">
+                                    <div v-if="EditApiRomeData.paramsRomeData.editModel=='From'">
+                                        <el-table
+                                            :data="EditApiRomeData.paramsRomeData.tableData"
+                                            border
+                                            height="610">
+                                            <el-table-column
+                                                label="启用"
+                                                width="70px"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="参数名"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-input v-model="scope.row.key" placeholder="参数名"></el-input>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="参数值"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-input v-model="scope.row.value" placeholder="参数值"></el-input>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="备注"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-input v-model="scope.row.remarks" placeholder="备注"></el-input>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                align="center"
+                                                width="120px">
+                                            <template slot="header">
+                                                <el-button-group>
+                                                    <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="CreateNewParamsData()"></el-button>
+                                                    <el-button type="warning" size="mini" @click="changesParamsEditModel()">Bulk</el-button>
+                                                </el-button-group>
+                                            </template>
+                                            <template slot-scope="scope" style="width:100px">
+                                                <el-button
+                                                    size="mini"
+                                                    icon="el-icon-delete"
+                                                    type="danger"
+                                                    @click="handleParamsDelete(scope.$index, scope.row)"></el-button>
+                                            </template>
+                                            </el-table-column>
+                                        </el-table>
+                                    </div>
+                                    <div v-else>
+                                        <el-card>
+                                            <div slot="header" style="height:20px">
+                                                <el-row style="margin-top:-8px">
+                                                    <el-col :span="12">
+                                                        <div style="float:left;margin-top:3px">
+                                                            <span style="font-size:15px">格式:启用状态,参数名,参数值,备注</span>
+                                                        </div>
+                                                        </el-col>
+                                                    <el-col :span="12">
+                                                        <div style="float:right">
+                                                            <el-button type="primary" size="mini" @click="changesParamsEditModel()">确定</el-button>
+                                                            <el-button size="mini" @click="cancelParamsBulkEdit()">取消</el-button>
+                                                        </div>
+                                                    </el-col>
+                                                </el-row>
+                                             
+                                            </div>
+                                            <div>
+                                                <el-input
+                                                    type="textarea"
+                                                    :autosize="{ minRows: 24, maxRows: 24}"
+                                                    v-model="EditApiRomeData.paramsRomeData.bulkEdit">
+                                                </el-input>
+                                            </div>
+                                        </el-card>
+                                    </div>
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.bodyName" name="Body">
+                                    <div>
+                                        <el-radio-group v-model="EditApiRomeData.bodyRomeData.requestSaveType" @change="changeBodyRequestType">
+                                            <el-radio label="none">none</el-radio>
+                                            <el-radio label='form-data'>form-data</el-radio>
+                                            <el-radio label="raw">raw</el-radio>
+                                            <el-radio label="file">file</el-radio>
+                                        </el-radio-group>
+                                    </div>
+                                    <div v-if="EditApiRomeData.bodyRomeData.requestSaveType=='none'">
+                                        <el-card shadow="never" class="bodyRome" style="height:580px;">
+                                            <div>该请求没有主体</div>
+                                        </el-card>
+                                    </div>
+                                    <div v-else-if="EditApiRomeData.bodyRomeData.requestSaveType=='form-data'">
+                                        <div v-if="EditApiRomeData.bodyRomeData.editModel=='From'">
+                                            <el-table
+                                                class="bodyRome"
+                                                :data="EditApiRomeData.bodyRomeData.tableData"
+                                                border
+                                                height="582">
+                                                <el-table-column
+                                                    label="启用"
+                                                    width="70px"
+                                                    align= "center">
+                                                    <template slot-scope="scope">
+                                                        <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                                    </template>
+                                                </el-table-column>
+                                                <el-table-column
+                                                    label="参数名"
+                                                    align= "center">
+                                                    <template slot-scope="scope">
+                                                        <el-input v-model="scope.row.key" placeholder="参数名"></el-input>
+                                                    </template>
+                                                </el-table-column>
+                                                <el-table-column
+                                                    label="参数值"
+                                                    align= "center">
+                                                    <template slot-scope="scope">
+                                                        <el-input v-model="scope.row.value" placeholder="参数值"></el-input>
+                                                    </template>
+                                                </el-table-column>
+                                                <el-table-column
+                                                    label="备注"
+                                                    align= "center">
+                                                    <template slot-scope="scope">
+                                                        <el-input v-model="scope.row.remarks" placeholder="备注"></el-input>
+                                                    </template>
+                                                </el-table-column>
+                                                <el-table-column
+                                                    align="center"
+                                                    width="120px">
+                                                <template slot="header">
+                                                    <el-button-group>
+                                                        <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="CreateNewBodyData()"></el-button>
+                                                        <el-button type="warning" size="mini" @click="changesBodyEditModel()">Bulk</el-button>
+                                                    </el-button-group>
+                                                </template>
+                                                <template slot-scope="scope" style="width:100px">
+                                                    <el-button
+                                                        size="mini"
+                                                        icon="el-icon-delete"
+                                                        type="danger"
+                                                        @click="handleBodyDelete(scope.$index, scope.row)"></el-button>
+                                                </template>
+                                                </el-table-column>
+                                            </el-table>
+                                        </div>
+                                        <div v-else>
+                                            <el-card style="margin-top:5px">
+                                                <div slot="header" style="height:20px;">
+                                                    <el-row style="margin-top:-8px">
+                                                        <el-col :span="12">
+                                                            <div style="float:left;margin-top:3px">
+                                                                <span style="font-size:15px">格式:启用状态,参数名,参数值,备注</span>
+                                                            </div>
+                                                            </el-col>
+                                                        <el-col :span="12">
+                                                            <div style="float:right">
+                                                                <el-button type="primary" size="mini" @click="changesBodyEditModel()">确定</el-button>
+                                                                <el-button size="mini" @click="cancelBodyBulkEdit()">取消</el-button>
+                                                            </div>
+                                                        </el-col>
+                                                    </el-row>
+                                                </div>
+                                                <div>
+                                                    <el-input
+                                                        type="textarea"
+                                                        :autosize="{ minRows: 23, maxRows: 23}"
+                                                        v-model="EditApiRomeData.bodyRomeData.bulkEdit">
+                                                    </el-input>
+                                                </div>
+                                            </el-card>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="EditApiRomeData.bodyRomeData.requestSaveType=='raw'">
+                                        <el-input
+                                            class="bodyRome"
+                                            type="textarea"
+                                            :autosize="{ minRows: 27, maxRows: 27}"
+                                            v-model="EditApiRomeData.bodyRomeData.rawValue">
+                                        </el-input>
+                                    </div>
+                                    <div v-else>
+                                        <el-card shadow="never" class="bodyRome" style="height:580px;">
+                                            <div>这里是上传文件地址</div>
+                                        </el-card>
+                                    </div>
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.extractName" name="Extract">
                                     <el-table
-                                        :data="EditApiRomeData.headersRomeData.tableData"
+                                        :data="EditApiRomeData.extractRomeData.tableData"
                                         border
-                                        height="563">
+                                        height="610">
                                         <el-table-column
                                             label="启用"
                                             width="70px"
@@ -104,67 +377,327 @@
                                             </template>
                                         </el-table-column>
                                         <el-table-column
-                                            label="参数名"
+                                            label="变量名称"
                                             align= "center">
                                             <template slot-scope="scope">
-                                                <el-input v-model="scope.row.key" placeholder="Key"></el-input>
+                                                <el-input v-model="scope.row.key" placeholder="变量名称"></el-input>
                                             </template>
                                         </el-table-column>
                                         <el-table-column
-                                            label="参数值"
+                                            label="提取表达式"
                                             align= "center">
                                             <template slot-scope="scope">
-                                                <el-input v-model="scope.row.value" placeholder="Value"></el-input>
+                                                <el-input v-model="scope.row.value" placeholder="提取表达式,例:$.key/$.key[0]"></el-input>
                                             </template>
                                         </el-table-column>
                                         <el-table-column
                                             label="备注"
                                             align= "center">
                                             <template slot-scope="scope">
-                                                <el-input v-model="scope.row.remarks" placeholder="Remark"></el-input>
+                                                <el-input v-model="scope.row.remarks" placeholder="备注"></el-input>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            align="center"
+                                            width="120px">
+                                        <template slot="header">
+                                            <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="CreateNewExtractData()"></el-button>
+                                        </template>
+                                        <template slot-scope="scope" style="width:100px">
+                                            <el-button
+                                                size="mini"
+                                                icon="el-icon-delete"
+                                                type="danger"
+                                                @click="handleExtractDelete(scope.$index, scope.row)"></el-button>
+                                        </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </el-tab-pane>
+                                <el-tab-pane :label="EditApiRomeData.validateName" name="Validate">
+                                    <el-table
+                                        :data="EditApiRomeData.validateRomeData.tableData"
+                                        border
+                                        height="610">
+                                        <el-table-column
+                                            label="提取变量名称"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-autocomplete
+                                                    v-model="scope.row.checkName"
+                                                    :fetch-suggestions="fetchSuggestionsValidate"
+                                                    placeholder="请输入提取变量名称">
+                                                </el-autocomplete>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="断言类型"
+                                            width="170px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-select  v-model="scope.row.validateType" placeholder="请选择">
+                                                    <el-option
+                                                        v-for="item in EditApiRomeData.validateRomeData.validateTypeOption"
+                                                        :key="item.value"
+                                                        :label="item.label"
+                                                        :value="item.value">
+                                                    </el-option>
+                                                </el-select>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="断言值类型"
+                                            width="120px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-select v-model="scope.row.valueType"  placeholder="请选择">
+                                                        <el-option
+                                                            v-for="item in EditApiRomeData.validateRomeData.valueTypeOption"
+                                                            :key="item.value"
+                                                            :label="item.label"
+                                                            :value="item.value">
+                                                        </el-option>
+                                                    </el-select>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="预期结果"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-input v-model="scope.row.expectedResults" placeholder="预期结果"></el-input>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="备注"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-input v-model="scope.row.remarks" placeholder="备注"></el-input>
                                             </template>
                                         </el-table-column>
                                         <el-table-column
                                             align="center"
                                             width="65px">
                                         <template slot="header">
-                                            <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="CreateNewHeadersData()"></el-button>
+                                            <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="CreateNewValidateData()"></el-button>
                                         </template>
                                         <template slot-scope="scope" style="width:100px">
                                         <el-button
                                             size="mini"
                                             icon="el-icon-delete"
                                             type="danger"
-                                            @click="handleHeadersDelete(scope.$index, scope.row)"></el-button>
+                                            @click="handleValidateDelete(scope.$index, scope.row)"></el-button>
                                         </template>
                                         </el-table-column>
                                     </el-table>
                                 </el-tab-pane>
-                                <el-tab-pane :label="EditApiRomeData.paramsName" name="Params">
-    
-                                </el-tab-pane>
-                                <el-tab-pane :label="EditApiRomeData.bodyName" name="Body">
-
-                                </el-tab-pane>
-                                <el-tab-pane label="File" name="File">
-
-                                </el-tab-pane>
-                                <el-tab-pane :label="EditApiRomeData.extractName" name="Extract">
-
-                                </el-tab-pane>
-                                <el-tab-pane :label="EditApiRomeData.validateName" name="Validate">
-
-                                </el-tab-pane>
                                 <el-tab-pane :label="EditApiRomeData.preOperationName" name="PreOperation">
-
+                                    <el-table
+                                        id="PreOperationSort"
+                                        row-key="id"
+                                        :data="EditApiRomeData.preOperationRomeData.tableData"
+                                        border
+                                        height="610">
+                                        <el-table-column
+                                            label="启用"
+                                            width="70px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="操作类型"
+                                            width="150px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-tag type="info">{{scope.row.operationType}}</el-tag>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="操作数据"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <div v-if="scope.row.operationType=='Methods'">
+                                                    <el-input v-model.trim="scope.row.methodsName" placeholder="输入DebugTalk文件中需要调用的方法"></el-input>
+                                                </div>
+                                                <div v-else-if="scope.row.operationType=='DataBase'">
+                                                    <el-form ref="preOperationRomeData" :model="EditApiRomeData.preOperationRomeData" label-width="80px">
+                                                        <el-form-item label="数据库:">
+                                                            <el-select v-model="scope.row.dataBase" placeholder="请选择连接的数据库" style="float:left;width:437px">
+                                                                <el-option
+                                                                    v-for="item in EditApiRomeData.preOperationRomeData.dataBaseOptions"
+                                                                    :key="item.value"
+                                                                    :label="item.label"
+                                                                    :value="item.value">
+                                                                </el-option>
+                                                            </el-select>
+                                                        </el-form-item>
+                                                        <el-form-item label="SQL:">
+                                                            <el-input
+                                                                type="textarea"
+                                                                :autosize="{ minRows: 3, maxRows: 3}"
+                                                                v-model="scope.row.sql"
+                                                                placeholder="SQL">
+                                                            </el-input>
+                                                        </el-form-item>
+                                                    </el-form>
+                                                </div>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="备注"
+                                            width="300px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-input v-model="scope.row.remarks" placeholder="备注"></el-input>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            align="center"
+                                            width="100px">
+                                        <template slot="header">
+                                            <el-dropdown @command="handlePreOperationCommand">
+                                                <el-button type="warning" size="mini" icon="el-icon-circle-plus-outline">
+                                                    <i class="el-icon-arrow-down el-icon--right"></i>
+                                                </el-button>
+                                                <el-dropdown-menu slot="dropdown">
+                                                    <el-dropdown-item command="Methods">方法函数</el-dropdown-item>
+                                                    <el-dropdown-item command="DataBase">数据库操作</el-dropdown-item>
+                                                </el-dropdown-menu>
+                                            </el-dropdown>
+                                        </template>
+                                        <template slot-scope="scope" style="width:100px">
+                                            <el-button
+                                                size="mini"
+                                                icon="el-icon-delete"
+                                                type="danger"
+                                                @click="handlePreOperationDelete(scope.$index, scope.row)"></el-button>
+                                        </template>
+                                        </el-table-column>
+                                    </el-table>
                                 </el-tab-pane>
                                 <el-tab-pane :label="EditApiRomeData.rearOperationName" name="RearOperation">
-
+                                    <el-table
+                                        id="RearOperationSort"
+                                        row-key="id"
+                                        :data="EditApiRomeData.rearOperationRomeData.tableData"
+                                        border
+                                        height="610">
+                                        <el-table-column
+                                            label="启用"
+                                            width="70px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="操作类型"
+                                            width="150px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-tag type="info">{{scope.row.operationType}}</el-tag>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="操作数据"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <div v-if="scope.row.operationType=='Methods'">
+                                                    <el-input v-model.trim="scope.row.methodsName" placeholder="输入DebugTalk文件中需要调用的方法"></el-input>
+                                                </div>
+                                                <div v-else-if="scope.row.operationType=='DataBase'">
+                                                    <el-form ref="rearOperationRomeData" :model="EditApiRomeData.rearOperationRomeData" label-width="80px">
+                                                        <el-form-item label="数据库:">
+                                                            <el-select v-model="scope.row.dataBase" placeholder="请选择连接的数据库" style="float:left;width:437px">
+                                                                <el-option
+                                                                    v-for="item in EditApiRomeData.rearOperationRomeData.dataBaseOptions"
+                                                                    :key="item.value"
+                                                                    :label="item.label"
+                                                                    :value="item.value">
+                                                                </el-option>
+                                                            </el-select>
+                                                        </el-form-item>
+                                                        <el-form-item label="SQL:">
+                                                            <el-input
+                                                                type="textarea"
+                                                                :autosize="{ minRows: 3, maxRows: 3}"
+                                                                v-model="scope.row.sql"
+                                                                placeholder="SQL">
+                                                            </el-input>
+                                                        </el-form-item>
+                                                    </el-form>
+                                                </div>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="备注"
+                                            width="300px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-input v-model="scope.row.remarks" placeholder="备注"></el-input>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            align="center"
+                                            width="100px">
+                                        <template slot="header">
+                                            <el-dropdown @command="handleRearOperationCommand">
+                                                <el-button type="warning" size="mini" icon="el-icon-circle-plus-outline">
+                                                    <i class="el-icon-arrow-down el-icon--right"></i>
+                                                </el-button>
+                                                <el-dropdown-menu slot="dropdown">
+                                                    <el-dropdown-item command="Methods">方法函数</el-dropdown-item>
+                                                    <el-dropdown-item command="DataBase">数据库操作</el-dropdown-item>
+                                                </el-dropdown-menu>
+                                            </el-dropdown>
+                                        </template>
+                                        <template slot-scope="scope" style="width:100px">
+                                            <el-button
+                                                size="mini"
+                                                icon="el-icon-delete"
+                                                type="danger"
+                                                @click="handleRearOperationDelete(scope.$index, scope.row)"></el-button>
+                                        </template>
+                                        </el-table-column>
+                                    </el-table>
                                 </el-tab-pane>
                             </el-tabs>
                         </el-form>
                     </template>
                     <template v-else>
+                         <div slot="header">
+                            {{CharmRomeData.title}}
+                        </div>
+                        <div>
+                            <el-table
+                            :data="CharmRomeData.tableData"
+                            border
+                            height="660px">
+                            <el-table-column
+                                type="index"
+                                align= "center"
+                                label="Index"
+                                width="100">
+                            </el-table-column>
+                            <el-table-column
+                                prop="stepsName"
+                                align= "center"
+                                label="错误步骤"
+                                width="200">
+                            </el-table-column>
+                            <el-table-column
+                                prop="errorMsg"
+                                align= "center"
+                                label="错误信息">
+                            </el-table-column>
+                            <el-table-column
+                                prop="updateTime"
+                                align= "center"
+                                label="错误时间"
+                                width="200">
+                            </el-table-column>
+                            </el-table>
+                        </div>
                     </template>
                 </el-card>
                 <el-button style="margin-top: 12px;" icon="el-icon-arrow-left" type="primary" v-if="StepsRomeData.disPlay_Previous" @click="previous">上一步</el-button>
@@ -176,6 +709,8 @@
 </template>
 
 <script>
+import Sortable from 'sortablejs';
+import Qs from 'qs';
 
 import {PrintConsole} from "../../../../../../js/Logger.js";
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
@@ -207,10 +742,11 @@ export default {
                 environmentId:'',//页面环境
                 environmentNameOption:[],
                 apiName:'',
-                apiState:'',
+                apiState:'InDev',
                 apiStateOption:[
-                    {'label':'启用','value':'0'},
-                    {'label':'禁用','value':'1'},
+                    {'label':'研发中','value':'InDev'},
+                    {'label':'已完成','value':'Completed'},
+                    {'label':'弃用','value':'Discard'},
                 ],
                 rules:{
                     pageId:[{ required: true, message: '请选择所属页面', trigger: 'change' }],
@@ -241,8 +777,57 @@ export default {
                 headersRomeData:{
                     index:0,
                     tableData:[],
+                    editModel:'From',
+                    bulkEdit:'',//显示给屏幕上看的数据
                 },
-
+                paramsRomeData:{
+                    index:0,
+                    tableData:[],
+                    editModel:'From',
+                    bulkEdit:'',//显示给屏幕上看的数据
+                },
+                bodyRomeData:{
+                    index:0,
+                    tableData:[],
+                    editModel:'From',
+                    bulkEdit:'',//显示给屏幕上看的数据
+                    requestSaveType:'form-data',//请求保存类型，none,form-data,json,raw
+                    rawValue:'',
+                },
+                extractRomeData:{
+                    index:0,
+                    tableData:[],
+                },
+                validateRomeData:{
+                    index:0,
+                    tableData:[],
+                    validateTypeOption:[//断言类型
+                        {label: 'equals(==)', value: 'equals'},
+                        {label: 'contains(In)',value: 'contains'},
+                        {label: 'not_equals(!=)', value: 'not_equals'},
+                    ],
+                    valueTypeOption:[//对比值类型
+                        {label: 'String',value: 'str'},
+                        {label: 'Int',value: 'int'},
+                        {label: 'Float',value: 'float'},
+                        {label: 'Bool',value: 'bool'},
+                        {label: 'List',value: 'list'}
+                    ],
+                },
+                preOperationRomeData:{
+                    index:0,
+                    tableData:[],
+                    dataBaseOptions:[],
+                },
+                rearOperationRomeData:{
+                    index:0,
+                    tableData:[],
+                    dataBaseOptions:[],
+                }
+            },
+            CharmRomeData:{
+                title:'',
+                tableData:[],
             },
         };
     },
@@ -269,6 +854,8 @@ export default {
                 this.ClearStepsRomeData();
                 this.ClearBasicRomeData();
                 this.ClearEditApiRomeData();
+                this.ClearCharmRomeData();
+
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew
 
@@ -303,7 +890,7 @@ export default {
                 self.BasicRomeData.funNameOption=[];
             }
         },
-        'EditApiRomeData.headersRomeData.index': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
+        'EditApiRomeData.headersRomeData.index': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
             let self = this;
             if(newVal!=oldVal){
                 let dataLength = self.EditApiRomeData.headersRomeData.tableData.length;
@@ -311,6 +898,78 @@ export default {
                     self.EditApiRomeData.headersName='Headers';
                 }else{
                     self.EditApiRomeData.headersName='Headers('+dataLength+')';
+                }
+                
+            }
+        },
+        'EditApiRomeData.paramsRomeData.index': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.EditApiRomeData.paramsRomeData.tableData.length;
+                if(dataLength==0){
+                    self.EditApiRomeData.paramsName='Params';
+                }else{
+                    self.EditApiRomeData.paramsName='Params('+dataLength+')';
+                }
+                
+            }
+        },
+        'EditApiRomeData.bodyRomeData.index': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.EditApiRomeData.bodyRomeData.tableData.length;
+                if(dataLength==0){
+                    self.EditApiRomeData.bodyName='Body';
+                }else{
+                    self.EditApiRomeData.bodyName='Body('+dataLength+')';
+                }
+                
+            }
+        },
+        'EditApiRomeData.extractRomeData.index': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.EditApiRomeData.extractRomeData.tableData.length;
+                if(dataLength==0){
+                    self.EditApiRomeData.extractName='Extract/提取';
+                }else{
+                    self.EditApiRomeData.extractName='Extract/提取('+dataLength+')';
+                }
+                
+            }
+        },
+        'EditApiRomeData.validateRomeData.index': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.EditApiRomeData.validateRomeData.tableData.length;
+                if(dataLength==0){
+                    self.EditApiRomeData.validateName='Validate/断言';
+                }else{
+                    self.EditApiRomeData.validateName='Validate/断言('+dataLength+')';
+                }
+                
+            }
+        },
+        'EditApiRomeData.preOperationRomeData.index': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.EditApiRomeData.preOperationRomeData.tableData.length;
+                if(dataLength==0){
+                    self.EditApiRomeData.preOperationName='前置操作';
+                }else{
+                    self.EditApiRomeData.preOperationName='前置操作('+dataLength+')';
+                }
+                
+            }
+        },
+        'EditApiRomeData.rearOperationRomeData.index': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.EditApiRomeData.rearOperationRomeData.tableData.length;
+                if(dataLength==0){
+                    self.EditApiRomeData.rearOperationName='后置操作';
+                }else{
+                    self.EditApiRomeData.rearOperationName='后置操作('+dataLength+')';
                 }
                 
             }
@@ -325,14 +984,15 @@ export default {
             let self = this;
             PrintConsole('当前',self.StepsRomeData.active)
             if(self.StepsRomeData.active==0){//基本用例数据
-                self.StepsRomeData.active++;
-                // this.$refs['BasicRomeData'].validate((valid) => {
-                //     if (valid) {//通过
-                //         self.StepsRomeData.active++;
-                //     } 
-                // });
+                // self.StepsRomeData.active++;
+                this.$refs['BasicRomeData'].validate((valid) => {
+                    if (valid) {//通过
+                        self.StepsRomeData.active++;
+                    } 
+                });
             }else if(self.StepsRomeData.active==1){
                 self.StepsRomeData.active++;
+                self.CharmApiData();
             }
         },
         previous(){//上一步
@@ -368,7 +1028,7 @@ export default {
         ClearBasicRomeData(){
             let self = this;
             self.resetForm('BasicRomeData');
-
+            self.BasicRomeData.apiState='InDev';
         },
         GetPageNameOption(){
             GetPageNameItems(this.$cookies.get('proId')).then(d=>{
@@ -412,9 +1072,41 @@ export default {
             //headersRomeData
             self.EditApiRomeData.headersRomeData.tableData=[];
             self.EditApiRomeData.headersRomeData.index=0;
+            self.EditApiRomeData.headersRomeData.editModel='From';
+
+            //paramsRomeData
+            self.EditApiRomeData.paramsRomeData.tableData=[];
+            self.EditApiRomeData.paramsRomeData.index=0;
+            self.EditApiRomeData.paramsRomeData.editModel='From';
+
+            //bodyRomeData
+            self.EditApiRomeData.bodyRomeData.tableData=[];
+            self.EditApiRomeData.bodyRomeData.index=0;
+            self.EditApiRomeData.bodyRomeData.editModel='From';
+            self.EditApiRomeData.bodyRomeData.requestSaveType='form-data';
+            self.EditApiRomeData.bodyRomeData.rawValue = '';
+
+            //extractRomeData
+            self.EditApiRomeData.extractRomeData.tableData=[];
+            self.EditApiRomeData.extractRomeData.index=0;
+
+            //validateRomeData
+            self.EditApiRomeData.validateRomeData.tableData=[];
+            self.EditApiRomeData.validateRomeData.index=0;
+
+            //PreOperationRomeData
+            self.EditApiRomeData.preOperationRomeData.tableData=[];
+            self.EditApiRomeData.preOperationRomeData.index=0;
+
+            //rearOperationRomeData
+            self.EditApiRomeData.rearOperationRomeData.tableData=[];
+            self.EditApiRomeData.rearOperationRomeData.index=0;
         },
         handleClick(tab, event){
             PrintConsole(tab);
+            if(tab.name=='PreOperation'){
+                this.rowDropPreOperation();
+            }
         },
 
         //headersRomeData
@@ -441,6 +1133,486 @@ export default {
 
             self.EditApiRomeData.headersRomeData.index -=1 ;
         },
+        cancelHeadersBulkEdit(){//批量修改模式下的取消
+            this.EditApiRomeData.headersRomeData.editModel='From';
+            this.EditApiRomeData.headersRomeData.showBulkEdit ='';
+            this.EditApiRomeData.headersRomeData.actualBulkEdit ='';
+        },
+        changesHeadersEditModel(){
+            let self = this;
+            if(self.EditApiRomeData.headersRomeData.editModel=='From'){
+                self.EditApiRomeData.headersRomeData.editModel='Bulk';
+                self.EditApiRomeData.headersRomeData.bulkEdit ='';
+                self.EditApiRomeData.headersRomeData.tableData.forEach(item=>{
+                    PrintConsole('changesHeadersBulkState',item);
+                    let rowData=item.state+',';
+                    if(item.key){
+                        rowData+=item.key+',';
+                    }else{
+                        rowData+=',';
+                    }
+                    if(item.value){
+                        rowData+=item.value+',';
+                    }else{
+                        rowData+=',';
+                    }
+                    if(item.remarks){
+                        rowData+=item.remarks;
+                    }
+                    rowData+='\n';
+                    self.EditApiRomeData.headersRomeData.bulkEdit +=rowData;
+                });
+            }else{
+                PrintConsole(self.EditApiRomeData.headersRomeData.bulkEdit.split('\n'));
+
+                self.EditApiRomeData.headersRomeData.editModel='From';
+                self.EditApiRomeData.headersRomeData.tableData=[];
+                self.EditApiRomeData.headersRomeData.index = 0
+                let bulkEdit = self.EditApiRomeData.headersRomeData.bulkEdit.split('\n');
+                bulkEdit.forEach(item=>{
+                    if(item){
+                        let data = item.split(',');
+
+                        let obj = {};
+                        obj.index = self.EditApiRomeData.headersRomeData.index;
+                        if(data[0]=="true"){
+                            obj.state = true;
+                        }else{
+                            obj.state = false;
+                        }
+                        obj.key = data[1];
+                        obj.value = data[2];
+                        if(data.length==4){
+                            obj.remarks = data[3];
+                        }else{
+                            obj.remarks ='';
+                        }
+                        // PrintConsole(obj);
+                        self.EditApiRomeData.headersRomeData.tableData.push(obj);
+                    }
+                });
+                PrintConsole(self.EditApiRomeData.headersRomeData.tableData);
+            }
+        },
+
+        //paramsRomeData
+        CreateNewParamsData(){
+            let self = this;
+            let obj = {};
+            obj.index = self.EditApiRomeData.paramsRomeData.index;
+            obj.state = true;
+            obj.key = '';
+            obj.value='';
+            obj.remarks='';
+
+            self.EditApiRomeData.paramsRomeData.tableData.push(obj);
+            self.EditApiRomeData.paramsRomeData.index+=1;
+            PrintConsole('CreateNewParamsData',self.EditApiRomeData.paramsRomeData.tableData);
+        },
+        handleParamsDelete(index,row){
+            PrintConsole('handleParamsDelete',row);
+            let self = this;
+            self.EditApiRomeData.paramsRomeData.tableData.splice(index, 1)//删除列表中的数据
+        
+            self.EditApiRomeData.paramsRomeData.tableData.forEach((item,i)=>{
+                self.EditApiRomeData.paramsRomeData.tableData[i].index = i;
+            });
+
+            self.EditApiRomeData.paramsRomeData.index -=1 ;
+        },
+        cancelParamsBulkEdit(){//批量修改模式下的取消
+            this.EditApiRomeData.paramsRomeData.editModel='From';
+            this.EditApiRomeData.paramsRomeData.showBulkEdit ='';
+            this.EditApiRomeData.paramsRomeData.actualBulkEdit ='';
+        },
+        changesParamsEditModel(){
+            let self = this;
+            if(self.EditApiRomeData.paramsRomeData.editModel=='From'){
+                self.EditApiRomeData.paramsRomeData.editModel='Bulk';
+                self.EditApiRomeData.paramsRomeData.bulkEdit ='';
+                self.EditApiRomeData.paramsRomeData.tableData.forEach(item=>{
+                    PrintConsole('changesParamsEditModel',item);
+                    let rowData=item.state+',';
+                    if(item.key){
+                        rowData+=item.key+',';
+                    }else{
+                        rowData+=',';
+                    }
+                    if(item.value){
+                        rowData+=item.value+',';
+                    }else{
+                        rowData+=',';
+                    }
+                    if(item.remarks){
+                        rowData+=item.remarks;
+                    }
+                    rowData+='\n';
+                    self.EditApiRomeData.paramsRomeData.bulkEdit +=rowData;
+                });
+            }else{
+                PrintConsole(self.EditApiRomeData.paramsRomeData.bulkEdit.split('\n'));
+
+                self.EditApiRomeData.paramsRomeData.editModel='From';
+                self.EditApiRomeData.paramsRomeData.tableData=[];
+                self.EditApiRomeData.paramsRomeData.index = 0
+                let bulkEdit = self.EditApiRomeData.paramsRomeData.bulkEdit.split('\n');
+                bulkEdit.forEach(item=>{
+                    if(item){
+                        let data = item.split(',');
+
+                        let obj = {};
+                        obj.index = self.EditApiRomeData.paramsRomeData.index;
+                        if(data[0]=="true"){
+                            obj.state = true;
+                        }else{
+                            obj.state = false;
+                        }
+                        obj.key = data[1];
+                        obj.value = data[2];
+                        if(data.length==4){
+                            obj.remarks = data[3];
+                        }else{
+                            obj.remarks ='';
+                        }
+                        // PrintConsole(obj);
+                        self.EditApiRomeData.paramsRomeData.tableData.push(obj);
+                    }
+                });
+                PrintConsole(self.EditApiRomeData.paramsRomeData.tableData);
+            }
+        },
+
+        //bodyRomeDta
+        changeBodyRequestType(val){
+            PrintConsole(val);
+        },
+        CreateNewBodyData(){
+            let self = this;
+            let obj = {};
+            obj.index = self.EditApiRomeData.bodyRomeData.index;
+            obj.state = true;
+            obj.key = '';
+            obj.value='';
+            obj.remarks='';
+
+            self.EditApiRomeData.bodyRomeData.tableData.push(obj);
+            self.EditApiRomeData.bodyRomeData.index+=1;
+            PrintConsole('CreateNewBodyData',self.EditApiRomeData.bodyRomeData.tableData);
+        },
+        handleBodyDelete(index,row){
+            PrintConsole('handleBodyDelete',row);
+            let self = this;
+            self.EditApiRomeData.bodyRomeData.tableData.splice(index, 1)//删除列表中的数据
+        
+            self.EditApiRomeData.bodyRomeData.tableData.forEach((item,i)=>{
+                self.EditApiRomeData.bodyRomeData.tableData[i].index = i;
+            });
+
+            self.EditApiRomeData.bodyRomeData.index -=1 ;
+        },
+        cancelBodyBulkEdit(){//批量修改模式下的取消
+            this.EditApiRomeData.bodyRomeData.editModel='From';
+            this.EditApiRomeData.bodyRomeData.showBulkEdit ='';
+            this.EditApiRomeData.bodyRomeData.actualBulkEdit ='';
+        },
+        changesBodyEditModel(){
+            let self = this;
+            if(self.EditApiRomeData.bodyRomeData.editModel=='From'){
+                self.EditApiRomeData.bodyRomeData.editModel='Bulk';
+                self.EditApiRomeData.bodyRomeData.bulkEdit ='';
+                self.EditApiRomeData.bodyRomeData.tableData.forEach(item=>{
+                    PrintConsole('changesBodyEditModel',item);
+                    let rowData=item.state+',';
+                    if(item.key){
+                        rowData+=item.key+',';
+                    }else{
+                        rowData+=',';
+                    }
+                    if(item.value){
+                        rowData+=item.value+',';
+                    }else{
+                        rowData+=',';
+                    }
+                    if(item.remarks){
+                        rowData+=item.remarks;
+                    }
+                    rowData+='\n';
+                    self.EditApiRomeData.bodyRomeData.bulkEdit +=rowData;
+                });
+            }else{
+                PrintConsole(self.EditApiRomeData.bodyRomeData.bulkEdit.split('\n'));
+
+                self.EditApiRomeData.bodyRomeData.editModel='From';
+                self.EditApiRomeData.bodyRomeData.tableData=[];
+                self.EditApiRomeData.bodyRomeData.index = 0
+                let bulkEdit = self.EditApiRomeData.bodyRomeData.bulkEdit.split('\n');
+                bulkEdit.forEach(item=>{
+                    if(item){
+                        let data = item.split(',');
+
+                        let obj = {};
+                        obj.index = self.EditApiRomeData.bodyRomeData.index;
+                        if(data[0]=="true"){
+                            obj.state = true;
+                        }else{
+                            obj.state = false;
+                        }
+                        obj.key = data[1];
+                        obj.value = data[2];
+                        if(data.length==4){
+                            obj.remarks = data[3];
+                        }else{
+                            obj.remarks ='';
+                        }
+                        // PrintConsole(obj);
+                        self.EditApiRomeData.bodyRomeData.tableData.push(obj);
+                    }
+                });
+                PrintConsole(self.EditApiRomeData.bodyRomeData.tableData);
+            }
+        },
+
+        //extractRomeData
+        CreateNewExtractData(){
+            let self = this;
+            let obj = {};
+            obj.index = self.EditApiRomeData.extractRomeData.index;
+            obj.state = true;
+            obj.key = '';
+            obj.value='';
+            obj.remarks='';
+
+            self.EditApiRomeData.extractRomeData.tableData.push(obj);
+            self.EditApiRomeData.extractRomeData.index+=1;
+            PrintConsole('CreateNewExtractData',self.EditApiRomeData.extractRomeData.tableData);
+        },
+        handleExtractDelete(index,row){
+            PrintConsole('handleExtractDelete',row);
+            let self = this;
+            self.EditApiRomeData.extractRomeData.tableData.splice(index, 1)//删除列表中的数据
+        
+            self.EditApiRomeData.extractRomeData.tableData.forEach((item,i)=>{
+                self.EditApiRomeData.extractRomeData.tableData[i].index = i;
+            });
+            self.EditApiRomeData.extractRomeData.index -=1 ;
+        },
+
+        //validateRomeData
+        GetExtractKeyName(){//获取提取中的key值
+            let self = this;
+            let checkOptions = [];
+            self.EditApiRomeData.extractRomeData.tableData.forEach(e =>{
+                if(e.state){
+                    let obj ={};
+                    obj.label = e.key;
+                    obj.value = e.key;
+                    checkOptions.push(obj);
+                }
+            })
+            PrintConsole('GetExtractKeyName',checkOptions);
+            return checkOptions
+        },
+        createFilterValidate(queryString) {
+            return (restaurant) => {
+                return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+            };
+        },
+        fetchSuggestionsValidate(queryString, cb){//断言点击输入框会加载断言的数据
+            var restaurants = this.GetExtractKeyName();
+            var results = queryString ? restaurants.filter(this.createFilterValidate(queryString)) : restaurants;
+            // 调用 callback 返回建议列表的数据
+            cb(results);
+        },
+        CreateNewValidateData(){
+            let self = this;
+            let obj = {};
+            obj.index = self.EditApiRomeData.validateRomeData.index;
+            obj.state = true;
+            obj.checkName = '';
+            obj.validateType='';
+            obj.valueType='';//断言值类型
+            obj.expectedResults='';
+            obj.remarks='';
+
+            self.EditApiRomeData.validateRomeData.tableData.push(obj);
+            self.EditApiRomeData.validateRomeData.index+=1;
+            PrintConsole('CreateNewValidateData',self.EditApiRomeData.validateRomeData.tableData);
+        },
+        handleValidateDelete(index,row){
+            PrintConsole('handleValidateDelete',row);
+            let self = this;
+            self.EditApiRomeData.validateRomeData.tableData.splice(index, 1)//删除列表中的数据
+        
+            self.EditApiRomeData.validateRomeData.tableData.forEach((item,i)=>{
+                self.EditApiRomeData.validateRomeData.tableData[i].index = i;
+            });
+            self.EditApiRomeData.validateRomeData.index -=1 ;
+        },
+
+        //前置操作
+        handlePreOperationCommand(command){
+            PrintConsole('handlePreOperationCommand:',command);
+            this.CreateNewPreOperationData(command);
+        },
+        CreateNewPreOperationData(operationType){
+            let self = this;
+            let obj = {};
+            obj.id = self.EditApiRomeData.preOperationRomeData.index;
+            obj.index = self.EditApiRomeData.preOperationRomeData.index;
+            obj.state = true;
+            obj.operationType = operationType;
+            obj.methodsName='';
+            obj.dataBase='';
+            obj.sql='';
+
+            obj.remarks='';
+
+            self.EditApiRomeData.preOperationRomeData.tableData.push(obj);
+            self.EditApiRomeData.preOperationRomeData.index+=1;
+            self.rowDropPreOperation();
+            PrintConsole('CreateNewMethodsData',self.EditApiRomeData.preOperationRomeData.tableData);
+        },
+        handlePreOperationDelete(index,row){
+            PrintConsole('handlePreOperationDelete',row);
+            let self = this;
+            self.EditApiRomeData.preOperationRomeData.tableData.splice(index, 1)//删除列表中的数据
+        
+            self.EditApiRomeData.preOperationRomeData.tableData.forEach((item,i)=>{
+                self.EditApiRomeData.preOperationRomeData.tableData[i].index = i;
+            });
+            self.EditApiRomeData.preOperationRomeData.index -=1 ;
+        },
+        rowDropPreOperation() {//加载可拖动效果
+            PrintConsole('加载可拖动效果')
+            const tbody = document.querySelector('#PreOperationSort > div:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
+            let self = this;
+            Sortable.create(tbody, {
+                onEnd ({ newIndex, oldIndex }) {
+                    const currRow = self.EditApiRomeData.preOperationRomeData.tableData.splice(oldIndex, 1)[0];
+                    self.EditApiRomeData.preOperationRomeData.tableData.splice(newIndex, 0, currRow);
+                    self.SortPreOperation();
+                }
+            });
+        },
+        SortPreOperation(){//调用 每次拖动完成后调用重新排序
+            let self = this;
+            self.EditApiRomeData.preOperationRomeData.tableData.forEach((d,index)=>{
+                self.EditApiRomeData.preOperationRomeData.tableData[index].rowNum = index;
+            });
+            PrintConsole('SortPreOperation:重新排序',self.EditApiRomeData.preOperationRomeData.tableData);
+        },
+
+        //后置操作
+        handleRearOperationCommand(command){
+            PrintConsole('handleRearOperationCommand:',command);
+            this.CreateNewRearOperationData(command);
+        },
+        CreateNewRearOperationData(operationType){
+            let self = this;
+            let obj = {};
+            obj.id = self.EditApiRomeData.rearOperationRomeData.index;
+            obj.index = self.EditApiRomeData.rearOperationRomeData.index;
+            obj.state = true;
+            obj.operationType = operationType;
+            obj.methodsName='';
+            obj.dataBase='';
+            obj.sql='';
+
+            obj.remarks='';
+
+            self.EditApiRomeData.rearOperationRomeData.tableData.push(obj);
+            self.EditApiRomeData.rearOperationRomeData.index+=1;
+            self.rowDropRearOperation();
+            PrintConsole('CreateNewRearOperationData',self.EditApiRomeData.rearOperationRomeData.tableData);
+        },
+        handleRearOperationDelete(index,row){
+            PrintConsole('handleRearOperationDelete',row);
+            let self = this;
+            self.EditApiRomeData.rearOperationRomeData.tableData.splice(index, 1)//删除列表中的数据
+        
+            self.EditApiRomeData.rearOperationRomeData.tableData.forEach((item,i)=>{
+                self.EditApiRomeData.rearOperationRomeData.tableData[i].index = i;
+            });
+            self.EditApiRomeData.rearOperationRomeData.index -=1 ;
+        },
+        rowDropRearOperation() {//加载可拖动效果
+            PrintConsole('加载可拖动效果')
+            const tbody = document.querySelector('#RearOperationSort > div:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
+            let self = this;
+            Sortable.create(tbody, {
+                onEnd ({ newIndex, oldIndex }) {
+                    const currRow = self.EditApiRomeData.rearOperationRomeData.tableData.splice(oldIndex, 1)[0];
+                    self.EditApiRomeData.rearOperationRomeData.tableData.splice(newIndex, 0, currRow);
+                    self.SortRearOperation();
+                }
+            });
+        },
+        SortRearOperation(){//调用 每次拖动完成后调用重新排序
+            let self = this;
+            self.EditApiRomeData.rearOperationRomeData.tableData.forEach((d,index)=>{
+                self.EditApiRomeData.rearOperationRomeData.tableData[index].rowNum = index;
+            });
+            PrintConsole('SortRearOperation:重新排序',self.EditApiRomeData.rearOperationRomeData.tableData);
+        },
+
+        //验证事件
+        ClearCharmRomeData(){
+            let self =this;
+            self.CharmRomeData.title='';
+            self.CharmRomeData.tableData=[];
+        },
+        CharmApiData(){//验证API接口数据的完整性
+            let self = this;
+            self.CharmRomeData.tableData = [];
+            self.CharmRomeData.title = '';
+            self.$axios.post('/api/ApiIntMaintenance/CharmApiData',{
+                'CharmType':self.isAddNew,
+                'BasicInfo':{
+                    'proId':self.$cookies.get('proId'),
+                    'pageId':self.BasicRomeData.pageId,
+                    'funId':self.BasicRomeData.funId,
+                    'apiName':self.BasicRomeData.apiName,
+                },
+                'ApiInfo':{
+                    'requestType':self.EditApiRomeData.requestType,
+                    'requestUrl':self.EditApiRomeData.requestUrl,
+                    'request':{
+                        'headers':self.EditApiRomeData.headersRomeData.tableData,
+                        'params':self.EditApiRomeData.paramsRomeData.tableData,
+                        'body':{
+                            'requestSaveType':self.EditApiRomeData.bodyRomeData.requestSaveType,
+                            'formData':self.EditApiRomeData.bodyRomeData.tableData,
+                        },
+                        'extract':self.EditApiRomeData.extractRomeData.tableData,
+                        'validate':self.EditApiRomeData.validateRomeData.tableData,
+                        'preOperation':self.EditApiRomeData.preOperationRomeData.tableData,
+                        'rearOperation':self.EditApiRomeData.rearOperationRomeData.tableData,
+                    }
+                },
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.stepsName =d.stepsName;
+                        obj.errorMsg = d.errorMsg;
+                        obj.updateTime = d.updateTime;
+                        self.CharmRomeData.tableData.push(obj);
+                    });
+                    if(self.CharmRomeData.tableData.length!=0){
+                        self.StepsRomeData.processStatus='error';
+                        self.CharmRomeData.title = '效验结果:失败,共发现错误数:'+self.CharmRomeData.tableData.length;
+                    }else{
+                        self.StepsRomeData.active++;
+                        self.CharmRomeData.title = '效验结果:完成,请点击保存';
+                    }
+                }else{
+                    self.$message.error('效验接口信息发生错误:'+res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
+
     }
 };
 </script>
@@ -449,4 +1621,7 @@ export default {
 .table {display: table; width: 100%;}
 .father {display: table-cell; vertical-align: middle;}
 .son {margin: auto;}
+.bodyRome{
+    margin-top:10px;
+}
 </style>

@@ -8,7 +8,7 @@ from time import sleep
 
 
 import json
-import psutil
+# import psutil
 
 # Create your db here.
 from login.models import UserTable as db_UserTable

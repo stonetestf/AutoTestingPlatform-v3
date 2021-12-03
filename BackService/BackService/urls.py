@@ -30,6 +30,8 @@ import FunManagement.urls
 import WorkorderManagement.urls
 import PageEnvironment.urls
 
+import Api_IntMaintenance.urls
+
 urlpatterns = [
     # path('admin/', admin.site.urls),
     url('api/login/', include(login.urls)),
@@ -44,5 +46,6 @@ urlpatterns = [
     url('api/FunManagement/', include(FunManagement.urls)),
     url('api/WorkorderManagement/', include(WorkorderManagement.urls)),
     url('api/PageEnvironment/', include(PageEnvironment.urls)),
+    url('api/ApiIntMaintenance/', include(Api_IntMaintenance.urls)),
 
 ]

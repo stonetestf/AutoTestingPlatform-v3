@@ -64,22 +64,22 @@
                         :data=tableData
                         height="600px"
                         border>
-                        <el-table-column
+                        <!-- <el-table-column
                             label="ID"
                             align= "center"
                             width="80px"
                             prop="id">
-                        </el-table-column>
+                        </el-table-column> -->
                         <el-table-column
                             label="所属页面"
                             align= "center"
-                            width="150px"
+                            width="180px"
                             prop="moduleName">
                         </el-table-column>
                         <el-table-column
                             label="所属功能"
                             align= "center"
-                            width="150px"
+                            width="180px"
                             prop="pageName">
                         </el-table-column>
                         <el-table-column
@@ -109,8 +109,9 @@
                             width="100px"
                             align= "center">
                             <template slot-scope="scope">
-                                <el-tag type="success" v-if="scope.row.intState==1" >启用</el-tag>
-                                <el-tag type="info" v-else>禁用</el-tag>
+                                <el-tag type="info" v-if="scope.row.intState=='0'" >研发中</el-tag>
+                                <el-tag type="success" v-else-if="scope.row.intState=='1'" >已完成</el-tag>
+                                <el-tag type="danger" v-else>弃用</el-tag>
                             </template>
                         </el-table-column>   
                         <el-table-column
@@ -137,8 +138,6 @@
                         <template slot="header">
                             <el-button-group>  
                                 <el-button type="primary" @click="OpenEditDialog()">新增</el-button>        
-                                <!-- <el-button type="success" @click="RequestIns()">运行</el-button>     -->
-                                <!-- <el-button type="warning" @click="CopyIns()">复制</el-button>   -->
                                 <el-dropdown @command="handleCommand">
                                     <el-button type="warning">
                                         更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
@@ -150,7 +149,7 @@
                                     </el-dropdown-menu>
                                 </el-dropdown>
                             </el-button-group>
-                            </template>
+                        </template>
                         <template slot-scope="scope" style="width:100px">
                         <el-button
                             size="mini"
@@ -218,8 +217,9 @@ export default {
                 apiUrl:'',
                 apiState:'',
                 apiStateOption:[
-                    {'label':'启用','value':'0'},
-                    {'label':'禁用','value':'1'},
+                    {'label':'研发中','value':'InDev'},
+                    {'label':'已完成','value':'Completed'},
+                    {'label':'弃用','value':'Discard'},
                 ],
                 associations:'',
                 associationsOption:[

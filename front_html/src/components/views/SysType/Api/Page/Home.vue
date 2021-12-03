@@ -317,7 +317,7 @@ export default {
         if(d.path=='/SysType/Api/Page/Home'){
             this.levelList.push({path: '/Choose', meta: { title: '测试系统'}})
             this.levelList.push({path: '/SysType/Api/Main', meta: {title: '接口测试' }})
-            this.levelList.push({path: '', meta: {title:this.$cookies.get('proName')}})
+            this.levelList.push({path: '', meta: {title:'项目:'+this.$cookies.get('proName')}})
           // this.levelList.push({path: '', meta: {title: '项目管理' }})
           // this.levelList.push({path: '/TestType_Fun/index', meta: { title: '首页' }})
         }
