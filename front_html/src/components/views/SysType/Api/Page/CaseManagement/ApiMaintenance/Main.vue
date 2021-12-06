@@ -151,17 +151,19 @@
                             </el-button-group>
                         </template>
                         <template slot-scope="scope" style="width:100px">
-                        <el-button
-                            size="mini"
-                            type="success"
-                            @click="RequestIns(scope.$index, scope.row)">Run</el-button>
-                        <el-button
-                            size="mini"
-                            @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
-                        <el-button
-                            size="mini"
-                            type="danger"
-                            @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
+                            <el-button-group>
+                            <el-button
+                                size="mini"
+                                type="success"
+                                @click="OpenEditDialog(scope.$index, scope.row)">Request</el-button>
+                            <el-button
+                                size="mini"
+                                @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
+                            <el-button
+                                size="mini"
+                                type="danger"
+                                @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
+                            </el-button-group>
                         </template>
                         </el-table-column>
                     </el-table>
@@ -189,6 +191,14 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+            <dialog-request-api
+                @closeDialog="closeRequestApiDialog" 
+                :isVisible="dialog.requestApi.dialogVisible" 
+                :dialogPara="dialog.requestApi.dialogPara"
+                @Succeed="SelectData">
+            </dialog-request-api>
+        </template>
     </div>
 </template>
 
@@ -197,14 +207,13 @@ import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
-// import store from '../../../../store/index'
 import DialogEditor from "./Editor.vue";
-// import DialogRequestInt from "./RequestInt.vue";
+import DialogRequestApi from "./RequestApi.vue";
 
 
 export default {
     components: {
-        DialogEditor
+        DialogEditor,DialogRequestApi
     },
     data() {
         return {
@@ -247,6 +256,13 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
+                requestApi:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                }
             },
            
         };
@@ -323,6 +339,17 @@ export default {
                 isAddNew:true,//初始化是否新增\修改
             }
             self.dialog.editor.dialogVisible=true;
+        },
+        closeRequestApiDialog(){
+            this.dialog.requestApi.dialogVisible =false;
+        },
+        OpenEditDialog(index,row){
+            let self = this;
+            self.dialog.requestApi.dialogPara={
+                dialogTitle:'测试请求:'+ row.apiName,//初始化标题
+                apiId:row.id,
+            }
+            self.dialog.requestApi.dialogVisible=true;
         },
         GetPageNameOption(){
             GetPageNameItems(this.$cookies.get('proId')).then(d=>{

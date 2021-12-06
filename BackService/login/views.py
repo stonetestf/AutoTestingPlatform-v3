@@ -100,7 +100,7 @@ def login_in(request):
                 response['code'] = 1001  # 登录时传给vue拦截器验证用的
                 response['statusCode'] = 2000
                 response['nickName'] = obj_db_UserTable[0].nickName
-                response['userImg'] = ''
+                # response['userImg'] = ''
                 response['token'] = token.key
         else:
             response['errorMsg'] = '用户名或密码错误!'
