@@ -702,7 +702,7 @@
                 </el-card>
                 <el-button style="margin-top: 12px;" icon="el-icon-arrow-left" type="primary" v-if="StepsRomeData.disPlay_Previous" @click="previous">上一步</el-button>
                 <el-button style="margin-top: 12px;" type="primary" v-if="StepsRomeData.disPlay_Next" @click="next">下一步<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="returnToMain()">保存</el-button>
+                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="DataSave()">保存</el-button>
             </el-drawer>
         </template>
     </div>
@@ -735,6 +735,7 @@ export default {
                 disPlay_Previous:false,
             },
             BasicRomeData:{
+                apiId:'',
                 pageId:'',
                 pageNameOption:[],
                 funId:'',
@@ -742,7 +743,7 @@ export default {
                 environmentId:'',//页面环境
                 environmentNameOption:[],
                 apiName:'',
-                apiState:'InDev',
+                apiState:'',
                 apiStateOption:[
                     {'label':'研发中','value':'InDev'},
                     {'label':'已完成','value':'Completed'},
@@ -754,7 +755,7 @@ export default {
                     environmentId:[{ required: true, message: '请选择环境地址', trigger: 'change' }],
                     apiName:[
                         { required: true, message: '请输入接口名称', trigger: 'blur' },
-                        { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
+                        { min: 1, max: 15, message: '长度在 1 到 15 个字符', trigger: 'blur' }
                     ],
                     apiState:[{ required: true, message: '请选择状态', trigger: 'change' }],
                 },
@@ -790,7 +791,7 @@ export default {
                     index:0,
                     tableData:[],
                     editModel:'From',
-                    bulkEdit:'',//显示给屏幕上看的数据
+                    bulkEdit:'',
                     requestSaveType:'form-data',//请求保存类型，none,form-data,json,raw
                     rawValue:'',
                 },
@@ -857,10 +858,132 @@ export default {
                 this.ClearCharmRomeData();
 
                 this.dialogTitle = newval.dialogTitle;
-                this.isAddNew = newval.isAddNew
+                this.isAddNew = newval.isAddNew;
 
                 if(newval.isAddNew==false){//进入编辑状态
-                
+                    let self = this;
+                    self.BasicRomeData.apiId = newval.apiId;
+                    self.LoadData(newval.apiId).then(d=>{
+                        if(d.statusCode==2000){
+                            GetPageNameItems(this.$cookies.get('proId')).then(dd=>{
+                                self.BasicRomeData.pageNameOption = dd;
+                                self.BasicRomeData.pageId = d.basicInfo.pageId;
+                                GetFunNameItems(this.$cookies.get('proId'),self.BasicRomeData.pageId).then(dd=>{
+                                    self.BasicRomeData.funNameOption = dd;
+                                    self.BasicRomeData.funId = d.basicInfo.funId;
+                                    GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(dd=>{
+                                        self.BasicRomeData.environmentNameOption = dd;
+                                        self.BasicRomeData.environmentId = d.basicInfo.environmentId;
+                                        self.BasicRomeData.apiName = d.basicInfo.apiName;
+                                        self.BasicRomeData.apiState = d.basicInfo.apiState;
+                                        self.EditApiRomeData.requestType = d.apiInfo.requestType;
+                                        self.EditApiRomeData.requestUrl =  d.apiInfo.requestUrl;
+                                        //headers
+                                        d.apiInfo.request.headers.forEach(item_headers=>{
+                                            let obj = {};
+                                            obj.index = item_headers.index;
+                                            obj.state =item_headers.state;
+                                            obj.key =item_headers.key;
+                                            obj.value=item_headers.value;
+                                            obj.remarks=item_headers.remarks;
+                                            self.EditApiRomeData.headersRomeData.tableData.push(obj);
+                                        });
+                                        self.EditApiRomeData.headersRomeData.index=d.apiInfo.request.headers.length+1;
+
+                                        //params
+                                        d.apiInfo.request.params.forEach(item_params=>{
+                                            let obj = {};
+                                            obj.index = item_params.index;
+                                            obj.state =item_params.state;
+                                            obj.key =item_params.key;
+                                            obj.value=item_params.value;
+                                            obj.remarks=item_params.remarks;
+                                            self.EditApiRomeData.paramsRomeData.tableData.push(obj);
+                                        });
+                                        self.EditApiRomeData.paramsRomeData.index=d.apiInfo.request.params.length+1;
+
+                                        //body
+                                        self.EditApiRomeData.bodyRomeData.requestSaveType = d.apiInfo.request.body.requestSaveType;
+                                        if(d.apiInfo.request.body.requestSaveType=='form-data'){
+                                            d.apiInfo.request.body.bodyData.forEach(item_body=>{
+                                                let obj = {};
+                                                obj.index = item_body.index;
+                                                obj.state =item_body.state;
+                                                obj.key =item_body.key;
+                                                obj.value=item_body.value;
+                                                obj.remarks=item_body.remarks;
+                                                self.EditApiRomeData.bodyRomeData.tableData.push(obj);
+                                            });
+                                            self.EditApiRomeData.bodyRomeData.index=d.apiInfo.request.body.bodyData.length+1;
+                                        }else if(d.apiInfo.request.body.requestSaveType=='raw'){
+                                            self.EditApiRomeData.bodyRomeData.rawValue = d.apiInfo.request.body.bodyData;
+                                        }
+
+                                        //extract
+                                        d.apiInfo.request.extract.forEach(item_extract=>{
+                                            let obj = {};
+                                            obj.index = item_extract.index;
+                                            obj.state =item_extract.state;
+                                            obj.key =item_extract.key;
+                                            obj.value=item_extract.value;
+                                            obj.remarks=item_extract.remarks;
+                                            self.EditApiRomeData.extractRomeData.tableData.push(obj);
+                                        });
+                                        self.EditApiRomeData.extractRomeData.index=d.apiInfo.request.extract.length+1;
+
+                                        //validate
+                                        d.apiInfo.request.validate.forEach(item_validate=>{
+                                            let obj = {};
+                                            obj.index = item_validate.index;
+                                            obj.state =item_validate.state;
+                                            obj.checkName =item_validate.checkName;
+                                            obj.validateType=item_validate.validateType;
+                                            obj.valueType=item_validate.valueType;
+                                            obj.expectedResults=item_validate.expectedResults;
+                                            obj.remarks=item_validate.remarks;
+                                            self.EditApiRomeData.validateRomeData.tableData.push(obj);
+                                        });
+                                        self.EditApiRomeData.validateRomeData.index=d.apiInfo.request.validate.length+1;
+
+                                        //preOperation
+                                        d.apiInfo.request.preOperation.forEach(item_preOperation=>{
+                                            let obj = {};
+                                            obj.index = item_preOperation.index;
+                                            obj.state =item_preOperation.state;
+                                            obj.operationType =item_preOperation.operationType;
+                                            obj.methodsName=item_preOperation.methodsName;
+                                            obj.dataBase=item_preOperation.dataBase;
+                                            obj.sql=item_preOperation.sql;
+                                            obj.remarks=item_preOperation.remarks;
+
+                                            self.EditApiRomeData.preOperationRomeData.tableData.push(obj);
+                                        });
+                                        self.EditApiRomeData.preOperationRomeData.index=d.apiInfo.request.preOperation.length+1;
+
+                                        //rearOperation
+                                        d.apiInfo.request.rearOperation.forEach(item_rearOperation=>{
+                                            let obj = {};
+                                            obj.index = item_rearOperation.index;
+                                            obj.state =item_rearOperation.state;
+                                            obj.operationType =item_rearOperation.operationType;
+                                            obj.methodsName=item_rearOperation.methodsName;
+                                            obj.dataBase=item_rearOperation.dataBase;
+                                            obj.sql=item_rearOperation.sql;
+                                            obj.remarks=item_rearOperation.remarks;
+
+                                            self.EditApiRomeData.rearOperationRomeData.tableData.push(obj);
+                                        });
+                                        self.EditApiRomeData.rearOperationRomeData.index=d.apiInfo.request.rearOperation.length+1;
+
+                                    });
+                                });
+                            });
+                            self.loading=false;
+                        }else{
+                            self.$message.error('获取数据失败:'+d.errorMsg);
+                            self.loading=false;
+                        }
+                    });
                 }
             }
         },
@@ -1028,7 +1151,13 @@ export default {
         ClearBasicRomeData(){
             let self = this;
             self.resetForm('BasicRomeData');
-            self.BasicRomeData.apiState='InDev';
+            self.BasicRomeData.pageId='';
+            self.BasicRomeData.funId='';
+            self.BasicRomeData.environmentId='';
+            self.BasicRomeData.apiName='';
+            self.BasicRomeData.apiState='';
+            PrintConsole('BasicRomeData','清除');
+        
         },
         GetPageNameOption(){
             GetPageNameItems(this.$cookies.get('proId')).then(d=>{
@@ -1060,6 +1189,7 @@ export default {
         ClearEditApiRomeData(){
             let self = this;
             self.EditApiRomeData.requestType='GET';
+            self.EditApiRomeData.requestUrl='';
             self.EditApiRomeData.activeName='Headers';
             self.EditApiRomeData.headersName='Headers';
             self.EditApiRomeData.paramsName='Params';
@@ -1568,6 +1698,7 @@ export default {
             self.$axios.post('/api/ApiIntMaintenance/CharmApiData',{
                 'CharmType':self.isAddNew,
                 'BasicInfo':{
+                    'apiId':self.BasicRomeData.apiId,
                     'proId':self.$cookies.get('proId'),
                     'pageId':self.BasicRomeData.pageId,
                     'funId':self.BasicRomeData.funId,
@@ -1582,6 +1713,7 @@ export default {
                         'body':{
                             'requestSaveType':self.EditApiRomeData.bodyRomeData.requestSaveType,
                             'formData':self.EditApiRomeData.bodyRomeData.tableData,
+                            'raw':self.EditApiRomeData.bodyRomeData.rawValue,
                         },
                         'extract':self.EditApiRomeData.extractRomeData.tableData,
                         'validate':self.EditApiRomeData.validateRomeData.tableData,
@@ -1610,6 +1742,107 @@ export default {
                 }
             }).catch(function (error) {
                 console.log(error);
+            })
+        },
+
+        //保存事件
+        DataSave(){//保存接口
+            let self = this;
+            if(self.CharmRomeData.tableData.length==0){
+                if(self.isAddNew){  
+                    self.$axios.post('/api/ApiIntMaintenance/SaveData',{
+                        'BasicInfo':{
+                            'proId':self.$cookies.get('proId'),
+                            'pageId':self.BasicRomeData.pageId,
+                            'funId':self.BasicRomeData.funId,
+                            'apiName':self.BasicRomeData.apiName,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'apiState':self.BasicRomeData.apiState,
+                        },
+                        'ApiInfo':{
+                            'requestType':self.EditApiRomeData.requestType,
+                            'requestUrl':self.EditApiRomeData.requestUrl,
+                            'request':{
+                                'headers':self.EditApiRomeData.headersRomeData.tableData,
+                                'params':self.EditApiRomeData.paramsRomeData.tableData,
+                                'body':{
+                                    'requestSaveType':self.EditApiRomeData.bodyRomeData.requestSaveType,
+                                    'formData':self.EditApiRomeData.bodyRomeData.tableData,
+                                    'raw':self.EditApiRomeData.bodyRomeData.rawValue,
+                                },
+                                'extract':self.EditApiRomeData.extractRomeData.tableData,
+                                'validate':self.EditApiRomeData.validateRomeData.tableData,
+                                'preOperation':self.EditApiRomeData.preOperationRomeData.tableData,
+                                'rearOperation':self.EditApiRomeData.rearOperationRomeData.tableData,
+                            }
+                        },
+                    }).then(res => {
+                        if(res.data.statusCode==2001){
+                            self.$message.success('新增接口成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('接口保存失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }else{
+                    self.$axios.post('/api/ApiIntMaintenance/EditData',{
+                       'BasicInfo':{
+                            'apiId':self.BasicRomeData.apiId,
+                            'proId':self.$cookies.get('proId'),
+                            'pageId':self.BasicRomeData.pageId,
+                            'funId':self.BasicRomeData.funId,
+                            'apiName':self.BasicRomeData.apiName,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'apiState':self.BasicRomeData.apiState,
+                        },
+                        'ApiInfo':{
+                            'requestType':self.EditApiRomeData.requestType,
+                            'requestUrl':self.EditApiRomeData.requestUrl,
+                            'request':{
+                                'headers':self.EditApiRomeData.headersRomeData.tableData,
+                                'params':self.EditApiRomeData.paramsRomeData.tableData,
+                                'body':{
+                                    'requestSaveType':self.EditApiRomeData.bodyRomeData.requestSaveType,
+                                    'formData':self.EditApiRomeData.bodyRomeData.tableData,
+                                    'raw':self.EditApiRomeData.bodyRomeData.rawValue,
+                                },
+                                'extract':self.EditApiRomeData.extractRomeData.tableData,
+                                'validate':self.EditApiRomeData.validateRomeData.tableData,
+                                'preOperation':self.EditApiRomeData.preOperationRomeData.tableData,
+                                'rearOperation':self.EditApiRomeData.rearOperationRomeData.tableData,
+                            }
+                        },
+                    }).then(res => {
+                        if(res.data.statusCode==2002){
+                            self.$message.success('修改接口成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('修改接口失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }
+            }else{
+                self.$message.warning('请先修改错误数据后,在进行保存!');
+            }
+        },
+        LoadData(apiId){
+            let self = this;
+            self.loading=true;
+            return self.$axios.get('/api/ApiIntMaintenance/LoadData',{
+                params:{
+                  'apiId':apiId
+                }
+            }).then(res => {
+                return res.data;
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
             })
         },
 

@@ -186,13 +186,13 @@ export default {
         },
         SaveUserInfo(){
             let self = this;
-            self.$axios.post('/api/home/SaveUserInfo',Qs.stringify({
+            self.$axios.post('/api/home/SaveUserInfo',{
                 'nickName':self.RomeData.nickName,
                 'emails':self.RomeData.emails,
                 'password':self.RomeData.pwd,
                 'fileList':self.RomeData.fileList,
                 'deleteFileList':self.RomeData.deleteFileList,
-            })).then(res => {
+            }).then(res => {
                 if(res.data.statusCode==2002){
                     self.$message.success('更新完成-请退出当前账户后查看更新!');
                     self.dialogVisible = false;//关闭新增弹窗

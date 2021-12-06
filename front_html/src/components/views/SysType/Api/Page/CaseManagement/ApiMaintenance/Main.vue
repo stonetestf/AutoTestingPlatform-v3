@@ -28,7 +28,7 @@
                         <el-input clearable v-model="SelectRomeData.apiName"></el-input>
                     </el-form-item>
                     <el-form-item label="接口地址:">
-                        <el-input clearable v-model="SelectRomeData.apiUrl"></el-input>
+                        <el-input clearable v-model="SelectRomeData.requestUrl"></el-input>
                     </el-form-item>
                     <el-form-item label="接口状态:">
                         <el-select v-model="SelectRomeData.apiState" clearable placeholder="请选择" style="width:100px;">
@@ -62,7 +62,7 @@
                     <el-table
                         v-loading="loading"
                         :data=tableData
-                        height="600px"
+                        height="636px"
                         border>
                         <!-- <el-table-column
                             label="ID"
@@ -74,19 +74,19 @@
                             label="所属页面"
                             align= "center"
                             width="180px"
-                            prop="moduleName">
+                            prop="pageName">
                         </el-table-column>
                         <el-table-column
                             label="所属功能"
                             align= "center"
                             width="180px"
-                            prop="pageName">
+                            prop="funName">
                         </el-table-column>
                         <el-table-column
                             label="接口名称"
                             width="300px"
                             align= "center"
-                            prop="intName">
+                            prop="apiName">
                         </el-table-column>
                         <el-table-column
                             label="接口类型"
@@ -109,8 +109,8 @@
                             width="100px"
                             align= "center">
                             <template slot-scope="scope">
-                                <el-tag type="info" v-if="scope.row.intState=='0'" >研发中</el-tag>
-                                <el-tag type="success" v-else-if="scope.row.intState=='1'" >已完成</el-tag>
+                                <el-tag type="info" v-if="scope.row.apiState=='InDev'" >研发中</el-tag>
+                                <el-tag type="success" v-else-if="scope.row.apiState=='Completed'" >已完成</el-tag>
                                 <el-tag type="danger" v-else>弃用</el-tag>
                             </template>
                         </el-table-column>   
@@ -168,6 +168,7 @@
                     </div>
                 </template>
                 <template>
+                    <div style="margin-top:-10px">
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                         @size-change="pageSizeChange"
                         @current-change="handleCurrentChange"
@@ -176,6 +177,7 @@
                         :page-sizes = [10,30,50,100]
                         style="margin: 20px auto auto auto;">
                     </el-pagination>
+                    </div>
                 </template>
             </el-card>
         </template>
@@ -191,6 +193,7 @@
 </template>
 
 <script>
+import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
@@ -214,7 +217,7 @@ export default {
                 funId:'',
                 funNameOption:[],
                 apiName:'',
-                apiUrl:'',
+                requestUrl:'',
                 apiState:'',
                 apiStateOption:[
                     {'label':'研发中','value':'InDev'},
@@ -258,58 +261,54 @@ export default {
         },
     },
     mounted(){
-        // this.SelectData();
+        this.SelectData();
     },
     methods: {
         SelectData(){
             let self = this;
-            // self.tableData= [];
-            // self.loading=true;
-            // self.$axios.get('/api/Int_InsManagement/SelectData',{
-            //     params:{
-            //         "proId":self.SelectRomeData.proId,
-            //         "moduleId":self.SelectRomeData.moduleId,
-            //         "pageId":self.SelectRomeData.pageId,
-            //         "insName":self.SelectRomeData.insName,
-            //         "requestUrl":self.SelectRomeData.requestUrl,
-            //         'intState':self.SelectRomeData.intState,
-            //         'current':self.page.current,
-            //         'pageSize':self.page.pageSize
-            //     }
-            // }).then(res => {
-            //     if(res.data.statusCode==2000){
-            //         res.data.TableData.forEach(d => {
-            //             let obj = {};
-            //             obj.id =d.id;
-            //             obj.proId = d.proId;
-            //             obj.moduleId=d.moduleId;
-            //             obj.pageId = d.pageId;
-            //             obj.proName = d.proName;
-            //             obj.moduleName = d.moduleName;
-            //             obj.pageName =d.pageName;
-            //             obj.intName = d.intName;
-            //             obj.requestUrl=d.requestUrl;
-            //             obj.requestType = d.requestType;
-            //             obj.intState = d.intState;
-            //             obj.updateTime = d.updateTime;
-            //             obj.userName = d.userName;
+            self.tableData= [];
+            self.loading=true;
+            self.$axios.get('/api/ApiIntMaintenance/SelectData',{
+                params:{
+                    "proId":self.$cookies.get('proId'),
+                    "pageId":self.SelectRomeData.pageId,
+                    "funId":self.SelectRomeData.funId,
+                    "apiName":self.SelectRomeData.apiName,
+                    "requestUrl":self.SelectRomeData.requestUrl,
+                    'apiState':self.SelectRomeData.apiState,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.id =d.id;
+                        obj.pageName = d.pageName;
+                        obj.funName=d.funName;
+                        obj.apiName = d.apiName;
+                        obj.requestType = d.requestType;
+                        obj.requestUrl = d.requestUrl;
+                        obj.apiState =d.apiState;
+                        obj.updateTime = d.updateTime;
+                        obj.userName = d.userName;               
 
-            //             self.tableData.push(obj);
-            //         });
-            //         if(self.tableData.length==0 && self.page.current != 1){
-            //             self.page.current = 1;
-            //             self.SelectData();
-            //         }
-            //         self.page.total = res.data.Total;
-            //         self.loading=false;
-            //     }else{
-            //         self.$message.error('获取数据失败:'+res.data.errorMsg);
-            //         self.loading=false;
-            //     }
-            // }).catch(function (error) {
-            //     console.log(error);
-            //     self.loading=false;
-            // })
+                        self.tableData.push(obj);
+                    });
+                    if(self.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                    self.loading=false;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+            })
         },
         handleCommand(command){//更多菜单
             PrintConsole(command);
@@ -344,7 +343,7 @@ export default {
             self.SelectRomeData.pageId='';
             self.SelectRomeData.funId='';
             self.SelectRomeData.apiName='';
-            self.SelectRomeData.apiUrl='';
+            self.SelectRomeData.requestUrl='';
             self.SelectRomeData.apiState='';
             self.SelectRomeData.associations='';
             self.SelectData();
@@ -360,6 +359,41 @@ export default {
             // 改变默认的页数
             self.page.current=val
             self.SelectData();
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                    this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/ApiIntMaintenance/DeleteData',Qs.stringify({
+                'apiId':id,
+            })).then(res => {
+            if(res.data.statusCode ==2003){
+                self.$message.success('接口删除成功!');
+                self.SelectData();
+            }
+            else{
+                self.$message.error('接口删除失败:'+ res.data.errorMsg);
+            }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
+        handleEdit(index,row){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑接口",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                apiId:row.id,
+            }
+            self.dialog.editor.dialogVisible=true;
         },
     }
 };

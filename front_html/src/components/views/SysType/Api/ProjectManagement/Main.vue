@@ -17,12 +17,6 @@
                             :data="RomeData.tableData"
                             height="596px"
                             border>
-                            <!-- <el-table-column
-                                label="ID"
-                                align= "center"
-                                width="80px"
-                                prop="id">
-                            </el-table-column> -->
                             <el-table-column
                                 label="项目名称"
                                 align= "center"
@@ -145,6 +139,7 @@ export default {
     data() {
         return {
             RomeData:{
+                multipleSelection:[],
                 proName:'',
                 tableData:[],
             },
@@ -161,7 +156,7 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
-                members:{
+                members:{//成员
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -169,8 +164,6 @@ export default {
                     },
                 },
             },
-           
-
         };
     },
     mounted(){

@@ -85,12 +85,13 @@ def load_user_info(request):
 def save_user_info(request):
     response = {}
     try:
+        responseData = json.loads(request.body)
+        objData = object_maker(responseData)
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
-        nickName = request.POST['nickName']
-        emails = request.POST['emails']
-        password = request.POST['password']
-
-        fileList = cls_Common.conversion_post_lists('fileList', request.POST)
+        nickName = objData.nickName
+        emails = objData.emails
+        password = objData.password
+        fileList = objData.fileList
         # deleteFileList = cls_Common.conversion_post_lists('deleteFileList',request.POST)
     except BaseException as e:
         errorMsg = f"入参错误:{e}"

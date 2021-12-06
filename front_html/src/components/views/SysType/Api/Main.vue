@@ -2,7 +2,11 @@
   <div ref="tab-main"  id="tab-main">
     <template>
       <el-card class="MainCard">
-          <span>这是首页</span>
+          <span>这里放置:</span>
+          <span>所有项目细致统计，该项目下有多少接口，单元测试，测试用例</span>
+          <span>显示整个API系统的成功失败曲线或柱图</span>
+          <span>显示整个API系统正在运行中的任务</span>
+          <span>近10个失败次数最多的任务</span>
       </el-card>
     </template>
   </div>

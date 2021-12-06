@@ -212,9 +212,9 @@ def edit_data(request):
                 else:
                     response['errorMsg'] = '当前用户未绑定角色组!'
             if is_edit:
-                obj_db_ProManagement = db_ProManagement.objects.filter(sysType=sysType,proName=proName, is_del=0)
-                if obj_db_ProManagement:
-                    if proId == obj_db_ProManagement[0].id:  # 自己修改自己
+                select_db_ProManagement = db_ProManagement.objects.filter(sysType=sysType,proName=proName, is_del=0)
+                if select_db_ProManagement:
+                    if proId == select_db_ProManagement[0].id:  # 自己修改自己
                         update_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=proId).update(
                             sysType=sysType,
                             proName=proName,
@@ -292,8 +292,11 @@ def delete_data(request):
                     try:
                         with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                             obj_db_ProManagement.update(
-                                is_del=1,
-                                updateTime=cls_Common.get_date_time()
+                                is_del=1,uid_id=userId,updateTime=cls_Common.get_date_time()
+                            )
+                            # 删除人员绑定表
+                            db_ProBindMembers.objects.filter(pid_id=proId,is_del=0).update(
+                                is_del=1,updateTime=cls_Common.get_date_time()
                             )
                             # region 添加操作信息
                             cls_Logging.record_operation_info(
@@ -460,4 +463,47 @@ def verify_enter_into(request):
             response['statusCode'] = 2000
         else:
             response['errorMsg'] = "当前用户不在此项目的成员列表中,不可进入!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def select_history(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        proId = objData.proId
+        proName = objData.proName
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'ProjectManagement', 'select_history', errorMsg)
+    else:
+        obj_db_History = db_History.objects.filter()
+        select_db_History = obj_db_History[minSize: maxSize]
+        if proId:
+            obj_db_History = obj_db_History.filter(pid_id=proId)
+            select_db_History = obj_db_History[minSize: maxSize]
+        if proName:
+            obj_db_History = obj_db_History.filter(proName__icontains=proName)
+            select_db_History = obj_db_History[minSize: maxSize]
+        for i in select_db_History:
+            dataList.append({
+                'id':i.id,
+                'proName':i.pid.proName,
+                'operationType':i.operationType,
+                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                'userName':i.pid.uid.userName,
+            })
+
+        response['TableData'] = dataList
+        response['Total'] = obj_db_History.count()
+        response['statusCode'] = 2000
     return JsonResponse(response)
