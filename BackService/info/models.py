@@ -15,7 +15,7 @@ class OperateInfo(models.Model):  # 操作日志
     CUFront = models.TextField('修改前信息', null=True)
     CURear = models.TextField('修改后信息', null=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 创建者
-    # is_read = models.IntegerField("是否删除(0:未读,1:已读)", null=False)
+    is_read = models.IntegerField("是否已读，只用error才会有此数据(0:未读,1:已读)", null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('更新时间', auto_now=True)
 

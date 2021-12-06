@@ -24,7 +24,7 @@
                                 </el-option>
                             </el-select>
                         </el-form-item>
-                        <!-- <el-form-item label="读取状态:">
+                        <el-form-item label="读取状态:">
                             <el-select v-model="SelectRomeData.isRead" clearable placeholder="请选择" style="width:150px;float:left;">
                                 <el-option
                                     v-for="item in SelectRomeData.isReadOption"
@@ -33,7 +33,7 @@
                                     :value="item.value">
                                 </el-option>
                             </el-select>
-                        </el-form-item> -->
+                        </el-form-item>
                         <!-- <el-form-item label="事件名称:">
                             <el-input clearable v-model.trim="SelectRomeData.eventName"></el-input>
                         </el-form-item> -->
@@ -121,7 +121,7 @@
                             width="150px"
                             prop="userName">
                         </el-table-column>
-                        <!-- <el-table-column
+                        <el-table-column
                             label="操作"
                             align="center"
                             width="100px">
@@ -132,9 +132,8 @@
                                     type="warning"
                                     @click="handleIsRead(scope.$index, scope.row)">已读
                                 </el-button>
-                                <el-button v-else size="mini" type="info" disabled>已读</el-button>
                             </template>
-                        </el-table-column> -->
+                        </el-table-column>
                     </el-table>
                 </template>
                 <template>
@@ -172,11 +171,11 @@ export default {
                     {'label':'API','value':'API'},
                     {'label':'PTS','value':'PTS'},
                 ],
-                // isRead:'',
-                // isReadOption:[
-                //     {'label':'已读','value':'1'},
-                //     {'label':'未读','value':'0'},
-                // ],
+                isRead:'',
+                isReadOption:[
+                    {'label':'已读','value':'1'},
+                    {'label':'未读','value':'0'},
+                ],
                 remindType:'',
                 remindTypeOption:[
                     {'label':'Error','value':'Error'},
@@ -204,7 +203,7 @@ export default {
                 params:{
                     'sysType':self.SelectRomeData.sysType,
                     'remindType':self.SelectRomeData.remindType,
-                    // 'isRead':self.SelectRomeData.isRead,
+                    'isRead':self.SelectRomeData.isRead,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -222,7 +221,7 @@ export default {
                         obj.toFun = d.toFun;
                         obj.info=d.info;
                         obj.editInfo = d.editInfo;
-                        // obj.is_read=d.is_read;
+                        obj.is_read=d.is_read;
                         obj.createTime = d.createTime;
                         obj.userName = d.userName;
 
@@ -240,22 +239,21 @@ export default {
                 console.log(error);
             })
         },
-        // handleIsRead(index,row){
-        //     let self = this;
-        //     self.$axios.post('/api/info/EditIsReadState',Qs.stringify({
-        //         'infoId':row.id,
-        //         'types':'1',
-        //     })).then(res => {
-        //         if(res.data.statusCode==2002){
-        //             self.SelectData();
-        //         }
-        //         else{
-        //             self.$message.error(res.data.errorMsg);
-        //         }
-        //     }).catch(function (error) {
-        //         console.log(error);
-        //     })
-        // },
+        handleIsRead(index,row){
+            let self = this;
+            self.$axios.post('/api/info/EditOperationalInfoState',Qs.stringify({
+                'oId':row.id,
+            })).then(res => {
+                if(res.data.statusCode==2002){
+                    self.SelectData();
+                }
+                else{
+                    self.$message.error(res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
         ClearSelectRomeData(){
             let self = this;
             self.SelectRomeData.sysType='';

@@ -114,7 +114,7 @@ class Logging(object):
             obj_db_UserTable = db_UserTable.objects.filter(userName="admin")
             db_OperateInfo.objects.create(
                 sysType=sysType, level=1, triggerType='System',remindType='Error',
-                toPage=toPage, toFun=toFun, info=info,
+                toPage=toPage, toFun=toFun, info=info,is_read=0,
                 uid_id=obj_db_UserTable[0].id
             )
         except BaseException as e:

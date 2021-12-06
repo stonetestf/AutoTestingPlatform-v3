@@ -7,10 +7,12 @@ from dwebsocket.decorators import accept_websocket
 from time import sleep
 
 
+
 import json
-# import psutil
+import psutil
 
 # Create your db here.
+from django.db.models import Q
 from login.models import UserTable as db_UserTable
 from django.contrib.auth.models import User as db_DjUser
 from routerPar.models import Router as db_Router
@@ -252,8 +254,6 @@ def get_router_path(request):
 @require_http_methods(["GET"])  # 用户统计数据,首页右下角弹出框
 def get_user_statistics_info(request):
     response = {}
-    errorCount = 0
-    changeCount = 0
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
     except BaseException as e:
@@ -262,21 +262,31 @@ def get_user_statistics_info(request):
         cls_Logging.record_error_info('HOME', 'home', 'get_router_path', errorMsg)
     else:
         obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId, is_del=0)
-        obj_db_OperateInfo = db_OperateInfo.objects.filter()
-        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
+
         if obj_db_UserBindRole:
-            if obj_db_UserBindRole[0].role.is_admin == 1:  # 是否超级管理
-                obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType='Error')
+            # if obj_db_UserBindRole[0].role.is_admin == 1:  # 是否超级管理
+            #     obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType='Error')
+            # else:
+            # obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId, remindType='Warning')
+            # for i in obj_db_PushInfo:
+            #     if i.oinfo.remindType == 'Error' and i.is_read == 0:
+            #         errorCount += 1
+            #     elif i.oinfo.remindType in ('Add', 'Edit') and i.is_read == 0:
+            #         changeCount += 1
+            pushCount = db_PushInfo.objects.filter(~Q(oinfo__uid_id=userId),uid_id=userId,is_read=0).count()
+            errorCount = db_OperateInfo.objects.filter(remindType='Error',is_read=0).count()
+            warningCount = db_OperateInfo.objects.filter(uid_id=userId, remindType='Warning').count()
+
+            if obj_db_UserBindRole[0].role.is_admin == 1:
+                message = f"当前您的信息: <br>" \
+                          f"错误信息({errorCount}),警告信息({warningCount}),推送信息({pushCount}),<br>" \
+                          f"请注意查收!"
             else:
-                obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId, remindType='Warning')
-            for i in obj_db_PushInfo:
-                if i.oinfo.remindType == 'Error' and i.is_read == 0:
-                    errorCount += 1
-                elif i.oinfo.remindType in ('Add', 'Edit') and i.is_read == 0:
-                    changeCount += 1
-            errorCount += obj_db_OperateInfo.count()
+                message = f"当前您的信息: <br>" \
+                          f"警告信息({warningCount}),推送信息({pushCount}),<br>" \
+                          f"请注意查收!"
             response['statusCode'] = 2000
-            response['message'] = f"当前您的信息: <br>错误信息({errorCount}),更变推送信息({changeCount}),<br>请注意查收!"
+            response['message'] = message
 
     return JsonResponse(response)
 

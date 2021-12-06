@@ -38,7 +38,7 @@ def select_operational_info(request):
         objData = cls_object_maker(responseData)
         sysType = objData.sysType
         remindType = objData.remindType
-        # isRead = objData.isRead
+        isRead = objData.isRead
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -59,9 +59,9 @@ def select_operational_info(request):
             # obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType__in=('Add', 'Edit'))
             obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType=remindType)
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
-        # if isRead:
-        #     obj_db_OperateInfo = obj_db_OperateInfo.filter(is_read=isRead)
-        #     select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
+        if isRead:
+            obj_db_OperateInfo = obj_db_OperateInfo.filter(is_read=isRead)
+            select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
 
         for i in select_db_OperateInfo:
             editInfo = ""
@@ -82,7 +82,7 @@ def select_operational_info(request):
                 'editInfo':editInfo,
                 # 'CUFront': i.CUFront,
                 # 'CURear': i.CURear,
-                # 'is_read': i.is_read,
+                'is_read': i.is_read,
                 'userName': i.uid.userName,
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
             })
@@ -140,7 +140,7 @@ def user_operational_info(request):
         if obj_db_UserTable:
             for i in select_db_PushInfo:
                 # 排除创建者看到自己推给别人的信息
-                if i.oinfo.uid_id != userId and i.is_read == 0 and i.oinfo.remindType != 'Error':
+                if i.oinfo.uid_id != userId and i.is_read == 0:
                     dataList.append({
                         'id': i.id,
                         'triggerType':i.oinfo.triggerType,
@@ -185,6 +185,28 @@ def edit_isread_state(request):
                     db_PushInfo.objects.filter(uid_id=userId).update(updateTime=cls_Common.get_date_time(), is_read=1)
                 else:
                     db_PushInfo.objects.filter(id=infoId).update(updateTime=cls_Common.get_date_time(), is_read=1)
+        except BaseException as e:  # 自动回滚，不需要任何操作
+            response['errorMsg'] = f"已读操作失败:{e}"
+        else:
+            response['statusCode'] = 2002
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 更改操作信息中的Error未读为已读取
+def edit_operational_info_state(request):
+    response = {}
+    try:
+        oId = request.POST['oId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'info', 'edit_operational_info_state', errorMsg)
+    else:
+        try:
+            with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+              db_OperateInfo.objects.filter(id=oId).update(is_read=1,updateTime=cls_Common.get_date_time())
         except BaseException as e:  # 自动回滚，不需要任何操作
             response['errorMsg'] = f"已读操作失败:{e}"
         else:
