@@ -11,3 +11,4 @@ psutil
 opencv-python
 Pillow
 dwebsocket
+requests

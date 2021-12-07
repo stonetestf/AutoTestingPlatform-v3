@@ -7,14 +7,14 @@ from PageManagement.models import PageManagement as db_PageManagement
 from FunManagement.models import FunManagement as db_FunManagement
 
 # Create reference here.
-from ClassData.Logger import Logging
+from ClassData.Logger import Logging as cls_Logging
 
 # Create info here.
-cls_Logging = Logging()
+# cls_Logging = Logging()
 
 
 # Create your views here.
-class FindTable(object):
+class FindTable(cls_Logging):
     def get_userId(self, token):  # 从Hearder中获取用户ID
         token = db_Token.objects.filter(key=token)  # 内置查询方法
         if token:

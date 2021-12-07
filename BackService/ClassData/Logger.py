@@ -12,7 +12,8 @@ import colorlog
 log_colors_config = {
     'DEBUG': 'cyan',
     'INFO': 'white',
-    'ERROR': 'red'
+    'ERROR': 'red',
+    'WARNING': 'yellow'
 }
 # 获取日志记录器，配置日志等级
 logging.basicConfig(level=logging.INFO)  # 设置日志级别
@@ -113,18 +114,18 @@ class Logging(object):
         try:
             obj_db_UserTable = db_UserTable.objects.filter(userName="admin")
             db_OperateInfo.objects.create(
-                sysType=sysType, level=1, triggerType='System',remindType='Error',
-                toPage=toPage, toFun=toFun, info=info,is_read=0,
+                sysType=sysType, level=1, triggerType='System', remindType='Error',
+                toPage=toPage, toFun=toFun, info=info, is_read=0,
                 uid_id=obj_db_UserTable[0].id
             )
         except BaseException as e:
             self.print_log('error', 'record_error_info', str(e))
 
-    # 添加操作信息
-    def record_operation_info(self, sysType,triggerType,level,remindType,toPro, toPage, toFun,userId, info,
-                              CUFront=None,CURear=None):
+    # 添加通用操作信息
+    def record_operation_info(self, sysType, triggerType, level, remindType, toPro, toPage, toFun, userId, info,
+                              CUFront=None, CURear=None):
         """
-        :param triggerType:
+        :param triggerType:触发类型:系统(System)/手动(Manual)'
         :param sysType: 系统类型
         :param level: "提醒等级(错误(1),警告(2),新增/修改/删除(3))"
         :param remindType: 提醒(警告/新增/修改/删除/其他)
@@ -139,8 +140,8 @@ class Logging(object):
         """
         try:
             save_db_OperateInfo = db_OperateInfo.objects.create(
-                sysType=sysType,triggerType=triggerType, level=level, remindType=remindType,
-                toPro=toPro, toPage=toPage, toFun=toFun, info=info, CUFront=CUFront,CURear=CURear,uid_id=userId
+                sysType=sysType, triggerType=triggerType, level=level, remindType=remindType,
+                toPro=toPro, toPage=toPage, toFun=toFun, info=info, CUFront=CUFront, CURear=CURear, uid_id=userId
             )
         except BaseException as e:
             self.print_log('error', 'record_operation_info', str(e))
@@ -148,8 +149,33 @@ class Logging(object):
         else:
             return save_db_OperateInfo.id
 
+    # 添加本地的操作信息例：警告
+    def record_local_operation_info(self, sysType, triggerType, level, remindType, toPro, toPage, toFun, info):
+        """
+        :param triggerType:触发类型:系统(System)/手动(Manual)'
+        :param sysType: 系统类型
+        :param level: "提醒等级(错误(1),警告(2),新增/修改/删除(3))"
+        :param remindType: 提醒(警告/新增/修改/删除/其他)
+        :param toPro:
+        :param toPage:
+        :param toFun:
+        :param info:
+        :return:
+        """
+        try:
+            obj_db_UserTable = db_UserTable.objects.filter(userName="admin")
+            save_db_OperateInfo = db_OperateInfo.objects.create(
+                sysType=sysType, triggerType=triggerType, level=level, remindType=remindType,
+                toPro=toPro, toPage=toPage, toFun=toFun, info=info,uid_id=obj_db_UserTable[0].id
+            )
+        except BaseException as e:
+            self.print_log('error', 'record_local_operation_info', str(e))
+            return None
+        else:
+            return save_db_OperateInfo.id
+
     # 推送用户
-    def push_to_user(self,operationId, pushToUserId):
+    def push_to_user(self, operationId, pushToUserId):
         try:
             db_PushInfo.objects.create(
                 uid_id=pushToUserId,
@@ -170,3 +196,5 @@ class Logging(object):
             logger.info(f'[{methods}] [{logType}]: {msg}')
         elif logType == "error":
             logger.error(f'[{methods}] [{logType}]: {msg}')
+        elif logType == "warning":
+            logger.warning(f'[{methods}] [{logType}]: {msg}')

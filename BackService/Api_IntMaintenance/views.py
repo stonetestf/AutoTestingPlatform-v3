@@ -12,6 +12,7 @@ from Api_IntMaintenance.models import ApiBody as db_ApiBody
 from Api_IntMaintenance.models import ApiExtract as db_ApiExtract
 from Api_IntMaintenance.models import ApiValidate as db_ApiValidate
 from Api_IntMaintenance.models import ApiOperation as db_ApiOperation
+from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -55,7 +56,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageEnvironment', 'select_data', errorMsg)
+        cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'select_data', errorMsg)
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
         select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
@@ -580,7 +581,7 @@ def edit_data(request):
                     oldData = {
                         'basicInfo': {
                             'apiId': basicInfo.apiId,
-                            'proId':obj_db_ApiBaseData[0].pid_id,
+                            'proId': obj_db_ApiBaseData[0].pid_id,
                             'pageId': obj_db_ApiBaseData[0].page_id,
                             'funId': obj_db_ApiBaseData[0].fun_id,
                             'environmentId': obj_db_ApiBaseData[0].environment_id,
@@ -965,4 +966,132 @@ def load_data(request):
             response['statusCode'] = 2000
         else:
             response['errorMsg'] = "未找到当前选择的接口数据,请刷新后重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def send_request(request):
+    response = {
+        'tabPane': {
+            'extractTable':[],
+            'assertionTable':[]
+        }
+    }
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        apiId = request.POST['apiId']
+        environmentId = request.POST['environmentId']
+        onlyCode = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'request_api', errorMsg)
+    else:
+        cls_Logging.print_log('info', 'send_request', '-----------------------------start-----------------------------')
+        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, id=apiId)
+        if obj_db_ApiBaseData:
+            # region 获取环境URl
+            if environmentId:
+                obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId)
+                if obj_db_PageEnvironment:
+                    environmentUrl = obj_db_PageEnvironment[0].environmentUrl
+                else:
+                    environmentUrl = obj_db_ApiBaseData[0].environment.environmentUrl
+            else:
+                environmentUrl = obj_db_ApiBaseData[0].environment.environmentUrl
+            # endregion
+            requestType = obj_db_ApiBaseData[0].requestType
+            requestUrl = f"{environmentUrl}{obj_db_ApiBaseData[0].requestUrl}"
+            requestParamsType = obj_db_ApiBaseData[0].requestParamsType  # 最终是以body请求还是以params请求
+            # 如果是body请求，还要看他请求的类型来决定以哪种形式发送
+            bodyRequestType = obj_db_ApiBaseData[0].bodyRequestSaveType
+            response['requestType'] = requestType
+            response['requestUrl'] = requestUrl
+
+            # region 请求数据获取
+            # 获取头部数据
+            obj_db_ApiHeaders = db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId)
+            headersData = [{'key': i.key, 'value': i.value} for i in obj_db_ApiHeaders if i.state]
+
+            # 获取params数据
+            obj_db_ApiParams = db_ApiParams.objects.filter(is_del=0, apiId_id=apiId)
+            paramsData = [{'key': i.key, 'value': i.value} for i in obj_db_ApiParams if i.state]
+
+            # 获取body数据
+            obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=apiId)
+            if bodyRequestType == 'form-data':
+                bodyData = [{'key': i.key, 'value': i.value} for i in obj_db_ApiBody if i.state]
+            elif bodyRequestType in ('json', 'raw'):
+                bodyData = obj_db_ApiBody[0].value
+            else:
+                bodyData = None
+
+            # 获取提取数据
+            obj_db_ApiExtract = db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId)
+            extractData = [{'key': i.key, 'value': i.value} for i in obj_db_ApiExtract if i.state]
+
+            # 获取断言数据
+            obj_db_ApiValidate = db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId)
+            validateData = [{'checkName': i.checkName, 'validateType': i.validateType,
+                             'valueType': i.valueType, 'expectedResults': i.expectedResults}
+                            for i in obj_db_ApiValidate if i.state]
+            # endregion
+
+            # 转换请求数据为JSON格式
+            conversionToJson = cls_RequstOperation.conversion_params_to_json(
+                headersData, paramsData, bodyRequestType, bodyData)
+            if conversionToJson['state']:
+                requestHeaders = conversionToJson['headersDict']
+                requestParams = conversionToJson['paramsDict']
+                requestBody = conversionToJson['bodyDict']
+                if requestParamsType == "Body":
+                    requestData = requestBody
+                else:
+                    requestData = requestParams
+
+                # 转换参数中带有引用的数据
+                conversionImportData = cls_RequstOperation.conversion_params_import_data(
+                    requestUrl, headersData, paramsData, bodyData)
+                if conversionImportData['state']:
+                    # 发送请求
+                    requestsApi = cls_RequstOperation.requests_api(
+                        requestType, requestParamsType, bodyRequestType, requestUrl, requestHeaders, requestData)
+                    if requestsApi['state']:
+                        response['responseCode'] = requestsApi['responseCode']
+                        response['time'] = requestsApi['time']
+                        # 解决中文乱码的问题
+                        response['tabPane']['content'] = json.dumps(requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),ensure_ascii=False)
+                        response['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
+
+                        if extractData:  # 如果有提取的数据才会执行断言
+                            requestExtract = cls_RequstOperation.request_extract(userId,onlyCode,
+                                                                                 requestsApi['content'],
+                                                                                 requestsApi['responseCode'],
+                                                                                 extractData)
+                            if requestExtract['state']:
+                                response['tabPane']['extractTable'] = requestExtract['extractList']
+
+                                # 断言数据
+                                requestValidate = cls_RequstOperation.request_validate(requestExtract['extractList'],
+                                                                                       validateData)
+                                if requestValidate['state']:
+                                    response['tabPane']['assertionTable'] = requestValidate['validateReport']
+                                    response['reportState'] = 'Pass' if requestValidate['reportState'] else 'Fail'
+                            else:
+                                response['errorMsg'] = requestExtract['errorMsg']
+                        else:
+                            response['reportState'] = 'Pass'
+
+                    else:
+                        response['errorMsg'] = requestsApi['errorMsg']
+                else:
+                    response['errorMsg'] = conversionImportData['errorMsg']
+            else:
+                response['errorMsg'] = conversionToJson['errorMsg']
+        else:
+            response['errorMsg'] = '没有找到当前所发送请求的接口信息'
+        response['statusCode'] = 2000
+        cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
     return JsonResponse(response)

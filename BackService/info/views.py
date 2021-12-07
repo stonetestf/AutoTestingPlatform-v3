@@ -138,6 +138,7 @@ def user_operational_info(request):
         if obj_db_UserTable:
             for i in select_db_PushInfo:
                 # 排除创建者看到自己推给别人的信息
+                # i.oinfo.uid_id != userId and
                 if i.oinfo.uid_id != userId and i.is_read == 0:
                     dataList.append({
                         'id': i.id,

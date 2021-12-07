@@ -404,7 +404,7 @@
                                             label="提取表达式"
                                             align= "center">
                                             <template slot-scope="scope">
-                                                <el-input v-model="scope.row.value" placeholder="提取表达式,例:$.key/$.key[0]"></el-input>
+                                                <el-input v-model="scope.row.value" placeholder="例:$.statuscode/$.key[0]"></el-input>
                                             </template>
                                         </el-table-column>
                                         <el-table-column

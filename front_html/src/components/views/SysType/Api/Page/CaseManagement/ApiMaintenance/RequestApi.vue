@@ -1,15 +1,44 @@
 <template>
     <div>
         <template>
-            <el-drawer
-            :title="dialogTitle"
-            size="1200px"
-            :wrapperClosable="false"
-            :visible.sync="dialogVisible"
-            direction='rtl'
-            :before-close="dialogClose">
-             
-            </el-drawer>
+            <el-dialog
+                :title="dialogTitle"
+                :visible.sync="dialogVisible"
+                :close-on-click-modal=false
+                :before-close="dialogClose"
+                width="400px">
+                <el-form ref="RomeData" :rules="rules" :model="RomeData"  label-width="100px" @submit.native.prevent>
+                    <el-form-item label="选择环境:" >
+                        <el-select v-model="RomeData.environmentId" clearable placeholder="默认为原接口环境" style="float:left" @click.native="GetPageEnvironmentNameOption()">
+                            <el-option
+                                v-for="item in RomeData.environmentNameOption"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="运行方式:" prop="runType">
+                        <el-select v-model="RomeData.runType" clearable placeholder="请选择运行方式" style="float:left">
+                            <el-option
+                                v-for="item in RomeData.runTypeOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-button  type="primary" @click="submitForm('RomeData')">运行</el-button>
+                    <el-button @click="ClearRomeData()">重置</el-button>
+                </el-form>
+            </el-dialog>
+        </template>
+        <template>
+            <dialog-test-report
+                @closeDialog="closeTestReportDialog" 
+                :isVisible="dialog.testReport.dialogVisible" 
+                :dialogPara="dialog.testReport.dialogPara">
+            </dialog-test-report>
         </template>
     </div>
 </template>
@@ -17,9 +46,12 @@
 <script>
 import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
+import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
+import DialogTestReport from "./TestReport.vue";
 
 export default {
     components: {
+        DialogTestReport
     },
     data() {
         return {
@@ -27,8 +59,28 @@ export default {
             dialogVisible:false,
             loading:false,
             RomeData:{
+                apiId:'',
+                apiName:'',
+                environmentId:'',
+                environmentNameOption:[],
+                runType:'',
+                runTypeOptions:[
+                    {'label':'同步(显示执行过程)','value':'Synchronous'},
+                    {'label':'异步(不会显示执行过程)','value':'Asynchronous'},
+                ],
             },
-    
+            rules:{
+                runType:[{required: true, message: '请选择运行方式', trigger: 'change' }]
+            },
+            dialog:{
+                testReport:{//运行过程
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+            },
         };
     },
     mounted(){
@@ -51,16 +103,61 @@ export default {
             handler(newval,oldval)
             {
                 PrintConsole(newval);
-
+                this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew;
-            
+                this.RomeData.apiId = newval.apiId;
+                this.RomeData.apiName = newval.apiName;
             },
         }
     },
     methods: {
         dialogClose(done){//用于调用父页面方法
             this.$emit('closeDialog');
+        },
+        ClearRomeData(){
+            let self = this;
+            self.resetForm('RomeData');
+            self.RomeData.environmentId='';
+            self.RomeData.runType='';
+        },
+        resetForm(formName) {//清除正则验证
+            if (this.$refs[formName] !== undefined) {
+                this.$refs[formName].resetFields();
+            }
+        },
+        submitForm(formName) {
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    if(this.RomeData.runType=='Synchronous'){
+                        this.OpenTestReportDialog();
+                    }else{
+                        this.dialogClose();
+                        this.$message.success('请求已发送置后台,稍后请在测试报告中查看运行结果!');
+                    }
+                } 
+            });
+        },
+        GetPageEnvironmentNameOption(){
+            GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{
+                this.RomeData.environmentNameOption = d;
+            });
+        },
+
+        //运行过程
+        closeTestReportDialog(){
+            this.dialog.testReport.dialogVisible =false;
+        },
+        OpenTestReportDialog(index,row){
+            let self = this;
+            self.dialog.testReport.dialogPara={
+                dialogTitle:self.RomeData.apiName,//初始化标题
+                apiId:self.RomeData.apiId,
+                environmentId:self.RomeData.environmentId,
+                isTest:false,
+            }
+            self.dialog.testReport.dialogVisible=true;
+            self.dialogClose();
         },
         
     }

@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'WorkorderManagement',
     'PageEnvironment',
     'Api_IntMaintenance',
+    'Api_TestReport',
 
 ]
 WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets

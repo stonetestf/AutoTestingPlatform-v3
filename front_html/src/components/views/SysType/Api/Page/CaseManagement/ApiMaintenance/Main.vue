@@ -155,7 +155,7 @@
                             <el-button
                                 size="mini"
                                 type="success"
-                                @click="OpenEditDialog(scope.$index, scope.row)">Request</el-button>
+                                @click="OpenRequestApiDialog(scope.$index, scope.row)">Request</el-button>
                             <el-button
                                 size="mini"
                                 @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
@@ -209,7 +209,6 @@ import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import DialogEditor from "./Editor.vue";
 import DialogRequestApi from "./RequestApi.vue";
-
 
 export default {
     components: {
@@ -346,8 +345,9 @@ export default {
         OpenRequestApiDialog(index,row){
             let self = this;
             self.dialog.requestApi.dialogPara={
-                dialogTitle:'测试请求:'+ row.apiName,//初始化标题
+                dialogTitle:'选择运行',//初始化标题
                 apiId:row.id,
+                apiName:row.apiName,
             }
             self.dialog.requestApi.dialogVisible=true;
         },
