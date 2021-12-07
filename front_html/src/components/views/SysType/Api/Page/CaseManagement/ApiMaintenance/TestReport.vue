@@ -1,0 +1,321 @@
+<template>
+   <el-drawer
+        :title="dialogTitle"
+        size="1000px"
+        :visible.sync="dialogVisible"
+        direction="rtl"
+        :before-close="dialogClose">
+        <el-card 
+            style="height:865px"
+            v-loading="loading"
+            element-loading-text="拼命返回请求信息中"
+            element-loading-spinner="el-icon-loading">
+            <div>
+                <el-form ref="RomeData" :model="RomeData" label-width="80px">
+                    <el-form-item label="请求地址:">
+                        <span style="float:left">{{RomeData.requestUrl}}</span>
+                    </el-form-item>
+                    <el-form-item label="请求类型:">
+                        <span style="float:left">{{RomeData.requestType}}</span>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <div  style="margin-top:-20px">
+                <el-divider></el-divider>
+            </div>
+            <div>
+                <el-row style="font-size:13px">
+                    <el-col :span="3">
+                        <div>
+                            <!-- <div v-bind:style="{color:scope.row.is_activation == 1 ? 'chartreuse' : 'red'}">{{scope.row.is_activation == 0 ? '否' : '是'}}</div> -->
+                            <span>状态码:</span>
+                            <span v-bind:style="{color:RomeData.stateCode == 200 ? 'chartreuse' : 'red'}">{{RomeData.stateCode}}</span>
+                            <el-divider direction="vertical"></el-divider>
+                        </div>
+                    </el-col>
+                    <el-col :span="2">
+                        <div>
+                            <span>耗时:{{RomeData.time}}</span>
+                            <el-divider direction="vertical"></el-divider>
+                        </div>
+                    </el-col>
+                    <el-col :span="4">
+                        <div style="margin-top:-8px">
+                            <span>报告状态:</span>
+                            <el-tag v-if="RomeData.reportState=='Pass'" type="success">通过</el-tag>
+                            <el-tag v-else-if="RomeData.reportState=='Fail'" type="warning">失败</el-tag>
+                            <el-tag v-else type="danger">错误</el-tag>
+                        </div>
+                    </el-col>
+                </el-row>
+            </div>
+            <div style="margin-top:-10px">
+                <el-divider></el-divider>
+            </div>
+            <div>
+                <el-tabs v-model="RomeData.activeName">
+                    <el-tab-pane label="返回主体" name="responseBody">
+                        <el-input type="textarea" 
+                            readonly
+                            resize="none"
+                            v-model="RomeData.responseText"
+                            :autosize="{ minRows: 27, maxRows: 27}"
+                            >
+                        </el-input>
+                    </el-tab-pane>
+                    <el-tab-pane :label="RomeData.responseHeadersName" name="ResponseHeaders">
+                        <el-table
+                            :data="RomeData.responseHeadersTableData"
+                            height="580px"
+                            style="width: 100%">
+                            <el-table-column
+                                width="400px"
+                                prop="key"
+                                label="名称">
+                            </el-table-column>
+                            <el-table-column
+                                prop="value"
+                                label="值">
+                            </el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                    <el-tab-pane :label="RomeData.ExtractResultsName" name="ExtractResults" v-if="RomeData.extractTableData.length!=0">
+                        <el-table
+                            :data="RomeData.extractTableData"
+                            height="580px"
+                            style="width: 100%">
+                            <el-table-column
+                                align="center"
+                                width="200px"
+                                prop="key"
+                                label="参数名">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                width="100px"
+                                prop="valueType"
+                                label="值类型">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                prop="value"
+                                label="参数值">
+                            </el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                    <el-tab-pane :label="RomeData.AssertionResultsName" name="AssertionResults" v-if="RomeData.assertionTableData.length!=0">
+                        <el-table
+                            :data="RomeData.assertionTableData"
+                            height="580px"
+                            border
+                            style="width: 100%">
+                            <el-table-column
+                                align="center"
+                                prop="checkName"
+                                label="检查值">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                prop="retChecktext"
+                                label="预期结果">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                prop="validateType"
+                                width="150px"
+                                label="比较类型">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                prop="retExtracttext"
+                                label="实际返回">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                width="100px"
+                                label="结果">
+                                <template slot-scope="scope">
+                                    <el-tag type="success" v-if="scope.row.results" >通过</el-tag>
+                                    <el-tag type="warning" v-else >失败</el-tag>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                    <el-tab-pane label="前置操作" name="PreOperation">
+                       
+                    </el-tab-pane>
+                    <el-tab-pane label="后置操作" name="RearOperation">
+                       
+                    </el-tab-pane>
+                    <el-tab-pane  :label="RomeData.errorInfoName" name="errorInfo" v-if="RomeData.errorInfo">
+                        <el-input type="textarea" 
+                            readonly
+                            resize="none"
+                            v-model="RomeData.errorInfo"
+                            :autosize="{ minRows: 25, maxRows: 25}">
+                        </el-input>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        </el-card>
+    </el-drawer>
+</template>
+
+<script>
+import Qs from 'qs';
+import {PrintConsole} from "../../../../../../js/Logger.js";
+
+export default {
+    components: {
+        
+    },
+    data() {
+        return {
+        dialogTitle:"",
+        dialogVisible:false,  
+        loading:true,
+
+        RomeData:{  
+            requestUrl:'Null',
+            requestType:'Null',
+            stateCode:'Null',
+            time:'Null',
+            reportState:'Null',
+
+            activeName:'responseBody',
+            responseHeadersName:'返回Headers',
+            ExtractResultsName:'提取结果',
+            AssertionResultsName:'断言结果',
+            errorInfoName:'错误信息',
+    
+            responseText:'',
+            responseHeadersTableData:[],
+            extractTableData:[],
+            assertionTableData:[],
+            
+            errorInfo:'',
+        },
+
+        };
+    },
+    props:[//main页面在引用editor时 必须声明所需要调用的属性
+        'isVisible','dialogPara'
+    ],
+    watch:{//当我们输入值后，wacth监听每次修改变化的新值，然后计算输出值
+        isVisible:{//用于监听父页面的isVisible，true时就弹出窗口
+            handler(newval,oldval)
+            {
+                this.dialogVisible=newval;
+            }
+        },
+        dialogPara:{
+            handler(newval,oldval)
+            {
+                PrintConsole('newval',newval);
+                this.ClearRomeData();
+                this.dialogTitle = newval.dialogTitle;
+                this.RequestApi(newval.isTest,newval.apiId,newval.environmentId);
+            }
+        },
+        'RomeData.responseHeadersTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.RomeData.responseHeadersTableData.length;
+                if(dataLength==0){
+                    self.RomeData.responseHeadersName='返回Headers';
+                }else{
+                    self.RomeData.responseHeadersName='返回Headers('+dataLength+')';
+                }
+            }
+        },
+        'RomeData.extractTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.RomeData.extractTableData.length;
+                if(dataLength==0){
+                    self.RomeData.ExtractResultsName='提取结果';
+                }else{
+                    self.RomeData.ExtractResultsName='提取结果('+dataLength+')';
+                }
+            }
+        },
+        'RomeData.assertionTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.RomeData.assertionTableData.length;
+                if(dataLength==0){
+                    self.RomeData.AssertionResultsName='断言结果';
+                }else{
+                    self.RomeData.AssertionResultsName='断言结果('+dataLength+')';
+                }
+            }
+        },
+        
+    },
+    mounted(){  
+
+    },
+    methods: {
+        dialogClose(done){//用于调用父页面方法
+            this.$emit('closeDialog');
+        },
+        ClearRomeData(){
+            let self = this;
+            self.RomeData.requestUrl='Null';
+            self.RomeData.requestType='Null';
+            self.RomeData.stateCode='Null';
+            self.RomeData.time='Null';
+            self.RomeData.reportState='Null';
+
+            self.RomeData.activeName='responseBody';
+            self.RomeData.responseText="";
+            self.RomeData.responseHeadersTableData=[];
+            self.RomeData.extractTableData=[];
+            self.RomeData.assertionTableData=[];
+            self.RomeData.errorInfo='';
+        },
+        RequestApi(isTest,apiId,environmentId){
+            let self = this;
+            self.loading=true;
+            if(isTest){
+                params = '/api/ApiIntMaintenance/SendTestRequest',{
+
+                }
+            }else{
+                self.$axios.post('/api/ApiIntMaintenance/SendRequest',Qs.stringify({
+                    'apiId':apiId,
+                    'environmentId':environmentId,
+                })).then(res => {
+                    if(res.data.statusCode==2000){
+                        self.RomeData.requestUrl = res.data.requestUrl;
+                        self.RomeData.requestType = res.data.requestType;
+                        self.RomeData.stateCode = res.data.responseCode;
+                        self.RomeData.time = res.data.time;
+                        self.RomeData.reportState = res.data.reportState;
+
+                        self.RomeData.responseText = res.data.tabPane.content;
+                        self.RomeData.responseHeadersTableData = res.data.tabPane.responseHeaders;
+                        self.RomeData.extractTableData = res.data.tabPane.extractTable;
+                        self.RomeData.assertionTableData = res.data.tabPane.assertionTable;
+
+                        self.RomeData.errorInfo = res.data.errorMsg;
+                        self.loading=false;
+                    }else{
+                        self.$message.error('接口请求失败'+res.data.errorMsg);
+                        self.loading=false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.loading=false;
+                })
+            }
+          
+        },
+        
+    }  
+};
+</script>
+
+<style>
+
+</style>
