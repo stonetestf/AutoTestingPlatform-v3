@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.db import transaction
 
 import json
+import ast
 
 # Create your db here.
 from info.models import OperateInfo as db_OperateInfo
@@ -64,11 +65,6 @@ def select_operational_info(request):
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
 
         for i in select_db_OperateInfo:
-            editInfo = ""
-            if i.CUFront:
-                editInfo += f"{i.CUFront}"
-            if i.CURear:
-                editInfo += f"<br>{i.CURear}"
             dataList.append({
                 'id': i.id,
                 'triggerType':i.triggerType,
@@ -79,9 +75,11 @@ def select_operational_info(request):
                 'toPage': i.toPage,
                 'toFun': i.toFun,
                 'info': i.info,
-                'editInfo':editInfo,
-                # 'CUFront': i.CUFront,
-                # 'CURear': i.CURear,
+                # 'editInfo':editInfo,
+                'tableItem':[{
+                    'CUFront':i.CUFront,
+                    'CURear': i.CURear,
+                }],
                 'is_read': i.is_read,
                 'userName': i.uid.userName,
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),

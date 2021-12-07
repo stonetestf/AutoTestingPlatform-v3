@@ -196,7 +196,7 @@ def edit_data(request):
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId,is_del=0)
         oldData = list(obj_db_ProManagement.values())
-        newData = dict(request.POST)
+        newData = json.dumps(request.POST)
         if obj_db_ProManagement:
             # 查询当前修改的用户是不是创建者
             if userId == obj_db_ProManagement[0].cuid:

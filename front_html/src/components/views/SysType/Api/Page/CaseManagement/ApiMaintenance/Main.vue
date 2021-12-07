@@ -343,7 +343,7 @@ export default {
         closeRequestApiDialog(){
             this.dialog.requestApi.dialogVisible =false;
         },
-        OpenEditDialog(index,row){
+        OpenRequestApiDialog(index,row){
             let self = this;
             self.dialog.requestApi.dialogPara={
                 dialogTitle:'测试请求:'+ row.apiName,//初始化标题

@@ -67,6 +67,23 @@
                                                         </el-option>
                                                     </el-select>
                                                 </el-form-item>
+                                                <div style="margin-left:-330px">
+                                                    <el-form-item label="关联To:">
+                                                        <el-cascader 
+                                                            @click.native="GetUserNameOption()"
+                                                            style="width:550px;"
+                                                            v-model="BasicRomeData.pushTo" 
+                                                            :options="BasicRomeData.userNameOptions" 
+                                                            :props="BasicRomeData.props" 
+                                                            :show-all-levels="false" 
+                                                            clearable>
+                                                            <template slot-scope="{ node, data }">
+                                                                <span>{{ data.label }}</span>
+                                                                <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                                                            </template>
+                                                        </el-cascader>
+                                                    </el-form-item>
+                                                </div>
                                             </el-form>
                                         </el-card>
                                     </div>
@@ -749,6 +766,9 @@ export default {
                     {'label':'已完成','value':'Completed'},
                     {'label':'弃用','value':'Discard'},
                 ],
+                props: { multiple: true },
+                pushTo:[],
+                userNameOptions:[],
                 rules:{
                     pageId:[{ required: true, message: '请选择所属页面', trigger: 'change' }],
                     funId:[{ required: true, message: '请选择所属功能', trigger: 'change' }],
@@ -1178,6 +1198,7 @@ export default {
                 this.BasicRomeData.environmentNameOption = d;
             });
         },
+        
         resetForm(formName) {//清除正则验证
             if (this.$refs[formName] !== undefined) {
                 PrintConsole('清除正则验证')

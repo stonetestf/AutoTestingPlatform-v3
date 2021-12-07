@@ -159,7 +159,7 @@ def edit_data(request):
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         # region 添加操作信息
                         oldData = list(obj_db_PageEnvironment.values())
-                        newData = dict(request.POST)
+                        newData = json.dumps(request.POST)
                         cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Edit',
                             cls_FindTable.get_pro_name(proId), None, None,

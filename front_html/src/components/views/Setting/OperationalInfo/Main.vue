@@ -52,6 +52,29 @@
                             width="80px"
                             prop="id">
                         </el-table-column>
+                        <el-table-column 
+                            label="详情" 
+                            width="50px"
+                            type="expand">
+                            <template slot-scope="props">
+                                <el-form label-position="left" >
+                                    <el-table
+                                        :data="props.row.tableItem"
+                                        border>
+                                        <el-table-column
+                                            prop="CUFront"
+                                            label="修改前"
+                                            align= "center">
+                                        </el-table-column>
+                                        <el-table-column
+                                            prop="CURear"
+                                            align= "center"
+                                            label="修改后">
+                                        </el-table-column>
+                                    </el-table>
+                                </el-form>
+                            </template>
+                        </el-table-column>
                         <el-table-column
                             label="所属系统"
                             width="80px"
@@ -101,14 +124,14 @@
                             align= "center"
                             prop="info">
                         </el-table-column>
-                        <el-table-column
+                        <!-- <el-table-column
                             label="修改信息"
                             show-overflow-tooltip
                             align= "left">
                             <template slot-scope="scope">
                                 <div v-html="scope.row.editInfo"></div>
                             </template>
-                        </el-table-column>
+                        </el-table-column> -->
                         <el-table-column
                             label="操作时间"
                             width="160px"
@@ -212,6 +235,7 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
+                        obj.tableItem=d.tableItem;
                         obj.triggerType=d.triggerType;
                         obj.level=d.level;
                         obj.remindType=d.remindType;
