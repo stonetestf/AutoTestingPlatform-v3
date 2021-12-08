@@ -60,6 +60,7 @@ class RequstOperation(cls_Logging):
         results['bodyDict'] = bodyDict
         return results
 
+    # 请求
     def requests_api(self, requestType, requestParamsType, bodyRequestType, url, headers, requestData, files=None):
         """
         :param requestType: GET/POST
@@ -139,6 +140,7 @@ class RequstOperation(cls_Logging):
             results['content'] = content
             return results
 
+    # 提取
     def request_extract(self, userId, onlyCode, content, statuscode, extract):
         results = {}
         extractList = []
@@ -214,6 +216,7 @@ class RequstOperation(cls_Logging):
             results['extractList'] = extractList
         return results
 
+    # 断言
     def request_validate(self, extractList, validate):
         results = {}
         validateReport = []
@@ -276,18 +279,18 @@ class RequstOperation(cls_Logging):
                         extractValueType = "List"
                     validateReport.append(
                         {'checkName': checkName,
-                         'retChecktext': f'{retValueType}({expectedResults})',  # 预期结果
+                         'retCheckOut': f'{retValueType}({expectedResults})',  # 预期结果
                          'validateType': validateType,
-                         'retExtracttext': f'{extractValueType}({extractValue})',  # 实际返回
+                         'retExtractorOut': f'{extractValueType}({extractValue})',  # 实际返回
                          'results': reportState}
                     )
                     break
             else:
                 validateReport.append(
                     {'checkName': checkName,
-                     'retChecktext': f'{retValueType}({expectedResults})',  # 预期结果
+                     'retCheckOut': f'{retValueType}({expectedResults})',  # 预期结果
                      'validateType': validateType,
-                     'retExtracttext': '没有找到当前检查值的可提取数据,请检查提取设置中是否有此检查值!',
+                     'retExtractorOut': '没有找到当前检查值的可提取数据,请检查提取设置中是否有此检查值!',
                      'results': False}
                 )
         passNum = 0

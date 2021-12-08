@@ -115,7 +115,7 @@ def save_data(request):
                         cls_FindTable.get_pro_name(proId),
                         cls_FindTable.get_page_name(pageId), funName,
                         userId,
-                        '新增功能',CUFront=dict(request.POST)
+                        '新增功能',CUFront=json.dumps(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -212,7 +212,7 @@ def delete_data(request):
                 cls_FindTable.get_page_name(obj_db_FunManagement[0].page_id),
                 cls_FindTable.get_fun_name(funId),
                 userId,
-                '删除功能',CUFront=dict(request.POST)
+                '删除功能',CUFront=json.dumps(request.POST)
             )
             # endregion
             response['statusCode'] = 2003

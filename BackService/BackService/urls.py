@@ -29,8 +29,11 @@ import PageManagement.urls
 import FunManagement.urls
 import WorkorderManagement.urls
 import PageEnvironment.urls
+import DebugTalk.urls
+import GlobalVariable.urls
 
 import Api_IntMaintenance.urls
+
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
@@ -47,5 +50,7 @@ urlpatterns = [
     url('api/WorkorderManagement/', include(WorkorderManagement.urls)),
     url('api/PageEnvironment/', include(PageEnvironment.urls)),
     url('api/ApiIntMaintenance/', include(Api_IntMaintenance.urls)),
+    url('api/DebugTalk/', include(DebugTalk.urls)),
+    url('api/GlobalVariable/', include(GlobalVariable.urls)),
 
 ]

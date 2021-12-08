@@ -24,6 +24,19 @@
                                     <div style="margin-top:20px;">
                                         <el-card shadow="never">
                                             <el-form ref="BasicRomeData" :inline="true" :rules="BasicRomeData.rules" :model="BasicRomeData"  label-width="100px">
+                                                <el-form-item label="接口名称:" prop="apiName">
+                                                    <el-input placeholder="请输入接口名称" v-model="BasicRomeData.apiName" style="width:550px;"></el-input>
+                                                </el-form-item>
+                                                <el-form-item label="接口状态:" prop="apiState">
+                                                    <el-select v-model="BasicRomeData.apiState" clearable placeholder="请选择" >
+                                                        <el-option
+                                                            v-for="item in BasicRomeData.apiStateOption"
+                                                            :key="item.value"
+                                                            :label="item.label"
+                                                            :value="item.value">
+                                                        </el-option>
+                                                    </el-select>
+                                                </el-form-item>
                                                 <el-form-item label="所属页面:" prop="pageId">
                                                     <el-select v-model="BasicRomeData.pageId" clearable placeholder="请选择" @click.native="GetPageNameOption()">
                                                         <el-option
@@ -54,36 +67,36 @@
                                                         </el-option>
                                                     </el-select>
                                                 </el-form-item>
-                                                <el-form-item label="接口名称:" prop="apiName">
-                                                    <el-input placeholder="请输入接口名称" v-model="BasicRomeData.apiName" style="width:550px;"></el-input>
+                                                <el-form-item label="指派To:">
+                                                    <el-cascader 
+                                                        placeholder="可不填,默认为当前用户"
+                                                        @click.native="GetassignedUserNameOption()"
+                                                        v-model="BasicRomeData.assignedUserId" 
+                                                        :options="BasicRomeData.assignedUserNameOptions" 
+                                                        :show-all-levels="false" 
+                                                        clearable>
+                                                        <template slot-scope="{ node, data }">
+                                                            <span>{{ data.label }}</span>
+                                                            <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                                                        </template>
+                                                    </el-cascader>
                                                 </el-form-item>
-                                                <el-form-item label="接口状态:" prop="apiState">
-                                                    <el-select v-model="BasicRomeData.apiState" clearable placeholder="请选择" >
-                                                        <el-option
-                                                            v-for="item in BasicRomeData.apiStateOption"
-                                                            :key="item.value"
-                                                            :label="item.label"
-                                                            :value="item.value">
-                                                        </el-option>
-                                                    </el-select>
+                                                <el-form-item label="关联To:">
+                                                    <el-cascader 
+                                                        placeholder="被关联者将会在此接口变动时收到变动提醒"
+                                                        @click.native="GetUserNameOption()"
+                                                        style="width:550px;"
+                                                        v-model="BasicRomeData.pushTo" 
+                                                        :options="BasicRomeData.userNameOptions" 
+                                                        :props="BasicRomeData.props" 
+                                                        :show-all-levels="false" 
+                                                        clearable>
+                                                        <template slot-scope="{ node, data }">
+                                                            <span>{{ data.label }}</span>
+                                                            <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                                                        </template>
+                                                    </el-cascader>
                                                 </el-form-item>
-                                                <div style="margin-left:-330px">
-                                                    <el-form-item label="关联To:">
-                                                        <el-cascader 
-                                                            @click.native="GetUserNameOption()"
-                                                            style="width:550px;"
-                                                            v-model="BasicRomeData.pushTo" 
-                                                            :options="BasicRomeData.userNameOptions" 
-                                                            :props="BasicRomeData.props" 
-                                                            :show-all-levels="false" 
-                                                            clearable>
-                                                            <template slot-scope="{ node, data }">
-                                                                <span>{{ data.label }}</span>
-                                                                <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
-                                                            </template>
-                                                        </el-cascader>
-                                                    </el-form-item>
-                                                </div>
                                             </el-form>
                                         </el-card>
                                     </div>
@@ -404,7 +417,7 @@
                                             label="提取表达式"
                                             align= "center">
                                             <template slot-scope="scope">
-                                                <el-input v-model="scope.row.value" placeholder="例:$.statuscode/$.key[0]"></el-input>
+                                                <el-input v-model="scope.row.value" placeholder="例:$.statuscode,$.key[0],$.table[0].name"></el-input>
                                             </template>
                                         </el-table-column>
                                         <el-table-column
@@ -733,6 +746,7 @@ import {PrintConsole} from "../../../../../../js/Logger.js";
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetUserNameItems} from "../../../../../../js/GetSelectTable.js";
 
 export default {
     components: {
@@ -766,6 +780,8 @@ export default {
                     {'label':'已完成','value':'Completed'},
                     {'label':'弃用','value':'Discard'},
                 ],
+                assignedUserId:'',//指派用户
+                assignedUserNameOptions:[],
                 props: { multiple: true },
                 pushTo:[],
                 userNameOptions:[],
@@ -891,114 +907,118 @@ export default {
                                 GetFunNameItems(this.$cookies.get('proId'),self.BasicRomeData.pageId).then(dd=>{
                                     self.BasicRomeData.funNameOption = dd;
                                     self.BasicRomeData.funId = d.basicInfo.funId;
-                                    GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(dd=>{
-                                        self.BasicRomeData.environmentNameOption = dd;
-                                        self.BasicRomeData.environmentId = d.basicInfo.environmentId;
-                                        self.BasicRomeData.apiName = d.basicInfo.apiName;
-                                        self.BasicRomeData.apiState = d.basicInfo.apiState;
-                                        self.EditApiRomeData.requestType = d.apiInfo.requestType;
-                                        self.EditApiRomeData.requestUrl =  d.apiInfo.requestUrl;
-                                        //headers
-                                        d.apiInfo.request.headers.forEach(item_headers=>{
-                                            let obj = {};
-                                            obj.index = item_headers.index;
-                                            obj.state =item_headers.state;
-                                            obj.key =item_headers.key;
-                                            obj.value=item_headers.value;
-                                            obj.remarks=item_headers.remarks;
-                                            self.EditApiRomeData.headersRomeData.tableData.push(obj);
-                                        });
-                                        self.EditApiRomeData.headersRomeData.index=d.apiInfo.request.headers.length+1;
-
-                                        //params
-                                        d.apiInfo.request.params.forEach(item_params=>{
-                                            let obj = {};
-                                            obj.index = item_params.index;
-                                            obj.state =item_params.state;
-                                            obj.key =item_params.key;
-                                            obj.value=item_params.value;
-                                            obj.remarks=item_params.remarks;
-                                            self.EditApiRomeData.paramsRomeData.tableData.push(obj);
-                                        });
-                                        self.EditApiRomeData.paramsRomeData.index=d.apiInfo.request.params.length+1;
-
-                                        //body
-                                        self.EditApiRomeData.bodyRomeData.requestSaveType = d.apiInfo.request.body.requestSaveType;
-                                        if(d.apiInfo.request.body.requestSaveType=='form-data'){
-                                            d.apiInfo.request.body.bodyData.forEach(item_body=>{
+                                    GetUserNameItems().then(dd=>{
+                                        self.BasicRomeData.assignedUserNameOptions = dd;
+                                        self.BasicRomeData.assignedUserId = d.basicInfo.assignedUserId;
+                                        GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(dd=>{
+                                            self.BasicRomeData.environmentNameOption = dd;
+                                            self.BasicRomeData.environmentId = d.basicInfo.environmentId;
+                                            self.BasicRomeData.apiName = d.basicInfo.apiName;
+                                            self.BasicRomeData.apiState = d.basicInfo.apiState;
+                                            self.EditApiRomeData.requestType = d.apiInfo.requestType;
+                                            self.EditApiRomeData.requestUrl =  d.apiInfo.requestUrl;
+                                            //headers
+                                            d.apiInfo.request.headers.forEach(item_headers=>{
                                                 let obj = {};
-                                                obj.index = item_body.index;
-                                                obj.state =item_body.state;
-                                                obj.key =item_body.key;
-                                                obj.value=item_body.value;
-                                                obj.remarks=item_body.remarks;
-                                                self.EditApiRomeData.bodyRomeData.tableData.push(obj);
+                                                obj.index = item_headers.index;
+                                                obj.state =item_headers.state;
+                                                obj.key =item_headers.key;
+                                                obj.value=item_headers.value;
+                                                obj.remarks=item_headers.remarks;
+                                                self.EditApiRomeData.headersRomeData.tableData.push(obj);
                                             });
-                                            self.EditApiRomeData.bodyRomeData.index=d.apiInfo.request.body.bodyData.length+1;
-                                        }else if(d.apiInfo.request.body.requestSaveType=='raw'){
-                                            self.EditApiRomeData.bodyRomeData.rawValue = d.apiInfo.request.body.bodyData;
-                                        }
+                                            self.EditApiRomeData.headersRomeData.index=d.apiInfo.request.headers.length+1;
 
-                                        //extract
-                                        d.apiInfo.request.extract.forEach(item_extract=>{
-                                            let obj = {};
-                                            obj.index = item_extract.index;
-                                            obj.state =item_extract.state;
-                                            obj.key =item_extract.key;
-                                            obj.value=item_extract.value;
-                                            obj.remarks=item_extract.remarks;
-                                            self.EditApiRomeData.extractRomeData.tableData.push(obj);
+                                            //params
+                                            d.apiInfo.request.params.forEach(item_params=>{
+                                                let obj = {};
+                                                obj.index = item_params.index;
+                                                obj.state =item_params.state;
+                                                obj.key =item_params.key;
+                                                obj.value=item_params.value;
+                                                obj.remarks=item_params.remarks;
+                                                self.EditApiRomeData.paramsRomeData.tableData.push(obj);
+                                            });
+                                            self.EditApiRomeData.paramsRomeData.index=d.apiInfo.request.params.length+1;
+
+                                            //body
+                                            self.EditApiRomeData.bodyRomeData.requestSaveType = d.apiInfo.request.body.requestSaveType;
+                                            if(d.apiInfo.request.body.requestSaveType=='form-data'){
+                                                d.apiInfo.request.body.bodyData.forEach(item_body=>{
+                                                    let obj = {};
+                                                    obj.index = item_body.index;
+                                                    obj.state =item_body.state;
+                                                    obj.key =item_body.key;
+                                                    obj.value=item_body.value;
+                                                    obj.remarks=item_body.remarks;
+                                                    self.EditApiRomeData.bodyRomeData.tableData.push(obj);
+                                                });
+                                                self.EditApiRomeData.bodyRomeData.index=d.apiInfo.request.body.bodyData.length+1;
+                                            }else if(d.apiInfo.request.body.requestSaveType=='raw'){
+                                                self.EditApiRomeData.bodyRomeData.rawValue = d.apiInfo.request.body.bodyData;
+                                            }
+
+                                            //extract
+                                            d.apiInfo.request.extract.forEach(item_extract=>{
+                                                let obj = {};
+                                                obj.index = item_extract.index;
+                                                obj.state =item_extract.state;
+                                                obj.key =item_extract.key;
+                                                obj.value=item_extract.value;
+                                                obj.remarks=item_extract.remarks;
+                                                self.EditApiRomeData.extractRomeData.tableData.push(obj);
+                                            });
+                                            self.EditApiRomeData.extractRomeData.index=d.apiInfo.request.extract.length+1;
+
+                                            //validate
+                                            d.apiInfo.request.validate.forEach(item_validate=>{
+                                                let obj = {};
+                                                obj.index = item_validate.index;
+                                                obj.state =item_validate.state;
+                                                obj.checkName =item_validate.checkName;
+                                                obj.validateType=item_validate.validateType;
+                                                obj.valueType=item_validate.valueType;
+                                                obj.expectedResults=item_validate.expectedResults;
+                                                obj.remarks=item_validate.remarks;
+                                                self.EditApiRomeData.validateRomeData.tableData.push(obj);
+                                            });
+                                            self.EditApiRomeData.validateRomeData.index=d.apiInfo.request.validate.length+1;
+
+                                            //preOperation
+                                            d.apiInfo.request.preOperation.forEach(item_preOperation=>{
+                                                let obj = {};
+                                                obj.index = item_preOperation.index;
+                                                obj.state =item_preOperation.state;
+                                                obj.operationType =item_preOperation.operationType;
+                                                obj.methodsName=item_preOperation.methodsName;
+                                                obj.dataBase=item_preOperation.dataBase;
+                                                obj.sql=item_preOperation.sql;
+                                                obj.remarks=item_preOperation.remarks;
+
+                                                self.EditApiRomeData.preOperationRomeData.tableData.push(obj);
+                                            });
+                                            self.EditApiRomeData.preOperationRomeData.index=d.apiInfo.request.preOperation.length+1;
+
+                                            //rearOperation
+                                            d.apiInfo.request.rearOperation.forEach(item_rearOperation=>{
+                                                let obj = {};
+                                                obj.index = item_rearOperation.index;
+                                                obj.state =item_rearOperation.state;
+                                                obj.operationType =item_rearOperation.operationType;
+                                                obj.methodsName=item_rearOperation.methodsName;
+                                                obj.dataBase=item_rearOperation.dataBase;
+                                                obj.sql=item_rearOperation.sql;
+                                                obj.remarks=item_rearOperation.remarks;
+
+                                                self.EditApiRomeData.rearOperationRomeData.tableData.push(obj);
+                                            });
+                                            self.EditApiRomeData.rearOperationRomeData.index=d.apiInfo.request.rearOperation.length+1;
+
+                                            self.loading=false;
                                         });
-                                        self.EditApiRomeData.extractRomeData.index=d.apiInfo.request.extract.length+1;
-
-                                        //validate
-                                        d.apiInfo.request.validate.forEach(item_validate=>{
-                                            let obj = {};
-                                            obj.index = item_validate.index;
-                                            obj.state =item_validate.state;
-                                            obj.checkName =item_validate.checkName;
-                                            obj.validateType=item_validate.validateType;
-                                            obj.valueType=item_validate.valueType;
-                                            obj.expectedResults=item_validate.expectedResults;
-                                            obj.remarks=item_validate.remarks;
-                                            self.EditApiRomeData.validateRomeData.tableData.push(obj);
-                                        });
-                                        self.EditApiRomeData.validateRomeData.index=d.apiInfo.request.validate.length+1;
-
-                                        //preOperation
-                                        d.apiInfo.request.preOperation.forEach(item_preOperation=>{
-                                            let obj = {};
-                                            obj.index = item_preOperation.index;
-                                            obj.state =item_preOperation.state;
-                                            obj.operationType =item_preOperation.operationType;
-                                            obj.methodsName=item_preOperation.methodsName;
-                                            obj.dataBase=item_preOperation.dataBase;
-                                            obj.sql=item_preOperation.sql;
-                                            obj.remarks=item_preOperation.remarks;
-
-                                            self.EditApiRomeData.preOperationRomeData.tableData.push(obj);
-                                        });
-                                        self.EditApiRomeData.preOperationRomeData.index=d.apiInfo.request.preOperation.length+1;
-
-                                        //rearOperation
-                                        d.apiInfo.request.rearOperation.forEach(item_rearOperation=>{
-                                            let obj = {};
-                                            obj.index = item_rearOperation.index;
-                                            obj.state =item_rearOperation.state;
-                                            obj.operationType =item_rearOperation.operationType;
-                                            obj.methodsName=item_rearOperation.methodsName;
-                                            obj.dataBase=item_rearOperation.dataBase;
-                                            obj.sql=item_rearOperation.sql;
-                                            obj.remarks=item_rearOperation.remarks;
-
-                                            self.EditApiRomeData.rearOperationRomeData.tableData.push(obj);
-                                        });
-                                        self.EditApiRomeData.rearOperationRomeData.index=d.apiInfo.request.rearOperation.length+1;
-
                                     });
                                 });
                             });
-                            self.loading=false;
                         }else{
                             self.$message.error('获取数据失败:'+d.errorMsg);
                             self.loading=false;
@@ -1176,6 +1196,7 @@ export default {
             self.BasicRomeData.environmentId='';
             self.BasicRomeData.apiName='';
             self.BasicRomeData.apiState='';
+            self.BasicRomeData.assignedUserId='';
             PrintConsole('BasicRomeData','清除');
         
         },
@@ -1196,6 +1217,16 @@ export default {
         GetPageEnvironmentNameOption(){
             GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{
                 this.BasicRomeData.environmentNameOption = d;
+            });
+        },
+        GetUserNameOption(){
+            GetUserNameItems().then(d=>{
+                this.BasicRomeData.userNameOptions = d;
+            });
+        },
+        GetassignedUserNameOption(){
+            GetUserNameItems().then(d=>{
+                this.BasicRomeData.assignedUserNameOptions = d;
             });
         },
         
@@ -1779,6 +1810,7 @@ export default {
                             'apiName':self.BasicRomeData.apiName,
                             'environmentId':self.BasicRomeData.environmentId,
                             'apiState':self.BasicRomeData.apiState,
+                            'assignedUserId':self.BasicRomeData.assignedUserId,
                         },
                         'ApiInfo':{
                             'requestType':self.EditApiRomeData.requestType,
@@ -1818,6 +1850,7 @@ export default {
                             'apiName':self.BasicRomeData.apiName,
                             'environmentId':self.BasicRomeData.environmentId,
                             'apiState':self.BasicRomeData.apiState,
+                            'assignedUserId':self.BasicRomeData.assignedUserId,
                         },
                         'ApiInfo':{
                             'requestType':self.EditApiRomeData.requestType,

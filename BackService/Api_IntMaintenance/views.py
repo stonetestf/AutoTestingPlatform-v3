@@ -289,9 +289,13 @@ def save_data(request):
     try:
         responseData = json.loads(request.body)
         objData = cls_object_maker(responseData)
-        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])#当前操作者
         basicInfo = objData.BasicInfo
         apiInfo = objData.ApiInfo
+        if basicInfo.assignedUserId:
+            assignedUserId = basicInfo.assignedUserId[1]
+        else:
+            assignedUserId = userId
         requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
             apiInfo.request.params, apiInfo.request.body.formData, apiInfo.request.body.raw)
     except BaseException as e:
@@ -314,7 +318,7 @@ def save_data(request):
                         requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
-                        uid_id=userId, cuid=userId, is_del=0,
+                        uid_id=assignedUserId, cuid=userId, is_del=0,
                     )
                     # endregion
                     # region Headers
@@ -463,6 +467,10 @@ def edit_data(request):
         objData = cls_object_maker(responseData)
         basicInfo = objData.BasicInfo
         apiInfo = objData.ApiInfo
+        if basicInfo.assignedUserId:
+            assignedUserId = basicInfo.assignedUserId[1]
+        else:
+            assignedUserId = userId
         requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
             apiInfo.request.params, apiInfo.request.body.formData, apiInfo.request.body.raw)
     except BaseException as e:
@@ -586,7 +594,8 @@ def edit_data(request):
                             'funId': obj_db_ApiBaseData[0].fun_id,
                             'environmentId': obj_db_ApiBaseData[0].environment_id,
                             'apiName': obj_db_ApiBaseData[0].apiName,
-                            'apiState': obj_db_ApiBaseData[0].apiState},
+                            'apiState': obj_db_ApiBaseData[0].apiState,
+                            'assignedUserId':obj_db_ApiBaseData[0].uid_id},
                         'apiInfo': {
                             'requestType': obj_db_ApiBaseData[0].requestType,
                             'requestUrl': obj_db_ApiBaseData[0].requestUrl,
@@ -622,7 +631,7 @@ def edit_data(request):
                         requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
-                        uid_id=userId, cuid=userId, is_del=0,
+                        uid_id=assignedUserId, cuid=userId, is_del=0,
                     )
                     # region 删除 各类原数据
                     db_ApiHeaders.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
@@ -808,7 +817,7 @@ def delete_data(request):
                         cls_FindTable.get_fun_name(obj_db_ApiBaseData[0].fun_id),
                         userId,
                         f'删除接口:{apiId}:{obj_db_ApiBaseData[0].apiName}',
-                        CUFront=f"{dict(request.POST)}"
+                        CUFront=json.dumps(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -844,12 +853,14 @@ def load_data(request):
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, id=apiId)
         if obj_db_ApiBaseData:
             # region 基本信息
+            roleId = cls_FindTable.get_roleId(obj_db_ApiBaseData[0].uid_id)
             basicInfo = {
                 'pageId': obj_db_ApiBaseData[0].page_id,
                 'funId': obj_db_ApiBaseData[0].fun_id,
                 'environmentId': obj_db_ApiBaseData[0].environment_id,
                 'apiName': obj_db_ApiBaseData[0].apiName,
                 'apiState': obj_db_ApiBaseData[0].apiState,
+                'assignedUserId':[roleId,obj_db_ApiBaseData[0].uid_id],
             }
             # endregion
             # region headers
@@ -1062,7 +1073,8 @@ def send_request(request):
                         response['responseCode'] = requestsApi['responseCode']
                         response['time'] = requestsApi['time']
                         # 解决中文乱码的问题
-                        response['tabPane']['content'] = json.dumps(requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),ensure_ascii=False)
+                        response['tabPane']['content'] = json.dumps(
+                            requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),ensure_ascii=False)
                         response['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
 
                         if extractData:  # 如果有提取的数据才会执行断言
@@ -1083,7 +1095,7 @@ def send_request(request):
                                 response['errorMsg'] = requestExtract['errorMsg']
                         else:
                             response['reportState'] = 'Pass'
-
+                        response['statusCode'] = 2000
                     else:
                         response['errorMsg'] = requestsApi['errorMsg']
                 else:
@@ -1092,6 +1104,5 @@ def send_request(request):
                 response['errorMsg'] = conversionToJson['errorMsg']
         else:
             response['errorMsg'] = '没有找到当前所发送请求的接口信息'
-        response['statusCode'] = 2000
         cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
     return JsonResponse(response)

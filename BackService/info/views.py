@@ -50,7 +50,7 @@ def select_operational_info(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'info', 'select_operational_info', errorMsg)
     else:
-        obj_db_OperateInfo = db_OperateInfo.objects.filter().order_by('-createTime').order_by('-updateTime')
+        obj_db_OperateInfo = db_OperateInfo.objects.filter().order_by('-createTime')
         select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
 
         if sysType:

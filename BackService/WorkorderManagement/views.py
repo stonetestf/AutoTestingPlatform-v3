@@ -154,7 +154,7 @@ def save_data(request):
                         cls_FindTable.get_fun_name(funId),
                         userId,
                         f'A-{save_db_WorkorderManagement.id}:{workName}',
-                        CUFront=dict(request.POST)
+                        CUFront=json.dumps(request.POST)
                     )
                     # 添加工单的生命周期
                     db_WorkLifeCycle.objects.create(
@@ -259,7 +259,7 @@ def edit_data(request):
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         # region添加操作信息
                         oldData = list(obj_db_WorkorderManagement.values())
-                        newData = dict(request.POST)
+                        newData = json.dumps(request.POST)
                         operationInfoId = cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Edit',
                             cls_FindTable.get_pro_name(proId),
@@ -344,7 +344,7 @@ def delete_data(request):
                         cls_FindTable.get_page_name(obj_db_WorkorderManagement[0].page_id),
                         cls_FindTable.get_fun_name(obj_db_WorkorderManagement[0].fun_id),
                         userId,
-                        obj_db_WorkorderManagement[0].workName,CUFront=dict(request.POST)
+                        obj_db_WorkorderManagement[0].workName,CUFront=json.dumps(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作

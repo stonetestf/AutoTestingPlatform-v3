@@ -74,9 +74,10 @@ INSTALLED_APPS = [
     'FunManagement',
     'WorkorderManagement',
     'PageEnvironment',
+    'DebugTalk',
+    'GlobalVariable',
     'Api_IntMaintenance',
     'Api_TestReport',
-
 ]
 WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets
 # endregion

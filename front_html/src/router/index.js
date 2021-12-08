@@ -19,8 +19,9 @@ import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManageme
 import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';//所属功能
 import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';//工单维护
 import Api_ApiMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/ApiMaintenance/Main';//接口维护
-
 import Api_PageEnvironment from '@/components/views/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
+import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
+import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -72,6 +73,12 @@ export default new Router({
         },
         {path: '/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main',name: 'Api_PageEnvironment',component: Api_PageEnvironment,
           meta:{name: '页面环境',url:'/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main',comp:'Api_PageEnvironment'}
+        },
+        {path: '/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main',name: 'Api_GlobalVariable',component: Api_GlobalVariable,
+          meta:{name: '全局变量',url:'/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main',comp:'Api_GlobalVariable'}
+        },
+        {path: '/SysType/Api/Page/Setting/DebugTalk/Main',name: 'Api_PageEnvironment',component: Api_DebugTalk,
+          meta:{name: 'DebugTalk.py',url:'/SysType/Api/Page/Setting/DebugTalk/Main',comp:'Api_DebugTalk'}
         },
       ]
     }

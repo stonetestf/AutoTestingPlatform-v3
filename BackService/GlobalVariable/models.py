@@ -2,11 +2,13 @@ from django.db import models
 
 
 # Create your models here.
-class PageEnvironment(models.Model):  # 页面环境
+
+class GlobalVariable(models.Model):
     sysType = models.CharField("所属系统", max_length=10, null=False)
     pid = models.ForeignKey("ProjectManagement.ProManagement", to_field='id', on_delete=models.CASCADE)
-    environmentName = models.CharField('环境名称', max_length=150, null=True)
-    environmentUrl = models.CharField('备注信息', max_length=300, null=True)
+    globalType = models.IntegerField("变量类型(0:普通变量,1:全局变量)", null=False)
+    globalName = models.CharField('变量名称', max_length=100, null=True)
+    globalValue = models.TextField('变量值', null=True)
     remarks = models.TextField('备注', null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)

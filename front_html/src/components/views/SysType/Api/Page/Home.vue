@@ -182,12 +182,14 @@ import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement
 import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';
 import Api_ApiMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/ApiMaintenance/Main';//接口维护
 import Api_PageEnvironment from '@/components/views/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
+import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
+import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
 
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
-    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment
+    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment,Api_DebugTalk,Api_GlobalVariable
   },
   data() {
     return {

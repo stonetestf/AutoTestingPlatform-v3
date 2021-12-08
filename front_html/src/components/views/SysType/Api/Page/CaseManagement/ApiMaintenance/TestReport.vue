@@ -116,7 +116,7 @@
                             </el-table-column>
                             <el-table-column
                                 align="center"
-                                prop="retChecktext"
+                                prop="retCheckOut"
                                 label="预期结果">
                             </el-table-column>
                             <el-table-column
@@ -127,7 +127,7 @@
                             </el-table-column>
                             <el-table-column
                                 align="center"
-                                prop="retExtracttext"
+                                prop="retExtractorOut"
                                 label="实际返回">
                             </el-table-column>
                             <el-table-column

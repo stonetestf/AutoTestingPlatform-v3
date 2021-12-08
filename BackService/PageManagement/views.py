@@ -106,7 +106,7 @@ def save_data(request):
                         'API', 'Manual', 3, 'Add',
                         cls_FindTable.get_pro_name(proId), pageName, None,
                         userId,
-                        '新增页面',CUFront=dict(request.POST)
+                        '新增页面',CUFront=json.dumps(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -205,7 +205,7 @@ def delete_data(request):
                             cls_FindTable.get_pro_name(obj_db_PageManagement[0].pid_id),
                             obj_db_PageManagement[0].pageName, None,
                             userId,
-                            '删除页面',CUFront=dict(request.POST)
+                            '删除页面',CUFront=json.dumps(request.POST)
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
