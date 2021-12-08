@@ -449,6 +449,14 @@
                                         border
                                         height="610">
                                         <el-table-column
+                                            label="启用"
+                                            width="70px"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
                                             label="提取变量名称"
                                             align= "center">
                                             <template slot-scope="scope">
