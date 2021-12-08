@@ -33,6 +33,7 @@ def select_data(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+        proId = int(objData.proId)
         sysType = objData.sysType
         globalType = objData.globalType
         globalName = objData.globalName
@@ -47,7 +48,7 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'GlobalVariable', 'select_data', errorMsg)
     else:
         obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
-            is_del=0, sysType=sysType,).order_by('-updateTime')
+            is_del=0, sysType=sysType,pid_id=proId).order_by('-updateTime')
         select_db_GlobalVariable = obj_db_GlobalVariable[minSize: maxSize]
         if globalType:
             obj_db_GlobalVariable = obj_db_GlobalVariable.filter(globalType=globalType)

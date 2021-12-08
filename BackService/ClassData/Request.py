@@ -1,5 +1,13 @@
 # Create your db here.
 from Api_TestReport.models import TempExtractData as db_TempExtractData
+from GlobalVariable.models import GlobalVariable as db_GlobalVariable
+from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
+from Api_IntMaintenance.models import ApiHeaders as db_ApiHeaders
+from Api_IntMaintenance.models import ApiParams as db_ApiParams
+from Api_IntMaintenance.models import ApiBody as db_ApiBody
+from Api_IntMaintenance.models import ApiExtract as db_ApiExtract
+from Api_IntMaintenance.models import ApiValidate as db_ApiValidate
+from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
@@ -28,10 +36,52 @@ class RequstOperation(cls_Logging):
         return requestParamsType
 
     # 转换参数中带有引用的数据
-    def conversion_params_import_data(self, requestUrl, headers, params, body):
+    def conversion_params_import_data(self, proId, requestUrl, requestHeaders, requestData):
         results = {}
+        conversionRequestUrl = requestUrl
+        conversionHeaders = {}
+        conversionRequestData = {}
+        if '{{' in requestUrl:
+            splitUrl = requestUrl.split('{{')
+            globalName = splitUrl[1].replace('}}', '')
+            obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
+                sysType='API', is_del=0, pid_id=proId, globalName=globalName)
+            if obj_db_GlobalVariable:
+                conversionRequestUrl = conversionRequestUrl.replace("{{%s}}" % globalName,
+                                                                    obj_db_GlobalVariable[0].globalValue)
+
+        for item_headersKey in requestHeaders.keys():
+            item_headersValue = requestHeaders[item_headersKey]
+            if '{{' in item_headersValue:
+                splitHeaders = item_headersValue.split('{{')
+                globalName = splitHeaders[1].replace('}}', '')
+                obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
+                    sysType='API', is_del=0, pid_id=proId, globalName=globalName)
+                if obj_db_GlobalVariable:
+                    conversionHeaders[item_headersKey] = obj_db_GlobalVariable[0].globalValue
+                else:
+                    conversionHeaders[item_headersKey] = item_headersValue
+            else:
+                conversionHeaders[item_headersKey] = item_headersValue
+
+        for item_dataKey in requestData.keys():
+            item_dataValue = requestData[item_dataKey]
+            if '{{' in item_dataValue:
+                splitData = item_dataValue.split('{{')
+                globalName = splitData[1].replace('}}', '')
+                obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
+                    sysType='API', is_del=0, pid_id=proId, globalName=globalName)
+                if obj_db_GlobalVariable:
+                    conversionRequestData[item_dataKey] = obj_db_GlobalVariable[0].globalValue
+                else:
+                    conversionRequestData[item_dataKey] = item_dataValue
+            else:
+                conversionRequestData[item_dataKey] = item_dataValue
 
         results['state'] = True
+        results['requestUrl'] = conversionRequestUrl
+        results['headersData'] = conversionHeaders
+        results['requestData'] = conversionRequestData
         return results
 
     # 转换请求数据为JSON格式
@@ -60,7 +110,113 @@ class RequstOperation(cls_Logging):
         results['bodyDict'] = bodyDict
         return results
 
-    # 请求
+    # 核心-单-获取请求的数据
+    def get_request_data(self, apiId, environmentId):
+        results = {}
+        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, id=apiId)
+        if obj_db_ApiBaseData:
+            # region 获取环境URl
+            if environmentId:
+                obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId)
+                if obj_db_PageEnvironment:
+                    environmentUrl = obj_db_PageEnvironment[0].environmentUrl
+                else:
+                    environmentUrl = obj_db_ApiBaseData[0].environment.environmentUrl
+            else:
+                environmentUrl = obj_db_ApiBaseData[0].environment.environmentUrl
+            # endregion
+            results['proId'] = obj_db_ApiBaseData[0].pid_id
+            results['requestType'] = obj_db_ApiBaseData[0].requestType
+            results['requestUrl'] = f"{environmentUrl}{obj_db_ApiBaseData[0].requestUrl}"
+            results['requestParamsType'] = obj_db_ApiBaseData[0].requestParamsType  # 最终是以body请求还是以params请求
+            # 如果是body请求，还要看他请求的类型来决定以哪种形式发送
+            results['bodyRequestType'] = obj_db_ApiBaseData[0].bodyRequestSaveType
+
+            # region 请求数据获取
+            # 获取头部数据
+            obj_db_ApiHeaders = db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId)
+            results['headersData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiHeaders if i.state]
+
+            # 获取params数据
+            obj_db_ApiParams = db_ApiParams.objects.filter(is_del=0, apiId_id=apiId)
+            results['paramsData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiParams if i.state]
+
+            # 获取body数据
+            obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=apiId)
+            if results['bodyRequestType'] == 'form-data':
+                results['bodyData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiBody if i.state]
+            elif results['bodyRequestType'] in ('json', 'raw'):
+                results['bodyData'] = obj_db_ApiBody[0].value
+            else:
+                results['bodyData'] = []
+
+            # 获取提取数据
+            obj_db_ApiExtract = db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId)
+            results['extractData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiExtract if i.state]
+
+            # 获取断言数据
+            obj_db_ApiValidate = db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId)
+            results['validateData'] = [{'checkName': i.checkName, 'validateType': i.validateType,
+                                        'valueType': i.valueType, 'expectedResults': i.expectedResults}
+                                       for i in obj_db_ApiValidate if i.state]
+
+            # 获取前置数据
+
+            # 获取后置数据
+
+
+            # endregion
+            results['state'] = True
+        else:
+            results['state'] = False
+            results['errorMsg'] = '没有找到当前所发送请求的接口信息'
+        return results
+
+    # 转换参数为最后请求的数据
+    def conversion_data_to_request_data(self, getRequestData):
+        results = {'state': False}
+        proId = getRequestData['proId']
+        requestUrl = getRequestData['requestUrl']
+
+        requestParamsType = getRequestData['requestParamsType']
+        headersData = getRequestData['headersData']
+        paramsData = getRequestData['paramsData']
+        bodyRequestType = getRequestData['bodyRequestType']
+        bodyData = getRequestData['bodyData']
+
+        # 转换请求数据为JSON格式
+        conversionToJson = self.conversion_params_to_json(
+            headersData, paramsData, bodyRequestType, bodyData)
+        if conversionToJson['state']:
+            requestHeaders = conversionToJson['headersDict']
+            requestParams = conversionToJson['paramsDict']
+            requestBody = conversionToJson['bodyDict']
+            if requestParamsType == "Body":
+                requestData = requestBody
+                results['requestData'] = bodyData
+            else:
+                requestData = requestParams
+                results['requestData'] = paramsData
+
+            # 转换参数中带有引用的数据
+            conversionImportData = self.conversion_params_import_data(
+                proId, requestUrl, requestHeaders, requestData)
+            if conversionImportData['state']:
+                conversionRequestUrl = conversionImportData['requestUrl']
+                conversionHeadersData = conversionImportData['headersData']
+                conversionRequestData = conversionImportData['requestData']
+                results['state'] = True
+                results['conversionRequestUrl'] = conversionRequestUrl
+                results['conversionHeadersData'] = conversionHeadersData
+                results['conversionRequestData'] = conversionRequestData
+            else:
+                results['errorMsg'] = conversionImportData['errorMsg']
+        else:
+            # 这里目前没有可获取到的错误，以后在需求中添加
+            results['errorMsg'] = ""
+        return results
+
+    # 核心-单-请求
     def requests_api(self, requestType, requestParamsType, bodyRequestType, url, headers, requestData, files=None):
         """
         :param requestType: GET/POST
@@ -140,6 +296,183 @@ class RequstOperation(cls_Logging):
             results['content'] = content
             return results
 
+    # 执行提取和断言操作
+    def perform_extract_and_validate(self,onlyCode,extractData,validateData,requestsApi,userId):
+        results = {'extractTable':[],
+                   'assertionTable':[]}
+        if extractData:  # 如果有提取的数据才会执行断言
+            requestExtract = self.request_extract(userId, onlyCode,
+                                                  requestsApi['content'],
+                                                  requestsApi['responseCode'],
+                                                  extractData)
+            if requestExtract['state']:
+                results['extractTable'] = requestExtract['extractList']
+
+                # 断言数据
+                requestValidate = self.request_validate(requestExtract['extractList'],
+                                                        validateData)
+                if requestValidate['state']:
+                    results['assertionTable'] = requestValidate['validateReport']
+                    results['reportState'] = 'Pass' if requestValidate['reportState'] else 'Fail'
+                    results['state'] = True
+                else:
+                    results['errorMsg'] = requestValidate['errorMsg']
+                    results['state'] = False
+            else:
+                results['errorMsg'] = requestExtract['errorMsg']
+                results['state'] = False
+        else:
+            results['reportState'] = 'Pass'
+            results['state'] = True
+        return results
+
+    # 核心-单接口的执行
+    def run_request(self, apiId, environmentId, onlyCode, userId):
+        results = {
+            'tabPane': {
+                'requsetHeaders': [],  # 原始请求头
+                'content': "",  # 返回主体
+                'responseHeaders': [],  # 返回头部
+                'extractTable': [],  # 提取信息
+                'assertionTable': []  # 断言信息
+            },
+            'state': False
+        }
+        getRequestData = self.get_request_data(apiId, environmentId)
+        if getRequestData['state']:
+            results['originalUrl'] = getRequestData['requestUrl']
+            results['tabPane']['requsetHeaders'] = getRequestData['headersData']
+            requestParamsType = getRequestData['requestParamsType']
+            bodyRequestType = getRequestData['bodyRequestType']
+            extractData = getRequestData['extractData']
+            validateData = getRequestData['validateData']
+            requestType = results['requestType'] = getRequestData['requestType']
+
+            # 转换参数为最后请求的数据
+            conversionDataToRequestData = self.conversion_data_to_request_data(getRequestData)
+            if conversionDataToRequestData['state']:
+                results['tabPane']['requestData'] = conversionDataToRequestData['requestData']
+                conversionRequestUrl = results['requestUrl'] = conversionDataToRequestData['conversionRequestUrl']
+                conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
+                conversionRequestData = conversionDataToRequestData['conversionRequestData']
+                # 发送请求
+                requestsApi = self.requests_api(
+                    requestType, requestParamsType, bodyRequestType,
+                    conversionRequestUrl, conversionHeadersData, conversionRequestData)
+                if requestsApi['state']:
+                    results['responseCode'] = requestsApi['responseCode']
+                    results['time'] = requestsApi['time']
+                    # 解决中文乱码的问题
+                    results['tabPane']['content'] = json.dumps(
+                        requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),
+                        ensure_ascii=False)
+                    results['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
+
+                    # 断言及提取
+                    performExtractAndValidate = self.perform_extract_and_validate(
+                        onlyCode,extractData,validateData,requestsApi,userId)
+                    if performExtractAndValidate['state']:
+                        results['tabPane']['extractTable'] = performExtractAndValidate['extractTable']
+                        results['tabPane']['assertionTable'] = performExtractAndValidate['assertionTable']
+                        results['reportState'] = performExtractAndValidate['reportState']
+                    else:
+                        results['errorMsg'] = performExtractAndValidate['errorMsg']
+                    results['state'] = True
+                else:
+                    results['errorMsg'] = requestsApi['errorMsg']
+            else:
+                results['errorMsg'] = conversionDataToRequestData['errorMsg']
+        else:
+            results['errorMsg'] = getRequestData['errorMsg']
+        return results
+
+    # def run_request(self, apiId, environmentId, onlyCode, userId):
+    #     results = {
+    #         'tabPane': {
+    #             'requsetHeaders': [],  # 原始请求头
+    #             'content': "",  # 返回主体
+    #             'responseHeaders': [],  # 返回头部
+    #             'extractTable': [],  # 提取信息
+    #             'assertionTable': []  # 断言信息
+    #         },
+    #         'state': False
+    #     }
+    #     getRequestData = self.get_request_data(apiId, environmentId)
+    #     if getRequestData['state']:
+    #         proId = getRequestData['proId']
+    #         requestUrl = results['originalUrl'] = getRequestData['requestUrl']
+    #         requestType = results['requestType'] = getRequestData['requestType']
+    #         requestParamsType = getRequestData['requestParamsType']
+    #         headersData = results['tabPane']['requsetHeaders'] = getRequestData['headersData']
+    #         paramsData = getRequestData['paramsData']
+    #         bodyRequestType = getRequestData['bodyRequestType']
+    #         bodyData = getRequestData['bodyData']
+    #         extractData = getRequestData['extractData']
+    #         validateData = getRequestData['validateData']
+    #         # 转换请求数据为JSON格式
+    #         conversionToJson = self.conversion_params_to_json(
+    #             headersData, paramsData, bodyRequestType, bodyData)
+    #         if conversionToJson['state']:
+    #             requestHeaders = conversionToJson['headersDict']
+    #             requestParams = conversionToJson['paramsDict']
+    #             requestBody = conversionToJson['bodyDict']
+    #             if requestParamsType == "Body":
+    #                 requestData = requestBody
+    #                 results['tabPane']['requestData'] = bodyData
+    #             else:
+    #                 requestData = requestParams
+    #                 results['tabPane']['requestData'] = paramsData
+    #
+    #             # 转换参数中带有引用的数据
+    #             conversionImportData = self.conversion_params_import_data(
+    #                 proId, requestUrl, requestHeaders, requestData)
+    #             if conversionImportData['state']:
+    #                 conversionRequestUrl = results['requestUrl'] = conversionImportData['requestUrl']
+    #                 conversionHeadersData = conversionImportData['headersData']
+    #                 conversionRequestData = conversionImportData['requestData']
+    #
+    #                 # 发送请求
+    #                 requestsApi = self.requests_api(
+    #                     requestType, requestParamsType, bodyRequestType,
+    #                     conversionRequestUrl, conversionHeadersData, conversionRequestData)
+    #                 if requestsApi['state']:
+    #                     results['responseCode'] = requestsApi['responseCode']
+    #                     results['time'] = requestsApi['time']
+    #                     # 解决中文乱码的问题
+    #                     results['tabPane']['content'] = json.dumps(
+    #                         requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),
+    #                         ensure_ascii=False)
+    #                     results['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
+    #                     if extractData:  # 如果有提取的数据才会执行断言
+    #                         requestExtract = self.request_extract(userId, onlyCode,
+    #                                                               requestsApi['content'],
+    #                                                               requestsApi['responseCode'],
+    #                                                               extractData)
+    #                         if requestExtract['state']:
+    #                             results['tabPane']['extractTable'] = requestExtract['extractList']
+    #
+    #                             # 断言数据
+    #                             requestValidate = self.request_validate(requestExtract['extractList'],
+    #                                                                     validateData)
+    #                             if requestValidate['state']:
+    #                                 results['tabPane']['assertionTable'] = requestValidate['validateReport']
+    #                                 results['reportState'] = 'Pass' if requestValidate['reportState'] else 'Fail'
+    #                         else:
+    #                             results['errorMsg'] = requestExtract['errorMsg']
+    #                     else:
+    #                         results['reportState'] = 'Pass'
+    #                     results['state'] = True
+    #                 else:
+    #                     results['errorMsg'] = requestsApi['errorMsg']
+    #             else:
+    #                 results['errorMsg'] = conversionImportData['errorMsg']
+    #         else:
+    #             # 这里目前没有可获取到的错误，以后在需求中添加
+    #             results['errorMsg'] = ""
+    #     else:
+    #         results['errorMsg'] = getRequestData['errorMsg']
+    #     return results
+
     # 提取
     def request_extract(self, userId, onlyCode, content, statuscode, extract):
         results = {}
@@ -180,7 +513,7 @@ class RequstOperation(cls_Logging):
                                 self, 'API', 'System', 2, 'Warning',
                                 None, 'ClassData', 'request_extract', message,
                             )
-                            cls_Logging.push_to_user(self,operationInfo,userId)
+                            cls_Logging.push_to_user(self, operationInfo, userId)
                             # endregion
                     else:
                         message = f"提取失败:变量名称:{extractKey}," \

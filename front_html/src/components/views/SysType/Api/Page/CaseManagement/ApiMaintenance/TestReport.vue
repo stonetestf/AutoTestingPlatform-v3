@@ -54,6 +54,104 @@
             </div>
             <div>
                 <el-tabs v-model="RomeData.activeName">
+                    <el-tab-pane label="文档信息" name="docInfo">
+                        <div style=" height:570px;overflow:auto">
+                            <div>
+                                <div slot="header" style="text-align: left;">
+                                    <el-tag type="info">基础信息</el-tag>
+                                </div>
+                                <div style="margin-top:15px;margin-left:-15px">
+                                    <el-row>
+                                        <el-col :span="2">
+                                            <el-tag type="success" v-if="RomeData.requestType=='GET'" >GET</el-tag>
+                                            <el-tag type="warning" v-else-if="RomeData.requestType=='POST'">POST</el-tag>
+                                            <el-tag type="info" v-else>{{RomeData.requestType}}</el-tag>
+                                        </el-col>
+                                        <el-col :span="22">
+                                            <span style="float:left;margin-top:6px;margin-left:-8px">{{docInfoRomeData.originalUrl}}</span>
+                                        </el-col>
+                                    </el-row>
+                                </div>
+                            </div>
+                            <el-divider></el-divider>
+                            <div style="margin-top:10px">
+                                <div slot="header" style="text-align:left;">
+                                    <el-tag type="info">请求Headers</el-tag>
+                                </div>
+                                <div>
+                                    <el-table
+                                        :data="docInfoRomeData.headersTableData"
+                                        style="width: 100%">
+                                        <el-table-column
+                                            prop="key"
+                                            width="400px"
+                                            label="名称">
+                                        </el-table-column>
+                                        <el-table-column
+                                            prop="value"
+                                            label="值">
+                                        </el-table-column>
+                                    </el-table>
+                                </div>
+                            </div>
+                            <el-divider></el-divider>
+                            <div style="margin-top:10px">
+                                <div slot="header" style="text-align: left;">
+                                    <el-tag type="info">请求主体</el-tag>
+                                </div>
+                                <div>
+                                    <el-table
+                                        :data="docInfoRomeData.requestDataTableData"
+                                        style="width: 100%">
+                                        <el-table-column
+                                            prop="key"
+                                            width="400px"
+                                            label="参数名">
+                                        </el-table-column>
+                                        <el-table-column
+                                            prop="value"
+                                            label="参数值">
+                                        </el-table-column>
+                                    </el-table>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div>
+                            <div style="text-align:left;margin-top:5px">
+                                <span >基础信息</span>
+                            </div>
+                            <div style="margin-top:10px;margin-left:-15px">
+                                <el-row>
+                                    <el-col :span="2">
+                                        <el-tag type="success">GET</el-tag>
+                                    </el-col>
+                                    <el-col :span="22">
+                                        <span style="float:left;margin-top:6px;margin-left:-8px">http://www.baidu.com</span>
+                                    </el-col>
+                                </el-row>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="text-align:left;margin-top:20px">
+                                <span>请求Headers</span>
+                            </div>
+                            <div>
+                                <el-table
+                                    :data="tableData"
+                                    style="width: 100%">
+                                    <el-table-column
+                                        prop="key"
+                                        width="400px"
+                                        label="名称">
+                                    </el-table-column>
+                                    <el-table-column
+                                        prop="value"
+                                        label="值">
+                                    </el-table-column>
+                                </el-table>
+                            </div>
+                        </div> -->
+                    </el-tab-pane>
                     <el-tab-pane label="返回主体" name="responseBody">
                         <el-input type="textarea" 
                             readonly
@@ -192,8 +290,11 @@ export default {
             responseHeadersTableData:[],
             extractTableData:[],
             assertionTableData:[],
-            
-            errorInfo:'',
+        },
+        docInfoRomeData:{
+            originalUrl:'',
+            headersTableData:[],
+            requestDataTableData:[],
         },
 
         };
@@ -293,6 +394,10 @@ export default {
                         self.RomeData.time = res.data.time;
                         self.RomeData.reportState = res.data.reportState;
 
+                        self.docInfoRomeData.originalUrl = res.data.originalUrl;
+                        self.docInfoRomeData.headersTableData = res.data.tabPane.requsetHeaders;
+                        self.docInfoRomeData.requestDataTableData = res.data.tabPane.requestData;
+
                         self.RomeData.responseText = res.data.tabPane.content;
                         self.RomeData.responseHeadersTableData = res.data.tabPane.responseHeaders;
                         self.RomeData.extractTableData = res.data.tabPane.extractTable;
@@ -317,5 +422,7 @@ export default {
 </script>
 
 <style>
-
+.test{
+    text-align: left;
+}
 </style>

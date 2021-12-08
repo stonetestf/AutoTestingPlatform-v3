@@ -157,6 +157,7 @@ export default {
             self.$axios.get('/api/GlobalVariable/SelectData',{
                 params:{
                     'sysType':'API',
+                    'proId':self.$cookies.get('proId'),
                     'globalType':self.SelectRomeData.globalType,
                     'globalName':self.SelectRomeData.globalName,
                     'current':self.page.current,
