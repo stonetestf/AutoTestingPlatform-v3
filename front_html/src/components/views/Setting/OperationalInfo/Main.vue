@@ -44,7 +44,7 @@
                 <template>
                     <el-table
                         :data="tableData"
-                        height="647px"
+                        height="619px"
                         border>
                         <el-table-column
                             label="ID"
