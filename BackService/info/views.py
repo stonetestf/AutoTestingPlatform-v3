@@ -110,36 +110,15 @@ def user_operational_info(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'info', 'select_operational_info', errorMsg)
     else:
-        # # 消息提醒中不会提醒错误信息 包括管理员也不会提醒
-        # obj_db_OperateInfo = db_OperateInfo.objects.filter(
-        #     uid_id=userId, is_read=0, remindType='Warning').order_by('-createTime')
-        # select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
-        #
-        # for i in select_db_OperateInfo:
-        #     dataList.append({
-        #         'id': i.id,
-        #         'level': i.level,
-        #         'remindType': i.remindType,
-        #         'sysType': i.sysType,
-        #         'toPage': i.toPage,
-        #         'toFun': i.toFun,
-        #         'info': i.info,
-        #         # 'CUFront': i.CUFront,
-        #         # 'CURear': i.CURear,
-        #         'is_read': i.is_read,
-        #         'userName': i.uid.userName,
-        #         'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-        #     })
-
         # 加载推送信息
-        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
+        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId,is_read=0)
         select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
         if obj_db_UserTable:
             for i in select_db_PushInfo:
                 # 排除创建者看到自己推给别人的信息
                 # i.oinfo.uid_id != userId and
-                if i.oinfo.uid_id != userId and i.is_read == 0:
+                if i.oinfo.uid_id != userId:
                     dataList.append({
                         'id': i.id,
                         'triggerType':i.oinfo.triggerType,

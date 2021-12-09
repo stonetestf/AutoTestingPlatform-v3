@@ -232,6 +232,12 @@ def charm_api_data(request):
                                 'stepsName': '接口信息-前置操作',
                                 'errorMsg': f'第{index}行:函数方法名称不可为空!',
                                 'updateTime': cls_Common.get_date_time()})
+                        if '(' not in item_preOperation.methodsName or ')' not in item_preOperation.methodsName:
+                            dataList.append({
+                                'stepsName': '接口信息-前置操作',
+                                'errorMsg': f'第{index}行:函数方法名称未检测到 ()',
+                                'updateTime': cls_Common.get_date_time()})
+
                     elif item_preOperation.operationType == 'DataBase':
                         if not item_preOperation.dataBase:
                             dataList.append({
@@ -254,6 +260,11 @@ def charm_api_data(request):
                                 'stepsName': '接口信息-后置操作',
                                 'errorMsg': f'第{index}行:函数方法名称不可为空!',
                                 'updateTime': cls_Common.get_date_time()})
+                        if '(' not in item_rearOperation.methodsName or ')' not in item_rearOperation.methodsName:
+                            dataList.append({
+                                'stepsName': '接口信息-后置操作',
+                                'errorMsg': f'第{index}行:函数方法名称未检测到 ()',
+                                'updateTime': cls_Common.get_date_time()})
                     elif item_rearOperation.operationType == 'DataBase':
                         if not item_rearOperation.dataBase:
                             dataList.append({
@@ -266,7 +277,6 @@ def charm_api_data(request):
                                 'errorMsg': f'第{index}行:请输入SQL语句!',
                                 'updateTime': cls_Common.get_date_time()})
         # endregion
-
         # region 验证params 和body 至少有1个有参数
         if not apiInfo.request.params and \
                 not apiInfo.request.body.formData and \
@@ -1001,100 +1011,3 @@ def send_request(request):
             response['statusCode'] = 2000
         cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
     return JsonResponse(response)
-# def send_request(request):
-#     response = {
-#         'tabPane': {
-#             'requsetHeaders': [],  # 原始请求头
-#             'content': "",  # 返回主体
-#             'responseHeaders': [],  # 返回头部
-#             'extractTable': [],  # 提取信息
-#             'assertionTable': []  # 断言信息
-#         }
-#     }
-#     try:
-#         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
-#         apiId = request.POST['apiId']
-#         environmentId = request.POST['environmentId']
-#         onlyCode = cls_Common.generate_only_code()
-#     except BaseException as e:
-#         errorMsg = f"入参错误:{e}"
-#         response['errorMsg'] = errorMsg
-#         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'request_api', errorMsg)
-#     else:
-#         cls_Logging.print_log('info', 'send_request', '-----------------------------start-----------------------------')
-#         getRequestData = cls_RequstOperation.get_request_data(apiId, environmentId)
-#         if getRequestData['state']:
-#             proId = getRequestData['proId']
-#             requestUrl = response['originalUrl'] = getRequestData['requestUrl']
-#             requestType = response['requestType'] = getRequestData['requestType']
-#             requestParamsType = getRequestData['requestParamsType']
-#             headersData = response['tabPane']['requsetHeaders'] = getRequestData['headersData']
-#             paramsData = getRequestData['paramsData']
-#             bodyRequestType = getRequestData['bodyRequestType']
-#             bodyData = getRequestData['bodyData']
-#             extractData = getRequestData['extractData']
-#             validateData = getRequestData['validateData']
-#             # 转换请求数据为JSON格式
-#             conversionToJson = cls_RequstOperation.conversion_params_to_json(
-#                 headersData, paramsData, bodyRequestType, bodyData)
-#             if conversionToJson['state']:
-#                 requestHeaders = conversionToJson['headersDict']
-#                 requestParams = conversionToJson['paramsDict']
-#                 requestBody = conversionToJson['bodyDict']
-#                 if requestParamsType == "Body":
-#                     requestData = requestBody
-#                     response['tabPane']['requestData'] = bodyData
-#                 else:
-#                     requestData = requestParams
-#                     response['tabPane']['requestData'] = paramsData
-#
-#                 # 转换参数中带有引用的数据
-#                 conversionImportData = cls_RequstOperation.conversion_params_import_data(
-#                     proId, requestUrl, requestHeaders, requestData)
-#                 if conversionImportData['state']:
-#                     conversionRequestUrl = response['requestUrl'] = conversionImportData['requestUrl']
-#                     conversionHeadersData = conversionImportData['headersData']
-#                     conversionRequestData = conversionImportData['requestData']
-#
-#                     # 发送请求
-#                     requestsApi = cls_RequstOperation.requests_api(
-#                         requestType, requestParamsType, bodyRequestType,
-#                         conversionRequestUrl, conversionHeadersData, conversionRequestData)
-#                     if requestsApi['state']:
-#                         response['responseCode'] = requestsApi['responseCode']
-#                         response['time'] = requestsApi['time']
-#                         # 解决中文乱码的问题
-#                         response['tabPane']['content'] = json.dumps(
-#                             requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),
-#                             ensure_ascii=False)
-#                         response['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
-#
-#                         if extractData:  # 如果有提取的数据才会执行断言
-#                             requestExtract = cls_RequstOperation.request_extract(userId, onlyCode,
-#                                                                                  requestsApi['content'],
-#                                                                                  requestsApi['responseCode'],
-#                                                                                  extractData)
-#                             if requestExtract['state']:
-#                                 response['tabPane']['extractTable'] = requestExtract['extractList']
-#
-#                                 # 断言数据
-#                                 requestValidate = cls_RequstOperation.request_validate(requestExtract['extractList'],
-#                                                                                        validateData)
-#                                 if requestValidate['state']:
-#                                     response['tabPane']['assertionTable'] = requestValidate['validateReport']
-#                                     response['reportState'] = 'Pass' if requestValidate['reportState'] else 'Fail'
-#                             else:
-#                                 response['errorMsg'] = requestExtract['errorMsg']
-#                         else:
-#                             response['reportState'] = 'Pass'
-#                         response['statusCode'] = 2000
-#                     else:
-#                         response['errorMsg'] = requestsApi['errorMsg']
-#                 else:
-#                     response['errorMsg'] = conversionImportData['errorMsg']
-#             else:
-#                 response['errorMsg'] = conversionToJson['errorMsg']
-#         else:
-#             response['errorMsg'] = getRequestData['errorMsg']
-#         cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
-#     return JsonResponse(response)

@@ -116,41 +116,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- <div>
-                            <div style="text-align:left;margin-top:5px">
-                                <span >基础信息</span>
-                            </div>
-                            <div style="margin-top:10px;margin-left:-15px">
-                                <el-row>
-                                    <el-col :span="2">
-                                        <el-tag type="success">GET</el-tag>
-                                    </el-col>
-                                    <el-col :span="22">
-                                        <span style="float:left;margin-top:6px;margin-left:-8px">http://www.baidu.com</span>
-                                    </el-col>
-                                </el-row>
-                            </div>
-                        </div>
-                        <div>
-                            <div style="text-align:left;margin-top:20px">
-                                <span>请求Headers</span>
-                            </div>
-                            <div>
-                                <el-table
-                                    :data="tableData"
-                                    style="width: 100%">
-                                    <el-table-column
-                                        prop="key"
-                                        width="400px"
-                                        label="名称">
-                                    </el-table-column>
-                                    <el-table-column
-                                        prop="value"
-                                        label="值">
-                                    </el-table-column>
-                                </el-table>
-                            </div>
-                        </div> -->
                     </el-tab-pane>
                     <el-tab-pane label="返回主体" name="responseBody">
                         <el-input type="textarea" 
@@ -239,19 +204,99 @@
                             </el-table-column>
                         </el-table>
                     </el-tab-pane>
-                    <el-tab-pane label="前置操作" name="PreOperation">
-                       
+                    <el-tab-pane :label="RomeData.preOperationName" name="PreOperation" v-if="RomeData.preOperationTableData!=0">
+                        <el-table
+                            :data="RomeData.preOperationTableData"
+                            border
+                            height="610">
+                            <el-table-column
+                                label="操作类型"
+                                width="150px"
+                                align= "center">
+                                <template slot-scope="scope">
+                                    <el-tag type="info">{{scope.row.operationType}}</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="调用名称"
+                                width="200px"
+                                align= "center"
+                                prop="callName">
+                            </el-table-column>
+                            <el-table-column
+                                label="调用结果"
+                                align= "center"
+                                prop="callResults">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                width="100px"
+                                label="结果">
+                                <template slot-scope="scope">
+                                    <el-tag type="success" v-if="scope.row.resultsState">通过</el-tag>
+                                    <el-tag type="warning" v-else >失败</el-tag>
+                                </template>
+                            </el-table-column>
+                        </el-table>
                     </el-tab-pane>
-                    <el-tab-pane label="后置操作" name="RearOperation">
-                       
+                    <el-tab-pane :label="RomeData.rearOperationName" name="RearOperation" v-if="RomeData.rearOperationTableData!=0">
+                        <el-table
+                            :data="RomeData.rearOperationTableData"
+                            border
+                            height="610">
+                            <el-table-column
+                                label="操作类型"
+                                width="150px"
+                                align= "center">
+                                <template slot-scope="scope">
+                                    <el-tag type="info">{{scope.row.operationType}}</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="调用名称"
+                                width="200px"
+                                align= "center"
+                                prop="callName">
+                            </el-table-column>
+                            <el-table-column
+                                label="调用结果"
+                                align= "center"
+                                prop="callResults">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                width="100px"
+                                label="结果">
+                                <template slot-scope="scope">
+                                    <el-tag type="success" v-if="scope.row.resultsState">通过</el-tag>
+                                    <el-tag type="warning" v-else >失败</el-tag>
+                                </template>
+                            </el-table-column>
+                        </el-table>
                     </el-tab-pane>
-                    <el-tab-pane  :label="RomeData.errorInfoName" name="errorInfo" v-if="RomeData.errorInfo">
-                        <el-input type="textarea" 
-                            readonly
-                            resize="none"
-                            v-model="RomeData.errorInfo"
-                            :autosize="{ minRows: 25, maxRows: 25}">
-                        </el-input>
+                    <el-tab-pane  :label="RomeData.errorInfoName" name="errorInfo" v-if="RomeData.errorInfoTableData!=0">
+                        <el-table
+                            :data="RomeData.errorInfoTableData"
+                            border
+                            height="610">
+                            <el-table-column
+                                label="触发时间"
+                                width="160px"
+                                align= "center"
+                                prop="createTime">
+                            </el-table-column>
+                            <el-table-column
+                                label="错误名称"
+                                width="200px"
+                                align= "center"
+                                prop="errorName">
+                            </el-table-column>
+                            <el-table-column
+                                label="错误信息"
+                                align= "center"
+                                prop="errorInfo">
+                            </el-table-column>
+                        </el-table>
                     </el-tab-pane>
                 </el-tabs>
             </div>
@@ -284,12 +329,18 @@ export default {
             responseHeadersName:'返回Headers',
             ExtractResultsName:'提取结果',
             AssertionResultsName:'断言结果',
+            preOperationName:'前置操作',
+            rearOperationName:'后置操作',
             errorInfoName:'错误信息',
     
             responseText:'',
             responseHeadersTableData:[],
             extractTableData:[],
             assertionTableData:[],
+            preOperationTableData:[],
+            rearOperationTableData:[],
+            errorInfoTableData:[],
+
         },
         docInfoRomeData:{
             originalUrl:'',
@@ -351,7 +402,39 @@ export default {
                 }
             }
         },
-        
+        'RomeData.preOperationTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.RomeData.preOperationTableData.length;
+                if(dataLength==0){
+                    self.RomeData.preOperationName='前置操作';
+                }else{
+                    self.RomeData.preOperationName='前置操作('+dataLength+')';
+                }
+            }
+        },
+        'RomeData.rearOperationTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.RomeData.rearOperationTableData.length;
+                if(dataLength==0){
+                    self.RomeData.rearOperationName='后置操作';
+                }else{
+                    self.RomeData.rearOperationName='后置操作('+dataLength+')';
+                }
+            }
+        },
+        'RomeData.errorInfoTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
+            let self = this;
+            if(newVal!=oldVal){
+                let dataLength = self.RomeData.errorInfoTableData.length;
+                if(dataLength==0){
+                    self.RomeData.errorInfoName='错误信息';
+                }else{
+                    self.RomeData.errorInfoName='错误信息('+dataLength+')';
+                }
+            }
+        },
     },
     mounted(){  
 
@@ -373,7 +456,13 @@ export default {
             self.RomeData.responseHeadersTableData=[];
             self.RomeData.extractTableData=[];
             self.RomeData.assertionTableData=[];
-            self.RomeData.errorInfo='';
+            self.RomeData.preOperationTableData=[];
+            self.RomeData.rearOperationTableData=[];
+            self.RomeData.errorInfoTableData=[];
+
+            self.docInfoRomeData.originalUrl='';
+            self.docInfoRomeData.headersTableData=[];
+            self.docInfoRomeData.requestDataTableData=[];
         },
         RequestApi(isTest,apiId,environmentId){
             let self = this;
@@ -402,8 +491,10 @@ export default {
                         self.RomeData.responseHeadersTableData = res.data.tabPane.responseHeaders;
                         self.RomeData.extractTableData = res.data.tabPane.extractTable;
                         self.RomeData.assertionTableData = res.data.tabPane.assertionTable;
+                        self.RomeData.preOperationTableData= res.data.tabPane.preOperationTable;
+                        self.RomeData.rearOperationTableData= res.data.tabPane.rearOperationTable;
 
-                        self.RomeData.errorInfo = res.data.errorMsg;
+                        self.RomeData.errorInfoTableData = res.data.tabPane.errorInfoTable;
                         self.loading=false;
                     }else{
                         self.$message.error('接口请求失败'+res.data.errorMsg);

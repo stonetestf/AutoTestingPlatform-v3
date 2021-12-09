@@ -11,5 +11,11 @@
     pip3 install mysqlclient
 
 
-## 运行说明
+# 运行说明
     /usr/local/nginx/sbin/nginx
+
+
+# 平台说明
+##接口维护
+    1.接口中的前置操作,会在接口运行前运行
+    2.接口中的后置操作,只会在接口运行完成后进行!

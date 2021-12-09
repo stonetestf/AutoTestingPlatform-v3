@@ -7,9 +7,11 @@ from Api_IntMaintenance.models import ApiParams as db_ApiParams
 from Api_IntMaintenance.models import ApiBody as db_ApiBody
 from Api_IntMaintenance.models import ApiExtract as db_ApiExtract
 from Api_IntMaintenance.models import ApiValidate as db_ApiValidate
+from Api_IntMaintenance.models import ApiOperation as db_ApiOperation
 from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 
 # Create reference here.
+from ClassData.Common import Common as cls_Common
 from ClassData.Logger import Logging as cls_Logging
 
 import requests
@@ -18,7 +20,7 @@ import ast
 import json
 
 
-class RequstOperation(cls_Logging):
+class RequstOperation(cls_Logging, cls_Common):
     # 循环请求的数据查询出当前请求的最终是从params，body，中哪种发出
     def for_data_get_requset_params_type(self, paramsTable, bodyTable, raw):
         requestParamsType = None
@@ -134,15 +136,15 @@ class RequstOperation(cls_Logging):
 
             # region 请求数据获取
             # 获取头部数据
-            obj_db_ApiHeaders = db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId)
+            obj_db_ApiHeaders = db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
             results['headersData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiHeaders if i.state]
 
             # 获取params数据
-            obj_db_ApiParams = db_ApiParams.objects.filter(is_del=0, apiId_id=apiId)
+            obj_db_ApiParams = db_ApiParams.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
             results['paramsData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiParams if i.state]
 
             # 获取body数据
-            obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=apiId)
+            obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
             if results['bodyRequestType'] == 'form-data':
                 results['bodyData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiBody if i.state]
             elif results['bodyRequestType'] in ('json', 'raw'):
@@ -151,19 +153,29 @@ class RequstOperation(cls_Logging):
                 results['bodyData'] = []
 
             # 获取提取数据
-            obj_db_ApiExtract = db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId)
+            obj_db_ApiExtract = db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
             results['extractData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiExtract if i.state]
 
             # 获取断言数据
-            obj_db_ApiValidate = db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId)
+            obj_db_ApiValidate = db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
             results['validateData'] = [{'checkName': i.checkName, 'validateType': i.validateType,
                                         'valueType': i.valueType, 'expectedResults': i.expectedResults}
                                        for i in obj_db_ApiValidate if i.state]
 
             # 获取前置数据
+            obj_db_ApiOperation = db_ApiOperation.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
+            obj_db_PreOperation = obj_db_ApiOperation.filter(location='Pre')
+            results['PreOperation'] = [{'operationType': i.operationType,
+                                        'methodsName': i.methodsName,
+                                        'dataBaseId': i.dataBaseId,
+                                        'sql': i.sql} for i in obj_db_PreOperation if i.state]
 
             # 获取后置数据
-
+            obj_db_RearOperation = obj_db_ApiOperation.filter(location='Rear')
+            results['RearOperation'] = [{'operationType': i.operationType,
+                                         'methodsName': i.methodsName,
+                                         'dataBaseId': i.dataBaseId,
+                                         'sql': i.sql} for i in obj_db_RearOperation if i.state]
 
             # endregion
             results['state'] = True
@@ -297,9 +309,9 @@ class RequstOperation(cls_Logging):
             return results
 
     # 执行提取和断言操作
-    def perform_extract_and_validate(self,onlyCode,extractData,validateData,requestsApi,userId):
-        results = {'extractTable':[],
-                   'assertionTable':[]}
+    def perform_extract_and_validate(self, onlyCode, extractData, validateData, requestsApi, userId):
+        results = {'extractTable': [],
+                   'assertionTable': []}
         if extractData:  # 如果有提取的数据才会执行断言
             requestExtract = self.request_extract(userId, onlyCode,
                                                   requestsApi['content'],
@@ -318,9 +330,11 @@ class RequstOperation(cls_Logging):
                 else:
                     results['errorMsg'] = requestValidate['errorMsg']
                     results['state'] = False
+                    results['reportState'] = 'Error'
             else:
                 results['errorMsg'] = requestExtract['errorMsg']
                 results['state'] = False
+                results['reportState'] = 'Error'
         else:
             results['reportState'] = 'Pass'
             results['state'] = True
@@ -334,10 +348,14 @@ class RequstOperation(cls_Logging):
                 'content': "",  # 返回主体
                 'responseHeaders': [],  # 返回头部
                 'extractTable': [],  # 提取信息
-                'assertionTable': []  # 断言信息
+                'assertionTable': [],  # 断言信息
+                'preOperationTable': [],
+                'rearOperationTable': [],
+                'errorInfoTable': [],
             },
-            'state': False
+            'state': False,
         }
+        reportState = []  # 1(前置状态),2(接口运行完成),3(提取和断言),4(后置状态)
         getRequestData = self.get_request_data(apiId, environmentId)
         if getRequestData['state']:
             results['originalUrl'] = getRequestData['requestUrl']
@@ -346,6 +364,8 @@ class RequstOperation(cls_Logging):
             bodyRequestType = getRequestData['bodyRequestType']
             extractData = getRequestData['extractData']
             validateData = getRequestData['validateData']
+            preOperationData = getRequestData['PreOperation']
+            rearOperationData = getRequestData['RearOperation']
             requestType = results['requestType'] = getRequestData['requestType']
 
             # 转换参数为最后请求的数据
@@ -355,7 +375,39 @@ class RequstOperation(cls_Logging):
                 conversionRequestUrl = results['requestUrl'] = conversionDataToRequestData['conversionRequestUrl']
                 conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
                 conversionRequestData = conversionDataToRequestData['conversionRequestData']
-                # 发送请求
+
+                # region 前置操作
+                for item_pre in preOperationData:
+                    if item_pre['operationType'] == 'Methods':
+                        callName = item_pre['methodsName']
+                        import DebugTalk.Data.ApiDebug
+                        strCmd = f"DebugTalk.Data.ApiDebug.{callName}"
+                        try:
+                            callResults = eval(strCmd)
+                            resultsState = True
+                            reportState.append('Pass')
+                        except BaseException as e:
+                            callResults = f"{callName} 执行错误:{e}"
+                            resultsState = False
+                            reportState.append('Error')
+                            results['tabPane']['errorInfoTable'].append({
+                                'createTime': cls_Common.get_date_time(self),
+                                'errorName': '前置操作',
+                                'errorInfo': callResults,
+                            })
+                        results['tabPane']['preOperationTable'].append(
+                            {'operationType': item_pre['operationType'],  # 操作类型
+                             'callName': callName,  # 调用名称
+                             'callResults': str(callResults),  # 调用结果
+                             'resultsState': resultsState
+                             }
+                        )
+                    else:
+                        pass
+
+                # endregion
+
+                # region 发送请求
                 requestsApi = self.requests_api(
                     requestType, requestParamsType, bodyRequestType,
                     conversionRequestUrl, conversionHeadersData, conversionRequestData)
@@ -367,113 +419,73 @@ class RequstOperation(cls_Logging):
                         requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),
                         ensure_ascii=False)
                     results['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
+                    reportState.append('Pass')
 
                     # 断言及提取
                     performExtractAndValidate = self.perform_extract_and_validate(
-                        onlyCode,extractData,validateData,requestsApi,userId)
+                        onlyCode, extractData, validateData, requestsApi, userId)
                     if performExtractAndValidate['state']:
                         results['tabPane']['extractTable'] = performExtractAndValidate['extractTable']
                         results['tabPane']['assertionTable'] = performExtractAndValidate['assertionTable']
-                        results['reportState'] = performExtractAndValidate['reportState']
-                    else:
-                        results['errorMsg'] = performExtractAndValidate['errorMsg']
+                    else:  # 失败后的结果
+                        results['tabPane']['errorInfoTable'].append({
+                            'createTime': cls_Common.get_date_time(self),
+                            'errorName': '提取/断言',
+                            'errorInfo': performExtractAndValidate['errorMsg'],
+                        })
+                    reportState.append(performExtractAndValidate['reportState'])
                     results['state'] = True
                 else:
-                    results['errorMsg'] = requestsApi['errorMsg']
+                    results['tabPane']['errorInfoTable'].append({
+                        'createTime': cls_Common.get_date_time(self),
+                        'errorName': '访问接口',
+                        'errorInfo': requestsApi['errorMsg'],
+                    })
+                    reportState.append('Error')
+                # endregion
+
+                # region 后置操作
+                for item_rear in rearOperationData:
+                    if item_rear['operationType'] == 'Methods':
+                        callName = item_rear['methodsName']
+                        import DebugTalk.Data.ApiDebug
+                        strCmd = f"DebugTalk.Data.ApiDebug.{callName}"
+                        try:
+                            callResults = eval(strCmd)
+                            resultsState = True
+                            reportState.append('Pass')
+                        except BaseException as e:
+                            callResults = f"{callName} 执行错误:{e}"
+                            resultsState = False
+                            reportState.append('Error')
+                            results['tabPane']['errorInfoTable'].append({
+                                'createTime': cls_Common.get_date_time(self),
+                                'errorName': '后置操作',
+                                'errorInfo': callResults,
+                            })
+                        results['tabPane']['rearOperationTable'].append(
+                            {'operationType': item_rear['operationType'],  # 操作类型
+                             'callName': callName,  # 调用名称
+                             'callResults': callResults,  # 调用结果
+                             'resultsState': resultsState
+                             }
+                        )
+                    else:
+                        pass
+                # endregion
+                if 'Error' in reportState:
+                    results['reportState'] = 'Error'
+                elif 'Fail' in reportState:
+                    results['reportState'] = 'Fail'
+                else:
+                    results['reportState'] = 'Pass'
             else:
                 results['errorMsg'] = conversionDataToRequestData['errorMsg']
         else:
             results['errorMsg'] = getRequestData['errorMsg']
         return results
 
-    # def run_request(self, apiId, environmentId, onlyCode, userId):
-    #     results = {
-    #         'tabPane': {
-    #             'requsetHeaders': [],  # 原始请求头
-    #             'content': "",  # 返回主体
-    #             'responseHeaders': [],  # 返回头部
-    #             'extractTable': [],  # 提取信息
-    #             'assertionTable': []  # 断言信息
-    #         },
-    #         'state': False
-    #     }
-    #     getRequestData = self.get_request_data(apiId, environmentId)
-    #     if getRequestData['state']:
-    #         proId = getRequestData['proId']
-    #         requestUrl = results['originalUrl'] = getRequestData['requestUrl']
-    #         requestType = results['requestType'] = getRequestData['requestType']
-    #         requestParamsType = getRequestData['requestParamsType']
-    #         headersData = results['tabPane']['requsetHeaders'] = getRequestData['headersData']
-    #         paramsData = getRequestData['paramsData']
-    #         bodyRequestType = getRequestData['bodyRequestType']
-    #         bodyData = getRequestData['bodyData']
-    #         extractData = getRequestData['extractData']
-    #         validateData = getRequestData['validateData']
-    #         # 转换请求数据为JSON格式
-    #         conversionToJson = self.conversion_params_to_json(
-    #             headersData, paramsData, bodyRequestType, bodyData)
-    #         if conversionToJson['state']:
-    #             requestHeaders = conversionToJson['headersDict']
-    #             requestParams = conversionToJson['paramsDict']
-    #             requestBody = conversionToJson['bodyDict']
-    #             if requestParamsType == "Body":
-    #                 requestData = requestBody
-    #                 results['tabPane']['requestData'] = bodyData
-    #             else:
-    #                 requestData = requestParams
-    #                 results['tabPane']['requestData'] = paramsData
-    #
-    #             # 转换参数中带有引用的数据
-    #             conversionImportData = self.conversion_params_import_data(
-    #                 proId, requestUrl, requestHeaders, requestData)
-    #             if conversionImportData['state']:
-    #                 conversionRequestUrl = results['requestUrl'] = conversionImportData['requestUrl']
-    #                 conversionHeadersData = conversionImportData['headersData']
-    #                 conversionRequestData = conversionImportData['requestData']
-    #
-    #                 # 发送请求
-    #                 requestsApi = self.requests_api(
-    #                     requestType, requestParamsType, bodyRequestType,
-    #                     conversionRequestUrl, conversionHeadersData, conversionRequestData)
-    #                 if requestsApi['state']:
-    #                     results['responseCode'] = requestsApi['responseCode']
-    #                     results['time'] = requestsApi['time']
-    #                     # 解决中文乱码的问题
-    #                     results['tabPane']['content'] = json.dumps(
-    #                         requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),
-    #                         ensure_ascii=False)
-    #                     results['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
-    #                     if extractData:  # 如果有提取的数据才会执行断言
-    #                         requestExtract = self.request_extract(userId, onlyCode,
-    #                                                               requestsApi['content'],
-    #                                                               requestsApi['responseCode'],
-    #                                                               extractData)
-    #                         if requestExtract['state']:
-    #                             results['tabPane']['extractTable'] = requestExtract['extractList']
-    #
-    #                             # 断言数据
-    #                             requestValidate = self.request_validate(requestExtract['extractList'],
-    #                                                                     validateData)
-    #                             if requestValidate['state']:
-    #                                 results['tabPane']['assertionTable'] = requestValidate['validateReport']
-    #                                 results['reportState'] = 'Pass' if requestValidate['reportState'] else 'Fail'
-    #                         else:
-    #                             results['errorMsg'] = requestExtract['errorMsg']
-    #                     else:
-    #                         results['reportState'] = 'Pass'
-    #                     results['state'] = True
-    #                 else:
-    #                     results['errorMsg'] = requestsApi['errorMsg']
-    #             else:
-    #                 results['errorMsg'] = conversionImportData['errorMsg']
-    #         else:
-    #             # 这里目前没有可获取到的错误，以后在需求中添加
-    #             results['errorMsg'] = ""
-    #     else:
-    #         results['errorMsg'] = getRequestData['errorMsg']
-    #     return results
-
-    # 提取
+    # 提取并推送给当前执行的用户提取失败的信息
     def request_extract(self, userId, onlyCode, content, statuscode, extract):
         results = {}
         extractList = []
@@ -511,7 +523,7 @@ class RequstOperation(cls_Logging):
                             # region 添加操作信息
                             operationInfo = cls_Logging.record_local_operation_info(
                                 self, 'API', 'System', 2, 'Warning',
-                                None, 'ClassData', 'request_extract', message,
+                                'ClassData', 'Request', 'request_extract', message,
                             )
                             cls_Logging.push_to_user(self, operationInfo, userId)
                             # endregion
