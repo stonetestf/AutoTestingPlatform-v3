@@ -63,13 +63,15 @@
                         v-loading="loading"
                         :data=tableData
                         height="636px"
-                        border>
-                        <!-- <el-table-column
-                            label="ID"
+                        border
+                        ref="multipleTable"
+                        @selection-change="handleSelectionChange"
+                        @row-click="handleRowClick">
+                        <el-table-column
+                            type="selection"
                             align= "center"
-                            width="80px"
-                            prop="id">
-                        </el-table-column> -->
+                            width="50">
+                        </el-table-column>
                         <el-table-column
                             label="所属页面"
                             align= "center"
@@ -120,7 +122,7 @@
                             align= "center"
                             prop="associationMy">
                             <template slot-scope="scope">
-                                <el-tag type="info" v-if="scope.row.associationMy">我</el-tag>
+                                <el-tag type="info" v-if="scope.row.associationMy">True</el-tag>
                             </template>
                         </el-table-column> 
                         <el-table-column
@@ -137,7 +139,7 @@
                         </el-table-column>
                         <el-table-column
                             align="center"
-                            width="230px">
+                            width="275px">
                         <template slot="header">
                             <el-button-group>  
                                 <el-button type="primary" @click="OpenEditDialog()">新增</el-button>        
@@ -146,9 +148,9 @@
                                         更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                     </el-button>
                                     <el-dropdown-menu slot="dropdown">
-                                        <el-dropdown-item command="CopyInt">复制接口</el-dropdown-item>
+                                        <el-dropdown-item command="CopyApi">复制接口</el-dropdown-item>
                                         <el-dropdown-item command="SwaggerImport">Swagger导入</el-dropdown-item>
-                                        <el-dropdown-item command="CopyInt">历史恢复</el-dropdown-item>
+                                        <el-dropdown-item command="HistoryBack">历史恢复</el-dropdown-item>
                                     </el-dropdown-menu>
                                 </el-dropdown>
                             </el-button-group>
@@ -159,6 +161,10 @@
                                 size="mini"
                                 type="success"
                                 @click="OpenRequestApiDialog(scope.$index, scope.row)">Request</el-button>
+                            <el-button
+                                type="warning"
+                                size="mini"
+                                @click="handleEdit(scope.$index, scope.row)">工单</el-button>
                             <el-button
                                 size="mini"
                                 @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
@@ -426,6 +432,16 @@ export default {
                 apiId:row.id,
             }
             self.dialog.editor.dialogVisible=true;
+        },
+        handleRowClick(row, column, event){//点击行选择勾选框
+          this.$refs.multipleTable.toggleRowSelection(row);
+        },
+        handleSelectionChange(val){//勾选数据时触发
+            // console.log(val)
+            this.multipleSelection=[];
+            val.forEach(d =>{
+                this.multipleSelection.push(d.id);
+            }); 
         },
     }
 };

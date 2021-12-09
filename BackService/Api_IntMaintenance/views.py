@@ -53,7 +53,7 @@ def select_data(request):
         apiName = objData.apiName
         requestUrl = objData.requestUrl
         apiState = objData.apiState
-        associations= objData.associations
+        associations = objData.associations
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
         minSize = (current - 1) * pageSize
@@ -82,8 +82,8 @@ def select_data(request):
             select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
 
         for i in select_db_ApiBaseData:
-            obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0,apiId_id=i.id,uid_id=userId)
-            if obj_db_ApiAssociatedUser:
+            obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=i.id, uid_id=userId)
+            if obj_db_ApiAssociatedUser or userId == i.cuid:
                 associationMy = True
             else:
                 associationMy = False
@@ -97,7 +97,7 @@ def select_data(request):
                         'requestType': i.requestType,
                         'requestUrl': i.requestUrl,
                         'apiState': i.apiState,
-                        'associationMy':associationMy,
+                        'associationMy': associationMy,
                         'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                         'userName': i.uid.userName
                     })
@@ -684,8 +684,8 @@ def edit_data(request):
                     )
                     # 创建工单生命周期
                     db_WorkLifeCycle.objects.create(
-                        work_id=save_db_WorkorderManagement.id,workState=1,operationType='Add',
-                        operationInfo=None,uid_id=userId,is_del=0,
+                        work_id=save_db_WorkorderManagement.id, workState=1, operationType='Add',
+                        operationInfo=None, uid_id=userId, is_del=0,
                     )
                     # endregion
                     # endregion
