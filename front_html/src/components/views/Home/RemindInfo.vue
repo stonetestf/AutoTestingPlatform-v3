@@ -97,7 +97,7 @@
                         </el-button>
                         <el-button v-else size="mini" type="info" disabled>已读</el-button>
                     </template>
-        </el-table-column>
+                </el-table-column>
             </el-table>
           </template>
           <template>

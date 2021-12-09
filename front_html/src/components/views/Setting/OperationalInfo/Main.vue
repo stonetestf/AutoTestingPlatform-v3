@@ -92,7 +92,7 @@
                         </el-table-column>
                         <el-table-column
                             label="提醒类别"
-                            width="80px"
+                            width="100px"
                             align= "center">
                             <template slot-scope="scope">
                                 <el-tag type="danger" v-if="scope.row.level==1">{{scope.row.remindType}}</el-tag>

@@ -22,6 +22,7 @@ import Api_ApiMaintenance from '@/components/views/SysType/Api/Page/CaseManageme
 import Api_PageEnvironment from '@/components/views/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
 import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
+import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -79,6 +80,9 @@ export default new Router({
         },
         {path: '/SysType/Api/Page/Setting/DebugTalk/Main',name: 'Api_PageEnvironment',component: Api_DebugTalk,
           meta:{name: 'DebugTalk.py',url:'/SysType/Api/Page/Setting/DebugTalk/Main',comp:'Api_DebugTalk'}
+        },
+        {path: '/WorkorderManagement/RemindInfo/Main',name: 'Api_RemindInfo',component: Api_RemindInfo,
+          meta:{name: '提醒消息',url:'/WorkorderManagement/RemindInfo/Main',comp:'Api_RemindInfo'}
         },
       ]
     }

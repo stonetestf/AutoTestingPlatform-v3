@@ -115,10 +115,13 @@
                             </template>
                         </el-table-column>   
                         <el-table-column
-                            label="关联对象"
+                            label="与我关联"
                             width="80px"
                             align= "center"
-                            prop="intName">
+                            prop="associationMy">
+                            <template slot-scope="scope">
+                                <el-tag type="info" v-if="scope.row.associationMy">我</el-tag>
+                            </template>
                         </el-table-column> 
                         <el-table-column
                             label="更新时间"
@@ -235,7 +238,7 @@ export default {
                 associations:'',
                 associationsOption:[
                     {'label':'我','value':'My'},
-                    {'label':'全部','value':'All'},
+                    {'label':'全部','value':''},
                 ],
 
             },
@@ -291,6 +294,7 @@ export default {
                     "apiName":self.SelectRomeData.apiName,
                     "requestUrl":self.SelectRomeData.requestUrl,
                     'apiState':self.SelectRomeData.apiState,
+                    'associations':self.SelectRomeData.associations,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -305,6 +309,7 @@ export default {
                         obj.requestType = d.requestType;
                         obj.requestUrl = d.requestUrl;
                         obj.apiState =d.apiState;
+                        obj.associationMy=d.associationMy;
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;               
 
