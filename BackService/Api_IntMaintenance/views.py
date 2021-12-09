@@ -5,6 +5,7 @@ from django.db import transaction
 import json
 
 # Create your db here.
+from login.models import UserTable as db_UserTable
 from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from Api_IntMaintenance.models import ApiHeaders as db_ApiHeaders
 from Api_IntMaintenance.models import ApiParams as db_ApiParams
@@ -13,6 +14,9 @@ from Api_IntMaintenance.models import ApiExtract as db_ApiExtract
 from Api_IntMaintenance.models import ApiValidate as db_ApiValidate
 from Api_IntMaintenance.models import ApiOperation as db_ApiOperation
 from Api_IntMaintenance.models import ApiAssociatedUser as db_ApiAssociatedUser
+from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
+from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
+from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -42,13 +46,14 @@ def select_data(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         proId = objData.proId
         pageId = objData.pageId
         funId = objData.funId
         apiName = objData.apiName
         requestUrl = objData.requestUrl
         apiState = objData.apiState
-
+        associations= objData.associations
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
         minSize = (current - 1) * pageSize
@@ -75,19 +80,40 @@ def select_data(request):
         if apiState:
             obj_db_ApiBaseData = obj_db_ApiBaseData.filter(apiState=apiState)
             select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
-        for i in select_db_ApiBaseData:
-            dataList.append({
-                'id': i.id,
-                'pageName': i.page.pageName,
-                'funName': i.fun.funName,
-                'apiName': i.apiName,
-                'requestType': i.requestType,
-                'requestUrl': i.requestUrl,
-                'apiState': i.apiState,
-                'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                'userName': i.uid.userName
 
-            })
+        for i in select_db_ApiBaseData:
+            obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0,apiId_id=i.id,uid_id=userId)
+            if obj_db_ApiAssociatedUser:
+                associationMy = True
+            else:
+                associationMy = False
+            if associations == 'My':
+                if associationMy:
+                    dataList.append({
+                        'id': i.id,
+                        'pageName': i.page.pageName,
+                        'funName': i.fun.funName,
+                        'apiName': i.apiName,
+                        'requestType': i.requestType,
+                        'requestUrl': i.requestUrl,
+                        'apiState': i.apiState,
+                        'associationMy':associationMy,
+                        'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                        'userName': i.uid.userName
+                    })
+            else:
+                dataList.append({
+                    'id': i.id,
+                    'pageName': i.page.pageName,
+                    'funName': i.fun.funName,
+                    'apiName': i.apiName,
+                    'requestType': i.requestType,
+                    'requestUrl': i.requestUrl,
+                    'apiState': i.apiState,
+                    'associationMy': associationMy,
+                    'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                    'userName': i.uid.userName
+                })
         response['TableData'] = dataList
         response['Total'] = obj_db_ApiBaseData.count()
         response['statusCode'] = 2000
@@ -328,7 +354,7 @@ def save_data(request):
                         cls_FindTable.get_page_name(basicInfo.pageId),
                         cls_FindTable.get_fun_name(basicInfo.funId),
                         userId,
-                        '新增接口', CUFront=responseData
+                        '【新增接口】', CUFront=responseData
                     )
                     # endregion
                     # region 保存基本信息
@@ -469,9 +495,9 @@ def save_data(request):
                     # endregion
                     # region 创建被关联用户的新增提醒
                     obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
-                        is_del=0,apiId_id=save_db_ApiBaseData.id)
+                        is_del=0, apiId_id=save_db_ApiBaseData.id)
                     for item_associatedUser in obj_db_ApiAssociatedUser:
-                        cls_Logging.push_to_user(operationInfoId,item_associatedUser.uid_id)
+                        cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
@@ -644,9 +670,24 @@ def edit_data(request):
                         cls_FindTable.get_page_name(basicInfo.pageId),
                         cls_FindTable.get_fun_name(basicInfo.funId),
                         userId,
-                        f'修改接口:{obj_db_ApiBaseData[0].id}:{obj_db_ApiBaseData[0].apiName}',
+                        f'【修改接口】 ID{obj_db_ApiBaseData[0].id}:{obj_db_ApiBaseData[0].apiName}',
                         CUFront=oldData, CURear=responseData
                     )
+                    # region 创建系统级别的工单
+                    save_db_WorkorderManagement = db_WorkorderManagement.objects.create(
+                        sysType='API', pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
+                        workSource=1, workType='Edit', workState=0, workName=basicInfo.apiName,
+                        message=f"{oldData}\n\n{responseData}",
+                        uid_id=userId,
+                        cuid=userId,
+                        is_del=0,
+                    )
+                    # 创建工单生命周期
+                    db_WorkLifeCycle.objects.create(
+                        work_id=save_db_WorkorderManagement.id,workState=1,operationType='Add',
+                        operationInfo=None,uid_id=userId,is_del=0,
+                    )
+                    # endregion
                     # endregion
                     # region 删除 各类原数据
                     db_ApiHeaders.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
@@ -807,6 +848,17 @@ def edit_data(request):
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion
+                    # region 创建被关联用户的新增提醒
+                    obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
+                        is_del=0, apiId_id=basicInfo.apiId)
+                    for item_associatedUser in obj_db_ApiAssociatedUser:
+                        db_WorkBindPushToUsers.objects.create(
+                            work_id=save_db_WorkorderManagement.id,
+                            uid_id=item_associatedUser.uid_id,
+                            is_del=0
+                        )
+                        cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
+                    # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'数据修改失败:{e}'
             else:
@@ -853,7 +905,7 @@ def delete_data(request):
                         cls_FindTable.get_page_name(obj_db_ApiBaseData[0].page_id),
                         cls_FindTable.get_fun_name(obj_db_ApiBaseData[0].fun_id),
                         userId,
-                        f'删除接口:{apiId}:{obj_db_ApiBaseData[0].apiName}',
+                        f'【删除接口】 ID:{apiId}:{obj_db_ApiBaseData[0].apiName}',
                         CUFront=json.dumps(request.POST)
                     )
                     # endregion
@@ -892,9 +944,9 @@ def load_data(request):
             # region 基本信息
             roleId = cls_FindTable.get_roleId(obj_db_ApiBaseData[0].uid_id)
             pushTo = []
-            obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0,apiId_id=apiId)
+            obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=apiId)
             for item_associateUser in obj_db_ApiAssociatedUser:
-                pushTo.append([cls_FindTable.get_roleId(item_associateUser.uid_id),item_associateUser.uid_id])
+                pushTo.append([cls_FindTable.get_roleId(item_associateUser.uid_id), item_associateUser.uid_id])
             basicInfo = {
                 'pageId': obj_db_ApiBaseData[0].page_id,
                 'funId': obj_db_ApiBaseData[0].fun_id,
@@ -902,7 +954,7 @@ def load_data(request):
                 'apiName': obj_db_ApiBaseData[0].apiName,
                 'apiState': obj_db_ApiBaseData[0].apiState,
                 'assignedUserId': [roleId, obj_db_ApiBaseData[0].uid_id],
-                'pushTo':pushTo,
+                'pushTo': pushTo,
             }
             # endregion
             # region headers

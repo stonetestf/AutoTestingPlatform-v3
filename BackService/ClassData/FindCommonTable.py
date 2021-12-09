@@ -5,6 +5,7 @@ from login.models import UserBindRole as db_UserBindRole
 from ProjectManagement.models import ProManagement as db_ProManagement
 from PageManagement.models import PageManagement as db_PageManagement
 from FunManagement.models import FunManagement as db_FunManagement
+from role.models import BasicRole as db_BasicRole
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
@@ -33,6 +34,17 @@ class FindTable(cls_Logging):
 
         else:
             return None
+
+    def get_role_is_admin(self,roleId):
+        obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0,id=roleId)
+        if obj_db_BasicRole:
+            isAdmin = obj_db_BasicRole[0].is_admin
+            if isAdmin==1:
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def get_pro_name(self, proId):
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId)

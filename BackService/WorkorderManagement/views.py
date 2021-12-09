@@ -162,6 +162,7 @@ def save_data(request):
                         operationType='Add',
                         workState=workState,
                         uid_id=userId,
+                        is_del=0,
                     )
                     if pushTo:  # 如果有推送To信息,就保存
                         product_list_to_insert = list()
@@ -292,6 +293,7 @@ def edit_data(request):
                             workState=workState,
                             operationInfo=newData,
                             uid_id=userId,
+                            is_del=0,
                         )
                         # endregion
                         # 在修改时如果正在修改的人是创建人才会重新推送信息

@@ -37,6 +37,9 @@ def select_operational_info(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        isAdminGroup = cls_FindTable.get_role_is_admin(roleId)
         sysType = objData.sysType
         remindType = objData.remindType
         isRead = objData.isRead
@@ -50,42 +53,75 @@ def select_operational_info(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'info', 'select_operational_info', errorMsg)
     else:
-        obj_db_OperateInfo = db_OperateInfo.objects.filter().order_by('-createTime')
-        select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
+        if isAdminGroup:
+            obj_db_OperateInfo = db_OperateInfo.objects.filter().order_by('-createTime')
+            select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
+            total = obj_db_OperateInfo.count()
 
-        if sysType:
-            obj_db_OperateInfo = obj_db_OperateInfo.filter(sysType=sysType)
-            select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
-        if remindType:
-            # obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType__in=('Add', 'Edit'))
-            obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType=remindType)
-            select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
-        if isRead:
-            obj_db_OperateInfo = obj_db_OperateInfo.filter(is_read=isRead)
-            select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
+            if sysType:
+                obj_db_OperateInfo = obj_db_OperateInfo.filter(sysType=sysType)
+                select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
+            if remindType:
+                # obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType__in=('Add', 'Edit'))
+                obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType=remindType)
+                select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
+            if isRead:
+                obj_db_OperateInfo = obj_db_OperateInfo.filter(is_read=isRead)
+                select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
 
-        for i in select_db_OperateInfo:
-            dataList.append({
-                'id': i.id,
-                'triggerType':i.triggerType,
-                'level': i.level,
-                'remindType': i.remindType,
-                'sysType': i.sysType,
-                'toPro':i.toPro,
-                'toPage': i.toPage,
-                'toFun': i.toFun,
-                'info': i.info,
-                # 'editInfo':editInfo,
-                'tableItem':[{
-                    'CUFront':i.CUFront,
-                    'CURear': i.CURear,
-                }],
-                'is_read': i.is_read,
-                'userName': i.uid.userName,
-                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-            })
+            for i in select_db_OperateInfo:
+                dataList.append({
+                    'id': i.id,
+                    'triggerType':i.triggerType,
+                    'level': i.level,
+                    'remindType': i.remindType,
+                    'sysType': i.sysType,
+                    'toPro':i.toPro,
+                    'toPage': i.toPage,
+                    'toFun': i.toFun,
+                    'info': i.info,
+                    # 'editInfo':editInfo,
+                    'tableItem':[{
+                        'CUFront':i.CUFront,
+                        'CURear': i.CURear,
+                    }],
+                    'is_read': i.is_read,
+                    'userName': i.uid.userName,
+                    'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                })
+        else:
+            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId).order_by('-createTime')
+            select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
+            if remindType:
+                obj_db_PushInfo = obj_db_PushInfo.filter(oinfo__remindType=remindType)
+                select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
+            if isRead:
+                obj_db_PushInfo = obj_db_PushInfo.filter(is_read=isRead)
+                select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
+            total = obj_db_PushInfo.count()
+            for i in select_db_PushInfo:
+                # 排除创建者看到自己推给别人的信息
+                if i.oinfo.uid_id != userId:
+                    dataList.append({
+                        'id': i.id,
+                        'triggerType': i.oinfo.triggerType,
+                        'level': i.oinfo.level,
+                        'remindType': i.oinfo.remindType,
+                        'sysType': i.oinfo.sysType,
+                        'toPro': i.oinfo.toPro,
+                        'toPage': i.oinfo.toPage,
+                        'toFun': i.oinfo.toFun,
+                        'info': i.oinfo.info,
+                        'tableItem': [{
+                            'CUFront': i.oinfo.CUFront,
+                            'CURear': i.oinfo.CURear,
+                        }],
+                        'is_read': i.is_read,
+                        'userName': i.oinfo.uid.userName,
+                        'createTime': str(i.oinfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                    })
         response['TableData'] = dataList
-        response['Total'] = obj_db_OperateInfo.count()
+        response['Total'] = total
         response['statusCode'] = 2000
     return JsonResponse(response)
 
@@ -117,7 +153,6 @@ def user_operational_info(request):
         if obj_db_UserTable:
             for i in select_db_PushInfo:
                 # 排除创建者看到自己推给别人的信息
-                # i.oinfo.uid_id != userId and
                 if i.oinfo.uid_id != userId:
                     dataList.append({
                         'id': i.id,
@@ -176,6 +211,9 @@ def edit_isread_state(request):
 def edit_operational_info_state(request):
     response = {}
     try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        isAdminGroup = cls_FindTable.get_role_is_admin(roleId)
         oId = request.POST['oId']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -184,7 +222,15 @@ def edit_operational_info_state(request):
     else:
         try:
             with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-              db_OperateInfo.objects.filter(id=oId).update(is_read=1,updateTime=cls_Common.get_date_time())
+                if isAdminGroup:
+                    db_OperateInfo.objects.filter(id=oId).update(is_read=1,updateTime=cls_Common.get_date_time())
+                else:
+                    obj_db_PushInfo = db_PushInfo.objects.filter(id=oId)
+                    if obj_db_PushInfo:
+                        db_OperateInfo.objects.filter(id=obj_db_PushInfo[0].oinfo_id).update(
+                            is_read=1, updateTime=cls_Common.get_date_time())
+                        obj_db_PushInfo.update(is_read=1,updateTime=cls_Common.get_date_time())
+
         except BaseException as e:  # 自动回滚，不需要任何操作
             response['errorMsg'] = f"已读操作失败:{e}"
         else:

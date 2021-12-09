@@ -161,9 +161,10 @@
     </template>
     <template>
       <dialog-remind-info
-          @closeDialog="closeRemindInfoDialog" 
-          :isVisible="dialog.remindInfo.dialogVisible" 
-          :dialogPara="dialog.remindInfo.dialogPara">
+        @closeDialog="closeRemindInfoDialog" 
+        :isVisible="dialog.remindInfo.dialogVisible" 
+        :dialogPara="dialog.remindInfo.dialogPara"
+        @getData="updateRemindNum($event)">
       </dialog-remind-info>
     </template>
   </div>
@@ -184,12 +185,14 @@ import Api_ApiMaintenance from '@/components/views/SysType/Api/Page/CaseManageme
 import Api_PageEnvironment from '@/components/views/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
 import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
+import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
 
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
-    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment,Api_DebugTalk,Api_GlobalVariable
+    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment,Api_DebugTalk,Api_GlobalVariable,
+    Api_RemindInfo
   },
   data() {
     return {
@@ -498,6 +501,10 @@ export default {
     },
     closeRemindInfoDialog(){
       this.dialog.remindInfo.dialogVisible =false;
+    },
+    updateRemindNum(event){//关闭推送消失时，回调传参数给首页的提醒数量
+      PrintConsole(event);
+      this.RomeData.remindNum=event;
     },
   }
 }
