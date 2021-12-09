@@ -12,7 +12,7 @@ from Api_IntMaintenance.models import ApiBody as db_ApiBody
 from Api_IntMaintenance.models import ApiExtract as db_ApiExtract
 from Api_IntMaintenance.models import ApiValidate as db_ApiValidate
 from Api_IntMaintenance.models import ApiOperation as db_ApiOperation
-from PageEnvironment.models import PageEnvironment as db_PageEnvironment
+from Api_IntMaintenance.models import ApiAssociatedUser as db_ApiAssociatedUser
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -321,6 +321,16 @@ def save_data(request):
         else:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加操作信息
+                    operationInfoId = cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Add',
+                        cls_FindTable.get_pro_name(basicInfo.proId),
+                        cls_FindTable.get_page_name(basicInfo.pageId),
+                        cls_FindTable.get_fun_name(basicInfo.funId),
+                        userId,
+                        '新增接口', CUFront=responseData
+                    )
+                    # endregion
                     # region 保存基本信息
                     save_db_ApiBaseData = db_ApiBaseData.objects.create(
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
@@ -330,6 +340,15 @@ def save_data(request):
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
                         uid_id=assignedUserId, cuid=userId, is_del=0,
                     )
+                    product_list_to_insert = list()
+                    for item_userId in basicInfo.pushTo:
+                        product_list_to_insert.append(db_ApiAssociatedUser(
+                            apiId_id=save_db_ApiBaseData.id,
+                            opertateInfo_id=operationInfoId,
+                            uid_id=item_userId[1],
+                            is_del=0)
+                        )
+                    db_ApiAssociatedUser.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region Headers
                     product_list_to_insert = list()
@@ -448,16 +467,11 @@ def save_data(request):
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion
-
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Add',
-                        cls_FindTable.get_pro_name(basicInfo.proId),
-                        cls_FindTable.get_page_name(basicInfo.pageId),
-                        cls_FindTable.get_fun_name(basicInfo.funId),
-                        userId,
-                        '新增接口', CUFront=responseData
-                    )
+                    # region 创建被关联用户的新增提醒
+                    obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
+                        is_del=0,apiId_id=save_db_ApiBaseData.id)
+                    for item_associatedUser in obj_db_ApiAssociatedUser:
+                        cls_Logging.push_to_user(operationInfoId,item_associatedUser.uid_id)
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
@@ -624,7 +638,7 @@ def edit_data(request):
                         }
                     }
                     # endregion
-                    cls_Logging.record_operation_info(
+                    operationInfoId = cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Edit',
                         cls_FindTable.get_pro_name(basicInfo.proId),
                         cls_FindTable.get_page_name(basicInfo.pageId),
@@ -634,15 +648,6 @@ def edit_data(request):
                         CUFront=oldData, CURear=responseData
                     )
                     # endregion
-
-                    obj_db_ApiBaseData.update(
-                        pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
-                        apiName=basicInfo.apiName, environment_id=basicInfo.environmentId, apiState=basicInfo.apiState,
-                        requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl,
-                        requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
-                        bodyRequestSaveType=apiInfo.request.body.requestSaveType,
-                        uid_id=assignedUserId, cuid=userId, is_del=0,updateTime=cls_Common.get_date_time()
-                    )
                     # region 删除 各类原数据
                     db_ApiHeaders.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
                         updateTime=cls_Common.get_date_time(), is_del=1
@@ -662,6 +667,28 @@ def edit_data(request):
                     db_ApiOperation.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
                         updateTime=cls_Common.get_date_time(), is_del=1
                     )
+                    db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
+                        updateTime=cls_Common.get_date_time(), is_del=1
+                    )
+                    # endregion
+                    # region 更新基本信息
+                    obj_db_ApiBaseData.update(
+                        pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
+                        apiName=basicInfo.apiName, environment_id=basicInfo.environmentId, apiState=basicInfo.apiState,
+                        requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl,
+                        requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
+                        bodyRequestSaveType=apiInfo.request.body.requestSaveType,
+                        uid_id=assignedUserId, cuid=userId, is_del=0, updateTime=cls_Common.get_date_time()
+                    )
+                    product_list_to_insert = list()
+                    for item_userId in basicInfo.pushTo:
+                        product_list_to_insert.append(db_ApiAssociatedUser(
+                            apiId_id=basicInfo.apiId,
+                            opertateInfo_id=operationInfoId,
+                            uid_id=item_userId[1],
+                            is_del=0)
+                        )
+                    db_ApiAssociatedUser.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region Headers
                     product_list_to_insert = list()
@@ -864,6 +891,10 @@ def load_data(request):
         if obj_db_ApiBaseData:
             # region 基本信息
             roleId = cls_FindTable.get_roleId(obj_db_ApiBaseData[0].uid_id)
+            pushTo = []
+            obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0,apiId_id=apiId)
+            for item_associateUser in obj_db_ApiAssociatedUser:
+                pushTo.append([cls_FindTable.get_roleId(item_associateUser.uid_id),item_associateUser.uid_id])
             basicInfo = {
                 'pageId': obj_db_ApiBaseData[0].page_id,
                 'funId': obj_db_ApiBaseData[0].fun_id,
@@ -871,6 +902,7 @@ def load_data(request):
                 'apiName': obj_db_ApiBaseData[0].apiName,
                 'apiState': obj_db_ApiBaseData[0].apiState,
                 'assignedUserId': [roleId, obj_db_ApiBaseData[0].uid_id],
+                'pushTo':pushTo,
             }
             # endregion
             # region headers

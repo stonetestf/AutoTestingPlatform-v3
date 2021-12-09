@@ -160,6 +160,7 @@ def save_data(request):
                     db_WorkLifeCycle.objects.create(
                         work_id=save_db_WorkorderManagement.id,
                         operationType='Add',
+                        workState=workState,
                         uid_id=userId,
                     )
                     if pushTo:  # 如果有推送To信息,就保存
@@ -288,6 +289,7 @@ def edit_data(request):
                         db_WorkLifeCycle.objects.create(
                             work_id=workId,
                             operationType='Edit',
+                            workState=workState,
                             operationInfo=newData,
                             uid_id=userId,
                         )
@@ -337,6 +339,9 @@ def delete_data(request):
                     db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
+                    db_WorkLifeCycle.objects.filter(is_del=0, work_id=workId).update(
+                        is_del=1, updateTime=cls_Common.get_date_time()
+                    )
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Delete',
@@ -376,12 +381,21 @@ def select_life_cycle(request):  # 获取当前工单的生命周期
             title = None
             content = None
             operationType = i.operationType
-            i.operationInfo = i.operationInfo
+            workState = ""
+            match i.workState:
+                case 0:
+                    workState = '待受理'
+                case 1:
+                    workState = '受理中'
+                case 2:
+                    workState = '已解决'
+                case 3:
+                    workState = '已关闭'
             match operationType:
                 case "Add":
-                    title = f'创建工单 {i.uid.userName}({i.uid.nickName})'
+                    title = f'创建工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
                 case "Edit":
-                    title = f'修改工单 {i.uid.userName}({i.uid.nickName})'
+                    title = f'修改工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
                     content = i.operationInfo
             dataList.append({
                 'title': title,

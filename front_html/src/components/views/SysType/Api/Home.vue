@@ -417,6 +417,7 @@ export default {
       socket.onmessage = function (e) {
           // PrintConsole('message: ' + e.data);//打印服务端返回的数据
           let retData = JSON.parse(e.data)
+          self.RomeData.remindNum=retData.pushCount;
           let cpu = retData.cpu;
           self.ServerPerformance.cpu=cpu;
           if(cpu>=80 && cpu<90){
@@ -441,23 +442,24 @@ export default {
             self.ServerPerformance.memStatus='success';
           }
 
+          //celery服务
+          if(retData.celery){
+            self.ServerPerformance.celery = 'success';
+          }else{
+            self.ServerPerformance.celery = 'exception';
+          }
+          if(retData.celeryBeat){
+            self.ServerPerformance.celeryBeat = 'success';
+          }else{
+            self.ServerPerformance.celeryBeat = 'exception';
+          }
+
           var data ={};
           data.Message = 'Heartbeat';
           data.Params = {
               'time':'Date()'
           }
           socket.send(JSON.stringify(data));//发送数据到服务端
-          //celery服务
-          if(retData.celery){
-              self.ServerPerformance.celery = 'success';
-          }else{
-              self.ServerPerformance.celery = 'exception';
-          }
-          if(retData.celeryBeat){
-              self.ServerPerformance.celeryBeat = 'success';
-          }else{
-              self.ServerPerformance.celeryBeat = 'exception';
-          }
       };
       socket.onclose=function(e){
           PrintConsole("关闭TCP连接onclose",e);

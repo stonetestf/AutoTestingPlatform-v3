@@ -83,7 +83,7 @@
                                                 </el-form-item>
                                                 <el-form-item label="关联To:">
                                                     <el-cascader 
-                                                        placeholder="被关联者将会在此接口变动时收到变动提醒"
+                                                        placeholder="被关联者将会在此接口变动时收到变动提醒!"
                                                         @click.native="GetUserNameOption()"
                                                         style="width:550px;"
                                                         v-model="BasicRomeData.pushTo" 
@@ -791,7 +791,7 @@ export default {
                 assignedUserId:'',//指派用户
                 assignedUserNameOptions:[],
                 props: { multiple: true },
-                pushTo:[],
+                pushTo:[],//关联To用户
                 userNameOptions:[],
                 rules:{
                     pageId:[{ required: true, message: '请选择所属页面', trigger: 'change' }],
@@ -923,105 +923,109 @@ export default {
                                             self.BasicRomeData.environmentId = d.basicInfo.environmentId;
                                             self.BasicRomeData.apiName = d.basicInfo.apiName;
                                             self.BasicRomeData.apiState = d.basicInfo.apiState;
-                                            self.EditApiRomeData.requestType = d.apiInfo.requestType;
-                                            self.EditApiRomeData.requestUrl =  d.apiInfo.requestUrl;
-                                            //headers
-                                            d.apiInfo.request.headers.forEach(item_headers=>{
-                                                let obj = {};
-                                                obj.index = item_headers.index;
-                                                obj.state =item_headers.state;
-                                                obj.key =item_headers.key;
-                                                obj.value=item_headers.value;
-                                                obj.remarks=item_headers.remarks;
-                                                self.EditApiRomeData.headersRomeData.tableData.push(obj);
-                                            });
-                                            self.EditApiRomeData.headersRomeData.index=d.apiInfo.request.headers.length+1;
+                                            GetUserNameItems().then(dd=>{
+                                                self.BasicRomeData.userNameOptions = dd;
+                                                self.BasicRomeData.pushTo = d.basicInfo.pushTo;
 
-                                            //params
-                                            d.apiInfo.request.params.forEach(item_params=>{
-                                                let obj = {};
-                                                obj.index = item_params.index;
-                                                obj.state =item_params.state;
-                                                obj.key =item_params.key;
-                                                obj.value=item_params.value;
-                                                obj.remarks=item_params.remarks;
-                                                self.EditApiRomeData.paramsRomeData.tableData.push(obj);
-                                            });
-                                            self.EditApiRomeData.paramsRomeData.index=d.apiInfo.request.params.length+1;
-
-                                            //body
-                                            self.EditApiRomeData.bodyRomeData.requestSaveType = d.apiInfo.request.body.requestSaveType;
-                                            if(d.apiInfo.request.body.requestSaveType=='form-data'){
-                                                d.apiInfo.request.body.bodyData.forEach(item_body=>{
+                                                self.EditApiRomeData.requestType = d.apiInfo.requestType;
+                                                self.EditApiRomeData.requestUrl =  d.apiInfo.requestUrl;
+                                                //headers
+                                                d.apiInfo.request.headers.forEach(item_headers=>{
                                                     let obj = {};
-                                                    obj.index = item_body.index;
-                                                    obj.state =item_body.state;
-                                                    obj.key =item_body.key;
-                                                    obj.value=item_body.value;
-                                                    obj.remarks=item_body.remarks;
-                                                    self.EditApiRomeData.bodyRomeData.tableData.push(obj);
+                                                    obj.index = item_headers.index;
+                                                    obj.state =item_headers.state;
+                                                    obj.key =item_headers.key;
+                                                    obj.value=item_headers.value;
+                                                    obj.remarks=item_headers.remarks;
+                                                    self.EditApiRomeData.headersRomeData.tableData.push(obj);
                                                 });
-                                                self.EditApiRomeData.bodyRomeData.index=d.apiInfo.request.body.bodyData.length+1;
-                                            }else if(d.apiInfo.request.body.requestSaveType=='raw'){
-                                                self.EditApiRomeData.bodyRomeData.rawValue = d.apiInfo.request.body.bodyData;
-                                            }
+                                                self.EditApiRomeData.headersRomeData.index=d.apiInfo.request.headers.length+1;
 
-                                            //extract
-                                            d.apiInfo.request.extract.forEach(item_extract=>{
-                                                let obj = {};
-                                                obj.index = item_extract.index;
-                                                obj.state =item_extract.state;
-                                                obj.key =item_extract.key;
-                                                obj.value=item_extract.value;
-                                                obj.remarks=item_extract.remarks;
-                                                self.EditApiRomeData.extractRomeData.tableData.push(obj);
+                                                //params
+                                                d.apiInfo.request.params.forEach(item_params=>{
+                                                    let obj = {};
+                                                    obj.index = item_params.index;
+                                                    obj.state =item_params.state;
+                                                    obj.key =item_params.key;
+                                                    obj.value=item_params.value;
+                                                    obj.remarks=item_params.remarks;
+                                                    self.EditApiRomeData.paramsRomeData.tableData.push(obj);
+                                                });
+                                                self.EditApiRomeData.paramsRomeData.index=d.apiInfo.request.params.length+1;
+
+                                                //body
+                                                self.EditApiRomeData.bodyRomeData.requestSaveType = d.apiInfo.request.body.requestSaveType;
+                                                if(d.apiInfo.request.body.requestSaveType=='form-data'){
+                                                    d.apiInfo.request.body.bodyData.forEach(item_body=>{
+                                                        let obj = {};
+                                                        obj.index = item_body.index;
+                                                        obj.state =item_body.state;
+                                                        obj.key =item_body.key;
+                                                        obj.value=item_body.value;
+                                                        obj.remarks=item_body.remarks;
+                                                        self.EditApiRomeData.bodyRomeData.tableData.push(obj);
+                                                    });
+                                                    self.EditApiRomeData.bodyRomeData.index=d.apiInfo.request.body.bodyData.length+1;
+                                                }else if(d.apiInfo.request.body.requestSaveType=='raw'){
+                                                    self.EditApiRomeData.bodyRomeData.rawValue = d.apiInfo.request.body.bodyData;
+                                                }
+
+                                                //extract
+                                                d.apiInfo.request.extract.forEach(item_extract=>{
+                                                    let obj = {};
+                                                    obj.index = item_extract.index;
+                                                    obj.state =item_extract.state;
+                                                    obj.key =item_extract.key;
+                                                    obj.value=item_extract.value;
+                                                    obj.remarks=item_extract.remarks;
+                                                    self.EditApiRomeData.extractRomeData.tableData.push(obj);
+                                                });
+                                                self.EditApiRomeData.extractRomeData.index=d.apiInfo.request.extract.length+1;
+
+                                                //validate
+                                                d.apiInfo.request.validate.forEach(item_validate=>{
+                                                    let obj = {};
+                                                    obj.index = item_validate.index;
+                                                    obj.state =item_validate.state;
+                                                    obj.checkName =item_validate.checkName;
+                                                    obj.validateType=item_validate.validateType;
+                                                    obj.valueType=item_validate.valueType;
+                                                    obj.expectedResults=item_validate.expectedResults;
+                                                    obj.remarks=item_validate.remarks;
+                                                    self.EditApiRomeData.validateRomeData.tableData.push(obj);
+                                                });
+                                                self.EditApiRomeData.validateRomeData.index=d.apiInfo.request.validate.length+1;
+
+                                                //preOperation
+                                                d.apiInfo.request.preOperation.forEach(item_preOperation=>{
+                                                    let obj = {};
+                                                    obj.index = item_preOperation.index;
+                                                    obj.state =item_preOperation.state;
+                                                    obj.operationType =item_preOperation.operationType;
+                                                    obj.methodsName=item_preOperation.methodsName;
+                                                    obj.dataBase=item_preOperation.dataBase;
+                                                    obj.sql=item_preOperation.sql;
+                                                    obj.remarks=item_preOperation.remarks;
+
+                                                    self.EditApiRomeData.preOperationRomeData.tableData.push(obj);
+                                                });
+                                                self.EditApiRomeData.preOperationRomeData.index=d.apiInfo.request.preOperation.length+1;
+
+                                                //rearOperation
+                                                d.apiInfo.request.rearOperation.forEach(item_rearOperation=>{
+                                                    let obj = {};
+                                                    obj.index = item_rearOperation.index;
+                                                    obj.state =item_rearOperation.state;
+                                                    obj.operationType =item_rearOperation.operationType;
+                                                    obj.methodsName=item_rearOperation.methodsName;
+                                                    obj.dataBase=item_rearOperation.dataBase;
+                                                    obj.sql=item_rearOperation.sql;
+                                                    obj.remarks=item_rearOperation.remarks;
+
+                                                    self.EditApiRomeData.rearOperationRomeData.tableData.push(obj);
+                                                });
+                                                self.EditApiRomeData.rearOperationRomeData.index=d.apiInfo.request.rearOperation.length+1;
                                             });
-                                            self.EditApiRomeData.extractRomeData.index=d.apiInfo.request.extract.length+1;
-
-                                            //validate
-                                            d.apiInfo.request.validate.forEach(item_validate=>{
-                                                let obj = {};
-                                                obj.index = item_validate.index;
-                                                obj.state =item_validate.state;
-                                                obj.checkName =item_validate.checkName;
-                                                obj.validateType=item_validate.validateType;
-                                                obj.valueType=item_validate.valueType;
-                                                obj.expectedResults=item_validate.expectedResults;
-                                                obj.remarks=item_validate.remarks;
-                                                self.EditApiRomeData.validateRomeData.tableData.push(obj);
-                                            });
-                                            self.EditApiRomeData.validateRomeData.index=d.apiInfo.request.validate.length+1;
-
-                                            //preOperation
-                                            d.apiInfo.request.preOperation.forEach(item_preOperation=>{
-                                                let obj = {};
-                                                obj.index = item_preOperation.index;
-                                                obj.state =item_preOperation.state;
-                                                obj.operationType =item_preOperation.operationType;
-                                                obj.methodsName=item_preOperation.methodsName;
-                                                obj.dataBase=item_preOperation.dataBase;
-                                                obj.sql=item_preOperation.sql;
-                                                obj.remarks=item_preOperation.remarks;
-
-                                                self.EditApiRomeData.preOperationRomeData.tableData.push(obj);
-                                            });
-                                            self.EditApiRomeData.preOperationRomeData.index=d.apiInfo.request.preOperation.length+1;
-
-                                            //rearOperation
-                                            d.apiInfo.request.rearOperation.forEach(item_rearOperation=>{
-                                                let obj = {};
-                                                obj.index = item_rearOperation.index;
-                                                obj.state =item_rearOperation.state;
-                                                obj.operationType =item_rearOperation.operationType;
-                                                obj.methodsName=item_rearOperation.methodsName;
-                                                obj.dataBase=item_rearOperation.dataBase;
-                                                obj.sql=item_rearOperation.sql;
-                                                obj.remarks=item_rearOperation.remarks;
-
-                                                self.EditApiRomeData.rearOperationRomeData.tableData.push(obj);
-                                            });
-                                            self.EditApiRomeData.rearOperationRomeData.index=d.apiInfo.request.rearOperation.length+1;
-
                                             self.loading=false;
                                         });
                                     });
@@ -1205,6 +1209,7 @@ export default {
             self.BasicRomeData.apiName='';
             self.BasicRomeData.apiState='';
             self.BasicRomeData.assignedUserId='';
+            self.BasicRomeData.pushTo=[];
             PrintConsole('BasicRomeData','清除');
         
         },
@@ -1227,12 +1232,12 @@ export default {
                 this.BasicRomeData.environmentNameOption = d;
             });
         },
-        GetUserNameOption(){
+        GetUserNameOption(){//关联
             GetUserNameItems().then(d=>{
                 this.BasicRomeData.userNameOptions = d;
             });
         },
-        GetassignedUserNameOption(){
+        GetassignedUserNameOption(){//指派
             GetUserNameItems().then(d=>{
                 this.BasicRomeData.assignedUserNameOptions = d;
             });
@@ -1819,6 +1824,7 @@ export default {
                             'environmentId':self.BasicRomeData.environmentId,
                             'apiState':self.BasicRomeData.apiState,
                             'assignedUserId':self.BasicRomeData.assignedUserId,
+                            'pushTo':self.BasicRomeData.pushTo,
                         },
                         'ApiInfo':{
                             'requestType':self.EditApiRomeData.requestType,
@@ -1859,6 +1865,7 @@ export default {
                             'environmentId':self.BasicRomeData.environmentId,
                             'apiState':self.BasicRomeData.apiState,
                             'assignedUserId':self.BasicRomeData.assignedUserId,
+                            'pushTo':self.BasicRomeData.pushTo,
                         },
                         'ApiInfo':{
                             'requestType':self.EditApiRomeData.requestType,

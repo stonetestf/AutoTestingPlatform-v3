@@ -90,3 +90,12 @@ class ApiOperation(models.Model):  # 前后置操作
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
+
+
+class ApiAssociatedUser(models.Model):  # 接口关联用户表，接口创建时，修改时，被关联者会收到消息提醒
+    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+    opertateInfo = models.ForeignKey(to='info.OperateInfo', to_field='id', on_delete=models.CASCADE)  # 操作信息ID
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 关联用户Id
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+    updateTime = models.DateTimeField('更新时间', auto_now=True)

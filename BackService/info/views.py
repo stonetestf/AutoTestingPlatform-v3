@@ -111,7 +111,7 @@ def user_operational_info(request):
         cls_Logging.record_error_info('HOME', 'info', 'select_operational_info', errorMsg)
     else:
         # 加载推送信息
-        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId,is_read=0)
+        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId,is_read=0).order_by('-updateTime')
         select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
         if obj_db_UserTable:

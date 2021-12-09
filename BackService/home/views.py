@@ -9,7 +9,7 @@ from time import sleep
 
 
 import json
-import psutil
+# import psutil
 
 # Create your db here.
 from django.db.models import Q
@@ -320,7 +320,7 @@ def get_server_indicators(request):
                                                           f'心跳包:{counter}秒内无响应,断开连接')
                                     break
                             userId = cls_FindTable.get_userId(token)
-                            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId)
+                            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId,is_read=0)
                             pushCount = obj_db_PushInfo.count()
                             # region CPU和内存
                             cpu = psutil.cpu_percent(interval=2)
