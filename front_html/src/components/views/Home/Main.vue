@@ -154,10 +154,11 @@ export default {
     this.LoadUserInfo();
     this.GetHomePermissions();
     this.getUserStatisticsInfo();
+    this.SelectRemindInfoData();
 
     // //定时执行
     // this.RemindInfoData = setInterval(() => {
-    //   setTimeout(this.SelectRemindInfoData(), 0)}, 1000*3
+    //   setTimeout(, 0)}, 1000*3
     // );
   },
   beforeDestroy(){//生命周期-离开时

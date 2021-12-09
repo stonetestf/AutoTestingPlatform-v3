@@ -94,8 +94,9 @@
                                 prop="workState">
                                 <template slot-scope="scope">
                                     <el-tag type="info" v-if="scope.row.workState==0">待受理</el-tag>
-                                    <el-tag type="warning"  v-else-if="scope.row.workState==1">受理中</el-tag>
-                                    <el-tag type="success"  v-else>已解决</el-tag>
+                                    <el-tag type="danger" v-else-if="scope.row.workState==1">受理中</el-tag>
+                                    <el-tag type="warning" v-else-if="scope.row.workState==2">已解决</el-tag>
+                                    <el-tag type="success" v-else>已关闭</el-tag>
                                 </template>
                             </el-table-column>
                             <el-table-column

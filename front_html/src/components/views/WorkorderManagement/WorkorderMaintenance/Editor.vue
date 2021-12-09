@@ -159,6 +159,7 @@ export default {
                     {'label':'待受理','value':0},
                     {'label':'受理中','value':1},
                     {'label':'已解决','value':2},
+                    {'label':'已关闭','value':3},
                 ],
                 pageId:'',
                 pageNameOption:[],

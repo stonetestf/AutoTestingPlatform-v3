@@ -246,10 +246,10 @@ export default {
     this.getBreadcrumb();
     this.GetApiPermissions();
     this.LoadUserInfo();
-    // this.CreateSocket();
+    this.CreateSocket();
   },
   beforeDestroy(){//生命周期-离开时
-    //   this.ServerPerformance.socket.close(); //关闭TCP连接
+    this.ServerPerformance.socket.close(); //关闭TCP连接
   },
   watch: {
     $route: function (to) {
@@ -373,76 +373,80 @@ export default {
       let val = this.tabsPath.filter(item => thisTab.name == item.name)
       this.$router.push({ path: val[0].path})
     },
-    // CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据
-    //   let self = this;
-    //   var socket = new WebSocket(store.state.WebSock+'/api/home/GetServerIndicators');
-    //   self.ServerPerformance.socket = socket;
+    CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据
+      let self = this;
+      var socket = new WebSocket(store.state.WebSock+'/api/home/GetServerIndicators');
+      self.ServerPerformance.socket = socket;
       
-    //   socket.onopen = function () {
-    //       PrintConsole('WebSocket open');//成功连接上Websocket
-    //       var data ={};
-    //       data.Message = 'Start';
-    //       data.Params = {
-    //           'token':self.$cookies.get('token')
-    //       }
-    //       socket.send(JSON.stringify(data));//发送数据到服务端
-    //   };
-    //   socket.onmessage = function (e) {
-    //       PrintConsole('message: ' + e.data);//打印服务端返回的数据
-    //       let retData = JSON.parse(e.data)
-    //       let cpu = retData.cpu;
-    //       self.ServerPerformance.cpu=cpu;
-    //       if(cpu>=80 && cpu<90){
-    //         self.ServerPerformance.cpuStatus='warning';
-    //       }
-    //       else if(cpu>=90){
-    //         self.ServerPerformance.cpuStatus='exception';
-    //       }
-    //       else{
-    //         self.ServerPerformance.cpuStatus='success';
-    //       }
+      socket.onopen = function () {
+        PrintConsole('WebSocket open');//成功连接上Websocket
+        var data ={};
+        data.Message = 'Start';
+        data.Params = {
+          'token':self.$cookies.get('token')
+        }
+        socket.send(JSON.stringify(data));//发送数据到服务端
+      };
+      socket.onmessage = function (e) {
+        // PrintConsole('message: ' + e.data);//打印服务端返回的数据
+        let retData = JSON.parse(e.data)
+        self.RomeData.remindNum=retData.pushCount;
 
-    //       let mem = retData.mem;
-    //       self.ServerPerformance.mem=mem;
-    //       if(mem>=80 && mem<90){
-    //         self.ServerPerformance.memStatus='warning';
-    //       }
-    //       else if(mem>=90){
-    //         self.ServerPerformance.memStatus='exception';
-    //       }
-    //       else{
-    //         self.ServerPerformance.memStatus='success';
-    //       }
+        let cpu = retData.cpu;
+        self.ServerPerformance.cpu=cpu;
+        if(cpu>=80 && cpu<90){
+          self.ServerPerformance.cpuStatus='warning';
+        }
+        else if(cpu>=90){
+          self.ServerPerformance.cpuStatus='exception';
+        }
+        else{
+          self.ServerPerformance.cpuStatus='success';
+        }
 
-    //       var data ={};
-    //       data.Message = 'Heartbeat';
-    //       data.Params = {
-    //           'time':'Date()'
-    //       }
-    //       socket.send(JSON.stringify(data));//发送数据到服务端
-    //       //celery服务
-    //       if(retData.celery){
-    //           self.ServerPerformance.celery = 'success';
-    //       }else{
-    //           self.ServerPerformance.celery = 'exception';
-    //       }
-    //       if(retData.celeryBeat){
-    //           self.ServerPerformance.celeryBeat = 'success';
-    //       }else{
-    //           self.ServerPerformance.celeryBeat = 'exception';
-    //       }
-    //   };
-    //   socket.onclose=function(e){
-    //       PrintConsole("关闭TCP连接onclose",e);
-    //       socket.close(); //关闭TCP连接
-    //       // //10次重连
-    //       // for(let i=1;i<=11;i++){
-    //       //     PrintConsole("正在重连",i);
-    //       //     self.CreateSocket();
-    //       // }
-    //   };
-    //   if (socket.readyState == WebSocket.OPEN) socket.onopen();       
-    // },
+        let mem = retData.mem;
+        self.ServerPerformance.mem=mem;
+        if(mem>=80 && mem<90){
+          self.ServerPerformance.memStatus='warning';
+        }
+        else if(mem>=90){
+          self.ServerPerformance.memStatus='exception';
+        }
+        else{
+          self.ServerPerformance.memStatus='success';
+        }
+
+        //celery服务
+        if(retData.celery){
+          self.ServerPerformance.celery = 'success';
+        }else{
+          self.ServerPerformance.celery = 'exception';
+        }
+        if(retData.celeryBeat){
+          self.ServerPerformance.celeryBeat = 'success';
+        }else{
+          self.ServerPerformance.celeryBeat = 'exception';
+        }
+
+        var data ={};
+        data.Message = 'Heartbeat';
+        data.Params = {
+          'time':'Date()'
+        }
+        socket.send(JSON.stringify(data));//发送数据到服务端
+          
+      };
+      socket.onclose=function(e){
+          PrintConsole("关闭TCP连接onclose",e);
+          socket.close(); //关闭TCP连接
+          // //10次重连
+          // for(let i=1;i<=11;i++){
+          //     PrintConsole("正在重连",i);
+          //     self.CreateSocket();
+          // }
+      };
+      if (socket.readyState == WebSocket.OPEN) socket.onopen();       
+    },
 
     closeUserInfoDialog(){
       this.dialog.userinfo.dialogVisible =false;
