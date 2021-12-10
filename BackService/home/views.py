@@ -265,7 +265,8 @@ def get_user_statistics_info(request):
         if obj_db_UserBindRole.exists():
             pushCount = db_PushInfo.objects.filter(~Q(oinfo__uid_id=userId),uid_id=userId,is_read=0).count()
             errorCount = db_OperateInfo.objects.filter(remindType='Error',is_read=0).count()
-            warningCount = db_OperateInfo.objects.filter(uid_id=userId, remindType='Warning').count()
+            # warningCount = db_OperateInfo.objects.filter(uid_id=userId, remindType='Warning').count()
+            warningCount = db_PushInfo.objects.filter(uid_id=userId,oinfo__remindType='Warning',is_read=0).count()
 
             if obj_db_UserBindRole[0].role.is_admin == 1:
                 message = f"当前您的信息: <br>" \

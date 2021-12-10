@@ -73,6 +73,12 @@
                             width="50">
                         </el-table-column>
                         <el-table-column
+                            label="ID"
+                            align= "center"
+                            width="80px"
+                            prop="id">
+                        </el-table-column>
+                        <el-table-column
                             label="所属页面"
                             align= "center"
                             width="180px"
@@ -164,7 +170,7 @@
                             <el-button
                                 type="warning"
                                 size="mini"
-                                @click="handleEdit(scope.$index, scope.row)">工单</el-button>
+                                @click="OpenWorkOrderDialog(scope.$index, scope.row)">工单</el-button>
                             <el-button
                                 size="mini"
                                 @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
@@ -208,6 +214,14 @@
                 @Succeed="SelectData">
             </dialog-request-api>
         </template>
+        <template>
+            <dialog-work-order
+                @closeDialog="closeWorkOrderDialog" 
+                :isVisible="dialog.workOrder.dialogVisible" 
+                :dialogPara="dialog.workOrder.dialogPara"
+                @Succeed="SelectData">
+            </dialog-work-order>
+        </template>
     </div>
 </template>
 
@@ -218,10 +232,11 @@ import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import DialogEditor from "./Editor.vue";
 import DialogRequestApi from "./RequestApi.vue";
+import DialogWorkOrder from "../../../../../WorkorderManagement/WorkorderMaintenance/Editor.vue";
 
 export default {
     components: {
-        DialogEditor,DialogRequestApi
+        DialogEditor,DialogRequestApi,DialogWorkOrder
     },
     data() {
         return {
@@ -270,6 +285,13 @@ export default {
                         dialogTitle:"",//初始化标题
                         isAddNew:true,//初始化是否新增\修改
                     },
+                },
+                workOrder:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
                 }
             },
            
@@ -309,7 +331,9 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
+                        obj.pageId=d.pageId;
                         obj.pageName = d.pageName;
+                        obj.funId = d.funId;
                         obj.funName=d.funName;
                         obj.apiName = d.apiName;
                         obj.requestType = d.requestType;
@@ -317,7 +341,8 @@ export default {
                         obj.apiState =d.apiState;
                         obj.associationMy=d.associationMy;
                         obj.updateTime = d.updateTime;
-                        obj.userName = d.userName;               
+                        obj.userName = d.userName;
+                        obj.createUserId = d.createUserId;        
 
                         self.tableData.push(obj);
                     });
@@ -361,6 +386,24 @@ export default {
                 apiName:row.apiName,
             }
             self.dialog.requestApi.dialogVisible=true;
+        },
+        closeWorkOrderDialog(){
+            this.dialog.workOrder.dialogVisible =false;
+        },
+        OpenWorkOrderDialog(index,row){
+            let self = this;
+            self.dialog.workOrder.dialogPara={
+                dialogTitle:'新增工单',//初始化标题
+                isAddNew:true,
+                triggerPage:'ApiMaintenance',//触发页面
+                workType:'Other',
+                workState:0,
+                pageId:row.pageId,
+                funId:row.funId,
+                workName:row.apiName,
+                createUserId:row.createUserId
+            }
+            self.dialog.workOrder.dialogVisible=true;
         },
         GetPageNameOption(){
             GetPageNameItems(this.$cookies.get('proId')).then(d=>{

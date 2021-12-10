@@ -91,7 +91,9 @@ def select_data(request):
                 if associationMy:
                     dataList.append({
                         'id': i.id,
+                        'pageId':i.page_id,
                         'pageName': i.page.pageName,
+                        'funId':i.fun_id,
                         'funName': i.fun.funName,
                         'apiName': i.apiName,
                         'requestType': i.requestType,
@@ -99,12 +101,15 @@ def select_data(request):
                         'apiState': i.apiState,
                         'associationMy': associationMy,
                         'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                        'userName': i.uid.userName
+                        'userName': i.uid.userName,
+                        'createUserId':[[cls_FindTable.get_roleId(i.cuid),i.cuid]]
                     })
             else:
                 dataList.append({
                     'id': i.id,
+                    'pageId': i.page_id,
                     'pageName': i.page.pageName,
+                    'funId': i.fun_id,
                     'funName': i.fun.funName,
                     'apiName': i.apiName,
                     'requestType': i.requestType,
@@ -112,7 +117,8 @@ def select_data(request):
                     'apiState': i.apiState,
                     'associationMy': associationMy,
                     'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                    'userName': i.uid.userName
+                    'userName': i.uid.userName,
+                    'createUserId': [[cls_FindTable.get_roleId(i.cuid), i.cuid]]
                 })
         response['TableData'] = dataList
         response['Total'] = obj_db_ApiBaseData.count()

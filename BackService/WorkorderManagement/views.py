@@ -80,6 +80,7 @@ def select_data(request):
                          "pageName": i.page.pageName,
                          "funName": i.fun.funName,
                          "workName": i.workName,
+                         "message":i.message,
                          "workState": i.workState,
                          "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                          "createUserName": createUserName,
@@ -92,6 +93,7 @@ def select_data(request):
                      "pageName": i.page.pageName,
                      "funName": i.fun.funName,
                      "workName": i.workName,
+                     "message": i.message,
                      "workState": i.workState,
                      "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                      "createUserName": createUserName,
@@ -126,7 +128,7 @@ def save_data(request):
         cls_Logging.record_error_info('API', 'WorkorderManagement', 'data_save', errorMsg)
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
-            is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId, workName=workName)
+            is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId,workSource=0, workName=workName)
         if obj_db_WorkorderManagement.exists():
             response['errorMsg'] = "当前所属功能下已有相同工单名称,请更改!"
         else:
@@ -153,7 +155,7 @@ def save_data(request):
                         cls_FindTable.get_page_name(pageId),
                         cls_FindTable.get_fun_name(funId),
                         userId,
-                        f'A-{save_db_WorkorderManagement.id}:{workName}',
+                        f'编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{workMessage}',
                         CUFront=json.dumps(request.POST)
                     )
                     # 添加工单的生命周期
