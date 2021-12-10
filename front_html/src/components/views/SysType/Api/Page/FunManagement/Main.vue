@@ -44,16 +44,16 @@
                                 prop="funName">
                             </el-table-column>
                             <el-table-column
-                                label="接口数量"
-                                width="100px"
-                                align= "center"
-                                prop="intNum">
-                            </el-table-column>
-                            <el-table-column
                                 label="备注"
                                 align= "center"
                                 prop="remarks">
                             </el-table-column>         
+                            <el-table-column
+                                label="接口数量"
+                                width="100px"
+                                align= "center"
+                                prop="apiNum">
+                            </el-table-column>
                             <el-table-column
                                 label="更新时间"
                                 align= "center"
@@ -176,7 +176,7 @@ export default {
                         obj.pageName = d.pageName;
                         obj.funName = d.funName;
                         obj.remarks = d.remarks;
-                        obj.intNum = d.intNum;
+                        obj.apiNum = d.apiNum;
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;
 
