@@ -363,6 +363,9 @@ export default {
         },
         handleCommand(command){//更多菜单
             PrintConsole(command);
+            if(command=='CopyApi'){
+                this.CopyApi();
+            }
         },
         closeEditDialog(){
             this.dialog.editor.dialogVisible =false;
@@ -485,6 +488,31 @@ export default {
             val.forEach(d =>{
                 this.multipleSelection.push(d.id);
             }); 
+        },
+        CopyApi(){
+            let self = this;
+            if(self.multipleSelection.length==0){
+                self.$message.warning('请勾选1条数据进行复制操作!');
+            }else{
+                self.loading=true;
+                self.$axios.get('/api/ApiIntMaintenance/CopyApi',{
+                    params:{
+                        'apiId':self.multipleSelection[0]
+                    }
+                }).then(res => {
+                    if(res.data.statusCode==2000){
+                        self.$message.success('接口复制成功!');
+                        self.SelectData();
+                        self.loading=false;
+                    }else{
+                        self.$message.error('获取数据失败:'+res.data.errorMsg);
+                        self.loading=false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.loading=false;
+                })
+            }
         },
     }
 };

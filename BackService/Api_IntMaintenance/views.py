@@ -1101,3 +1101,179 @@ def send_request(request):
             response['statusCode'] = 2000
         cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
     return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def copy_api(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
+        apiId = objData.apiId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'copy_api', errorMsg)
+    else:
+        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, id=apiId)
+        if obj_db_ApiBaseData.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加操作信息
+                    operationInfoId = cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Add',
+                        cls_FindTable.get_pro_name(obj_db_ApiBaseData[0].pid_id),
+                        cls_FindTable.get_page_name(obj_db_ApiBaseData[0].page_id),
+                        cls_FindTable.get_fun_name(obj_db_ApiBaseData[0].fun_id),
+                        userId,
+                        '【复制接口】', CUFront=f"ID:{apiId},{obj_db_ApiBaseData[0].apiName}"
+                    )
+                    # endregion
+                    # region 保存基本信息
+                    save_db_ApiBaseData = db_ApiBaseData.objects.create(
+                        pid_id=obj_db_ApiBaseData[0].pid_id,
+                        page_id=obj_db_ApiBaseData[0].page_id,
+                        fun_id=obj_db_ApiBaseData[0].fun_id,
+                        apiName=f"{obj_db_ApiBaseData[0].apiName}-副本{operationInfoId}",
+                        environment_id=obj_db_ApiBaseData[0].environment_id,
+                        apiState=obj_db_ApiBaseData[0].apiState,
+                        requestType=obj_db_ApiBaseData[0].requestType,
+                        requestUrl=obj_db_ApiBaseData[0].requestUrl,
+                        requestParamsType=obj_db_ApiBaseData[0].requestParamsType,
+                        bodyRequestSaveType=obj_db_ApiBaseData[0].bodyRequestSaveType,
+                        uid_id=userId, cuid=userId, is_del=0,
+                    )
+                    obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(apiId_id=apiId,is_del=0)
+                    product_list_to_insert = list()
+                    for item_userId in obj_db_ApiAssociatedUser:
+                        product_list_to_insert.append(db_ApiAssociatedUser(
+                            apiId_id=save_db_ApiBaseData.id,
+                            opertateInfo_id=item_userId.opertateInfo_id,
+                            uid_id=item_userId.uid_id,
+                            is_del=0)
+                        )
+                    db_ApiAssociatedUser.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region Headers
+                    obj_db_ApiHeaders = db_ApiHeaders.objects.filter(apiId_id=apiId,is_del=0)
+                    product_list_to_insert = list()
+                    for item_headers in obj_db_ApiHeaders:
+                        product_list_to_insert.append(db_ApiHeaders(
+                            apiId_id=save_db_ApiBaseData.id,
+                            index=item_headers.index,
+                            key=item_headers.key,
+                            value=item_headers.value,
+                            remarks=item_headers.remarks,
+                            state=item_headers.state,
+                            is_del=0)
+                        )
+                    db_ApiHeaders.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region Params
+                    obj_db_ApiParams = db_ApiParams.objects.filter(apiId_id=apiId,is_del=0)
+                    product_list_to_insert = list()
+                    for item_params in obj_db_ApiParams:
+                        product_list_to_insert.append(db_ApiParams(
+                            apiId_id=save_db_ApiBaseData.id,
+                            index=item_params.index,
+                            key=item_params.key,
+                            value=item_params.value,
+                            remarks=item_params.remarks,
+                            state=item_params.state,
+                            is_del=0)
+                        )
+                    db_ApiParams.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region Body
+                    obj_db_ApiBody = db_ApiBody.objects.filter(apiId_id=apiId, is_del=0)
+                    if obj_db_ApiBaseData[0].bodyRequestSaveType == 'form-data':
+                        product_list_to_insert = list()
+                        for item_body in obj_db_ApiBody:
+                            product_list_to_insert.append(db_ApiBody(
+                                apiId_id=save_db_ApiBaseData.id,
+                                index=item_body.index,
+                                key=item_body.key,
+                                value=item_body.value,
+                                remarks=item_body.remarks,
+                                state=item_body.state,
+                                is_del=0)
+                            )
+                        db_ApiBody.objects.bulk_create(product_list_to_insert)
+                    elif obj_db_ApiBaseData[0].bodyRequestSaveType == 'raw':
+                        if obj_db_ApiBody.exists():
+                            db_ApiBody.objects.create(
+                                apiId_id=save_db_ApiBaseData.id,
+                                index=0,
+                                key=None,
+                                value=obj_db_ApiBody[0].value,
+                                state=1,
+                                is_del=0
+                            )
+                    # file 之后在做
+                    # endregion
+                    # region Extract
+                    obj_db_ApiExtract = db_ApiExtract.objects.filter(apiId_id=apiId,is_del=0)
+                    product_list_to_insert = list()
+                    for item_extract in obj_db_ApiExtract:
+                        product_list_to_insert.append(db_ApiExtract(
+                            apiId_id=save_db_ApiBaseData.id,
+                            index=item_extract.index,
+                            key=item_extract.key,
+                            value=item_extract.value,
+                            remarks=item_extract.remarks,
+                            state=item_extract.state,
+                            is_del=0)
+                        )
+                    db_ApiExtract.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region Validate
+                    obj_db_ApiValidate = db_ApiValidate.objects.filter(apiId_id=apiId,is_del=0)
+                    product_list_to_insert = list()
+                    for item_validate in obj_db_ApiValidate:
+                        product_list_to_insert.append(db_ApiValidate(
+                            apiId_id=save_db_ApiBaseData.id,
+                            index=item_validate.index,
+                            checkName=item_validate.checkName,
+                            validateType=item_validate.validateType,
+                            valueType=item_validate.valueType,
+                            expectedResults=item_validate.expectedResults,
+                            remarks=item_validate.remarks,
+                            state=item_validate.state,
+                            is_del=0)
+                        )
+                    db_ApiValidate.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region 前后置
+                    obj_db_ApiOperation = db_ApiOperation.objects.filter(apiId_id=apiId,is_del=0)
+                    product_list_to_insert = list()
+                    for item_preOperation in obj_db_ApiOperation:
+                        product_list_to_insert.append(db_ApiOperation(
+                            apiId_id=save_db_ApiBaseData.id,
+                            index=item_preOperation.index,
+                            location=item_preOperation.location,
+                            operationType=item_preOperation.operationType,
+                            methodsName=item_preOperation.methodsName,
+                            dataBaseId=item_preOperation.dataBaseId,
+                            sql=item_preOperation.sql,
+                            remarks=item_preOperation.remarks,
+                            state=item_preOperation.state,
+                            is_del=0)
+                        )
+                    db_ApiOperation.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region 创建被关联用户的新增提醒
+                    obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
+                        is_del=0, apiId_id=save_db_ApiBaseData.id)
+                    for item_associatedUser in obj_db_ApiAssociatedUser:
+                        cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f"复制接口失败:{e}"
+            else:
+                response['statusCode'] = 2000
+        else:
+            response['errorMsg'] = "未找到当前选择的接口数据,请刷新后重新尝试!"
+    return JsonResponse(response)

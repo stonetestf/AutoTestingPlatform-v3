@@ -6,6 +6,7 @@ import json
 
 # Create your db here.
 from FunManagement.models import FunManagement as db_FunManagement
+from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -63,7 +64,7 @@ def select_data(request):
                  "pageName": i.page.pageName,
                  "funName": i.funName,
                  "remarks": i.remarks,
-                 "intNum": 0,
+                 "apiNum": db_ApiBaseData.objects.filter(is_del=0,fun_id=i.id).count(),
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  "userName": i.uid.userName,
                  }
@@ -200,22 +201,27 @@ def delete_data(request):
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(id=funId)
         if obj_db_FunManagement.exists():
-            obj_db_FunManagement.update(
-                is_del=1,
-                updateTime=cls_Common.get_date_time(),
-                uid_id=userId
-            )
-            # region 添加操作信息
-            cls_Logging.record_operation_info(
-                'API', 'Manual', 3, 'Delete',
-                cls_FindTable.get_pro_name(obj_db_FunManagement[0].pid_id),
-                cls_FindTable.get_page_name(obj_db_FunManagement[0].page_id),
-                cls_FindTable.get_fun_name(funId),
-                userId,
-                '删除功能',CUFront=json.dumps(request.POST)
-            )
-            # endregion
-            response['statusCode'] = 2003
+            obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0,fun_id=funId)
+            if obj_db_ApiBaseData.exists():
+                response['errorMsg'] = f'当前所属功能下存在 {obj_db_ApiBaseData.count()} 条接口信息,' \
+                                       f'请删除或修改这些接口所属后在进行当前删除操作!'
+            else:
+                obj_db_FunManagement.update(
+                    is_del=1,
+                    updateTime=cls_Common.get_date_time(),
+                    uid_id=userId
+                )
+                # region 添加操作信息
+                cls_Logging.record_operation_info(
+                    'API', 'Manual', 3, 'Delete',
+                    cls_FindTable.get_pro_name(obj_db_FunManagement[0].pid_id),
+                    cls_FindTable.get_page_name(obj_db_FunManagement[0].page_id),
+                    cls_FindTable.get_fun_name(funId),
+                    userId,
+                    '删除功能',CUFront=json.dumps(request.POST)
+                )
+                # endregion
+                response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前功能数据,请刷新后重新尝试!'
     return JsonResponse(response)

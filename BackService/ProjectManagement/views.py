@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.db import transaction
 
 import json
+import ast
 
 # Create your db here.
 from login.models import UserTable as db_UserTable
@@ -10,6 +11,7 @@ from login.models import UserBindRole as db_UserBindRole
 from ProjectManagement.models import ProManagement as db_ProManagement
 from ProjectManagement.models import ProBindMembers as db_ProBindMembers
 from PageManagement.models import PageManagement as db_PageManagement
+from ProjectManagement.models import History as db_History
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -97,7 +99,7 @@ def select_data(request):
             # region 查询当前项目关联的人员
             obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0, pid_id=i.id)
             for item in obj_db_ProBindMembers:
-                bindMembers.append({'id':item.uid.id,'name':item.uid.nickName})  # 载入关联的成员
+                bindMembers.append({'id': item.uid.id, 'name': item.uid.nickName})  # 载入关联的成员
             # endregion
             # endregion
             dataList.append(
@@ -132,6 +134,7 @@ def save_data(request):
         sysType = request.POST['sysType']
         proName = request.POST['proName']
         remarks = request.POST['remarks']
+        getDateTime = cls_Common.get_date_time()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -150,7 +153,9 @@ def save_data(request):
                             remarks=remarks,
                             is_del=0,
                             uid_id=userId,
-                            cuid=userId
+                            cuid=userId,
+                            createTime=getDateTime,
+                            updateTime=getDateTime
                         )
                         # 绑定默认创建人到项目成员中
                         db_ProBindMembers.objects.create(
@@ -162,9 +167,18 @@ def save_data(request):
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Add',
-                            proName,None,None,
+                            proName, None, None,
                             userId,
-                            '新增项目',CUFront=json.dumps(request.POST)
+                            '新增项目', CUFront=json.dumps(request.POST)
+                        )
+                        # endregion
+                        # region 添加历史恢复
+                        db_History.objects.create(
+                            pid_id=save_db_ProManagement.id,
+                            proName=proName,
+                            onlyCode=cls_Common.generate_only_code(),
+                            operationType='Add',
+                            restoreData=None,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -182,9 +196,10 @@ def save_data(request):
 def edit_data(request):
     response = {}
     is_edit = False
-    update_db_ProManagement = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        is_admin = cls_FindTable.get_role_is_admin(roleId)
         sysType = request.POST['sysType']
         proId = int(request.POST['proId'])
         proName = request.POST['proName']
@@ -194,7 +209,7 @@ def edit_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'ProjectManagement', 'edit_data', errorMsg)
     else:
-        obj_db_ProManagement = db_ProManagement.objects.filter(id=proId,is_del=0)
+        obj_db_ProManagement = db_ProManagement.objects.filter(id=proId, is_del=0)
         oldData = list(obj_db_ProManagement.values())
         newData = json.dumps(request.POST)
         if obj_db_ProManagement.exists():
@@ -205,53 +220,85 @@ def edit_data(request):
                 # 查询当前修改的用户是不是管理员成功
                 obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId)
                 if obj_db_UserBindRole.exists():
-                    if obj_db_UserBindRole[0].role.is_admin == 1:
+                    if is_admin:
                         is_edit = True
                     else:
                         response['errorMsg'] = '您当前没有权限对此进行操作,只有创建者或超管组才有此操作权限!'
                 else:
                     response['errorMsg'] = '当前用户未绑定角色组!'
             if is_edit:
-                select_db_ProManagement = db_ProManagement.objects.filter(sysType=sysType,proName=proName, is_del=0)
+                select_db_ProManagement = db_ProManagement.objects.filter(sysType=sysType, proName=proName, is_del=0)
                 if select_db_ProManagement.exists():
                     if proId == select_db_ProManagement[0].id:  # 自己修改自己
-                        update_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=proId).update(
-                            sysType=sysType,
-                            proName=proName,
-                            uid_id=userId,
-                            remarks=remarks,
-                            updateTime=cls_Common.get_date_time())
-                        # region 添加操作信息
-                        cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Edit',
-                            proName, None, None,
-                            userId,
-                            "修改项目",
-                            oldData,newData
-                        )
-                        # endregion
+                        try:
+                            with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                                db_ProManagement.objects.filter(is_del=0, id=proId).update(
+                                    sysType=sysType,
+                                    proName=proName,
+                                    uid_id=userId,
+                                    remarks=remarks,
+                                    updateTime=cls_Common.get_date_time())
+                                # region 添加操作信息
+                                cls_Logging.record_operation_info(
+                                    'API', 'Manual', 3, 'Edit',
+                                    proName, None, None,
+                                    userId,
+                                    "修改项目",
+                                    oldData, newData
+                                )
+                                # endregion
+                                # region 添加历史恢复
+                                oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                                oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                                db_History.objects.create(
+                                    pid_id=proId,
+                                    proName=proName,
+                                    onlyCode=cls_Common.generate_only_code(),
+                                    operationType='Edit',
+                                    restoreData=oldData[0]
+                                )
+                                # endregion
+                        except BaseException as e:  # 自动回滚，不需要任何操作
+                            response['errorMsg'] = f'更新数据失败:{e}'
+                        else:
+                            response['statusCode'] = 2002
                     else:
-                        response['errorMsg'] = '已有重复角色,请更改!'
+                        response['errorMsg'] = '已有重复所属项目名称,请更改!'
                 else:
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Edit',
-                        proName, None, None,
-                        userId,
-                        None,
-                        oldData, newData
-                    )
-                    # endregion
-                    update_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=proId).update(
-                        sysType=sysType,
-                        proName=proName,
-                        uid_id=userId,
-                        remarks=remarks,
-                        updateTime=cls_Common.get_date_time())
+                    try:
+                        with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                            # region 添加操作信息
+                            cls_Logging.record_operation_info(
+                                'API', 'Manual', 3, 'Edit',
+                                proName, None, None,
+                                userId,
+                                None,
+                                oldData, newData
+                            )
+                            # endregion
+                            db_ProManagement.objects.filter(is_del=0, id=proId).update(
+                                sysType=sysType,
+                                proName=proName,
+                                uid_id=userId,
+                                remarks=remarks,
+                                updateTime=cls_Common.get_date_time())
+                            # region 添加历史恢复
+                            oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            db_History.objects.create(
+                                pid_id=proId,
+                                proName=proName,
+                                onlyCode=cls_Common.generate_only_code(),
+                                operationType='Edit',
+                                restoreData=oldData[0]
+                            )
+                            # endregion
+                    except BaseException as e:  # 自动回滚，不需要任何操作
+                        response['errorMsg'] = f'更新数据失败:{e}'
+                    else:
+                        response['statusCode'] = 2002
         else:
             response['errorMsg'] = '未找到当前项目,请刷新后重新尝试!'
-    if update_db_ProManagement:
-        response['statusCode'] = 2002
     return JsonResponse(response)
 
 
@@ -271,7 +318,7 @@ def delete_data(request):
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId)
         if obj_db_ProManagement.exists():
-            obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0,pid_id=proId)
+            obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, pid_id=proId)
             if obj_db_PageManagement.exists():
                 response['errorMsg'] = '当前项目下有所属页面数据,请删除下级所属页面后在重新尝试删除!'
             else:
@@ -292,18 +339,27 @@ def delete_data(request):
                     try:
                         with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                             obj_db_ProManagement.update(
-                                is_del=1,uid_id=userId,updateTime=cls_Common.get_date_time()
+                                is_del=1, uid_id=userId, updateTime=cls_Common.get_date_time()
                             )
                             # 删除人员绑定表
-                            db_ProBindMembers.objects.filter(pid_id=proId,is_del=0).update(
-                                is_del=1,updateTime=cls_Common.get_date_time()
+                            db_ProBindMembers.objects.filter(pid_id=proId, is_del=0).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
                             )
                             # region 添加操作信息
                             cls_Logging.record_operation_info(
                                 'API', 'Manual', 3, 'Delete',
                                 obj_db_ProManagement[0].proName, None, None,
                                 userId,
-                                '删除项目',CUFront=json.dumps(request.POST)
+                                '删除项目', CUFront=json.dumps(request.POST)
+                            )
+                            # endregion
+                            # region 添加历史恢复
+                            db_History.objects.create(
+                                pid_id=proId,
+                                proName=obj_db_ProManagement[0].proName,
+                                onlyCode=cls_Common.generate_only_code(),
+                                operationType='Delete',
+                                restoreData=None,
                             )
                             # endregion
                     except BaseException as e:  # 自动回滚，不需要任何操作
@@ -458,7 +514,7 @@ def verify_enter_into(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'ProjectManagement', 'verify_enter_into', errorMsg)
     else:
-        obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0,uid_id=userId,pid_id=proId)
+        obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0, uid_id=userId, pid_id=proId)
         if obj_db_ProBindMembers.exists():
             response['statusCode'] = 2000
         else:
@@ -466,44 +522,42 @@ def verify_enter_into(request):
     return JsonResponse(response)
 
 
-# @cls_Logging.log
-# @cls_GlobalDer.foo_isToken
-# @require_http_methods(["GET"])
-# def select_history(request):
-#     response = {}
-#     dataList = []
-#     try:
-#         responseData = json.loads(json.dumps(request.GET))
-#         objData = cls_object_maker(responseData)
-#         proId = objData.proId
-#         proName = objData.proName
-#         current = int(objData.current)  # 当前页数
-#         pageSize = int(objData.pageSize)  # 一页多少条
-#         minSize = (current - 1) * pageSize
-#         maxSize = current * pageSize
-#     except BaseException as e:
-#         errorMsg = f"入参错误:{e}"
-#         response['errorMsg'] = errorMsg
-#         cls_Logging.record_error_info('API', 'ProjectManagement', 'select_history', errorMsg)
-#     else:
-#         obj_db_History = db_History.objects.filter()
-#         select_db_History = obj_db_History[minSize: maxSize]
-#         if proId:
-#             obj_db_History = obj_db_History.filter(pid_id=proId)
-#             select_db_History = obj_db_History[minSize: maxSize]
-#         if proName:
-#             obj_db_History = obj_db_History.filter(proName__icontains=proName)
-#             select_db_History = obj_db_History[minSize: maxSize]
-#         for i in select_db_History:
-#             dataList.append({
-#                 'id':i.id,
-#                 'proName':i.pid.proName,
-#                 'operationType':i.operationType,
-#                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-#                 'userName':i.pid.uid.userName,
-#             })
-#
-#         response['TableData'] = dataList
-#         response['Total'] = obj_db_History.count()
-#         response['statusCode'] = 2000
-#     return JsonResponse(response)
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def select_history(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'ProjectManagement', 'select_history', errorMsg)
+    else:
+        if proId:
+            obj_db_History = db_History.objects.filter(pid_id=proId).order_by('-createTime')
+        else:
+            obj_db_History = db_History.objects.filter().order_by('-createTime')
+        for i in obj_db_History:
+            if i.restoreData:
+                restoreData = json.dumps(ast.literal_eval(i.restoreData),
+                                         sort_keys=True, indent=4, separators=(",", ": "),ensure_ascii=False)
+            else:
+                restoreData = None
+            dataList.append({
+                'id':i.id,
+                'proName':i.proName,
+                'operationType':i.operationType,
+                'tableItem':[
+                    {'restoreData': restoreData}
+                ],
+                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                'userName':i.pid.uid.userName,
+            })
+
+        response['TableData'] = dataList
+        response['statusCode'] = 2000
+    return JsonResponse(response)
