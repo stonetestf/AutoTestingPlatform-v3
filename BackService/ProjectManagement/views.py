@@ -524,7 +524,7 @@ def verify_enter_into(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])
+@require_http_methods(["GET"])  # 查询历史恢复
 def select_history(request):
     response = {}
     dataList = []
@@ -544,20 +544,71 @@ def select_history(request):
         for i in obj_db_History:
             if i.restoreData:
                 restoreData = json.dumps(ast.literal_eval(i.restoreData),
-                                         sort_keys=True, indent=4, separators=(",", ": "),ensure_ascii=False)
+                                         sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
             else:
                 restoreData = None
             dataList.append({
-                'id':i.id,
-                'proName':i.proName,
-                'operationType':i.operationType,
-                'tableItem':[
+                'id': i.id,
+                'proName': i.proName,
+                'operationType': i.operationType,
+                'tableItem': [
                     {'restoreData': restoreData}
                 ],
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-                'userName':i.pid.uid.userName,
+                'userName': i.pid.uid.userName,
             })
 
         response['TableData'] = dataList
         response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
+def restor_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        is_admin = cls_FindTable.get_role_is_admin(roleId)
+        historyId = request.POST['historyId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'ProjectManagement', 'restor_data', errorMsg)
+    else:
+        obj_db_History = db_History.objects.filter(id=historyId)
+        if obj_db_History.exists():
+            # 恢复时是管理员或是 当前项目的创建人时才可恢复
+            if is_admin or obj_db_History[0].pid.cuid == userId:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        restoreData = obj_db_History[0].restoreData
+                        if obj_db_History[0].operationType == "Edit":
+                            restoreData = ast.literal_eval(restoreData)
+                            db_ProManagement.objects.filter(id=obj_db_History[0].pid_id, is_del=0).update(
+                                proName=restoreData['proName'],
+                                remarks=restoreData['remarks'],
+                                updateTime=cls_Common.get_date_time(),
+                                createTime=restoreData['createTime'],
+                                uid=userId,
+                                is_del=0
+                            )
+                        else:  # Delete
+                            select_db_History = db_History.objects.filter(
+                                pid_id=obj_db_History[0].pid_id).order_by('createTime')
+                            if select_db_History.count() < 2:
+                                response['errorMsg'] = "数据恢复失败,当前恢复的项目没有上次的操作记录!"
+                            else:
+                                restoreData = ast.literal_eval(select_db_History[-1].restoreData)
+                                pass
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"数据恢复失败:{e}"
+                else:
+                    response['statusCode'] = 2002
+            else:
+                response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
+        else:
+            response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
     return JsonResponse(response)

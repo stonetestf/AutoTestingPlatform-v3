@@ -1264,12 +1264,12 @@ def copy_api(request):
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion
-                    # region 创建被关联用户的新增提醒
-                    obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
-                        is_del=0, apiId_id=save_db_ApiBaseData.id)
-                    for item_associatedUser in obj_db_ApiAssociatedUser:
-                        cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
-                    # endregion
+                    # # region 创建被关联用户的新增提醒
+                    # obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
+                    #     is_del=0, apiId_id=save_db_ApiBaseData.id)
+                    # for item_associatedUser in obj_db_ApiAssociatedUser:
+                    #     cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
+                    # # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f"复制接口失败:{e}"
             else:

@@ -20,11 +20,17 @@
                             ref="multipleTable"
                             @selection-change="handleSelectionChange"
                             @row-click="handleRowClick">
-                        <el-table-column
-                            type="selection"
-                            align= "center"
-                            width="50">
-                        </el-table-column>
+                            <el-table-column
+                                type="selection"
+                                align= "center"
+                                width="50">
+                            </el-table-column>
+                            <el-table-column
+                                label="ID"
+                                align= "center"
+                                width="50"
+                                prop="id">
+                            </el-table-column>
                             <el-table-column
                                 label="项目名称"
                                 align= "center"
