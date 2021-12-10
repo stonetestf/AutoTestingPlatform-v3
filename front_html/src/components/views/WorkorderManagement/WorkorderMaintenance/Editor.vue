@@ -104,7 +104,7 @@
                         :timestamp="activity.timestamp">
                         <el-card style="width:600px">
                             <h4>{{activity.title}}</h4>
-                            <p>{{activity.content}}</p>
+                            <p v-html="activity.content" style="white-space: pre-line;"></p>
                         </el-card>
                         </el-timeline-item>
                     </el-timeline>
@@ -208,32 +208,52 @@ export default {
                 this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew
-
-                if(newval.isAddNew==false){//进入编辑状态
+                if(newval.triggerPage=='ApiMaintenance'){
                     let self = this;
-                    self.RomeData.workId=newval.workId;
-                    self.LoadEditData(newval.workId).then(d=>{
-                        if(d.statusCode==2000){
-                            self.RomeData.workType = d.dataTabel.workType;
-                            self.RomeData.workState = d.dataTabel.workState;
-                            GetPageNameItems(this.$cookies.get('proId')).then(dd=>{
-                                self.RomeData.pageNameOption = dd;
-                                self.RomeData.pageId = d.dataTabel.pageId;
-                                GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(dd=>{
-                                    self.RomeData.funNameOption = dd;
-                                    self.RomeData.funId = d.dataTabel.funId;
-                                    self.RomeData.workName = d.dataTabel.workName;
-                                    self.RomeData.workMessage = d.dataTabel.workMessage;
-                                    GetUserNameItems().then(dd=>{
-                                        self.RomeData.userNameOptions = dd;
-                                        self.RomeData.pushTo = d.dataTabel.pushTo;
+                    self.RomeData.workType=newval.workType;
+                    self.RomeData.workState=newval.workState;
+                    GetPageNameItems(self.$cookies.get('proId')).then(d=>{
+                        self.RomeData.pageNameOption = d;
+                        self.RomeData.pageId=newval.pageId;
+                        GetFunNameItems(self.$cookies.get('proId'),self.RomeData.pageId).then(d=>{
+                            self.RomeData.funNameOption = d;
+                            self.RomeData.funId=newval.funId;
+                            self.RomeData.workName=newval.workName;
+                            GetUserNameItems().then(d=>{
+                                self.RomeData.userNameOptions = d;
+                                self.RomeData.pushTo=newval.createUserId;
+                            });
+
+                        });
+                    });
+                    
+                }else{      
+                    if(newval.isAddNew==false){//进入编辑状态
+                        let self = this;
+                        self.RomeData.workId=newval.workId;
+                        self.LoadEditData(newval.workId).then(d=>{
+                            if(d.statusCode==2000){
+                                self.RomeData.workType = d.dataTabel.workType;
+                                self.RomeData.workState = d.dataTabel.workState;
+                                GetPageNameItems(this.$cookies.get('proId')).then(dd=>{
+                                    self.RomeData.pageNameOption = dd;
+                                    self.RomeData.pageId = d.dataTabel.pageId;
+                                    GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(dd=>{
+                                        self.RomeData.funNameOption = dd;
+                                        self.RomeData.funId = d.dataTabel.funId;
+                                        self.RomeData.workName = d.dataTabel.workName;
+                                        self.RomeData.workMessage = d.dataTabel.workMessage;
+                                        GetUserNameItems().then(dd=>{
+                                            self.RomeData.userNameOptions = dd;
+                                            self.RomeData.pushTo = d.dataTabel.pushTo;
+                                        });
                                     });
                                 });
-                            });
-                        }else{
-                            self.$message.error('获取数据失败:'+d.errorMsg);
-                        }
-                    });
+                            }else{
+                                self.$message.error('获取数据失败:'+d.errorMsg);
+                            }
+                        });
+                    }
                 }
             }
         },

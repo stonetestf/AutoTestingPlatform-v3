@@ -127,60 +127,60 @@ def save_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'WorkorderManagement', 'data_save', errorMsg)
     else:
-        obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
-            is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId,workSource=0, workName=workName)
-        if obj_db_WorkorderManagement.exists():
-            response['errorMsg'] = "当前所属功能下已有相同工单名称,请更改!"
+        # obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
+        #     is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId,workSource=0, workName=workName)
+        # if obj_db_WorkorderManagement.exists():
+        #     response['errorMsg'] = "当前所属功能下已有相同工单名称,请更改!"
+        # else:
+        try:
+            with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                save_db_WorkorderManagement = db_WorkorderManagement.objects.create(
+                    sysType=sysType,
+                    pid_id=proId,
+                    page_id=pageId,
+                    fun_id=funId,
+                    workSource=0,
+                    workType=workType,
+                    workState=workState,
+                    workName=workName,
+                    message=workMessage,
+                    is_del=0,
+                    uid_id=userId,
+                    cuid=userId
+                )
+                # 添加操作信息
+                operationInfoId = cls_Logging.record_operation_info(
+                    'API', 'Manual', 3, "Add",
+                    cls_FindTable.get_pro_name(proId),
+                    cls_FindTable.get_page_name(pageId),
+                    cls_FindTable.get_fun_name(funId),
+                    userId,
+                    f'编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{workMessage}',
+                    CUFront=json.dumps(request.POST)
+                )
+                # 添加工单的生命周期
+                db_WorkLifeCycle.objects.create(
+                    work_id=save_db_WorkorderManagement.id,
+                    operationType='Add',
+                    workState=workState,
+                    uid_id=userId,
+                    is_del=0,
+                )
+                if pushTo:  # 如果有推送To信息,就保存
+                    product_list_to_insert = list()
+                    for i in pushToList:
+                        # 添加推送to数据
+                        cls_Logging.push_to_user(operationInfoId, i)
+                        product_list_to_insert.append(db_WorkBindPushToUsers(
+                            work_id=save_db_WorkorderManagement.id,
+                            uid_id=i,
+                            is_del=0
+                        ))
+                    db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
+        except BaseException as e:  # 自动回滚，不需要任何操作
+            response['errorMsg'] = f'保存失败:{e}'
         else:
-            try:
-                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    save_db_WorkorderManagement = db_WorkorderManagement.objects.create(
-                        sysType=sysType,
-                        pid_id=proId,
-                        page_id=pageId,
-                        fun_id=funId,
-                        workSource=0,
-                        workType=workType,
-                        workState=workState,
-                        workName=workName,
-                        message=workMessage,
-                        is_del=0,
-                        uid_id=userId,
-                        cuid=userId
-                    )
-                    # 添加操作信息
-                    operationInfoId = cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, "Add",
-                        cls_FindTable.get_pro_name(proId),
-                        cls_FindTable.get_page_name(pageId),
-                        cls_FindTable.get_fun_name(funId),
-                        userId,
-                        f'编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{workMessage}',
-                        CUFront=json.dumps(request.POST)
-                    )
-                    # 添加工单的生命周期
-                    db_WorkLifeCycle.objects.create(
-                        work_id=save_db_WorkorderManagement.id,
-                        operationType='Add',
-                        workState=workState,
-                        uid_id=userId,
-                        is_del=0,
-                    )
-                    if pushTo:  # 如果有推送To信息,就保存
-                        product_list_to_insert = list()
-                        for i in pushToList:
-                            # 添加推送to数据
-                            cls_Logging.push_to_user(operationInfoId, i)
-                            product_list_to_insert.append(db_WorkBindPushToUsers(
-                                work_id=save_db_WorkorderManagement.id,
-                                uid_id=i,
-                                is_del=0
-                            ))
-                        db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
-            except BaseException as e:  # 自动回滚，不需要任何操作
-                response['errorMsg'] = f'保存失败:{e}'
-            else:
-                response['statusCode'] = 2001
+            response['statusCode'] = 2001
     return JsonResponse(response)
 
 
@@ -228,7 +228,7 @@ def load_data(request):
 @require_http_methods(["POST"])
 def edit_data(request):
     response = {}
-    is_edit = False
+    # is_edit = False
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         workId = int(request.POST['workId'])
@@ -249,74 +249,75 @@ def edit_data(request):
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(id=workId, is_del=0)
         if obj_db_WorkorderManagement.exists():
-            select_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
-                sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId, workName=workName, is_del=0)
-            if select_db_WorkorderManagement.exists():
-                if workId == select_db_WorkorderManagement[0].id:  # 自己修改自己
-                    is_edit = True
-                else:
-                    response['errorMsg'] = '已有重复角色,请更改!'
+            # select_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
+            #     sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId, workName=workName, is_del=0)
+            # if select_db_WorkorderManagement.exists():
+            #     if workId == select_db_WorkorderManagement[0].id:  # 自己修改自己
+            #         is_edit = True
+            #     else:
+            #         response['errorMsg'] = '已有重复工单,请更改!'
+            # else:
+            #     is_edit = True
+            # if is_edit:
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region添加操作信息
+                    oldData = list(obj_db_WorkorderManagement.values())
+                    newData = json.dumps(request.POST)
+                    operationInfoId = cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Edit',
+                        cls_FindTable.get_pro_name(proId),
+                        cls_FindTable.get_page_name(pageId),
+                        cls_FindTable.get_fun_name(funId),
+                        userId,
+                        # f'A-{workId}:{workName}',
+                        f'编号:【A-{workId}】 {workName}:{workMessage}',
+                        oldData, newData
+                    )
+                    # endregion
+                    # region 基本信息
+                    obj_db_WorkorderManagement.update(
+                        sysType=sysType,
+                        pid_id=proId,
+                        page_id=pageId,
+                        fun_id=funId,
+                        workType=workType,
+                        workState=workState,
+                        workName=workName,
+                        message=workMessage,
+                        uid_id=userId,
+                        updateTime=cls_Common.get_date_time()
+                    )
+                    # endregion
+                    # region 添加工单的生命周期
+                    db_WorkLifeCycle.objects.create(
+                        work_id=workId,
+                        operationType='Edit',
+                        workState=workState,
+                        operationInfo=newData,
+                        uid_id=userId,
+                        is_del=0,
+                    )
+                    # endregion
+                    # # 在修改时如果正在修改的人是创建人才会重新推送信息
+                    # if userId == obj_db_WorkorderManagement[0].cuid:
+                    if pushTo:  # 如果有推送To信息,就保存
+                        db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time())
+                        product_list_to_insert = list()
+                        for i in pushToList:
+                            # 添加推送to数据
+                            cls_Logging.push_to_user(operationInfoId, i)
+                            product_list_to_insert.append(db_WorkBindPushToUsers(
+                                work_id=workId,
+                                uid_id=i,
+                                is_del=0
+                            ))
+                        db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'工单修改失败:{e}'
             else:
-                is_edit = True
-            if is_edit:
-                try:
-                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        # region添加操作信息
-                        oldData = list(obj_db_WorkorderManagement.values())
-                        newData = json.dumps(request.POST)
-                        operationInfoId = cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Edit',
-                            cls_FindTable.get_pro_name(proId),
-                            cls_FindTable.get_page_name(pageId),
-                            cls_FindTable.get_fun_name(funId),
-                            userId,
-                            f'A-{workId}:{workName}',
-                            oldData, newData
-                        )
-                        # endregion
-                        # region 基本信息
-                        obj_db_WorkorderManagement.update(
-                            sysType=sysType,
-                            pid_id=proId,
-                            page_id=pageId,
-                            fun_id=funId,
-                            workType=workType,
-                            workState=workState,
-                            workName=workName,
-                            message=workMessage,
-                            uid_id=userId,
-                            updateTime=cls_Common.get_date_time()
-                        )
-                        # endregion
-                        # region 添加工单的生命周期
-                        db_WorkLifeCycle.objects.create(
-                            work_id=workId,
-                            operationType='Edit',
-                            workState=workState,
-                            operationInfo=newData,
-                            uid_id=userId,
-                            is_del=0,
-                        )
-                        # endregion
-                        # 在修改时如果正在修改的人是创建人才会重新推送信息
-                        if userId == obj_db_WorkorderManagement[0].cuid:
-                            if pushTo:  # 如果有推送To信息,就保存
-                                db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
-                                    is_del=1, updateTime=cls_Common.get_date_time())
-                                product_list_to_insert = list()
-                                for i in pushToList:
-                                    # 添加推送to数据
-                                    cls_Logging.push_to_user(operationInfoId, i)
-                                    product_list_to_insert.append(db_WorkBindPushToUsers(
-                                        work_id=workId,
-                                        uid_id=i,
-                                        is_del=0
-                                    ))
-                                db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
-                except BaseException as e:  # 自动回滚，不需要任何操作
-                    response['errorMsg'] = f'工单修改失败:{e}'
-                else:
-                    response['statusCode'] = 2002
+                response['statusCode'] = 2002
         else:
             response['errorMsg'] = '未找到当前工单,请刷新后重新尝试!'
     return JsonResponse(response)
@@ -400,7 +401,9 @@ def select_life_cycle(request):  # 获取当前工单的生命周期
                     title = f'创建工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
                 case "Edit":
                     title = f'修改工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
-                    content = i.operationInfo
+                    content = json.dumps(
+                        ast.literal_eval(i.operationInfo),
+                        sort_keys=True, indent=4, separators=(",", ": "),ensure_ascii=False)
             dataList.append({
                 'title': title,
                 'content': content,

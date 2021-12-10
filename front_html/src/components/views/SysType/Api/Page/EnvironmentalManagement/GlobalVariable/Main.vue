@@ -28,6 +28,12 @@
                             height="596px"
                             border>
                             <el-table-column
+                                label="ID"
+                                align= "center"
+                                width="80px"
+                                prop="id">
+                            </el-table-column>
+                            <el-table-column
                                 label="变量类型"
                                 width="150px"
                                 align= "center">

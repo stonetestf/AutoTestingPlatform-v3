@@ -60,13 +60,8 @@
                                 </template>
                             </el-table-column>
                             <el-table-column
-                                label="工单名称"
-                                align= "center"
-                                prop="workName">
-                            </el-table-column>
-                            <el-table-column
                                 label="工单类型"
-                                width="100px"
+                                width="80px"
                                 align= "center"
                                 prop="workType">
                                 <template slot-scope="scope">
@@ -88,6 +83,17 @@
                                 prop="funName">
                             </el-table-column>
                             <el-table-column
+                                label="工单名称"
+                                align= "center"
+                                prop="workName">
+                            </el-table-column>
+                            <el-table-column
+                                label="工单信息"
+                                show-overflow-tooltip
+                                align= "center"
+                                prop="message">
+                            </el-table-column>
+                            <el-table-column
                                 label="工单状态"
                                 width="100px"
                                 align= "center"
@@ -102,13 +108,13 @@
                             <el-table-column
                                 label="更新时间"
                                 align= "center"
-                                width="200px"
+                                width="160px"
                                 prop="updateTime">
                             </el-table-column>   
                             <el-table-column
                                 label="创建者"
                                 align= "center"
-                                width="150px"
+                                width="120px"
                                 prop="createUserName">
                             </el-table-column>   
                             <el-table-column
@@ -250,6 +256,7 @@ export default {
                         obj.pageName = d.pageName;
                         obj.funName = d.funName;
                         obj.workName = d.workName;
+                        obj.message=d.message;
                         obj.workState=d.workState;
                         obj.updateTime = d.updateTime;
                         obj.createUserName = d.createUserName;
@@ -290,6 +297,7 @@ export default {
             let self = this;
             self.dialog.editor.dialogPara={
                 dialogTitle:"新增工单",//初始化标题
+                triggerPage:'WorkorderMaintenance',//触发页面
                 isAddNew:true,//初始化是否新增\修改
             }
             self.dialog.editor.dialogVisible=true;
