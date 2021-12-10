@@ -87,6 +87,7 @@
 </template>
 
 <script>
+import Qs from 'qs';
 import {PrintConsole} from "../../../../js/Logger.js";
 
 export default {
@@ -184,9 +185,9 @@ export default {
         handleRestor(index,row){
             let message = ""
             if(row.operationType=='Delete'){
-                message = "注意:此恢复会自动找最后一次操作的数据进行恢复,如最后一次无操作时将会恢复失败!请确定是否恢复?"
+                message = "注意:此恢复会自动找最后一次操作的数据进行恢复,如最后一次无操作时将会恢复失败!项目恢复时并不会恢复关联的成员,请确定是否恢复?"
             }else{
-                message = "注意:请确定是否恢复?"
+                message = "注意:项目恢复时并不会恢复关联的成员,请确定是否恢复?"
             }
             this.$confirm(message, '提示', {
                 confirmButtonText: '确定',
@@ -197,8 +198,23 @@ export default {
                 }).catch(() => {       
             });
         },
-        RestorData(proId){
-
+        RestorData(historyId){
+            let self = this;
+            self.$axios.post('/api/ProjectManagement/RestorData',Qs.stringify({
+                "historyId":historyId,
+            })).then(res => {
+                if(res.data.statusCode==2002){
+                    self.$message.success('项目恢复成功!');
+                    self.dialogVisible = false;//关闭新增弹窗
+                    self.$emit('closeDialog');
+                    self.$emit('Succeed');//回调查询
+                }
+                else{
+                    self.$message.error('项目恢复失败:'+res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
         }
     }
 };
