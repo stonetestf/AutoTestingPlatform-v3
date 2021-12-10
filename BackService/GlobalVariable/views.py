@@ -94,7 +94,7 @@ def save_data(request):
     else:
         obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
             is_del=0, sysType=sysType, globalName=globalName)
-        if obj_db_GlobalVariable:
+        if obj_db_GlobalVariable.exists():
             response['errorMsg'] = "系统内以有相同的环境名称存在,请更改!"
         else:
             try:
@@ -146,10 +146,10 @@ def edit_data(request):
         cls_Logging.record_error_info('API', 'GlobalVariable', 'edit_data', errorMsg)
     else:
         obj_db_GlobalVariable = db_GlobalVariable.objects.filter(id=globalId, is_del=0)
-        if obj_db_GlobalVariable:
+        if obj_db_GlobalVariable.exists():
             select_db_GlobalVariable = db_GlobalVariable.objects.filter(
                 sysType=sysType, pid_id=proId, globalName=globalName, is_del=0)
-            if select_db_GlobalVariable:
+            if select_db_GlobalVariable.exists():
                 if globalId == select_db_GlobalVariable[0].id:  # 自己修改自己
                     is_Edit = True
                 else:
@@ -202,7 +202,7 @@ def delete_data(request):
         cls_Logging.record_error_info('API', 'GlobalVariable', 'delete_data', errorMsg)
     else:
         obj_db_GlobalVariable = db_GlobalVariable.objects.filter(id=globalId)
-        if obj_db_GlobalVariable:
+        if obj_db_GlobalVariable.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     obj_db_GlobalVariable.update(

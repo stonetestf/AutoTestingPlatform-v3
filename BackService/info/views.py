@@ -150,7 +150,7 @@ def user_operational_info(request):
         obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId,is_read=0).order_by('-updateTime')
         select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
-        if obj_db_UserTable:
+        if obj_db_UserTable.exists():
             for i in select_db_PushInfo:
                 # 排除创建者看到自己推给别人的信息
                 if i.oinfo.uid_id != userId:
@@ -226,7 +226,7 @@ def edit_operational_info_state(request):
                     db_OperateInfo.objects.filter(id=oId).update(is_read=1,updateTime=cls_Common.get_date_time())
                 else:
                     obj_db_PushInfo = db_PushInfo.objects.filter(id=oId)
-                    if obj_db_PushInfo:
+                    if obj_db_PushInfo.exists():
                         db_OperateInfo.objects.filter(id=obj_db_PushInfo[0].oinfo_id).update(
                             is_read=1, updateTime=cls_Common.get_date_time())
                         obj_db_PushInfo.update(is_read=1,updateTime=cls_Common.get_date_time())

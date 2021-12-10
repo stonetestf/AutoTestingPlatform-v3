@@ -90,7 +90,7 @@ def save_data(request):
         cls_Logging.record_error_info('HOME', 'role', 'save_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del='0', roleName=roleName)
-        if obj_db_BasicRole:
+        if obj_db_BasicRole.exists():
             response['errorMsg'] = '当前新增角色名称存在,请更改！'
         else:
             db_BasicRole.objects.create(
@@ -124,7 +124,7 @@ def edit_data(request):
             response['errorMsg'] = '系统级别角色不可修改!'
         else:
             obj_db_BasicRole = db_BasicRole.objects.filter(roleName=roleName, is_del='0')
-            if obj_db_BasicRole:
+            if obj_db_BasicRole.exists():
                 if roleId == obj_db_BasicRole[0].id:  # 自己修改自己
                     update_db_BasicRole = obj_db_BasicRole.filter(is_del='0', id=roleId).update(
                         roleName=roleName,
@@ -157,12 +157,12 @@ def delete_data(request):
         cls_Logging.record_error_info('HOME', 'role', 'delete_data', errorMsg)
     else:
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0, id=roleId)
-        if obj_db_BasicRole:
+        if obj_db_BasicRole.exists():
             if obj_db_BasicRole[0].dataType == 0:
                 response['errorMsg'] = f"当前角色为系统级别,不可删除!"
             else:
                 select_db_BasicRole = db_BasicRole.objects.filter(is_del=0, roleName='游客')
-                if select_db_BasicRole:
+                if select_db_BasicRole.exists():
                     touristsId = select_db_BasicRole[0].id
                 else:
                     touristsId = db_BasicRole.objects.create(
@@ -290,7 +290,7 @@ def save_role_permissions(request):
                 # 重新新增新的权限
                 for item_router in menuChecked:
                     obj_db_RouterPar = db_Router.objects.filter(id=item_router.id)
-                    if obj_db_RouterPar:
+                    if obj_db_RouterPar.exists():
                         routerId = obj_db_RouterPar[0].id
                         db_RoleBindMenu.objects.create(
                             role_id=roleId,

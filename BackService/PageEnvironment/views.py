@@ -92,9 +92,9 @@ def save_data(request):
     else:
         obj_db_PageEnvironment = db_PageEnvironment.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId)
-        if obj_db_PageEnvironment.filter(environmentName=environmentName):
+        if obj_db_PageEnvironment.filter(environmentName=environmentName).exists():
             response['errorMsg'] = "当前所属项目下已有相同的环境名称存在,请更改!"
-        elif obj_db_PageEnvironment.filter(environmentUrl=environmentUrl):
+        elif obj_db_PageEnvironment.filter(environmentUrl=environmentUrl).exists():
             response['errorMsg'] = "当前所属项目下已有相同的环境地址存在,请更改!"
         else:
             try:
@@ -144,10 +144,10 @@ def edit_data(request):
         cls_Logging.record_error_info('API', 'PageEnvironment', 'edit_data', errorMsg)
     else:
         obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId, is_del=0)
-        if obj_db_PageEnvironment:
+        if obj_db_PageEnvironment.exists():
             select_db_PageEnvironment = db_PageEnvironment.objects.filter(
                 sysType=sysType, pid_id=proId, environmentName=environmentName, is_del=0)
-            if select_db_PageEnvironment:
+            if select_db_PageEnvironment.exists():
                 if environmentId == select_db_PageEnvironment[0].id:  # 自己修改自己
                     is_Edit = True
                 else:
@@ -199,7 +199,7 @@ def delete_data(request):
         cls_Logging.record_error_info('API', 'PageEnvironment', 'delete_data', errorMsg)
     else:
         obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId)
-        if obj_db_PageEnvironment:
+        if obj_db_PageEnvironment.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     obj_db_PageEnvironment.update(

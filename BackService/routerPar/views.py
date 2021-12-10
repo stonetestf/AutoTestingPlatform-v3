@@ -163,7 +163,7 @@ def save_data(request):
     else:
         #  效验保存的数据
         obj_db_Router = db_Router.objects.filter(is_del=0, sysType=sysType)
-        if obj_db_Router.filter(menuName=menuName):
+        if obj_db_Router.filter(menuName=menuName).exists():
             response['errorMsg'] = "当前输入的菜单名称已存在,请更改!"
         else:
             try:
@@ -213,21 +213,8 @@ def edit_data(request):
         cls_Logging.record_error_info('HOME', 'routerPar','edit_data', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(id=routerId)
-        if obj_db_Router:
-            # if menuLevel == '1':
-            #     index = routerId
-            #     sortNum = 1
-            # else:
-            #     select_db_Router = db_Router.objects.filter(is_del=0, belogId=belogId)
-            # if select_db_Router.count() == 0:
-            #     sortNum = 1
-            # else:
-            #     sortNum = select_db_Router.count() + 1
-            # index = f"{belogId}-{sortNum}"
-
+        if obj_db_Router.exists():
             obj_db_Router.update(level=menuLevel,
-                                 # index=index,
-                                 # sortNum=sortNum,
                                  menuName=menuName,
                                  routerPath=routerPath,
                                  belogId=belogId if belogId else None,
@@ -255,10 +242,10 @@ def delete_data(request):
         cls_Logging.record_error_info('HOME', 'routerPae','delete_data', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0, id=routerId)
-        if obj_db_Router:
+        if obj_db_Router.exists():
             if obj_db_Router[0].level == 1:
                 select_db_Router = db_Router.objects.filter(is_del=0, belogId=obj_db_Router[0].id)
-                if select_db_Router:
+                if select_db_Router.exists():
                     response['errorMsg'] = f"当前一级菜单下存在二级菜单数据,请先删除2级菜单数据后在进行删除操作!"
                 else:
                     try:
@@ -305,7 +292,7 @@ def update_router_sort(request):
             for index, item_children in enumerate(item_tree.children, 1):
                 routerId = item_children.id
                 obj_db_Router = db_Router.objects.filter(id=routerId)
-                if obj_db_Router:
+                if obj_db_Router.exists():
                     belogId = f"{obj_db_Router[0].belogId}-{index}"
                     obj_db_Router.update(sortNum=index, index=belogId, updateTime=cls_Common.get_date_time())
         response['statusCode'] = 2002
@@ -328,7 +315,7 @@ def load_router_data(request):
         cls_Logging.record_error_info('HOME', 'routerPar','get_belogid_table', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(id=routerId)
-        if obj_db_Router:
+        if obj_db_Router.exists():
             dataTable = {
                 'sysType': obj_db_Router[0].sysType,
                 'menuLevel': str(obj_db_Router[0].level),

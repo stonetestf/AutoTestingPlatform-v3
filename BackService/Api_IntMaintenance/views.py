@@ -141,14 +141,14 @@ def charm_api_data(request):
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
             is_del=0, pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
             apiName=basicInfo.apiName, requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl)
-        if obj_db_ApiBaseData:
+        if obj_db_ApiBaseData.exists():
             if charmType:
                 dataList.append({
                     'stepsName': '基本信息',
                     'errorMsg': '当前所属功能下已有相同接口名称,类型,请求地址,请更改!',
                     'updateTime': cls_Common.get_date_time()})
             else:
-                if obj_db_ApiBaseData:
+                if obj_db_ApiBaseData.exists():
                     if basicInfo.apiId == obj_db_ApiBaseData[0].id:
                         pass
                     else:
@@ -160,14 +160,14 @@ def charm_api_data(request):
             obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
                 is_del=0, pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                 apiName=basicInfo.apiName, requestType=apiInfo.requestType)
-            if obj_db_ApiBaseData:
+            if obj_db_ApiBaseData.exists():
                 if charmType:
                     dataList.append({
                         'stepsName': '基本信息',
                         'errorMsg': '当前所属功能下已有相同接口名称,类型,请更改!',
                         'updateTime': cls_Common.get_date_time()})
                 else:
-                    if obj_db_ApiBaseData:
+                    if obj_db_ApiBaseData.exists():
                         if basicInfo.apiId == obj_db_ApiBaseData[0].id:
                             pass
                         else:
@@ -342,7 +342,7 @@ def save_data(request):
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
             is_del=0, pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
             apiName=basicInfo.apiName, requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl)
-        if obj_db_ApiBaseData:
+        if obj_db_ApiBaseData.exists():
             response['errorMsg'] = f'当前所属功能下已有相同数据,请修改后在继续保存!'
         else:
             try:
@@ -529,7 +529,7 @@ def edit_data(request):
         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'edit_data', errorMsg)
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=basicInfo.apiId, is_del=0)
-        if obj_db_ApiBaseData:
+        if obj_db_ApiBaseData.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     # region 添加操作信息
@@ -882,7 +882,7 @@ def delete_data(request):
         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'delete_data', errorMsg)
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
-        if obj_db_ApiBaseData:
+        if obj_db_ApiBaseData.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     obj_db_ApiBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
@@ -940,7 +940,7 @@ def load_data(request):
         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'load_data', errorMsg)
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, id=apiId)
-        if obj_db_ApiBaseData:
+        if obj_db_ApiBaseData.exists():
             # region 基本信息
             roleId = cls_FindTable.get_roleId(obj_db_ApiBaseData[0].uid_id)
             pushTo = []

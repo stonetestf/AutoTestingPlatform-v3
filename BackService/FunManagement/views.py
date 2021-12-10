@@ -94,7 +94,7 @@ def save_data(request):
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, funName=funName)
-        if obj_db_FunManagement:
+        if obj_db_FunManagement.exists():
             response['errorMsg'] = "当前所属页面下已有相同的功能名称存在,请更改!"
         else:
             try:
@@ -145,10 +145,10 @@ def edit_data(request):
         cls_Logging.record_error_info('API', 'FunManagement', 'edit_data', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(id=funId, is_del=0)
-        if obj_db_FunManagement:
+        if obj_db_FunManagement.exists():
             select_db_FunManagement = db_FunManagement.objects.filter(
                 sysType=sysType, pid_id=proId, page_id=pageId, funName=funName, is_del=0)
-            if select_db_FunManagement:
+            if select_db_FunManagement.exists():
                 if funId == select_db_FunManagement[0].id:  # 自己修改自己
                     is_Edit = True
                 else:
@@ -199,7 +199,7 @@ def delete_data(request):
         cls_Logging.record_error_info('API', 'FunManagement', 'delete_data', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(id=funId)
-        if obj_db_FunManagement:
+        if obj_db_FunManagement.exists():
             obj_db_FunManagement.update(
                 is_del=1,
                 updateTime=cls_Common.get_date_time(),

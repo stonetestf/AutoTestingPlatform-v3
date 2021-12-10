@@ -48,7 +48,7 @@ class RequstOperation(cls_Logging, cls_Common):
             globalName = splitUrl[1].replace('}}', '')
             obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
                 sysType='API', is_del=0, pid_id=proId, globalName=globalName)
-            if obj_db_GlobalVariable:
+            if obj_db_GlobalVariable.exists():
                 conversionRequestUrl = conversionRequestUrl.replace("{{%s}}" % globalName,
                                                                     obj_db_GlobalVariable[0].globalValue)
 
@@ -59,7 +59,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 globalName = splitHeaders[1].replace('}}', '')
                 obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
                     sysType='API', is_del=0, pid_id=proId, globalName=globalName)
-                if obj_db_GlobalVariable:
+                if obj_db_GlobalVariable.exists():
                     conversionHeaders[item_headersKey] = obj_db_GlobalVariable[0].globalValue
                 else:
                     conversionHeaders[item_headersKey] = item_headersValue
@@ -73,7 +73,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 globalName = splitData[1].replace('}}', '')
                 obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
                     sysType='API', is_del=0, pid_id=proId, globalName=globalName)
-                if obj_db_GlobalVariable:
+                if obj_db_GlobalVariable.exists():
                     conversionRequestData[item_dataKey] = obj_db_GlobalVariable[0].globalValue
                 else:
                     conversionRequestData[item_dataKey] = item_dataValue
@@ -116,11 +116,11 @@ class RequstOperation(cls_Logging, cls_Common):
     def get_request_data(self, apiId, environmentId):
         results = {}
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, id=apiId)
-        if obj_db_ApiBaseData:
+        if obj_db_ApiBaseData.exists():
             # region 获取环境URl
             if environmentId:
                 obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=environmentId)
-                if obj_db_PageEnvironment:
+                if obj_db_PageEnvironment.exists():
                     environmentUrl = obj_db_PageEnvironment[0].environmentUrl
                 else:
                     environmentUrl = obj_db_ApiBaseData[0].environment.environmentUrl

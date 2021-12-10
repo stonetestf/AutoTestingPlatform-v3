@@ -53,7 +53,7 @@ def load_user_info(request):
         cls_Logging.record_error_info('HOME', 'home', 'load_user_info', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
-        if obj_db_UserTable:
+        if obj_db_UserTable.exists():
             # region 处理userImg
             fileList = []
             if obj_db_UserTable[0].userImg:
@@ -101,9 +101,9 @@ def save_user_info(request):
         cls_Logging.record_error_info('HOME', 'home', 'save_user_info', errorMsg)
     else:
         obj_db_user = db_UserTable.objects.filter(id=userId)
-        if obj_db_user:
+        if obj_db_user.exists():
             obj_db_DjUser = db_DjUser.objects.get(id=obj_db_user[0].userId)
-            if obj_db_DjUser:
+            if obj_db_DjUser.exists():
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         obj_db_DjUser.password = hashers.make_password(password=password)
@@ -149,7 +149,7 @@ def get_home_permissions(request):
         obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='Home').order_by('sortNum')  # 1级菜单
         obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
         menuTable = []
-        if obj_db_UserBindRole:
+        if obj_db_UserBindRole.exists():
             roleId = obj_db_UserBindRole[0].role_id
             for item_level_1 in obj_level_1_Menu:
                 children = []
@@ -194,7 +194,7 @@ def get_api_permissions(request):
         obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='API').order_by('sortNum')  # 1级菜单
         obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
         menuTable = []
-        if obj_db_UserBindRole:
+        if obj_db_UserBindRole.exists():
             roleId = obj_db_UserBindRole[0].role_id
             for item_level_1 in obj_level_1_Menu:
                 children = []
@@ -241,7 +241,7 @@ def get_router_path(request):
         cls_Logging.record_error_info('HOME', 'home', 'get_router_path', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(sysType=sysType, index=index, is_del=0)
-        if obj_db_Router:
+        if obj_db_Router.exists():
             response['statusCode'] = 2000
             response['routerPath'] = obj_db_Router[0].routerPath
         else:
@@ -262,17 +262,7 @@ def get_user_statistics_info(request):
         cls_Logging.record_error_info('HOME', 'home', 'get_router_path', errorMsg)
     else:
         obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId, is_del=0)
-
-        if obj_db_UserBindRole:
-            # if obj_db_UserBindRole[0].role.is_admin == 1:  # 是否超级管理
-            #     obj_db_OperateInfo = obj_db_OperateInfo.filter(remindType='Error')
-            # else:
-            # obj_db_OperateInfo = obj_db_OperateInfo.filter(uid_id=userId, remindType='Warning')
-            # for i in obj_db_PushInfo:
-            #     if i.oinfo.remindType == 'Error' and i.is_read == 0:
-            #         errorCount += 1
-            #     elif i.oinfo.remindType in ('Add', 'Edit') and i.is_read == 0:
-            #         changeCount += 1
+        if obj_db_UserBindRole.exists():
             pushCount = db_PushInfo.objects.filter(~Q(oinfo__uid_id=userId),uid_id=userId,is_read=0).count()
             errorCount = db_OperateInfo.objects.filter(remindType='Error',is_read=0).count()
             warningCount = db_OperateInfo.objects.filter(uid_id=userId, remindType='Warning').count()

@@ -127,7 +127,7 @@ def save_data(request):
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId, workName=workName)
-        if obj_db_WorkorderManagement:
+        if obj_db_WorkorderManagement.exists():
             response['errorMsg'] = "当前所属功能下已有相同工单名称,请更改!"
         else:
             try:
@@ -197,7 +197,7 @@ def load_data(request):
         cls_Logging.record_error_info('API', 'WorkorderManagement', 'load_edit_data', errorMsg)
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(is_del=0, id=workId)
-        if obj_db_WorkorderManagement:
+        if obj_db_WorkorderManagement.exists():
             data = obj_db_WorkorderManagement[0]
             pushTo = []
             obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=data.id)
@@ -246,10 +246,10 @@ def edit_data(request):
         cls_Logging.record_error_info('API', 'ProjectManagement', 'edit_data', errorMsg)
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(id=workId, is_del=0)
-        if obj_db_WorkorderManagement:
+        if obj_db_WorkorderManagement.exists():
             select_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
                 sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId, workName=workName, is_del=0)
-            if select_db_WorkorderManagement:
+            if select_db_WorkorderManagement.exists():
                 if workId == select_db_WorkorderManagement[0].id:  # 自己修改自己
                     is_edit = True
                 else:
@@ -334,7 +334,7 @@ def delete_data(request):
         cls_Logging.record_error_info('API', 'WorkorderManagement', 'delete_data', errorMsg)
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(id=workId)
-        if obj_db_WorkorderManagement:
+        if obj_db_WorkorderManagement.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     obj_db_WorkorderManagement.update(is_del=1, uid_id=userId, updateTime=cls_Common.get_date_time())

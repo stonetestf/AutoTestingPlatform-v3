@@ -103,7 +103,7 @@ def user_activation(request):
         cls_Logging.record_error_info('HOME', 'userManagement','user_activation', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
-        if obj_db_UserTable:
+        if obj_db_UserTable.exists():
             obj_db_UserTable.update(is_activation=1, updateTime=cls_Common.get_date_time())
             response['statusCode'] = 2002
         else:
@@ -125,7 +125,7 @@ def edit_islock_state(request):
         cls_Logging.record_error_info('HOME', 'userManagement','user_activation', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
-        if obj_db_UserTable:
+        if obj_db_UserTable.exists():
             obj_db_UserTable.update(is_lock=state, updateTime=cls_Common.get_date_time())
             response['statusCode'] = 2002
         else:
@@ -146,7 +146,7 @@ def delete_data(request):
         cls_Logging.record_error_info('HOME', 'userManagement','delete_data', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
-        if obj_db_UserTable:
+        if obj_db_UserTable.exists():
             if obj_db_UserTable[0].userName == "admin":
                 response['errorMsg'] = "初始超级管理员用户不可删除!"
             else:
@@ -186,7 +186,7 @@ def internal_registered(request):
             response['errorMsg'] = errorMsg
         else:
             find_db_UserTable = db_UserTable.objects.filter(userName=userName, is_del=0)
-            if find_db_UserTable:
+            if find_db_UserTable.exists():
                 response['errorMsg'] = '已有相同用户名注册,请更换用户名!'
             else:
                 try:
@@ -228,14 +228,14 @@ def edit_data(request):
         cls_Logging.record_error_info('HOME', 'userManagement','edit_data', errorMsg)
     else:
         obj_db_UserTable = db_UserTable.objects.filter(id=userId, is_del=0)
-        if obj_db_UserTable:
+        if obj_db_UserTable.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     # 修改用户信息
                     obj_db_UserTable.update(nickName=nickName, emails=emails, updateTime=cls_Common.get_date_time())
                     # 修改用户权限
                     obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId, is_del=0)
-                    if obj_db_UserBindRole:
+                    if obj_db_UserBindRole.exists():
                         db_UserBindRole.objects.filter(user_id=userId, is_del=0).update(role_id=roleId)
                     else:
                         db_UserBindRole.objects.create(

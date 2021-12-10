@@ -41,7 +41,7 @@ def registered(request):
             response['errorMsg'] = errorMsg
         else:
             find_db_UserTable = db_UserTable.objects.filter(userName=userName, is_del=0)
-            if find_db_UserTable:
+            if find_db_UserTable.exists():
                 response['errorMsg'] = '已有相同用户名注册,请更换用户名!'
             else:
                 try:

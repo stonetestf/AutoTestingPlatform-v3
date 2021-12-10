@@ -87,7 +87,7 @@ def save_data(request):
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId,pageName=pageName)
-        if obj_db_PageManagement:
+        if obj_db_PageManagement.exists():
             response['errorMsg'] = "当前所属项目下已有相同的所属页面存在,请更改!"
         else:
             try:
@@ -135,10 +135,10 @@ def edit_data(request):
         cls_Logging.record_error_info('API', 'PageManagement', 'edit_data', errorMsg)
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId, is_del=0)
-        if obj_db_PageManagement:
+        if obj_db_PageManagement.exists():
             select_db_PageManagement = db_PageManagement.objects.filter(
                 sysType=sysType,pid_id=proId,pageName=pageName, is_del=0)
-            if select_db_PageManagement:
+            if select_db_PageManagement.exists():
                 if pageId == select_db_PageManagement[0].id:  # 自己修改自己
                     is_Edit = True
                 else:
@@ -187,9 +187,9 @@ def delete_data(request):
         cls_Logging.record_error_info('API', 'PageManagement', 'delete_data', errorMsg)
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId)
-        if obj_db_PageManagement:
+        if obj_db_PageManagement.exists():
             obj_db_FunManagement = db_FunManagement.objects.filter(is_del=0,page_id=pageId)
-            if obj_db_FunManagement:
+            if obj_db_FunManagement.exists():
                 response['errorMsg'] = '当前所属页面下已有所属功能数据,请删除下级所属功能后在重新尝试删除'
             else:
                 try:

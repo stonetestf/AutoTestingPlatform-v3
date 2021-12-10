@@ -38,7 +38,7 @@ class GlobalDer(object):
                 content['errorMsg'] = "Request Hearders Not TOKEN"
                 a.status_code = 500
             else:
-                if token:
+                if token.exists():
                     content = json.loads(a.content)
                     # Token正常时带入正确code
                     content['code'] = 1001
