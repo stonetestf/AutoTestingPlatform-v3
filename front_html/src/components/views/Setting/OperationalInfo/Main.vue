@@ -120,6 +120,7 @@
                             prop="toFun">
                         </el-table-column>
                         <el-table-column
+                            show-overflow-tooltip
                             label="系统:(信息)/推送:(编号:工单名称)"
                             align= "center"
                             prop="info">
