@@ -33,7 +33,7 @@ function webService()
     api.interceptors.response.use(
         (config)=>{
             if(isDebug){
-                console.log('拦截响应流',config);
+                console.log('拦截响应流:'+config.config.url,config);
             }
             if(config.data.code==1001){
                 

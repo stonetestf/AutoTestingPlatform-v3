@@ -200,12 +200,18 @@ def load_data(request):
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(is_del=0, id=workId)
         if obj_db_WorkorderManagement.exists():
+            cuid = obj_db_WorkorderManagement[0].cuid
             data = obj_db_WorkorderManagement[0]
             pushTo = []
             obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=data.id)
             for i in obj_db_WorkBindPushToUsers:
                 roleId = cls_FindTable.get_roleId(i.uid_id)
                 pushTo.append([roleId, i.uid.id])
+
+            # 在编辑时把创建人给加到推送TO中,省的反推时还要在添加
+            roleId = cls_FindTable.get_roleId(cuid)
+            if [roleId, cuid] not in pushTo:
+                pushTo.append([roleId, cuid])
             dataTabel = {
                 'workType': data.workType,
                 'workState': data.workState,

@@ -72,12 +72,12 @@
                             align= "center"
                             width="50">
                         </el-table-column>
-                        <el-table-column
+                        <!-- <el-table-column
                             label="ID"
                             align= "center"
                             width="80px"
                             prop="id">
-                        </el-table-column>
+                        </el-table-column> -->
                         <el-table-column
                             label="所属页面"
                             align= "center"
@@ -222,6 +222,14 @@
                 @Succeed="SelectData">
             </dialog-work-order>
         </template>
+        <template>
+        <dialog-history-info
+            @closeDialog="closeHistoryInfoDialog" 
+            :isVisible="dialog.historyInfo.dialogVisible" 
+            :dialogPara="dialog.historyInfo.dialogPara"
+            @Succeed="SelectData">
+        </dialog-history-info>
+        </template>
     </div>
 </template>
 
@@ -233,10 +241,11 @@ import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import DialogEditor from "./Editor.vue";
 import DialogRequestApi from "./RequestApi.vue";
 import DialogWorkOrder from "../../../../../WorkorderManagement/WorkorderMaintenance/Editor.vue";
+import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-        DialogEditor,DialogRequestApi,DialogWorkOrder
+        DialogEditor,DialogRequestApi,DialogWorkOrder,DialogHistoryInfo
     },
     data() {
         return {
@@ -292,6 +301,13 @@ export default {
                         dialogTitle:"",//初始化标题
                         isAddNew:true,//初始化是否新增\修改
                     },
+                },
+                historyInfo:{
+                dialogVisible:false,
+                dialogPara:{
+                    dialogTitle:"",//初始化标题
+                    isAddNew:true,//初始化是否新增\修改
+                },
                 }
             },
            
@@ -365,6 +381,8 @@ export default {
             PrintConsole(command);
             if(command=='CopyApi'){
                 this.CopyApi();
+            }else if(command=='HistoryBack'){
+                this.OpenHistoryInfoDialog();
             }
         },
         closeEditDialog(){
@@ -407,6 +425,21 @@ export default {
                 createUserId:row.createUserId
             }
             self.dialog.workOrder.dialogVisible=true;
+        },
+        closeHistoryInfoDialog(){
+        this.dialog.historyInfo.dialogVisible =false;
+        },
+        OpenHistoryInfoDialog(){
+            let self = this;
+            if(self.multipleSelection.length>1){
+                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
+            }else{
+                self.dialog.historyInfo.dialogPara={
+                    dialogTitle:"历史恢复",//初始化标题
+                    apiId:self.multipleSelection[0],
+                }
+                self.dialog.historyInfo.dialogVisible=true;
+            }
         },
         GetPageNameOption(){
             GetPageNameItems(this.$cookies.get('proId')).then(d=>{

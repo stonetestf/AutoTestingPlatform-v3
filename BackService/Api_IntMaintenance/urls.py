@@ -10,5 +10,7 @@ urlpatterns = [
     url(r'LoadData', views.load_data, name='LoadData'),
     url(r'SendRequest', views.send_request, name='SendRequest'),
     url(r'CopyApi', views.copy_api, name='CopyApi'),
+    url(r'SelectHistory', views.select_history, name='SelectHistory'),
+    url(r'RestorData', views.restor_data, name='RestorData'),
 
 ]
