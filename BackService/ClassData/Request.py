@@ -341,7 +341,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-单接口的执行
-    def run_request(self, apiId, environmentId, onlyCode, userId):
+    def run_request(self,is_test, onlyCode, userId,apiId=None, environmentId=None,requestData=None):
         results = {
             'tabPane': {
                 'requsetHeaders': [],  # 原始请求头
@@ -356,7 +356,10 @@ class RequstOperation(cls_Logging, cls_Common):
             'state': False,
         }
         reportState = []  # 1(前置状态),2(接口运行完成),3(提取和断言),4(后置状态)
-        getRequestData = self.get_request_data(apiId, environmentId)
+        if is_test:
+            getRequestData = requestData
+        else:
+            getRequestData = self.get_request_data(apiId, environmentId)
         if getRequestData['state']:
             results['originalUrl'] = getRequestData['requestUrl']
             results['tabPane']['requsetHeaders'] = getRequestData['headersData']

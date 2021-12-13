@@ -205,6 +205,7 @@ export default {
                     {'label':'Warning','value':'Warning'},
                     {'label':'Add','value':'Add'},
                     {'label':'Edit','value':'Edit'},
+                    {'label':'Update','value':'Update'},
                     {'label':'Delete','value':'Delete'},
                 ],
             },

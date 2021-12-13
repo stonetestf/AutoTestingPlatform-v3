@@ -21,6 +21,7 @@ from WorkorderManagement.models import WorkorderManagement as db_WorkorderManage
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
 from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
 from Api_IntMaintenance.models import ApiHistory as db_ApiHistory
+from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -526,7 +527,7 @@ def save_data(request):
                     # endregion
                     # region 创建被关联用户的新增提醒
                     obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
-                        is_del=0, apiId_id=save_db_ApiBaseData.id,historyCode=historyCode)
+                        is_del=0, apiId_id=save_db_ApiBaseData.id, historyCode=historyCode)
                     for item_associatedUser in obj_db_ApiAssociatedUser:
                         cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
                     # endregion
@@ -1165,9 +1166,68 @@ def send_request(request):
         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'request_api', errorMsg)
     else:
         cls_Logging.print_log('info', 'send_request', '-----------------------------start-----------------------------')
-        response = cls_RequstOperation.run_request(apiId, environmentId, onlyCode, userId)
+        response = cls_RequstOperation.run_request(False, onlyCode, userId, apiId=apiId, environmentId=environmentId)
         if response['state']:
             response['statusCode'] = 2000
+        cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def send_test_request(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        responseData = json.loads(request.body)
+        # 核心请求是字典类型,不可使用对象来传输
+        # objData = cls_object_maker(responseData)
+        onlyCode = cls_Common.generate_only_code()
+        testSendData = responseData['testSendData']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'request_api', errorMsg)
+    else:
+        cls_Logging.print_log('info', 'send_request', '-----------------------------start-----------------------------')
+        # 获取环境URl
+        obj_db_PageEnvironment = db_PageEnvironment.objects.filter(id=testSendData['BasicInfo']['environmentId'])
+        if obj_db_PageEnvironment.exists():
+            environmentUrl = obj_db_PageEnvironment[0].environmentUrl
+            request = cls_object_maker(testSendData['ApiInfo']['request'])
+            requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
+                request.params,request.body.formData,request.body.raw,
+            )
+            requestParamsType = 'Body' if testSendData['ApiInfo']['request']['body'][
+                                              'requestSaveType'] == 'none' else requestParamsType,
+            bodyRequestType = testSendData['ApiInfo']['request']['body']['requestSaveType']
+            if bodyRequestType == 'form-data':
+                bodyData = testSendData['ApiInfo']['request']['body']['formData']
+            elif bodyRequestType in ('json', 'raw'):
+                bodyData = testSendData['ApiInfo']['request']['body']['raw']
+            else:
+                bodyData = []
+            requestData = {
+                'state': True,
+                'proId':testSendData['BasicInfo']['proId'],
+                'requestType': testSendData['ApiInfo']['requestType'],
+                'requestUrl': f'{environmentUrl}{testSendData["ApiInfo"]["requestUrl"]}',
+                'requestParamsType': requestParamsType,
+                'bodyRequestType': bodyRequestType,
+                'headersData': testSendData['ApiInfo']['request']['headers'],
+                'paramsData': testSendData['ApiInfo']['request']['params'],
+                'bodyData': bodyData,
+                'extractData': testSendData['ApiInfo']['request']['extract'],
+                'validateData': testSendData['ApiInfo']['request']['validate'],
+                'PreOperation': testSendData['ApiInfo']['request']['preOperation'],
+                'RearOperation': testSendData['ApiInfo']['request']['rearOperation'],
+            }
+            response = cls_RequstOperation.run_request(True, onlyCode, userId, requestData=requestData)
+            if response['state']:
+                response['statusCode'] = 2000
+        else:
+            response['errorMsg'] = f"没有找到当前环境ID的环境数据!"
         cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
     return JsonResponse(response)
 
@@ -1517,7 +1577,7 @@ def restor_data(request):
                                                     value=item_body['value'],
                                                     remarks=item_body['remarks'],
                                                     state=1 if item_body['state'] else 0,
-                                                    is_del=0,historyCode=historyCode)
+                                                    is_del=0, historyCode=historyCode)
                                                 )
                                             db_ApiBody.objects.bulk_create(product_list_to_insert)
                                         elif requestSaveType == 'raw':
@@ -1527,7 +1587,7 @@ def restor_data(request):
                                                 key=None,
                                                 value=restoreData['apiInfo']['request']['body']['bodyData'],
                                                 state=1,
-                                                is_del=0,historyCode=historyCode
+                                                is_del=0, historyCode=historyCode
                                             )
                                         # file 之后在做
                                         # endregion
@@ -1544,7 +1604,7 @@ def restor_data(request):
                                                 value=item_extract['value'],
                                                 remarks=item_extract['remarks'],
                                                 state=1 if item_extract['state'] else 0,
-                                                is_del=0,historyCode=historyCode)
+                                                is_del=0, historyCode=historyCode)
                                             )
                                         db_ApiExtract.objects.bulk_create(product_list_to_insert)
                                         # endregion
@@ -1563,7 +1623,7 @@ def restor_data(request):
                                                 expectedResults=item_validate['expectedResults'],
                                                 remarks=item_validate['remarks'],
                                                 state=1 if item_validate['state'] else 0,
-                                                is_del=0,historyCode=historyCode)
+                                                is_del=0, historyCode=historyCode)
                                             )
                                         db_ApiValidate.objects.bulk_create(product_list_to_insert)
                                         # endregion
@@ -1583,7 +1643,7 @@ def restor_data(request):
                                                 sql=item_preOperation['sql'],
                                                 remarks=item_preOperation['remarks'],
                                                 state=1 if item_preOperation['state'] else 0,
-                                                is_del=0,historyCode=historyCode)
+                                                is_del=0, historyCode=historyCode)
                                             )
                                         db_ApiOperation.objects.bulk_create(product_list_to_insert)
                                         # endregion
@@ -1600,7 +1660,7 @@ def restor_data(request):
                                                 sql=item_rearOperation['sql'],
                                                 remarks=item_rearOperation['remarks'],
                                                 state=1 if item_rearOperation['state'] else 0,
-                                                is_del=0,historyCode=historyCode)
+                                                is_del=0, historyCode=historyCode)
                                             )
                                         db_ApiOperation.objects.bulk_create(product_list_to_insert)
                                         # endregion
