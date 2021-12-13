@@ -128,7 +128,7 @@ class Logging(object):
         :param triggerType:触发类型:系统(System)/手动(Manual)'
         :param sysType: 系统类型
         :param level: "提醒等级(错误(1),警告(2),新增/修改/删除(3))"
-        :param remindType: 提醒(警告/新增/修改/删除/其他)
+        :param remindType: 提醒(警告/新增/修改/删除/更新/其他)
         :param toPro:
         :param toPage:
         :param toFun:

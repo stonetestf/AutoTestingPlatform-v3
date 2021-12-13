@@ -1432,7 +1432,7 @@ def restor_data(request):
                                             cls_FindTable.get_page_name(obj_db_ApiHistory[0].page_id),
                                             cls_FindTable.get_fun_name(obj_db_ApiHistory[0].fun_id),
                                             userId,
-                                            f'【恢复接口】 ID{obj_db_ApiHistory[0].api_id}:'
+                                            f'【恢复接口】 ID:{obj_db_ApiHistory[0].api_id}:'
                                             f'{obj_db_ApiHistory[0].apiName}',
                                         )
                                         # endregion
@@ -1640,6 +1640,17 @@ def restor_data(request):
                                                 is_del=0, updateTime=cls_Common.get_date_time())
                                             db_ApiOperation.objects.filter(historyCode=historyCode).update(
                                                 is_del=0, updateTime=cls_Common.get_date_time())
+                                            # endregion
+                                            # region 操作记录
+                                            cls_Logging.record_operation_info(
+                                                'API', 'Manual', 3, 'Update',
+                                                cls_FindTable.get_pro_name(obj_db_ApiHistory[0].pid_id),
+                                                cls_FindTable.get_page_name(obj_db_ApiHistory[0].page_id),
+                                                cls_FindTable.get_fun_name(obj_db_ApiHistory[0].fun_id),
+                                                userId,
+                                                f'【恢复接口】 ID:{obj_db_ApiHistory[0].api_id}:'
+                                                f'{obj_db_ApiHistory[0].apiName}',
+                                            )
                                             # endregion
                                         else:
                                             response['errorMsg'] = "未找到当前可恢复的数据!"

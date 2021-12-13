@@ -7,7 +7,7 @@ class OperateInfo(models.Model):  # 操作日志
     # 非手动添加的类别全为sys
     triggerType = models.CharField('触发类型:系统(System)/手动(Manual)', max_length=10, null=False)
     level = models.IntegerField("提醒等级(错误(1),警告(2),新增/修改/删除(3)),其他(4)", null=False)
-    remindType = models.CharField('提醒类别 Error,Warning,Add,Edit,Delete,Other', max_length=10, null=False)
+    remindType = models.CharField('提醒类别 Error,Warning,Add,Edit,Delete,Update,Other', max_length=10, null=False)
     toPro = models.CharField('所属项目', max_length=100, null=True)
     toPage = models.CharField('所属页面', max_length=100, null=True)
     toFun = models.CharField('所属功能', max_length=100, null=True)
