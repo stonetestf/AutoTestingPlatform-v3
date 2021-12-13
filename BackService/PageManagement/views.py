@@ -83,7 +83,7 @@ def save_data(request):
         proId = request.POST['proId']
         pageName = request.POST['pageName']
         remarks = request.POST['remarks']
-        getDateTime = cls_Common.get_date_time()
+        # getDateTime = cls_Common.get_date_time()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -116,23 +116,23 @@ def save_data(request):
                     )
                     # endregion
                     # region 添加历史恢复
-                    restoreData = {
-                        'sysType': sysType,
-                        'pid_id':proId,
-                        'pageName': pageName,
-                        'remarks': remarks,
-                        'is_del': 0,
-                        'uid_id': userId,
-                        'cuid': userId,
-                        'createTime': getDateTime,
-                    }
+                    # restoreData = {
+                    #     'sysType': sysType,
+                    #     'pid_id':proId,
+                    #     'pageName': pageName,
+                    #     'remarks': remarks,
+                    #     'is_del': 0,
+                    #     'uid_id': userId,
+                    #     'cuid': userId,
+                    #     'createTime': getDateTime,
+                    # }
                     db_PageHistory.objects.create(
                         pid_id=proId,
                         page_id=save_db_PageManagement.id,
                         pageName=pageName,
                         onlyCode=cls_Common.generate_only_code(),
                         operationType='Add',
-                        restoreData=restoreData,
+                        restoreData=None,
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -249,27 +249,27 @@ def delete_data(request):
                         )
                         # endregion
                         # region 添加历史恢复
-                        oldData = list(obj_db_PageManagement.values())
-                        oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                        oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                        restoreData = {
-                            'sysType': oldData[0]['sysType'],
-                            'pid_id':oldData[0]['pid_id'],
-                            'pageName': oldData[0]['pageName'],
-                            'remarks': oldData[0]['remarks'],
-                            'is_del': oldData[0]['is_del'],
-                            'uid_id': oldData[0]['uid_id'],
-                            'cuid': oldData[0]['cuid'],
-                            'createTime': oldData[0]['createTime'],
-                            'updateTime': oldData[0]['updateTime'],
-                        }
+                        # oldData = list(obj_db_PageManagement.values())
+                        # oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        # restoreData = {
+                        #     'sysType': oldData[0]['sysType'],
+                        #     'pid_id':oldData[0]['pid_id'],
+                        #     'pageName': oldData[0]['pageName'],
+                        #     'remarks': oldData[0]['remarks'],
+                        #     'is_del': oldData[0]['is_del'],
+                        #     'uid_id': oldData[0]['uid_id'],
+                        #     'cuid': oldData[0]['cuid'],
+                        #     'createTime': oldData[0]['createTime'],
+                        #     'updateTime': oldData[0]['updateTime'],
+                        # }
                         db_PageHistory.objects.create(
                             pid_id=obj_db_PageManagement[0].pid_id,
                             page_id=pageId,
                             pageName=obj_db_PageManagement[0].pageName,
                             onlyCode=cls_Common.generate_only_code(),
                             operationType='Delete',
-                            restoreData=restoreData,
+                            restoreData=None,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -384,18 +384,26 @@ def restor_data(request):
                                     is_del=0
                                 )
                             else:  # Delete
-                                restoreData = ast.literal_eval(obj_db_PageHistory[0].restoreData)
-                                db_PageManagement.objects.create(
-                                    sysType=restoreData['sysType'],
-                                    pid_id=restoreData['pid_id'],
-                                    pageName=restoreData['pageName'],
-                                    remarks=restoreData['remarks'],
-                                    updateTime=cls_Common.get_date_time(),
-                                    createTime=restoreData['createTime'],
-                                    uid_id=userId,
-                                    cuid=restoreData['cuid'],
-                                    is_del=0
-                                )
+                                obj_db_PageManagement = db_PageManagement.objects.filter(
+                                    id=obj_db_PageHistory[0].page_id)
+                                if obj_db_PageManagement.exists():
+                                    obj_db_PageManagement.update(
+                                        uid_id=userId, updateTime=cls_Common.get_date_time(), is_del=0
+                                    )
+                                else:
+                                    response['errorMsg'] = "未找到当前可恢复的数据!"
+                                # restoreData = ast.literal_eval(obj_db_PageHistory[0].restoreData)
+                                # db_PageManagement.objects.create(
+                                #     sysType=restoreData['sysType'],
+                                #     pid_id=restoreData['pid_id'],
+                                #     pageName=restoreData['pageName'],
+                                #     remarks=restoreData['remarks'],
+                                #     updateTime=cls_Common.get_date_time(),
+                                #     createTime=restoreData['createTime'],
+                                #     uid_id=userId,
+                                #     cuid=restoreData['cuid'],
+                                #     is_del=0
+                                # )
                         else:
                             response['errorMsg'] = f"当前恢复的页面上级所属项目不存在,恢复失败!"
                 except BaseException as e:  # 自动回滚，不需要任何操作

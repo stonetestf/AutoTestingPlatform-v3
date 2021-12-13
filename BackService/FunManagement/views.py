@@ -3,10 +3,14 @@ from django.http import JsonResponse
 from django.db import transaction
 
 import json
+import ast
 
 # Create your db here.
 from FunManagement.models import FunManagement as db_FunManagement
 from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
+from ProjectManagement.models import ProManagement as db_ProManagement
+from PageManagement.models import PageManagement as db_PageManagement
+from FunManagement.models import FunHistory as db_FunHistory
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -88,6 +92,7 @@ def save_data(request):
         pageId = request.POST['pageId']
         funName = request.POST['funName']
         remarks = request.POST['remarks']
+        getDateTime = cls_Common.get_date_time()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -100,7 +105,8 @@ def save_data(request):
         else:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    db_FunManagement.objects.create(
+                    # region 基本信息
+                    save_db_FunManagement = db_FunManagement.objects.create(
                         sysType=sysType,
                         pid_id=proId,
                         page_id=pageId,
@@ -110,6 +116,7 @@ def save_data(request):
                         uid_id=userId,
                         cuid=userId
                     )
+                    # endregion
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Add',
@@ -117,6 +124,28 @@ def save_data(request):
                         cls_FindTable.get_page_name(pageId), funName,
                         userId,
                         '新增功能',CUFront=json.dumps(request.POST)
+                    )
+                    # endregion
+                    # region 添加历史恢复
+                    # restoreData = {
+                    #     'sysType': sysType,
+                    #     'pid_id': proId,
+                    #     'page_id': pageId,
+                    #     'funName': funName,
+                    #     'remarks': remarks,
+                    #     'is_del': 0,
+                    #     'uid_id': userId,
+                    #     'cuid': userId,
+                    #     'createTime': getDateTime,
+                    # }
+                    db_FunHistory.objects.create(
+                        pid_id=proId,
+                        page_id=pageId,
+                        fun_id=save_db_FunManagement.id,
+                        funName=funName,
+                        onlyCode=cls_Common.generate_only_code(),
+                        operationType='Add',
+                        restoreData=None,
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -171,12 +200,27 @@ def edit_data(request):
                             oldData, newData
                         )
                         # endregion
+                        # region 基本信息
                         obj_db_FunManagement.update(
                             page_id=pageId,
                             funName=funName,
                             uid_id=userId,
                             remarks=remarks,
                             updateTime=cls_Common.get_date_time())
+                        # endregion
+                        # region 添加历史恢复
+                        oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        db_FunHistory.objects.create(
+                            pid_id=proId,
+                            page_id=pageId,
+                            fun_id=funId,
+                            funName=funName,
+                            onlyCode=cls_Common.generate_only_code(),
+                            operationType='Edit',
+                            restoreData=oldData[0]
+                        )
+                        # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f'数据修改失败:{e}'
                 else:
@@ -206,11 +250,13 @@ def delete_data(request):
                 response['errorMsg'] = f'当前所属功能下存在 {obj_db_ApiBaseData.count()} 条接口信息,' \
                                        f'请删除或修改这些接口所属后在进行当前删除操作!'
             else:
+                # region 基本信息
                 obj_db_FunManagement.update(
                     is_del=1,
                     updateTime=cls_Common.get_date_time(),
                     uid_id=userId
                 )
+                # endregion
                 # region 添加操作信息
                 cls_Logging.record_operation_info(
                     'API', 'Manual', 3, 'Delete',
@@ -219,6 +265,32 @@ def delete_data(request):
                     cls_FindTable.get_fun_name(funId),
                     userId,
                     '删除功能',CUFront=json.dumps(request.POST)
+                )
+                # endregion
+                # region 添加历史恢复
+                # oldData = list(obj_db_FunManagement.values())
+                # oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                # restoreData = {
+                #     'sysType': oldData[0]['sysType'],
+                #     'pid_id': oldData[0]['pid_id'],
+                #     'page_id': oldData[0]['page_id'],
+                #     'funName': oldData[0]['funName'],
+                #     'remarks': oldData[0]['remarks'],
+                #     'is_del': oldData[0]['is_del'],
+                #     'uid_id': oldData[0]['uid_id'],
+                #     'cuid': oldData[0]['cuid'],
+                #     'createTime': oldData[0]['createTime'],
+                #     'updateTime': oldData[0]['updateTime'],
+                # }
+                db_FunHistory.objects.create(
+                    pid_id=obj_db_FunManagement[0].pid_id,
+                    page_id=obj_db_FunManagement[0].page_id,
+                    fun_id=funId,
+                    funName=obj_db_FunManagement[0].funName,
+                    onlyCode=cls_Common.generate_only_code(),
+                    operationType='Delete',
+                    restoreData=None,
                 )
                 # endregion
                 response['statusCode'] = 2003
@@ -251,4 +323,109 @@ def get_fun_name_items(request):
             })
         response['itemsData'] = dataList
         response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询历史恢复
+def select_history(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        sysType = objData.sysType
+        funId = objData.funId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'FunManagement', 'select_history', errorMsg)
+    else:
+        if funId:
+            obj_db_FunHistory = db_FunHistory.objects.filter(
+                fun_id=funId,page__sysType=sysType).order_by('-createTime')
+        else:
+            obj_db_FunHistory = db_FunHistory.objects.filter(page__sysType=sysType).order_by('-createTime')
+        for i in obj_db_FunHistory:
+            if i.restoreData:
+                restoreData = json.dumps(ast.literal_eval(i.restoreData),
+                                         sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+            else:
+                restoreData = None
+            dataList.append({
+                'id': i.id,
+                'funName': i.funName,
+                'operationType': i.operationType,
+                'tableItem': [
+                    {'restoreData': restoreData}
+                ],
+                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                'userName': i.pid.uid.userName,
+            })
+        response['TableData'] = dataList
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
+def restor_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        is_admin = cls_FindTable.get_role_is_admin(roleId)
+        historyId = request.POST['historyId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'FunManagement', 'restor_data', errorMsg)
+    else:
+        obj_db_FunHistory = db_FunHistory.objects.filter(id=historyId)
+        if obj_db_FunHistory.exists():
+            # 恢复时是管理员或是 当前项目的创建人时才可恢复
+            if is_admin or obj_db_FunHistory[0].pid.cuid == userId:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0,id=obj_db_FunHistory[0].pid_id)
+                        if obj_db_ProManagement.exists():
+                            obj_db_PageManagement = db_PageManagement.objects.filter(
+                                is_del=0,id=obj_db_FunHistory[0].page_id)
+                            if obj_db_PageManagement.exists():
+                                restoreData = obj_db_FunHistory[0].restoreData
+                                if obj_db_FunHistory[0].operationType == "Edit":
+                                    restoreData = ast.literal_eval(restoreData)
+                                    db_FunManagement.objects.filter(id=obj_db_FunHistory[0].fun_id).update(
+                                        pid_id=restoreData['pid_id'],
+                                        page_id=restoreData['page_id'],
+                                        funName=restoreData['funName'],
+                                        remarks=restoreData['remarks'],
+                                        updateTime=cls_Common.get_date_time(),
+                                        createTime=restoreData['createTime'],
+                                        uid=userId,
+                                        is_del=0
+                                    )
+                                else:  # Delete
+                                    obj_db_FunManagement = db_FunManagement.objects.filter(
+                                        id=obj_db_FunHistory[0].fun_id)
+                                    if obj_db_FunManagement.exists():
+                                        obj_db_FunManagement.update(
+                                            uid_id=userId, updateTime=cls_Common.get_date_time(), is_del=0
+                                        )
+                                    else:
+                                        response['errorMsg'] = "未找到当前可恢复的数据!"
+                            else:
+                                response['errorMsg'] = f"当前恢复的数据上级所属页面不存在,恢复失败!"
+                        else:
+                            response['errorMsg'] = f"当前恢复的数据上级所属项目不存在,恢复失败!"
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"数据恢复失败:{e}"
+                else:
+                    response['statusCode'] = 2002
+            else:
+                response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
+        else:
+            response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
     return JsonResponse(response)

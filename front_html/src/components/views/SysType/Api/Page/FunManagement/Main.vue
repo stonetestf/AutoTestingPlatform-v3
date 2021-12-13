@@ -26,7 +26,15 @@
                         <el-table
                             :data="tableData"
                             height="596px"
-                            border>
+                            border
+                            ref="multipleTable"
+                            @selection-change="handleSelectionChange"
+                            @row-click="handleRowClick">
+                            <el-table-column
+                                type="selection"
+                                align= "center"
+                                width="50">
+                            </el-table-column>
                             <el-table-column
                                 label="ID"
                                 align= "center"
@@ -71,6 +79,7 @@
                                 width="200px">
                             <template slot="header">
                                 <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                                <el-button type="warning" @click="OpenHistoryInfoDialog()">历史</el-button>
                             </template>
                             <template slot-scope="scope" style="width:100px">
                                 <el-button
@@ -107,6 +116,14 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+        <dialog-history-info
+            @closeDialog="closeHistoryInfoDialog" 
+            :isVisible="dialog.historyInfo.dialogVisible" 
+            :dialogPara="dialog.historyInfo.dialogPara"
+            @Succeed="SelectData">
+        </dialog-history-info>
+        </template>
     </div>
 </template>
 
@@ -114,15 +131,16 @@
 import Qs from 'qs'
 import DialogEditor from "./Editor.vue";
 import {GetPageNameItems} from "../../../../../js/GetSelectTable.js";
-// import {GetModuleNameItems} from "../../../js/intGetCommonTable.js";
+import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-        DialogEditor,
+        DialogEditor,DialogHistoryInfo
     },
     data() {
         return {
             tableData: [],
+            multipleSelection:[],
             SelectRomeData:{
                 pageId:'',
                 pageNameOption:[],
@@ -144,6 +162,13 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
+                historyInfo:{
+                dialogVisible:false,
+                dialogPara:{
+                    dialogTitle:"",//初始化标题
+                    isAddNew:true,//初始化是否新增\修改
+                },
+                }
             },
           
         };
@@ -211,6 +236,21 @@ export default {
             }
             self.dialog.editor.dialogVisible=true;
         },
+        closeHistoryInfoDialog(){
+        this.dialog.historyInfo.dialogVisible =false;
+        },
+        OpenHistoryInfoDialog(){
+        let self = this;
+        if(self.multipleSelection.length>1){
+            self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
+        }else{
+            self.dialog.historyInfo.dialogPara={
+                dialogTitle:"历史恢复",//初始化标题
+                funId:self.multipleSelection[0],
+            }
+            self.dialog.historyInfo.dialogVisible=true;
+        }
+        },
         handleEdit(index,row){
             let self = this;
             self.dialog.editor.dialogPara={
@@ -222,6 +262,16 @@ export default {
                 remarks:row.remarks,
             }
             self.dialog.editor.dialogVisible=true;
+        },
+        handleRowClick(row, column, event){//点击行选择勾选框
+        this.$refs.multipleTable.toggleRowSelection(row);
+        },
+        handleSelectionChange(val){//勾选数据时触发
+            // console.log(val)
+            this.multipleSelection=[];
+            val.forEach(d =>{
+                this.multipleSelection.push(d.id);
+            }); 
         },
         handleDelete(index,row){
             this.$confirm('请确定是否删除?', '提示', {

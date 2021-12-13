@@ -155,8 +155,6 @@ def save_data(request):
                             is_del=0,
                             uid_id=userId,
                             cuid=userId,
-                            createTime=getDateTime,
-                            updateTime=getDateTime
                         )
                         # endregion
                         # region 绑定默认创建人到项目成员中
@@ -176,21 +174,21 @@ def save_data(request):
                         )
                         # endregion
                         # region 添加历史恢复
-                        restoreData = {
-                            'sysType': sysType,
-                            'proName': proName,
-                            'remarks': remarks,
-                            'is_del': 0,
-                            'uid_id': userId,
-                            'cuid': userId,
-                            'createTime': getDateTime,
-                        }
+                        # restoreData = {
+                        #     'sysType': sysType,
+                        #     'proName': proName,
+                        #     'remarks': remarks,
+                        #     'is_del': 0,
+                        #     'uid_id': userId,
+                        #     'cuid': userId,
+                        #     'createTime': getDateTime,
+                        # }
                         db_ProHistory.objects.create(
                             pid_id=save_db_ProManagement.id,
                             proName=proName,
                             onlyCode=cls_Common.generate_only_code(),
                             operationType='Add',
-                            restoreData=restoreData,
+                            restoreData=None,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -366,25 +364,25 @@ def delete_data(request):
                             )
                             # endregion
                             # region 添加历史恢复
-                            oldData = list(obj_db_ProManagement.values())
-                            oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                            oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                            restoreData = {
-                                'sysType': oldData[0]['sysType'],
-                                'proName': oldData[0]['proName'],
-                                'remarks': oldData[0]['remarks'],
-                                'is_del': oldData[0]['is_del'],
-                                'uid_id': oldData[0]['uid_id'],
-                                'cuid': oldData[0]['cuid'],
-                                'createTime': oldData[0]['createTime'],
-                                'updateTime':oldData[0]['updateTime'],
-                            }
+                            # oldData = list(obj_db_ProManagement.values())
+                            # oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            # restoreData = {
+                            #     'sysType': oldData[0]['sysType'],
+                            #     'proName': oldData[0]['proName'],
+                            #     'remarks': oldData[0]['remarks'],
+                            #     'is_del': oldData[0]['is_del'],
+                            #     'uid_id': oldData[0]['uid_id'],
+                            #     'cuid': oldData[0]['cuid'],
+                            #     'createTime': oldData[0]['createTime'],
+                            #     'updateTime':oldData[0]['updateTime'],
+                            # }
                             db_ProHistory.objects.create(
                                 pid_id=proId,
                                 proName=obj_db_ProManagement[0].proName,
                                 onlyCode=cls_Common.generate_only_code(),
                                 operationType='Delete',
-                                restoreData=restoreData,
+                                restoreData=None,
                             )
                             # endregion
                     except BaseException as e:  # 自动回滚，不需要任何操作
@@ -621,17 +619,24 @@ def restor_data(request):
                                 is_del=0
                             )
                         else:  # Delete
-                            restoreData = ast.literal_eval(obj_db_ProHistory[0].restoreData)
-                            db_ProManagement.objects.create(
-                                sysType=restoreData['sysType'],
-                                proName=restoreData['proName'],
-                                remarks=restoreData['remarks'],
-                                updateTime=cls_Common.get_date_time(),
-                                createTime=restoreData['createTime'],
-                                uid_id=userId,
-                                cuid=restoreData['cuid'],
-                                is_del=0
-                            )
+                            obj_db_ProManagement = db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id)
+                            if obj_db_ProManagement.exists():
+                                obj_db_ProManagement.update(
+                                    uid_id=userId,updateTime=cls_Common.get_date_time(),is_del=0
+                                )
+                            else:
+                                response['errorMsg'] = "未找到当前可恢复的数据!"
+                            # restoreData = ast.literal_eval(obj_db_ProHistory[0].restoreData)
+                            # db_ProManagement.objects.create(
+                            #     sysType=restoreData['sysType'],
+                            #     proName=restoreData['proName'],
+                            #     remarks=restoreData['remarks'],
+                            #     updateTime=cls_Common.get_date_time(),
+                            #     createTime=restoreData['createTime'],
+                            #     uid_id=userId,
+                            #     cuid=restoreData['cuid'],
+                            #     is_del=0
+                            # )
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f"数据恢复失败:{e}"
                 else:
