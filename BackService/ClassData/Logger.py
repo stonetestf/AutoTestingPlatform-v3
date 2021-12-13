@@ -1,37 +1,37 @@
-from django.conf import settings
-from django.db import transaction
+from loguru import logger
+
 from info.models import OperateInfo as db_OperateInfo
 from info.models import PushInfo as db_PushInfo
 from login.models import UserTable as db_UserTable
 
-import logging
+# import logging
 import json
 import colorlog
 
-# region 配置日志
-log_colors_config = {
-    'DEBUG': 'cyan',
-    'INFO': 'white',
-    'ERROR': 'red',
-    'WARNING': 'yellow'
-}
-# 获取日志记录器，配置日志等级
-logging.basicConfig(level=logging.INFO)  # 设置日志级别
-logger = logging.getLogger(__name__)
-logger.propagate = False  # 重复打印解决方法 当logger其中一个子记录器收集了一条消息时，它在层次结构中向后退，导致logger的父节点也记录信息。
-# 默认日志格式
-formatter = colorlog.ColoredFormatter("%(log_color)s [%(asctime)s] %(message)s",
-                                      log_colors=log_colors_config)
-# formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - %(message)s")
-# 输出到控制台的handler
-chlr = logging.StreamHandler()
-# 配置默认日志格式
-chlr.setFormatter(formatter)
-# 日志记录器增加此handler
-logger.addHandler(chlr)
-
-
-# endregion
+# # region 配置日志
+# log_colors_config = {
+#     'DEBUG': 'cyan',
+#     'INFO': 'white',
+#     'ERROR': 'red',
+#     'WARNING': 'yellow'
+# }
+# # 获取日志记录器，配置日志等级
+# logging.basicConfig(level=logging.INFO)  # 设置日志级别
+# logger = logging.getLogger(__name__)
+# logger.propagate = False  # 重复打印解决方法 当logger其中一个子记录器收集了一条消息时，它在层次结构中向后退，导致logger的父节点也记录信息。
+# # 默认日志格式
+# formatter = colorlog.ColoredFormatter("%(log_color)s [%(asctime)s] %(message)s",
+#                                       log_colors=log_colors_config)
+# # formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - %(message)s")
+# # 输出到控制台的handler
+# chlr = logging.StreamHandler()
+# # 配置默认日志格式
+# chlr.setFormatter(formatter)
+# # 日志记录器增加此handler
+# logger.addHandler(chlr)
+#
+#
+# # endregion
 
 class Logging(object):
     def log(self, func):  # 日志装饰器
@@ -63,7 +63,7 @@ class Logging(object):
                 SERVER_PROTOCOL = ""
             if method == "GET":
                 params = args[0].META['QUERY_STRING']
-                logger.info(f"[{func.__name__}]:\n"
+                logger.debug(f"[{func.__name__}]:\n"
                             f"{method} {path}?{params} {SERVER_PROTOCOL} {res.status_code}\n"
                             f"Host:{args[0].META['HTTP_HOST']}\n"
                             f"Connection:{args[0].META['HTTP_CONNECTION']}\n"
@@ -82,7 +82,7 @@ class Logging(object):
                 for i in args[0].POST:
                     dicts[i] = args[0].POST[i]
                 params = dicts
-                logger.info(f"[{func.__name__}]:\n"
+                logger.debug(f"[{func.__name__}]:\n"
                             f"{method} {path} {args[0].META['SERVER_PROTOCOL']} {res.status_code}\n"
                             f"Host:{args[0].META['HTTP_HOST']}\n"
                             f"Connection:{args[0].META['HTTP_CONNECTION']}\n"
@@ -194,6 +194,8 @@ class Logging(object):
         """
         if logType == "info":
             logger.info(f'[{methods}] [{logType}]: {msg}')
+        if logType == "debug":
+            logger.debug(f'[{methods}] [{logType}]: {msg}')
         elif logType == "error":
             logger.error(f'[{methods}] [{logType}]: {msg}')
         elif logType == "warning":

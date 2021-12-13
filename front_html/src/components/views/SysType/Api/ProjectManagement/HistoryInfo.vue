@@ -158,6 +158,7 @@ export default {
             self.tableData= [];
             self.$axios.get('/api/ProjectManagement/SelectHistory',{
                 params:{
+                    'sysType':'API',
                     'proId':self.RomeData.proId,
                 }
             }).then(res => {
@@ -198,7 +199,7 @@ export default {
                 }).catch(() => {       
             });
         },
-        RestorData(historyId){
+        RestorData(historyId){//恢复数据
             let self = this;
             self.$axios.post('/api/ProjectManagement/RestorData',Qs.stringify({
                 "historyId":historyId,

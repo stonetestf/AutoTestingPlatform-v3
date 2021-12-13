@@ -22,7 +22,7 @@ class ProBindMembers(models.Model):  # 项目绑定成员
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
 
 
-class History(models.Model):  # 历史记录，恢复使用
+class ProHistory(models.Model):  # 历史记录，恢复使用
     pid = models.ForeignKey("ProManagement", to_field='id', on_delete=models.CASCADE)
     proName = models.CharField("项目名称", max_length=20, null=False)
     onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)

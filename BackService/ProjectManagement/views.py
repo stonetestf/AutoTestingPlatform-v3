@@ -11,7 +11,7 @@ from login.models import UserBindRole as db_UserBindRole
 from ProjectManagement.models import ProManagement as db_ProManagement
 from ProjectManagement.models import ProBindMembers as db_ProBindMembers
 from PageManagement.models import PageManagement as db_PageManagement
-from ProjectManagement.models import History as db_History
+from ProjectManagement.models import ProHistory as db_ProHistory
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -147,6 +147,7 @@ def save_data(request):
             else:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region 基本信息创建
                         save_db_ProManagement = db_ProManagement.objects.create(
                             sysType=sysType,
                             proName=proName,
@@ -157,13 +158,15 @@ def save_data(request):
                             createTime=getDateTime,
                             updateTime=getDateTime
                         )
-                        # 绑定默认创建人到项目成员中
+                        # endregion
+                        # region 绑定默认创建人到项目成员中
                         db_ProBindMembers.objects.create(
                             pid_id=save_db_ProManagement.id,
                             role_id=roleId,
                             uid_id=userId,
                             is_del=0
                         )
+                        # endregion
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
                             'API', 'Manual', 3, 'Add',
@@ -173,12 +176,21 @@ def save_data(request):
                         )
                         # endregion
                         # region 添加历史恢复
-                        db_History.objects.create(
+                        restoreData = {
+                            'sysType': sysType,
+                            'proName': proName,
+                            'remarks': remarks,
+                            'is_del': 0,
+                            'uid_id': userId,
+                            'cuid': userId,
+                            'createTime': getDateTime,
+                        }
+                        db_ProHistory.objects.create(
                             pid_id=save_db_ProManagement.id,
                             proName=proName,
                             onlyCode=cls_Common.generate_only_code(),
                             operationType='Add',
-                            restoreData=None,
+                            restoreData=restoreData,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -250,7 +262,7 @@ def edit_data(request):
                                 # region 添加历史恢复
                                 oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
                                 oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                                db_History.objects.create(
+                                db_ProHistory.objects.create(
                                     pid_id=proId,
                                     proName=proName,
                                     onlyCode=cls_Common.generate_only_code(),
@@ -285,7 +297,7 @@ def edit_data(request):
                             # region 添加历史恢复
                             oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
                             oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                            db_History.objects.create(
+                            db_ProHistory.objects.create(
                                 pid_id=proId,
                                 proName=proName,
                                 onlyCode=cls_Common.generate_only_code(),
@@ -354,12 +366,25 @@ def delete_data(request):
                             )
                             # endregion
                             # region 添加历史恢复
-                            db_History.objects.create(
+                            oldData = list(obj_db_ProManagement.values())
+                            oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            restoreData = {
+                                'sysType': oldData[0]['sysType'],
+                                'proName': oldData[0]['proName'],
+                                'remarks': oldData[0]['remarks'],
+                                'is_del': oldData[0]['is_del'],
+                                'uid_id': oldData[0]['uid_id'],
+                                'cuid': oldData[0]['cuid'],
+                                'createTime': oldData[0]['createTime'],
+                                'updateTime':oldData[0]['updateTime'],
+                            }
+                            db_ProHistory.objects.create(
                                 pid_id=proId,
                                 proName=obj_db_ProManagement[0].proName,
                                 onlyCode=cls_Common.generate_only_code(),
                                 operationType='Delete',
-                                restoreData=None,
+                                restoreData=restoreData,
                             )
                             # endregion
                     except BaseException as e:  # 自动回滚，不需要任何操作
@@ -531,6 +556,7 @@ def select_history(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+        sysType = objData.sysType
         proId = objData.proId
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -538,10 +564,10 @@ def select_history(request):
         cls_Logging.record_error_info('API', 'ProjectManagement', 'select_history', errorMsg)
     else:
         if proId:
-            obj_db_History = db_History.objects.filter(pid_id=proId).order_by('-createTime')
+            obj_db_ProHistory = db_ProHistory.objects.filter(pid_id=proId,pid__sysType=sysType).order_by('-createTime')
         else:
-            obj_db_History = db_History.objects.filter().order_by('-createTime')
-        for i in obj_db_History:
+            obj_db_ProHistory = db_ProHistory.objects.filter(pid__sysType=sysType).order_by('-createTime')
+        for i in obj_db_ProHistory:
             if i.restoreData:
                 restoreData = json.dumps(ast.literal_eval(i.restoreData),
                                          sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
@@ -557,7 +583,6 @@ def select_history(request):
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
                 'userName': i.pid.uid.userName,
             })
-
         response['TableData'] = dataList
         response['statusCode'] = 2000
     return JsonResponse(response)
@@ -578,16 +603,16 @@ def restor_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'ProjectManagement', 'restor_data', errorMsg)
     else:
-        obj_db_History = db_History.objects.filter(id=historyId)
-        if obj_db_History.exists():
+        obj_db_ProHistory = db_ProHistory.objects.filter(id=historyId)
+        if obj_db_ProHistory.exists():
             # 恢复时是管理员或是 当前项目的创建人时才可恢复
-            if is_admin or obj_db_History[0].pid.cuid == userId:
+            if is_admin or obj_db_ProHistory[0].pid.cuid == userId:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        restoreData = obj_db_History[0].restoreData
-                        if obj_db_History[0].operationType == "Edit":
+                        restoreData = obj_db_ProHistory[0].restoreData
+                        if obj_db_ProHistory[0].operationType == "Edit":
                             restoreData = ast.literal_eval(restoreData)
-                            db_ProManagement.objects.filter(id=obj_db_History[0].pid_id, is_del=0).update(
+                            db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id).update(
                                 proName=restoreData['proName'],
                                 remarks=restoreData['remarks'],
                                 updateTime=cls_Common.get_date_time(),
@@ -596,13 +621,17 @@ def restor_data(request):
                                 is_del=0
                             )
                         else:  # Delete
-                            select_db_History = db_History.objects.filter(
-                                pid_id=obj_db_History[0].pid_id).order_by('createTime')
-                            if select_db_History.count() < 2:
-                                response['errorMsg'] = "数据恢复失败,当前恢复的项目没有上次的操作记录!"
-                            else:
-                                restoreData = ast.literal_eval(select_db_History[-1].restoreData)
-                                pass
+                            restoreData = ast.literal_eval(obj_db_ProHistory[0].restoreData)
+                            db_ProManagement.objects.create(
+                                sysType=restoreData['sysType'],
+                                proName=restoreData['proName'],
+                                remarks=restoreData['remarks'],
+                                updateTime=cls_Common.get_date_time(),
+                                createTime=restoreData['createTime'],
+                                uid_id=userId,
+                                cuid=restoreData['cuid'],
+                                is_del=0
+                            )
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f"数据恢复失败:{e}"
                 else:

@@ -41,29 +41,6 @@ class Common(object):
 
         return new_password
 
-    # 转换POST请求来时list转换问题
-    def conversion_post_lists(self,listName,listData):
-        """
-        :param listName: 需要转换的list名称
-        :param listData:
-        :return:
-        """
-        lists = []
-        indexLists = []
-        for i in listData:
-            if i.startswith(listName):
-                index = int(i.split('[')[1].replace(']', ''))
-                indexLists.append(index)
-
-        for i in set(indexLists):
-            itemDicts = {}
-            for item in listData:
-                if item.startswith(listName):
-                    keyName = item.split('[')[-1].replace(']', '')
-                    itemDicts[keyName] = listData[f"{listName}[{i}][{keyName}]"]
-            lists.append(itemDicts)
-        return lists
-
     # 删除文件
     def delete_file(self, filePath):
         if os.path.exists(filePath):

@@ -3,10 +3,13 @@ from django.http import JsonResponse
 from django.db import transaction
 
 import json
+import ast
 
 # Create your db here.
 from PageManagement.models import PageManagement as db_PageManagement
 from FunManagement.models import FunManagement as db_FunManagement
+from PageManagement.models import PageHistory as db_PageHistory
+from ProjectManagement.models import ProManagement as db_ProManagement
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -80,6 +83,7 @@ def save_data(request):
         proId = request.POST['proId']
         pageName = request.POST['pageName']
         remarks = request.POST['remarks']
+        getDateTime = cls_Common.get_date_time()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -92,7 +96,8 @@ def save_data(request):
         else:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    db_PageManagement.objects.create(
+                    # region 保存基本信息
+                    save_db_PageManagement = db_PageManagement.objects.create(
                         sysType=sysType,
                         pid_id=proId,
                         pageName=pageName,
@@ -101,12 +106,33 @@ def save_data(request):
                         uid_id=userId,
                         cuid=userId
                     )
+                    # endregion
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Add',
                         cls_FindTable.get_pro_name(proId), pageName, None,
                         userId,
                         '新增页面',CUFront=json.dumps(request.POST)
+                    )
+                    # endregion
+                    # region 添加历史恢复
+                    restoreData = {
+                        'sysType': sysType,
+                        'pid_id':proId,
+                        'pageName': pageName,
+                        'remarks': remarks,
+                        'is_del': 0,
+                        'uid_id': userId,
+                        'cuid': userId,
+                        'createTime': getDateTime,
+                    }
+                    db_PageHistory.objects.create(
+                        pid_id=proId,
+                        page_id=save_db_PageManagement.id,
+                        pageName=pageName,
+                        onlyCode=cls_Common.generate_only_code(),
+                        operationType='Add',
+                        restoreData=restoreData,
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -159,11 +185,25 @@ def edit_data(request):
                             oldData, newData
                         )
                         # endregion
+                        # region 基本信息
                         db_PageManagement.objects.filter(is_del=0, id=pageId).update(
                             pageName=pageName,
                             uid_id=userId,
                             remarks=remarks,
                             updateTime=cls_Common.get_date_time())
+                        # endregion
+                        # region 添加历史恢复
+                        oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        db_PageHistory.objects.create(
+                            pid_id=proId,
+                            page_id=pageId,
+                            pageName=pageName,
+                            onlyCode=cls_Common.generate_only_code(),
+                            operationType='Edit',
+                            restoreData=oldData[0]
+                        )
+                        # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f'数据修改失败:{e}'
                 else:
@@ -208,6 +248,30 @@ def delete_data(request):
                             '删除页面',CUFront=json.dumps(request.POST)
                         )
                         # endregion
+                        # region 添加历史恢复
+                        oldData = list(obj_db_PageManagement.values())
+                        oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        restoreData = {
+                            'sysType': oldData[0]['sysType'],
+                            'pid_id':oldData[0]['pid_id'],
+                            'pageName': oldData[0]['pageName'],
+                            'remarks': oldData[0]['remarks'],
+                            'is_del': oldData[0]['is_del'],
+                            'uid_id': oldData[0]['uid_id'],
+                            'cuid': oldData[0]['cuid'],
+                            'createTime': oldData[0]['createTime'],
+                            'updateTime': oldData[0]['updateTime'],
+                        }
+                        db_PageHistory.objects.create(
+                            pid_id=obj_db_PageManagement[0].pid_id,
+                            page_id=pageId,
+                            pageName=obj_db_PageManagement[0].pageName,
+                            onlyCode=cls_Common.generate_only_code(),
+                            operationType='Delete',
+                            restoreData=restoreData,
+                        )
+                        # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f'数据删除失败:{e}'
                 else:
@@ -239,4 +303,107 @@ def get_page_name_items(request):
             })
         response['itemsData'] = dataList
         response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询历史恢复
+def select_history(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        sysType = objData.sysType
+        pageId = objData.pageId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'PageManagement', 'select_history', errorMsg)
+    else:
+        if pageId:
+            obj_db_PageHistory = db_PageHistory.objects.filter(
+                page_id=pageId,page__sysType=sysType).order_by('-createTime')
+        else:
+            obj_db_PageHistory = db_PageHistory.objects.filter(page__sysType=sysType).order_by('-createTime')
+        for i in obj_db_PageHistory:
+            if i.restoreData:
+                restoreData = json.dumps(ast.literal_eval(i.restoreData),
+                                         sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+            else:
+                restoreData = None
+            dataList.append({
+                'id': i.id,
+                'pageName': i.pageName,
+                'operationType': i.operationType,
+                'tableItem': [
+                    {'restoreData': restoreData}
+                ],
+                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                'userName': i.pid.uid.userName,
+            })
+        response['TableData'] = dataList
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
+def restor_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        is_admin = cls_FindTable.get_role_is_admin(roleId)
+        historyId = request.POST['historyId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'PageManagement', 'restor_data', errorMsg)
+    else:
+        obj_db_PageHistory = db_PageHistory.objects.filter(id=historyId)
+        if obj_db_PageHistory.exists():
+            # 恢复时是管理员或是 当前项目的创建人时才可恢复
+            if is_admin or obj_db_PageHistory[0].pid.cuid == userId:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0,id=obj_db_PageHistory[0].pid_id)
+                        if obj_db_ProManagement.exists():
+                            restoreData = obj_db_PageHistory[0].restoreData
+                            if obj_db_PageHistory[0].operationType == "Edit":
+                                restoreData = ast.literal_eval(restoreData)
+                                db_PageManagement.objects.filter(id=obj_db_PageHistory[0].page_id).update(
+                                    pid_id=restoreData['pid_id'],
+                                    pageName=restoreData['pageName'],
+                                    remarks=restoreData['remarks'],
+                                    updateTime=cls_Common.get_date_time(),
+                                    createTime=restoreData['createTime'],
+                                    uid=userId,
+                                    is_del=0
+                                )
+                            else:  # Delete
+                                restoreData = ast.literal_eval(obj_db_PageHistory[0].restoreData)
+                                db_PageManagement.objects.create(
+                                    sysType=restoreData['sysType'],
+                                    pid_id=restoreData['pid_id'],
+                                    pageName=restoreData['pageName'],
+                                    remarks=restoreData['remarks'],
+                                    updateTime=cls_Common.get_date_time(),
+                                    createTime=restoreData['createTime'],
+                                    uid_id=userId,
+                                    cuid=restoreData['cuid'],
+                                    is_del=0
+                                )
+                        else:
+                            response['errorMsg'] = f"当前恢复的页面上级所属项目不存在,恢复失败!"
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"数据恢复失败:{e}"
+                else:
+                    response['statusCode'] = 2002
+            else:
+                response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
+        else:
+            response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
     return JsonResponse(response)
