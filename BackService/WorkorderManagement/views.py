@@ -80,7 +80,7 @@ def select_data(request):
                          "pageName": i.page.pageName,
                          "funName": i.fun.funName,
                          "workName": i.workName,
-                         "message":i.message,
+                         "message": i.message,
                          "workState": i.workState,
                          "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                          "createUserName": createUserName,
@@ -243,7 +243,7 @@ def edit_data(request):
         pageId = request.POST['pageId']
         funId = request.POST['funId']
         workType = request.POST['workType']
-        workState = request.POST['workState']
+        workState = int(request.POST['workState'])
         workName = request.POST['workName']
         workMessage = request.POST['workMessage']
         pushTo = ast.literal_eval(request.POST['pushTo']) if request.POST['pushTo'] else []
@@ -270,6 +270,21 @@ def edit_data(request):
                     # region添加操作信息
                     oldData = list(obj_db_WorkorderManagement.values())
                     newData = json.dumps(request.POST)
+                    if workState != obj_db_WorkorderManagement[0].workState and workMessage == obj_db_WorkorderManagement[0].message:
+                        # 0: 待受理, 1: 受理中, 2: 已解决, 3: 已关闭
+                        match workState:
+                            case 0:
+                                workStateName = '待受理'
+                            case 1:
+                                workStateName = '受理中'
+                            case 2:
+                                workStateName = '已解决'
+                            case 3:
+                                workStateName = '已关闭'
+
+                        message = f'工单编号:【A-{workId}】 修改状态:{workStateName}'
+                    else:
+                        message = f'工单编号:【A-{workId}】 {workName}:{workMessage}'
                     operationInfoId = cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Edit',
                         cls_FindTable.get_pro_name(proId),
@@ -277,7 +292,7 @@ def edit_data(request):
                         cls_FindTable.get_fun_name(funId),
                         userId,
                         # f'A-{workId}:{workName}',
-                        f'编号:【A-{workId}】 {workName}:{workMessage}',
+                        message,
                         oldData, newData
                     )
                     # endregion
@@ -360,7 +375,7 @@ def delete_data(request):
                         cls_FindTable.get_page_name(obj_db_WorkorderManagement[0].page_id),
                         cls_FindTable.get_fun_name(obj_db_WorkorderManagement[0].fun_id),
                         userId,
-                        obj_db_WorkorderManagement[0].workName,CUFront=json.dumps(request.POST)
+                        obj_db_WorkorderManagement[0].workName, CUFront=json.dumps(request.POST)
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -409,7 +424,7 @@ def select_life_cycle(request):  # 获取当前工单的生命周期
                     title = f'修改工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
                     content = json.dumps(
                         ast.literal_eval(i.operationInfo),
-                        sort_keys=True, indent=4, separators=(",", ": "),ensure_ascii=False)
+                        sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
             dataList.append({
                 'title': title,
                 'content': content,
