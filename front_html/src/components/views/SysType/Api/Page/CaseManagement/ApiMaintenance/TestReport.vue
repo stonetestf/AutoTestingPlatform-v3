@@ -366,7 +366,11 @@ export default {
                 PrintConsole('newval',newval);
                 this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
-                this.RequestApi(newval.isTest,newval.apiId,newval.environmentId);
+                this.RequestApi(
+                    newval.isTest,
+                    newval.apiId,
+                    newval.environmentId,
+                    newval.testSendData);
             }
         },
         'RomeData.responseHeadersTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
@@ -464,13 +468,41 @@ export default {
             self.docInfoRomeData.headersTableData=[];
             self.docInfoRomeData.requestDataTableData=[];
         },
-        RequestApi(isTest,apiId,environmentId){
+        RequestApi(isTest,apiId,environmentId,testSendData){
             let self = this;
             self.loading=true;
             if(isTest){
-                params = '/api/ApiIntMaintenance/SendTestRequest',{
+                self.$axios.post('/api/ApiIntMaintenance/SendTestRequest',{
+                    'testSendData':testSendData,
+                }).then(res => {
+                    if(res.data.statusCode==2000){
+                        self.RomeData.requestUrl = res.data.requestUrl;
+                        self.RomeData.requestType = res.data.requestType;
+                        self.RomeData.stateCode = res.data.responseCode;
+                        self.RomeData.time = res.data.time;
+                        self.RomeData.reportState = res.data.reportState;
 
-                }
+                        self.docInfoRomeData.originalUrl = res.data.originalUrl;
+                        self.docInfoRomeData.headersTableData = res.data.tabPane.requsetHeaders;
+                        self.docInfoRomeData.requestDataTableData = res.data.tabPane.requestData;
+
+                        self.RomeData.responseText = res.data.tabPane.content;
+                        self.RomeData.responseHeadersTableData = res.data.tabPane.responseHeaders;
+                        self.RomeData.extractTableData = res.data.tabPane.extractTable;
+                        self.RomeData.assertionTableData = res.data.tabPane.assertionTable;
+                        self.RomeData.preOperationTableData= res.data.tabPane.preOperationTable;
+                        self.RomeData.rearOperationTableData= res.data.tabPane.rearOperationTable;
+
+                        self.RomeData.errorInfoTableData = res.data.tabPane.errorInfoTable;
+                        self.loading=false;
+                    }else{
+                        self.$message.error('接口请求失败'+res.data.errorMsg);
+                        self.loading=false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.loading=false;
+                })
             }else{
                 self.$axios.post('/api/ApiIntMaintenance/SendRequest',Qs.stringify({
                     'apiId':apiId,
@@ -505,7 +537,6 @@ export default {
                     self.loading=false;
                 })
             }
-          
         },
         
     }  

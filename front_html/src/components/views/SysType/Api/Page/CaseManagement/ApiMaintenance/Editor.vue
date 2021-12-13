@@ -117,7 +117,7 @@
                                         </el-option>
                                     </el-select>
                                 </el-input>
-                                <el-button type="primary" @click="SendRequest()">Send</el-button>
+                                <el-button type="primary" @click="OpenTestReportDialog()">Send</el-button>
                             </el-form-item>
                             <el-tabs v-model="EditApiRomeData.activeName" @tab-click="handleClick" style="margin-top:-10px">
                                 <el-tab-pane :label="EditApiRomeData.headersName" name="Headers">
@@ -743,6 +743,13 @@
                 <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="DataSave()">保存</el-button>
             </el-drawer>
         </template>
+        <template>
+            <dialog-test-report
+                @closeDialog="closeTestReportDialog" 
+                :isVisible="dialog.testReport.dialogVisible" 
+                :dialogPara="dialog.testReport.dialogPara">
+            </dialog-test-report>
+        </template>
     </div>
 </template>
 
@@ -755,9 +762,11 @@ import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetUserNameItems} from "../../../../../../js/GetSelectTable.js";
+import DialogTestReport from "./TestReport.vue";
 
 export default {
     components: {
+        DialogTestReport
     },
     data() {
         return {
@@ -873,6 +882,15 @@ export default {
             CharmRomeData:{
                 title:'',
                 tableData:[],
+            },
+            dialog:{
+                testReport:{//运行过程
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
             },
         };
     },
@@ -1913,6 +1931,42 @@ export default {
                 console.log(error);
                 self.loading=false;
             })
+        },
+
+        //测试请求
+        closeTestReportDialog(){
+            this.dialog.testReport.dialogVisible =false;
+        },
+        OpenTestReportDialog(index,row){
+            let self = this;
+            self.dialog.testReport.dialogPara={
+                dialogTitle:self.BasicRomeData.apiName,//初始化标题
+                isTest:true,
+                testSendData:{
+                    'BasicInfo':{
+                        'proId':self.$cookies.get('proId'),
+                        'environmentId':self.BasicRomeData.environmentId,
+                    },
+                    'ApiInfo':{
+                        'requestType':self.EditApiRomeData.requestType,
+                        'requestUrl':self.EditApiRomeData.requestUrl,
+                        'request':{
+                            'headers':self.EditApiRomeData.headersRomeData.tableData,
+                            'params':self.EditApiRomeData.paramsRomeData.tableData,
+                            'body':{
+                                'requestSaveType':self.EditApiRomeData.bodyRomeData.requestSaveType,
+                                'formData':self.EditApiRomeData.bodyRomeData.tableData,
+                                'raw':self.EditApiRomeData.bodyRomeData.rawValue,
+                            },
+                            'extract':self.EditApiRomeData.extractRomeData.tableData,
+                            'validate':self.EditApiRomeData.validateRomeData.tableData,
+                            'preOperation':self.EditApiRomeData.preOperationRomeData.tableData,
+                            'rearOperation':self.EditApiRomeData.rearOperationRomeData.tableData,
+                        }
+                    }
+                }
+            }
+            self.dialog.testReport.dialogVisible=true;
         },
 
     }

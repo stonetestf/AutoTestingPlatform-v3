@@ -159,7 +159,6 @@ export default {
             self.dialog.testReport.dialogVisible=true;
             self.dialogClose();
         },
-        
     }
 };
 </script>
