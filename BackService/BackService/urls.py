@@ -33,6 +33,7 @@ import DebugTalk.urls
 import GlobalVariable.urls
 
 import Api_IntMaintenance.urls
+import Api_TestReport.urls
 
 
 urlpatterns = [
@@ -52,5 +53,6 @@ urlpatterns = [
     url('api/ApiIntMaintenance/', include(Api_IntMaintenance.urls)),
     url('api/DebugTalk/', include(DebugTalk.urls)),
     url('api/GlobalVariable/', include(GlobalVariable.urls)),
+    url('api/ApiTestReport/', include(Api_TestReport.urls)),
 
 ]

@@ -13,11 +13,14 @@ from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 # Create reference here.
 from ClassData.Common import Common as cls_Common
 from ClassData.Logger import Logging as cls_Logging
+from ClassData.TestReport import ApiReport
 
 import requests
 import os
 import ast
 import json
+
+cls_ApiReport = ApiReport()
 
 
 class RequstOperation(cls_Logging, cls_Common):
@@ -341,7 +344,8 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-单接口的执行
-    def run_request(self,is_test, onlyCode, userId,apiId=None, environmentId=None,requestData=None):
+    def run_request(self, is_test, onlyCode, userId, apiId=None, environmentId=None, requestData=None,
+                    reportItemId=None):
         results = {
             'tabPane': {
                 'requsetHeaders': [],  # 原始请求头
@@ -353,13 +357,19 @@ class RequstOperation(cls_Logging, cls_Common):
                 'rearOperationTable': [],
                 'errorInfoTable': [],
             },
+            'report':{
+                'requsetHeaders': {},  # 原始请求头
+                'requestData':{}
+            },
             'state': False,
+            'errorInfo':'',
         }
         reportState = []  # 1(前置状态),2(接口运行完成),3(提取和断言),4(后置状态)
         if is_test:
             getRequestData = requestData
         else:
             getRequestData = self.get_request_data(apiId, environmentId)
+
         if getRequestData['state']:
             results['originalUrl'] = getRequestData['requestUrl']
             results['tabPane']['requsetHeaders'] = getRequestData['headersData']
@@ -378,6 +388,8 @@ class RequstOperation(cls_Logging, cls_Common):
                 conversionRequestUrl = results['requestUrl'] = conversionDataToRequestData['conversionRequestUrl']
                 conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
                 conversionRequestData = conversionDataToRequestData['conversionRequestData']
+                results['report']['requsetHeaders'] = conversionHeadersData
+                results['report']['requestData'] = conversionRequestData
 
                 # region 前置操作
                 for item_pre in preOperationData:
@@ -482,6 +494,9 @@ class RequstOperation(cls_Logging, cls_Common):
                     results['reportState'] = 'Fail'
                 else:
                     results['reportState'] = 'Pass'
+                # 创建3级测试报告
+                if not is_test:
+                    cls_ApiReport.create_api_report(reportItemId,results)
             else:
                 results['errorMsg'] = conversionDataToRequestData['errorMsg']
         else:

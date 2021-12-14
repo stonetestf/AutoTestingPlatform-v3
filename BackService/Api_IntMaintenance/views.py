@@ -31,6 +31,7 @@ from ClassData.Common import Common
 from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.Request import RequstOperation
+from ClassData.TestReport import ApiReport
 
 # Create info here.
 cls_Logging = Logging()
@@ -39,6 +40,7 @@ cls_FindTable = FindTable()
 cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
 cls_RequstOperation = RequstOperation()
+cls_ApiReport = ApiReport()
 
 
 # Create your views here.
@@ -1166,9 +1168,41 @@ def send_request(request):
         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'request_api', errorMsg)
     else:
         cls_Logging.print_log('info', 'send_request', '-----------------------------start-----------------------------')
-        response = cls_RequstOperation.run_request(False, onlyCode, userId, apiId=apiId, environmentId=environmentId)
-        if response['state']:
-            response['statusCode'] = 2000
+        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
+        if obj_db_ApiBaseData.exists():
+            # region 创建1级主报告
+            createTestReport = cls_ApiReport.create_test_report(
+                obj_db_ApiBaseData[0].pid_id,
+                obj_db_ApiBaseData[0].apiName,
+                'API',apiId,1,userId
+            )
+            # endregion
+            if createTestReport['state']:
+                # region  创建2级报告
+                testReportId = createTestReport['testReportId']
+                queueId = cls_ApiReport.create_queue(apiId, testReportId, userId)# 创建队列
+                apiName = obj_db_ApiBaseData[0].apiName
+                createReportItems = cls_ApiReport.create_report_items(testReportId, apiId,apiName)
+                if createReportItems['state']:
+                    reportItemId = createReportItems['reportItemId']
+                    cls_ApiReport.update_queue(queueId, 1, userId)
+                    # 请求运行
+                    response = cls_RequstOperation.run_request(
+                        False, onlyCode, userId, apiId=apiId, environmentId=environmentId,reportItemId=reportItemId)
+                    if response['state']:
+                        response['statusCode'] = 2000
+                    else:
+                        response['errorMsg'] = response['errorMsg']
+                    # 更新2级报告
+                    cls_ApiReport.update_report_items(testReportId,reportItemId)
+                    cls_ApiReport.update_queue(queueId,2,userId)
+                else:
+                    response['errorMsg'] = createReportItems['errorMsg']
+                # endregion
+            else:
+                response['errorMsg'] = createTestReport['errorMsg']
+        else:
+            response['errorMsg'] = '当前请求的接口不存在,请刷新后在重新尝试'
         cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
     return JsonResponse(response)
 

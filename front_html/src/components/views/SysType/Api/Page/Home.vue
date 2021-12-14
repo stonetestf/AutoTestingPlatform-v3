@@ -186,13 +186,14 @@ import Api_PageEnvironment from '@/components/views/SysType/Api/Page/Environment
 import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
 import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
 import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
+import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告
 
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
     Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment,Api_DebugTalk,Api_GlobalVariable,
-    Api_RemindInfo
+    Api_RemindInfo,Api_TestReport
   },
   data() {
     return {

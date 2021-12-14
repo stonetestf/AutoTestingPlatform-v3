@@ -23,6 +23,7 @@ import Api_PageEnvironment from '@/components/views/SysType/Api/Page/Environment
 import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
 import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
 import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
+import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -83,6 +84,9 @@ export default new Router({
         },
         {path: '/WorkorderManagement/RemindInfo/Main',name: 'Api_RemindInfo',component: Api_RemindInfo,
           meta:{name: '提醒消息',url:'/WorkorderManagement/RemindInfo/Main',comp:'Api_RemindInfo'}
+        },
+        {path: '/SysType/Api/Page/TestReport/Main',name: 'Api_TestReport',component: Api_TestReport,
+          meta:{name: '报告维护',url:'/SysType/Api/Page/TestReport/Main',comp:'Api_TestReport'}
         },
       ]
     }
