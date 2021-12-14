@@ -393,15 +393,12 @@ def api_pagehome_select_test_results(request):
                         errorTotal += 1
                     case '':
                         errorTotal += 1
-            passData.append(passTotal)
-            failData.append(failTotal)
-            errorData.append(errorTotal)
-            # if passTotal != 0:
-            #     passData.append({'name': i, 'value': [i, passTotal]})
-            # if failTotal != 0:
-            #     failData.append({'name': i, 'value': [i, failTotal]})
-            # if errorTotal != 0:
-            #     errorData.append({'name': i, 'value': [i, errorTotal]})
+            if passTotal != 0:
+                passData.append({'name': i, 'value': [i, passTotal]})
+            if failTotal != 0:
+                failData.append({'name': i, 'value': [i, failTotal]})
+            if errorTotal != 0:
+                errorData.append({'name': i, 'value': [i, errorTotal]})
 
         response['statusCode'] = 2000
         response['timeData'] = reportTime

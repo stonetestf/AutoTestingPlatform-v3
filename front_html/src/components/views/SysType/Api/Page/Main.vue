@@ -267,8 +267,6 @@ export default {
     },
     topline(){
       let self = this;
-      // console.log(this.DownData.lineData)
-      
       var option_line = {
         title: {
           text: '测试结果总览',
@@ -293,8 +291,7 @@ export default {
         // },
         xAxis: {
           type: 'category',
-          // boundaryGap: false,
-          axisLabel: { interval: 0, rotate: 30 },
+          axisLabel: { interval: 0, rotate: 30 },//底部文字倾斜显示
           data:self.RomeData.topLine.timeData
           // data: ['Mon', 'Tue','123']
         },
@@ -303,6 +300,10 @@ export default {
         },
         series: [
           {
+            label: {
+              show: true,
+              position: 'top'
+            },
             name: 'Pass',
             type: 'bar',
             // stack: 'Total',
@@ -315,6 +316,10 @@ export default {
             itemStyle: {normal: {color: '#91cc75'}} 
           },
           {
+            label: {
+              show: true,
+              position: 'top'
+            },
             name: 'Fail',
             type: 'bar',
             // stack: 'Total',
@@ -327,6 +332,10 @@ export default {
             itemStyle: {normal: {color: '#fac858'}} 
           },
           {
+            label: {
+              show: true,
+              position: 'top'
+            },
             name: 'Error',
             type: 'bar',
             // stack: 'Total',
