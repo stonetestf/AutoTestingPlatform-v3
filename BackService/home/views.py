@@ -6,10 +6,8 @@ from django.contrib.auth import hashers
 from dwebsocket.decorators import accept_websocket
 from time import sleep
 
-
-
 import json
-# import psutil
+import psutil
 
 # Create your db here.
 from django.db.models import Q
@@ -20,6 +18,7 @@ from login.models import UserBindRole as db_UserBindRole
 from role.models import RoleBindMenu as db_RoleBindMenu
 from info.models import OperateInfo as db_OperateInfo
 from info.models import PushInfo as db_PushInfo
+from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -208,7 +207,7 @@ def get_api_permissions(request):
                             children.append({
                                 'index': str(item_level_2.index),
                                 'menuName': item_level_2.menuName,
-                                'path':item_level_2.routerPath,
+                                'path': item_level_2.routerPath,
                             })
                 menuTable.append({'index': str(item_level_1.sortNum),
                                   'level': item_level_1.level,
@@ -263,10 +262,10 @@ def get_user_statistics_info(request):
     else:
         obj_db_UserBindRole = db_UserBindRole.objects.filter(user_id=userId, is_del=0)
         if obj_db_UserBindRole.exists():
-            pushCount = db_PushInfo.objects.filter(~Q(oinfo__uid_id=userId),uid_id=userId,is_read=0).count()
-            errorCount = db_OperateInfo.objects.filter(remindType='Error',is_read=0).count()
+            pushCount = db_PushInfo.objects.filter(~Q(oinfo__uid_id=userId), uid_id=userId, is_read=0).count()
+            errorCount = db_OperateInfo.objects.filter(remindType='Error', is_read=0).count()
             # warningCount = db_OperateInfo.objects.filter(uid_id=userId, remindType='Warning').count()
-            warningCount = db_PushInfo.objects.filter(uid_id=userId,oinfo__remindType='Warning',is_read=0).count()
+            warningCount = db_PushInfo.objects.filter(uid_id=userId, oinfo__remindType='Warning', is_read=0).count()
 
             if obj_db_UserBindRole[0].role.is_admin == 1:
                 message = f"当前您的信息: <br>" \
@@ -311,7 +310,7 @@ def get_server_indicators(request):
                                                           f'心跳包:{counter}秒内无响应,断开连接')
                                     break
                             userId = cls_FindTable.get_userId(token)
-                            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId,is_read=0)
+                            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId, is_read=0)
                             pushCount = obj_db_PushInfo.count()
                             # region CPU和内存
                             cpu = psutil.cpu_percent(interval=2)
@@ -352,3 +351,61 @@ def get_server_indicators(request):
                         request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
                         sleep(1)
 
+
+# 测试结果总览
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def api_pagehome_select_test_results(request):
+    response = {}
+    passData = []
+    failData = []
+    errorData = []
+    reportTime = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = object_maker(responseData)
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_test_results', errorMsg)
+    else:
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, pid_id=proId).order_by('updateTime')
+        for i in obj_db_ApiTestReport:
+            reportTime.append(str(i.updateTime.strftime('%Y-%m-%d')))
+        reportTime = list(set(reportTime))  # 去重复时间
+        reportTime.sort()  # 排序
+        for i in reportTime:
+            passTotal = 0
+            failTotal = 0
+            errorTotal = 0
+            staTime = i + " 00:00:00"
+            endTime = i + " 23:59:59"
+            select_db_ApiTestReport = obj_db_ApiTestReport.filter(updateTime__gte=staTime, updateTime__lte=endTime)
+            for item in select_db_ApiTestReport:
+                match item.reportStatus:
+                    case 'Pass':
+                        passTotal += 1
+                    case 'Fail':
+                        failTotal += 1
+                    case 'Error':
+                        errorTotal += 1
+                    case '':
+                        errorTotal += 1
+            passData.append(passTotal)
+            failData.append(failTotal)
+            errorData.append(errorTotal)
+            # if passTotal != 0:
+            #     passData.append({'name': i, 'value': [i, passTotal]})
+            # if failTotal != 0:
+            #     failData.append({'name': i, 'value': [i, failTotal]})
+            # if errorTotal != 0:
+            #     errorData.append({'name': i, 'value': [i, errorTotal]})
+
+        response['statusCode'] = 2000
+        response['timeData'] = reportTime
+        response['passData'] = passData
+        response['failData'] = failData
+        response['errorData'] = errorData
+    return JsonResponse(response)

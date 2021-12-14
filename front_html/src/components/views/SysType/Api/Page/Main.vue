@@ -2,10 +2,193 @@
   <div ref="tab-main"  id="tab-main">
     <template>
       <el-card class="MainCard">
-          <span>这里显示当前项目的接口数量，单元测试数量，测试用例数量，定时任务数据，批量任务数量</span>
+          <!-- <span>这里显示当前项目的接口数量，单元测试数量，测试用例数量，定时任务数据，批量任务数量</span>
           <span>当前项目的成功，失败全统计</span>
-          <span>当前项目10个失败数量最多的任务</span>
-           <span>当前项目的任务队列</span>
+          <span></span>
+           <span></span> -->
+          <div>
+            <el-row :gutter="10">
+              <el-col :span="11">
+                <div>
+                  <el-card class="TopCard">
+                    <div id="topline" style="width:830px;height:300px;margin-left:-20px;"></div>   
+                  </el-card>
+                </div>
+              </el-col>
+              <el-col :span="13">
+                <div>
+                  <el-card class="TopCard">
+                    <el-table
+                      height="290px"
+                      :data="RomeData.proTableData">
+                      <el-table-column
+                        prop="itsName"
+                        align= "center"
+                        label="所属页面/功能">
+                      </el-table-column>
+                      <el-table-column
+                        width="80px"
+                        prop="apiTotal"
+                        align= "center"
+                        label="接口数量">
+                      </el-table-column>
+                      <el-table-column
+                        width="80px"
+                        prop="unitTotal"
+                        align= "center"
+                        label="单元测试">
+                      </el-table-column>
+                      <el-table-column
+                        width="80px"
+                        prop="caseTotal"
+                        align= "center"
+                        label="测试用例">
+                      </el-table-column>
+                      <el-table-column
+                        width="80px"
+                        prop="taskTotal"
+                        align= "center"
+                        label="定时任务">
+                      </el-table-column>
+                      <el-table-column
+                        width="80px"
+                        prop="batchTotal"
+                        align= "center"
+                        label="批量任务">
+                      </el-table-column>
+                      <el-table-column
+                        width="80px"
+                        prop="weekTotal"
+                        align= "center"
+                        label="本周新增">
+                      </el-table-column>
+                      <el-table-column
+                        width="100px"
+                        prop="performWeek"
+                        align= "center"
+                        label="本周执行">
+                      </el-table-column>
+                      <el-table-column
+                        width="100px"
+                        prop="perforHistory"
+                        align= "center"
+                        label="历史执行">
+                      </el-table-column>
+                    </el-table>
+                  </el-card>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+          <div style="margin-top:10px">
+            <el-row :gutter="10">
+              <el-col :span="13">
+                <div>
+                  <el-card class="DownCard">
+                    <div style="margin-top:-10px">
+                      <el-tag type="info">过去7天内失败TOP 10 </el-tag>
+                    </div>
+                    <div style="margin-top:10px">
+                      <el-table
+                        height="340px"
+                        :data="RomeData.formerlyTableData">
+                        <el-table-column
+                          prop="index"
+                          width="70px"
+                          align= "center"
+                          label="排名">
+                          <template slot-scope="scope">
+                              <el-tag type="danger" v-if="scope.row.index=='1'" >{{scope.row.index}}</el-tag>
+                              <el-tag type="warning" v-else-if="scope.row.index=='2'">{{scope.row.index}}</el-tag>
+                              <el-tag type="primary" v-else-if="scope.row.index=='3'">{{scope.row.index}}</el-tag>
+                              <span v-else>{{scope.row.index}}</span>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="itsName"
+                          align= "center"
+                          label="所属页面/功能">
+                        </el-table-column>
+                        <el-table-column
+                          align= "center"
+                          width="100px"
+                          label="任务类型">
+                          <template slot-scope="scope">
+                              <el-tag v-if="scope.row.taskType=='API'" >接口</el-tag>
+                              <el-tag type="success" v-else-if="scope.row.taskType=='CASE'" >测试用例</el-tag>
+                              <el-tag type="warning" v-else-if="scope.row.taskType=='TASK'" >定时任务</el-tag>
+                              <el-tag type="danger" v-else-if="scope.row.taskType=='BATCH'" >批量任务</el-tag>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="taskName"
+                          align= "center"
+                          label="任务名称">
+                        </el-table-column>
+                        <el-table-column
+                          prop="number"
+                          align= "center"
+                          width="100px"
+                          label="失败次数">
+                        </el-table-column>
+                      </el-table>
+                    </div>
+                  </el-card>
+                </div>
+              </el-col>
+              <el-col :span="11">
+                <div>
+                  <el-card class="DownCard">
+                    <div style="margin-top:-10px">
+                      <el-tag type="info">项目队列</el-tag>
+                    </div>
+                    <div style="margin-top:10px">
+                      <el-table
+                        height="340px"
+                        :data="RomeData.queueTableData">
+                        <el-table-column
+                          prop="itsName"
+                          align= "center"
+                          label="所属页面/功能">
+                        </el-table-column>
+                        <el-table-column
+                          width="100px"
+                          align= "center"
+                          label="任务类型">
+                          <template slot-scope="scope">
+                              <el-tag v-if="scope.row.taskType=='API'" >接口</el-tag>
+                              <el-tag type="success" v-else-if="scope.row.taskType=='CASE'" >测试用例</el-tag>
+                              <el-tag type="warning" v-else-if="scope.row.taskType=='TASK'" >定时任务</el-tag>
+                              <el-tag type="danger" v-else-if="scope.row.taskType=='BATCH'" >批量任务</el-tag>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="taskName"
+                          align= "center"
+                          label="任务名称">
+                        </el-table-column>
+                        <el-table-column
+                          width="100px"
+                          align= "center"
+                          label="任务状态">
+                          <template slot-scope="scope">
+                              <el-tag type="info" v-if="scope.row.taskState=='0'" >未开始</el-tag>
+                              <el-tag type="warning" v-else-if="scope.row.taskState=='1'" >执行中</el-tag>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="performProgress"
+                          width="100px"
+                          align= "center"
+                          label="执行进度">
+                        </el-table-column>
+                      </el-table>
+                    </div>
+                  </el-card>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
       </el-card>
     </template>
   </div>
@@ -15,36 +198,163 @@
 
 // import * as echarts from 'echarts';
 // import store from '../../../store/index'
-
+import * as echarts from 'echarts';
 export default {
   components: {
 
   },
   data() {
     return {
+        myChart_line:'',
         RomeData:{
-      
+          topLine:{
+            timeData:[],
+            passData:[],
+            failData:[],
+            errorData:[],
+          },
+
+          //项目统计
+          proTableData:[
+            // {'itsName':'测试页面/测试功能','apiTotal':'1000000','unitTotal':'20','caseTotal':'13','taskTotal':'30','batchTotal':'20','weekTotal':"12",'performWeek':'11','perforHistory':'30'}
+          ],
+
+          //过去7天失败错误列表
+          formerlyTableData:[
+            // {'index':'1','itsName':'测试页面/测试功能','taskType':'API','taskName':'查询项目','number':'999'},
+            // {'index':'2','itsName':'测试页面/测试功能','taskType':'CASE','taskName':'验证项目','number':'888'},
+            // {'index':'3','itsName':'测试页面/测试功能','taskType':'TASK','taskName':'查询项目','number':'777'},
+            // {'index':'4','itsName':'测试页面/测试功能','taskType':'BATCH','taskName':'验证项目','number':'666'},
+          ],
+          //队列列表
+          queueTableData:[
+            // {'itsName':'测试页面/测试功能','taskType':'API','taskName':'验证项目','taskState':'0','performProgress':'1/1'},
+            // {'itsName':'测试页面/测试功能','taskType':'CASE','taskName':'验证项目','taskState':'1' ,'performProgress':'2/20'},
+          ]
 
         },
 
     };
   },
   mounted(){
-
-
+    this.myChart_line = echarts.init(document.getElementById('topline'));//初始化
+    // this.topline();
+    this.SelectTestResults();//测试结果总览
   },
   beforeDestroy(){//生命周期-离开时
 
   },
   methods: {
-    
+    SelectTestResults(){
+      let self = this;
+      self.$axios.get('/api/home/ApiPageHomeSelectTestResults',{
+        params:{
+          'proId':self.$cookies.get('proId'),
+        }
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          self.RomeData.topLine.timeData = res.data.timeData;
+          self.RomeData.topLine.passData = res.data.passData;
+          self.RomeData.topLine.failData = res.data.failData;
+          self.RomeData.topLine.errorData = res.data.errorData;
+          this.topline();
+        }else{
+            self.$message.error('获取数据失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+          console.log(error);
+      })
+    },
+    topline(){
+      let self = this;
+      // console.log(this.DownData.lineData)
+      
+      var option_line = {
+        title: {
+          text: '测试结果总览',
+          left:'40'
+        },
+        tooltip: {
+          trigger: 'axis'
+        },
+        legend: {
+          data: ['Pass', 'Fail', 'Error']
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        // toolbox: {
+        //   feature: {
+        //     saveAsImage: {}
+        //   }
+        // },
+        xAxis: {
+          type: 'category',
+          // boundaryGap: false,
+          axisLabel: { interval: 0, rotate: 30 },
+          data:self.RomeData.topLine.timeData
+          // data: ['Mon', 'Tue','123']
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            name: 'Pass',
+            type: 'bar',
+            // stack: 'Total',
+            data:self.RomeData.topLine.passData,
+            // data: [
+            //       {name:'2016/12/18 6:38:08', value:['2016/12/18 6:38:08', 20]},
+            //       {name:'2016/12/18 16:18:18', value:['2016/12/18 16:18:18', 1]},
+            //       {name:'2016/12/18 19:18:18', value:['2016/12/18 19:18:18', 1]}
+            //   ],
+            itemStyle: {normal: {color: '#91cc75'}} 
+          },
+          {
+            name: 'Fail',
+            type: 'bar',
+            // stack: 'Total',
+            data:self.RomeData.topLine.failData,
+            // data: [
+            //     {name:'2016/12/17 6:38:08', value:['2016/12/17 6:38:08', 1]},
+            //     {name:'2016/12/17 16:18:18', value:['2016/12/17 16:18:18', 22]},
+            //     {name:'2016/12/17 19:18:18', value:['2016/12/17 19:18:18', 44]}
+            // ],
+            itemStyle: {normal: {color: '#fac858'}} 
+          },
+          {
+            name: 'Error',
+            type: 'bar',
+            // stack: 'Total',
+            data:self.RomeData.topLine.errorData,
+            // data: [
+            //     {name:'2016/12/16 6:38:08', value:['2016/12/16 6:38:08', 1]},
+            //     {name:'2016/12/16 16:18:18', value:['2016/12/16 16:18:18', 22]},
+            //     {name:'2016/12/16 19:18:18', value:['2016/12/16 19:18:18', 44]}
+            // ],
+            itemStyle: {normal: {color: '#ee6666'}} 
+          },
+        ]
+      };
+      this.myChart_line.setOption(option_line,true);//加载属性后显示 true自动每次清除数据
+    },
   }
 };
 </script>
 
 <style>
 .MainCard{
-  height: 750px;
+  height: 760px;
+}
+.TopCard{
+  height: 320px;
+}
+.DownCard{
+  height: 400px;
 }
 
 </style>
