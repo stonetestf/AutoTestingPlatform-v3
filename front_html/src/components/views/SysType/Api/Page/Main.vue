@@ -22,9 +22,9 @@
                       height="290px"
                       :data="RomeData.proTableData">
                       <el-table-column
-                        prop="itsName"
+                        prop="pageName"
                         align= "center"
-                        label="所属页面/功能">
+                        label="所属页面">
                       </el-table-column>
                       <el-table-column
                         width="80px"
@@ -64,13 +64,13 @@
                       </el-table-column>
                       <el-table-column
                         width="100px"
-                        prop="performWeek"
+                        prop="performWeekTotal"
                         align= "center"
                         label="本周执行">
                       </el-table-column>
                       <el-table-column
                         width="100px"
-                        prop="perforHistory"
+                        prop="perforHistoryTotal"
                         align= "center"
                         label="历史执行">
                       </el-table-column>
@@ -82,7 +82,7 @@
           </div>
           <div style="margin-top:10px">
             <el-row :gutter="10">
-              <el-col :span="13">
+              <el-col :span="11">
                 <div>
                   <el-card class="DownCard">
                     <div style="margin-top:-10px">
@@ -136,7 +136,7 @@
                   </el-card>
                 </div>
               </el-col>
-              <el-col :span="11">
+              <el-col :span="13">
                 <div>
                   <el-card class="DownCard">
                     <div style="margin-top:-10px">
@@ -182,6 +182,24 @@
                           align= "center"
                           label="执行进度">
                         </el-table-column>
+                        <el-table-column
+                          prop="updateTime"
+                          width="100px"
+                          align= "center"
+                          label="发布时间">
+                        </el-table-column>
+                        <el-table-column
+                          label="操作"
+                          align="center"
+                          width="80px">
+                          <template slot-scope="scope" style="width:100px">
+                            <el-button
+                              type="info"
+                              size="mini"
+                              @click="handleState(scope.$index, scope.row)">取消
+                            </el-button>
+                        </template>
+                      </el-table-column>
                       </el-table>
                     </div>
                   </el-card>
@@ -195,9 +213,7 @@
 </template>
 
 <script>
-
-// import * as echarts from 'echarts';
-// import store from '../../../store/index'
+import Qs from 'qs';
 import * as echarts from 'echarts';
 export default {
   components: {
@@ -240,11 +256,15 @@ export default {
     this.myChart_line = echarts.init(document.getElementById('topline'));//初始化
     // this.topline();
     this.SelectTestResults();//测试结果总览
+    this.SelectProStatistical();//项目统计
+    this.SelectFormerlyData();//过去7天内Top10
+    this.SelectProQueue();//项目队列
   },
   beforeDestroy(){//生命周期-离开时
 
   },
   methods: {
+    //测试结果总览
     SelectTestResults(){
       let self = this;
       self.$axios.get('/api/home/ApiPageHomeSelectTestResults',{
@@ -351,6 +371,72 @@ export default {
       };
       this.myChart_line.setOption(option_line,true);//加载属性后显示 true自动每次清除数据
     },
+    //项目总览
+    SelectProStatistical(){
+      let self = this;
+      self.$axios.get('/api/home/ApiPageHomeSelectProStatistical',{
+        params:{
+          'proId':self.$cookies.get('proId'),
+        }
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          self.RomeData.proTableData = res.data.dataTable;
+        }else{
+            self.$message.error('获取数据失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+          console.log(error);
+      })
+    },
+    //过去7天内Top10
+    SelectFormerlyData(){
+      let self = this;
+      self.$axios.get('/api/home/ApiPageHomeSelectFormerlyData',{
+        params:{
+          'proId':self.$cookies.get('proId'),
+        }
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          self.RomeData.formerlyTableData = res.data.dataTable;
+        }else{
+          self.$message.error('获取数据失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+          console.log(error);
+      })
+    },
+    //项目队列
+    SelectProQueue(){
+      let self = this;
+      self.$axios.get('/api/home/ApiPageHomeSelectProQueue',{
+        params:{
+          'proId':self.$cookies.get('proId'),
+        }
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          self.RomeData.queueTableData = res.data.dataTable;
+        }else{
+          self.$message.error('获取数据失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+        console.log(error);
+      })
+    },
+    handleState(index,row){//项目队列取消
+      let self = this;
+      self.$axios.post('/api/home/ApiPageHomeHandleState',Qs.stringify({
+        'queueId':row.id,
+      })).then(res => {
+        if(res.data.statusCode==2002){
+          self.SelectProQueue();
+        }
+        else{
+          self.$message.error('队列状态修改失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+          console.log(error);
+      })
+    }
   }
 };
 </script>

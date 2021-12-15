@@ -7,6 +7,7 @@ from dwebsocket.decorators import accept_websocket
 from time import sleep
 
 import json
+import operator
 import psutil
 
 # Create your db here.
@@ -19,6 +20,10 @@ from role.models import RoleBindMenu as db_RoleBindMenu
 from info.models import OperateInfo as db_OperateInfo
 from info.models import PushInfo as db_PushInfo
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
+from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
+from PageManagement.models import PageManagement as db_PageManagement
+from Api_TestReport.models import ApiQueue as db_ApiQueue
+from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -352,10 +357,9 @@ def get_server_indicators(request):
                         sleep(1)
 
 
-# 测试结果总览
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])
+@require_http_methods(["GET"])  # 测试结果总览
 def api_pagehome_select_test_results(request):
     response = {}
     passData = []
@@ -405,4 +409,172 @@ def api_pagehome_select_test_results(request):
         response['passData'] = passData
         response['failData'] = failData
         response['errorData'] = errorData
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 项目下的所有数据总统计
+def api_pagehome_select_pro_statistical(request):
+    response = {}
+    dataTable = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = object_maker(responseData)
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_statistical', errorMsg)
+    else:
+        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, pid_id=proId)
+        for item_page in obj_db_PageManagement:
+            # region 获取本周时间
+            weekData = cls_Common.get_this_weeks_interval_data()
+            staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
+            endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
+            # endregion
+            obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId, page_id=item_page.id)
+            apiTotal = obj_db_ApiBaseData.count()  # 接口数量
+            # region 本周新增
+            weekTotal = obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
+            # endregion
+            # region 本周执行
+            performWeekTotal = db_ApiQueue.objects.filter(
+                pid_id=proId, page_id=item_page.id, updateTime__gte=staTime, updateTime__lte=endTime).count()
+            # endregion
+            perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
+            dataTable.append({
+                'pageName': item_page.pageName,
+                'apiTotal': apiTotal,
+
+                'weekTotal': weekTotal,
+                'performWeekTotal': performWeekTotal,
+                'perforHistoryTotal': perforHistoryTotal
+
+            })
+        response['dataTable'] = dataTable
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 过去7天内Top10
+def api_pagehome_select_Formerly_data(request):
+    response = {}
+    dataTable = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = object_maker(responseData)
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select__Formerly_data', errorMsg)
+    else:
+        # region 获取本周时间
+        weekData = cls_Common.get_this_weeks_interval_data()
+        staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
+        endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
+        # endregion
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
+            ~Q(reportStatus='Pass'), is_del=0, pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime)
+        reportNameList = [i.reportName for i in obj_db_ApiTestReport]
+        reportNameList = list(set(reportNameList))
+        for item_reportName in reportNameList:
+            failTotal = 0
+            errorTotal = 0
+            select_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName=item_reportName)
+            for i in select_db_ApiTestReport:
+                match i.reportStatus:
+                    case "Fail":
+                        failTotal += 1
+                    case "Error":
+                        errorTotal += 1
+                    case "":
+                        errorTotal += 1
+
+            if select_db_ApiTestReport[0].reportType == 'API':
+                obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)
+                if obj_db_ApiBaseData.exists():
+                    itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
+            else:
+                itsName = ""
+            dataTable.append({
+                'index': '',
+                'itsName': itsName,
+                'taskType': select_db_ApiTestReport[0].reportType,
+                'taskName': item_reportName,
+                'number': failTotal + errorTotal
+            })
+        dataTable = sorted(dataTable, key=operator.itemgetter('number'), reverse=True)  # 利用number来倒序排列
+        # 给index 来赋值
+        for index, i in enumerate(dataTable[:10], 1):
+            dataTable[index - 1]['index'] = str(index)
+
+        response['dataTable'] = dataTable
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 过去7天内Top10
+def api_pagehome_select_pro_queue(request):
+    response = {}
+    dataTable = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = object_maker(responseData)
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_queue', errorMsg)
+    else:
+        obj_db_ApiQueue = db_ApiQueue.objects.filter(~Q(queueStatus='2'), pid_id=proId).order_by('-updateTime')
+        for i in obj_db_ApiQueue:
+            if i.taskType == 'API':
+                obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=i.taskId)
+                if obj_db_ApiBaseData.exists():
+                    itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
+            else:
+                itsName = ""
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.id)
+            dataTable.append({
+                'id': i.id,
+                'itsName': itsName,
+                'taskType': i.taskType,
+                'taskName': i.testReport.reportName,
+                'taskState': i.queueStatus,
+                'performProgress': f"{obj_db_ApiReportItem.count()}/{i.testReport.apiTotal}",
+                'updateTime': str(i.updateTime.strftime('%H:%M:%S')),
+            })
+        response['dataTable'] = dataTable
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 修改队列状态
+def api_pagehome_handle_state(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        queueId = request.POST['queueId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_handle_state', errorMsg)
+    else:
+        db_ApiQueue.objects.filter(id=queueId).update(
+            queueStatus=2, updateTime=cls_Common.get_date_time(), uid_id=userId
+        )
+        response['statusCode'] = 2002
     return JsonResponse(response)

@@ -99,3 +99,26 @@ class Common(object):
             # print(new_password)
 
         return new_password
+
+    # 返回本周的星期一和星期天的日期
+    def get_this_weeks_interval_data(self):
+        currentTime = datetime.datetime.now()
+        dayOfWeek = currentTime.isoweekday()  # 返回数字1-7代表周一到周日
+        # 算出星期1日期
+        dayData = dayOfWeek
+        while True:
+            if dayOfWeek - dayData == 1:
+                break
+            else:
+                dayData -= 1
+        mondayData = currentTime + datetime.timedelta(days=-dayData)
+
+        # 算出星期7日期
+        dayData = 0
+        while True:
+            if dayOfWeek + dayData == 7:
+                break
+            else:
+                dayData += 1
+        sundayData = currentTime + datetime.timedelta(days=dayData)
+        return mondayData, sundayData

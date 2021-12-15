@@ -59,7 +59,10 @@ class ApiReport(models.Model):  # 三级用例报告
 
 
 class ApiQueue(models.Model):  # 队列信息
-    # taskType = models.CharField('任务类型(API:单接口,Case,Task:定时任务,batch:批量任务)', max_length=50, null=False)
+    pid = models.ForeignKey("ProjectManagement.ProManagement", to_field='id', on_delete=models.CASCADE)
+    page = models.ForeignKey(to='PageManagement.PageManagement', to_field='id', on_delete=models.CASCADE)
+    fun = models.ForeignKey(to='FunManagement.FunManagement', to_field='id', on_delete=models.CASCADE)
+    taskType = models.CharField('任务类型(API:单接口,Case,Task:定时任务,batch:批量任务)', max_length=50, null=False)
     taskId = models.IntegerField("任务ID,apiId,CaseId,TaskId,BatchId", null=False)
     testReport = models.ForeignKey("ApiTestReport", to_field='id', on_delete=models.CASCADE)  # 主报告id
     queueStatus = models.IntegerField("队列执行状态(0:未开始,1:执行中,2:已结束)", null=False)
