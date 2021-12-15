@@ -1174,28 +1174,30 @@ def send_request(request):
             createTestReport = cls_ApiReport.create_test_report(
                 obj_db_ApiBaseData[0].pid_id,
                 obj_db_ApiBaseData[0].apiName,
-                'API',apiId,1,userId
+                'API', apiId, 1, userId
             )
             # endregion
             if createTestReport['state']:
                 # region  创建2级报告
                 testReportId = createTestReport['testReportId']
-                queueId = cls_ApiReport.create_queue(apiId, testReportId, userId)# 创建队列
+                queueId = cls_ApiReport.create_queue(
+                    obj_db_ApiBaseData[0].pid_id, obj_db_ApiBaseData[0].page_id, obj_db_ApiBaseData[0].fun_id
+                    , 'API', apiId, testReportId, userId)  # 创建队列
                 apiName = obj_db_ApiBaseData[0].apiName
-                createReportItems = cls_ApiReport.create_report_items(testReportId, apiId,apiName)
+                createReportItems = cls_ApiReport.create_report_items(testReportId, apiId, apiName)
                 if createReportItems['state']:
                     reportItemId = createReportItems['reportItemId']
                     cls_ApiReport.update_queue(queueId, 1, userId)
                     # 请求运行
                     response = cls_RequstOperation.run_request(
-                        False, onlyCode, userId, apiId=apiId, environmentId=environmentId,reportItemId=reportItemId)
+                        False, onlyCode, userId, apiId=apiId, environmentId=environmentId, reportItemId=reportItemId)
                     if response['state']:
                         response['statusCode'] = 2000
                     else:
                         response['errorMsg'] = response['errorMsg']
                     # 更新2级报告
-                    cls_ApiReport.update_report_items(testReportId,reportItemId)
-                    cls_ApiReport.update_queue(queueId,2,userId)
+                    cls_ApiReport.update_report_items(testReportId, reportItemId)
+                    cls_ApiReport.update_queue(queueId, 2, userId)
                 else:
                     response['errorMsg'] = createReportItems['errorMsg']
                 # endregion
@@ -1231,10 +1233,10 @@ def send_test_request(request):
             environmentUrl = obj_db_PageEnvironment[0].environmentUrl
             request = cls_object_maker(testSendData['ApiInfo']['request'])
             requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-                request.params,request.body.formData,request.body.raw,
+                request.params, request.body.formData, request.body.raw,
             )
             requestParamsType = 'Body' if testSendData['ApiInfo']['request']['body'][
-                                              'requestSaveType'] == 'none' else requestParamsType,
+                                              'requestSaveType'] == 'none' else requestParamsType
             bodyRequestType = testSendData['ApiInfo']['request']['body']['requestSaveType']
             if bodyRequestType == 'form-data':
                 bodyData = testSendData['ApiInfo']['request']['body']['formData']
@@ -1244,7 +1246,7 @@ def send_test_request(request):
                 bodyData = []
             requestData = {
                 'state': True,
-                'proId':testSendData['BasicInfo']['proId'],
+                'proId': testSendData['BasicInfo']['proId'],
                 'requestType': testSendData['ApiInfo']['requestType'],
                 'requestUrl': f'{environmentUrl}{testSendData["ApiInfo"]["requestUrl"]}',
                 'requestParamsType': requestParamsType,

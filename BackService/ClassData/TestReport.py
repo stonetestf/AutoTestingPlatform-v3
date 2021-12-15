@@ -128,7 +128,7 @@ class ApiReport(cls_Logging):
             updateTime=cls_Common.get_date_time()
         )
 
-        if failTotal + errorTotal >= 1 and successTotal != 0:
+        if failTotal + errorTotal >= 1:
             if failTotal >= 1:
                 reportStatus = 'Fail'
             if errorTotal >= 1:
@@ -139,10 +139,10 @@ class ApiReport(cls_Logging):
         for i in db_db_ApiReportItem:
             testReportRunningTime += float(i.runningTime)
         db_ApiTestReport.objects.filter(id=testReportId).update(
-            reportStatus=reportStatus,runningTime=testReportRunningTime, updateTime=cls_Common.get_date_time()
+            reportStatus=reportStatus, runningTime=testReportRunningTime, updateTime=cls_Common.get_date_time()
         )
 
-    def create_queue(self,taskId,testReportId,userId):
+    def create_queue(self, proId, pageId, funId, taskType, taskId, testReportId, userId):
         """
         :param taskId: 务ID,apiId,CaseId,TaskId,BatchId
         :param testReportId:
@@ -150,7 +150,8 @@ class ApiReport(cls_Logging):
         :return:
         """
         save_db_ApiQueue = db_ApiQueue.objects.create(
-            taskId=taskId,testReport_id=testReportId,queueStatus=0,uid_id=userId
+            pid_id=proId, page_id=pageId, fun_id=funId, taskType=taskType, taskId=taskId, testReport_id=testReportId,
+            queueStatus=0, uid_id=userId
         )
         return save_db_ApiQueue.id
 

@@ -375,7 +375,8 @@ def api_pagehome_select_test_results(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_test_results', errorMsg)
     else:
-        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, pid_id=proId).order_by('updateTime')
+        # 这里因该把删除的也显示出来
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(pid_id=proId).order_by('updateTime')
         for i in obj_db_ApiTestReport:
             reportTime.append(str(i.updateTime.strftime('%Y-%m-%d')))
         reportTime = list(set(reportTime))  # 去重复时间
@@ -478,8 +479,9 @@ def api_pagehome_select_Formerly_data(request):
         staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
         endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
         # endregion
+        # 这里把删除的也显示出来,觉得被删除的一般都是引起系统错误的也算统计内
         obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
-            ~Q(reportStatus='Pass'), is_del=0, pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime)
+            ~Q(reportStatus='Pass'), pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime)
         reportNameList = [i.reportName for i in obj_db_ApiTestReport]
         reportNameList = list(set(reportNameList))
         for item_reportName in reportNameList:
@@ -522,7 +524,7 @@ def api_pagehome_select_Formerly_data(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])  # 过去7天内Top10
+@require_http_methods(["GET"])  # 项目队列
 def api_pagehome_select_pro_queue(request):
     response = {}
     dataTable = []

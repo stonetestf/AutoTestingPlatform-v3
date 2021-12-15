@@ -65,8 +65,9 @@
                                 align= "center">
                                 <template slot-scope="scope">
                                     <el-tag type="info" v-if="scope.row.queueStatus==0" >未开始</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.queueStatus==1" >执行中</el-tag>
-                                    <el-tag type="success" v-else-if="scope.row.queueStatus==2" >已结束</el-tag>
+                                    <el-tag type="warning" v-else-if="scope.row.queueStatus==1">执行中</el-tag>
+                                    <el-tag type="success" v-else-if="scope.row.queueStatus==2">已结束</el-tag>
+                                    <el-tag type="danger" v-else>数据缺损</el-tag>
                                 </template>
                             </el-table-column>
                             <el-table-column
@@ -145,7 +146,7 @@
 
 <script>
 
-
+import Qs from 'qs';
 export default {
     components: {
         
@@ -233,6 +234,33 @@ export default {
             // 改变默认的页数
             self.page.current=val
             self.SelectData();
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                   this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/ApiTestReport/DeleteData',Qs.stringify({
+                "sysType":'API',
+                'testReportId':id,
+            })).then(res => {
+                if(res.data.statusCode ==2003){
+                    self.$message.success('测试报告删除成功!');
+                    self.SelectData();
+                }
+                else{
+                    self.$message.error('测试报告删除失败:'+ res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
     }
 };
