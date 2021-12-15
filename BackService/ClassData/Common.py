@@ -122,3 +122,10 @@ class Common(object):
                 dayData += 1
         sundayData = currentTime + datetime.timedelta(days=dayData)
         return mondayData, sundayData
+
+    # 转换key value 类型的列表字典
+    def conversion_kv_to_dict(self,kv):
+        dicts = {}
+        for item in kv:
+            dicts[item['key']] = item['value']
+        return dicts

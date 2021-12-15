@@ -89,8 +89,8 @@ class ApiReport(cls_Logging):
                 reportStatus=results['reportState'],
 
                 statusCode=results['responseCode'],
-                # responseHeaders=results['responseHeaders'],
-                # responseInfo=results['responseInfo'],
+                # responseHeaders=results['report']['responseHeaders'],
+                responseInfo=results['tabPane']['text'],
                 # requestExtract=results['requestExtract'],
                 # requestValidate=results['requestValidate'],
                 # responseValidate=results['responseValidate'],
@@ -101,7 +101,7 @@ class ApiReport(cls_Logging):
             )
         except BaseException as e:
             errorMsg = f"保存失败:{e}"
-            cls_Logging.print_log(self, 'debug', 'create_api_report', errorMsg)
+            cls_Logging.print_log(self, 'error', 'create_api_report', errorMsg)
             cls_Logging.record_error_info(self, 'API', 'ClassData>TestReport>ApiReport', 'create_api_report', errorMsg)
 
     # 更新 成功失败数量及运行总时间
@@ -142,6 +142,7 @@ class ApiReport(cls_Logging):
             reportStatus=reportStatus, runningTime=testReportRunningTime, updateTime=cls_Common.get_date_time()
         )
 
+    # 创建队列
     def create_queue(self, proId, pageId, funId, taskType, taskId, testReportId, userId):
         """
         :param taskId: 务ID,apiId,CaseId,TaskId,BatchId
@@ -155,6 +156,7 @@ class ApiReport(cls_Logging):
         )
         return save_db_ApiQueue.id
 
+    # 更新队列状态
     def update_queue(self, queueId, queueStatus, userId):
         """
         :param taskId: 务ID,apiId,CaseId,TaskId,BatchId
@@ -164,6 +166,62 @@ class ApiReport(cls_Logging):
         :return:
         """
         db_ApiQueue.objects.filter(id=queueId).update(queueStatus=queueStatus, uid_id=userId)
+
+    # 测试报告-返回顶部数据
+    def get_report_top_data(self, testReportId):
+        results = {
+            'errorMsg': '',
+            'topData': {
+                'reportName': None,
+                'createTime': '',
+                'runningTime': 0,
+                'reportStatus': None,
+                'passTotal': 0,
+                'failTotal': 0,
+                'errorTotal': 0,
+                'passRate': 0,  # 通过率
+            }
+        }
+
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(id=testReportId, is_del=0)
+        if obj_db_ApiTestReport.exists():
+            reportName = obj_db_ApiTestReport[0].reportName
+            createTime = str(obj_db_ApiTestReport[0].updateTime.strftime('%Y-%m-%d %H:%M:%S'))
+            reportStatus = obj_db_ApiTestReport[0].reportStatus
+            results['topData']['reportName'] = reportName
+            results['topData']['createTime'] = createTime
+            results['topData']['reportStatus'] = reportStatus
+
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId)
+            passTotal = 0
+            failTotal = 0
+            errorTotal = 0
+            runningTime = 0
+            for item_reportItem in obj_db_ApiReportItem:
+                passTotal += float(item_reportItem.successTotal)
+                failTotal += float(item_reportItem.failTotal)
+                errorTotal += float(item_reportItem.errorTotal)
+
+                obj_db_ApiReport = db_ApiReport.objects.filter(is_del=0, reportItem_id=item_reportItem.id)
+                for item_apiReport in obj_db_ApiReport:
+                    runningTime += float(item_apiReport.runningTime)
+            results['topData']['passTotal'] = passTotal
+            results['topData']['failTotal'] = failTotal
+            results['topData']['errorTotal'] = errorTotal
+            results['topData']['runningTime'] = runningTime
+
+            allTotal = passTotal + failTotal + errorTotal
+            passRate = passTotal / allTotal * 100
+            results['topData']['passRate'] = int(passRate)
+            results['state'] = True
+        else:
+            results['state'] = False
+            results['errorMsg'] = "当前选择测试报告不存在,请刷新后在重新尝试!"
+        return results
+
+    # 测试报告-返回一级列表数据
+    def get_report_first_list(self,testReportId):
+        results={}
 
 
 class UiReport(cls_Logging):

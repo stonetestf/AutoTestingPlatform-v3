@@ -19,6 +19,7 @@ from ClassData.FindCommonTable import FindTable
 from ClassData.Common import Common
 from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
+from ClassData.TestReport import ApiReport
 
 # Create info here.
 cls_Logging = Logging()
@@ -26,6 +27,7 @@ cls_GlobalDer = GlobalDer()
 cls_FindTable = FindTable()
 cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
+cls_ApiReport = ApiReport()
 
 
 # Create your views here.
@@ -55,12 +57,12 @@ def select_data(request):
     else:
         obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
         select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
-        # if pageId:
-        #     obj_db_FunManagement = obj_db_FunManagement.filter(page_id=pageId)
-        #     select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
-        # if funName:
-        #     obj_db_FunManagement = obj_db_FunManagement.filter(funName__icontains=funName)
-        #     select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
+        if reportName:
+            obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName__icontains=reportName)
+            select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
+        if reportType:
+            obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportType=reportType)
+            select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         for i in select_db_ApiTestReport:
             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0,testReport_id=i.id)
             obj_db_ApiQueue = db_ApiQueue.objects.filter(testReport_id=i.id)
@@ -111,4 +113,29 @@ def delete_data(request):
                 response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前功能数据,请刷新后重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def load_report_data(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        testReportId = objData.testReportId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_data', errorMsg)
+    else:
+        reportTopData = cls_ApiReport.get_report_top_data(testReportId)
+        if reportTopData['state']:
+
+            response['topData'] = reportTopData['topData']
+        else:
+            response['errorMsg'] = reportTopData['errorMsg']
+        if 'errorMsg' not in response:
+            response['statusCode'] = 2000
     return JsonResponse(response)

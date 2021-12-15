@@ -23,7 +23,8 @@ import Api_PageEnvironment from '@/components/views/SysType/Api/Page/Environment
 import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
 import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
 import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
-import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告
+import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告主页
+import Api_Report from '@/components/views/SysType/Api/Page/TestReport/Report';//测试报告
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -38,6 +39,7 @@ export default new Router({
   mode: 'history',//去掉URL中的#/
   routes: [
     {path: '/',name: 'login',component: login},
+    {path: '/SysType/Api/Page/TestReport/Report',name: 'Api_Report',component: Api_Report},
     //Home页面
     {path: '/Main',name: 'Home',component: Home,
       children:[

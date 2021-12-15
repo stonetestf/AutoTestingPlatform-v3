@@ -349,7 +349,8 @@ class RequstOperation(cls_Logging, cls_Common):
         results = {
             'tabPane': {
                 'requsetHeaders': [],  # 原始请求头
-                'content': "",  # 返回主体
+                'content': "",  # 返回主体 格式化的数据
+                'text': "",  # 返回主体,未格式化
                 'responseHeaders': [],  # 返回头部
                 'extractTable': [],  # 提取信息
                 'assertionTable': [],  # 断言信息
@@ -357,12 +358,13 @@ class RequstOperation(cls_Logging, cls_Common):
                 'rearOperationTable': [],
                 'errorInfoTable': [],
             },
-            'report':{
+            'report': {
                 'requsetHeaders': {},  # 原始请求头
-                'requestData':{}
+                'requestData': {},
+                'responseHeaders': {},
             },
             'state': False,
-            'errorInfo':'',
+            'errorInfo': '',
         }
         reportState = []  # 1(前置状态),2(接口运行完成),3(提取和断言),4(后置状态)
         if is_test:
@@ -433,7 +435,10 @@ class RequstOperation(cls_Logging, cls_Common):
                     results['tabPane']['content'] = json.dumps(
                         requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "),
                         ensure_ascii=False)
+                    results['tabPane']['text'] = requestsApi['content']
                     results['tabPane']['responseHeaders'] = requestsApi['responseHeaders']
+                    # results['report']['responseHeaders'] = cls_Common.conversion_kv_to_dict(
+                    #     self, requestsApi['responseHeaders'])
                     reportState.append('Pass')
 
                     # 断言及提取
@@ -496,7 +501,7 @@ class RequstOperation(cls_Logging, cls_Common):
                     results['reportState'] = 'Pass'
                 # 创建3级测试报告
                 if not is_test:
-                    cls_ApiReport.create_api_report(reportItemId,results)
+                    cls_ApiReport.create_api_report(reportItemId, results)
             else:
                 results['errorMsg'] = conversionDataToRequestData['errorMsg']
         else:

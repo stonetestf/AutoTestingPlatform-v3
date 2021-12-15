@@ -158,10 +158,10 @@ export default {
                 reportName:'',
                 reportType:'',
                 reportTypeOption:[
-                    {'label':'接口','value':'Int'},
-                    {'label':'测试用例','value':'Case'},
-                    {'label':'定时任务','value':'Task'},
-                    {'label':'批量任务','value':'Batch'},
+                    {'label':'接口','value':'API'},
+                    {'label':'测试用例','value':'CASE'},
+                    {'label':'定时任务','value':'TASK'},
+                    {'label':'批量任务','value':'BATCH'},
                 ],
                 queueStatus:'',//报告队列状态
                 queueStatusOption:[
@@ -186,6 +186,13 @@ export default {
 
     },
     methods: {
+        ClearSelectRomeData(){
+            let self = this;
+            self.SelectRomeData.reportName='';
+            self.SelectRomeData.reportType='';
+            self.SelectRomeData.queueStatus='';
+            self.SelectData();
+        },
         SelectData(){//刷新列表数据
             let self = this;
             self.tableData= [];
@@ -261,6 +268,17 @@ export default {
             }).catch(function (error) {
                 console.log(error);
             })
+        },
+        handleReport(index,row){
+            let self = this;
+            let routeUrl = this.$router.resolve({
+                name: "Api_Report",
+                query: {
+                    testReportId:row.id,
+                    // token:self.$cookies.get('token'),
+                }
+            });
+            window.open(routeUrl.href, '_blank');
         },
     }
 };
