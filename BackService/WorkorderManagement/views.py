@@ -270,18 +270,17 @@ def edit_data(request):
                     # region添加操作信息
                     oldData = list(obj_db_WorkorderManagement.values())
                     newData = json.dumps(request.POST)
-                    if workState != obj_db_WorkorderManagement[0].workState and workMessage == obj_db_WorkorderManagement[0].message:
+                    if workState != obj_db_WorkorderManagement[0].workState and workMessage == \
+                            obj_db_WorkorderManagement[0].message:
                         # 0: 待受理, 1: 受理中, 2: 已解决, 3: 已关闭
-                        match workState:
-                            case 0:
-                                workStateName = '待受理'
-                            case 1:
-                                workStateName = '受理中'
-                            case 2:
-                                workStateName = '已解决'
-                            case 3:
-                                workStateName = '已关闭'
-
+                        if workState == 0:
+                            workStateName = '待受理'
+                        elif workState == 1:
+                            workStateName = '受理中'
+                        elif workState == 2:
+                            workStateName = '已解决'
+                        else:
+                            workStateName = '已关闭'
                         message = f'工单编号:【A-{workId}】 修改状态:{workStateName}'
                     else:
                         message = f'工单编号:【A-{workId}】 {workName}:{workMessage}'
@@ -407,24 +406,21 @@ def select_life_cycle(request):  # 获取当前工单的生命周期
             title = None
             content = None
             operationType = i.operationType
-            workState = ""
-            match i.workState:
-                case 0:
-                    workState = '待受理'
-                case 1:
-                    workState = '受理中'
-                case 2:
-                    workState = '已解决'
-                case 3:
-                    workState = '已关闭'
-            match operationType:
-                case "Add":
-                    title = f'创建工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
-                case "Edit":
-                    title = f'修改工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
-                    content = json.dumps(
-                        ast.literal_eval(i.operationInfo),
-                        sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+            if i.workState == 0:
+                workState = '待受理'
+            elif i.workState == 1:
+                workState = '受理中'
+            elif i.workState == 2:
+                workState = '已解决'
+            else:
+                workState = '已关闭'
+            if operationType == "Add":
+                title = f'创建工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
+            elif operationType == "Edit":
+                title = f'修改工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
+                content = json.dumps(
+                    ast.literal_eval(i.operationInfo),
+                    sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
             dataList.append({
                 'title': title,
                 'content': content,

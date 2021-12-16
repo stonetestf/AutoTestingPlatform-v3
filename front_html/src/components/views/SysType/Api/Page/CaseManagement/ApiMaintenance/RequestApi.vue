@@ -132,11 +132,28 @@ export default {
                     if(this.RomeData.runType=='Synchronous'){
                         this.OpenTestReportDialog();
                     }else{
+                        this.Asynchronous();
                         this.dialogClose();
                         this.$message.success('请求已发送置后台,稍后请在测试报告中查看运行结果!');
                     }
                 } 
             });
+        },
+        Asynchronous(){//异步运行
+            let self = this;
+            self.$axios.post('/api/ApiIntMaintenance/SendRequest',Qs.stringify({
+                'apiId':self.RomeData.apiId,
+                'environmentId':self.RomeData.environmentId,
+                'runType':self.RomeData.runType
+            })).then(res => {
+                if(res.data.statusCode==2000){
+                    
+                }else{
+                    self.$message.error('异步接口请求失败'+res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
         GetPageEnvironmentNameOption(){
             GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{

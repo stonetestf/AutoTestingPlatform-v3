@@ -8,7 +8,7 @@ from time import sleep
 
 import json
 import operator
-import psutil
+# import psutil
 
 # Create your db here.
 from django.db.models import Q
@@ -389,15 +389,14 @@ def api_pagehome_select_test_results(request):
             endTime = i + " 23:59:59"
             select_db_ApiTestReport = obj_db_ApiTestReport.filter(updateTime__gte=staTime, updateTime__lte=endTime)
             for item in select_db_ApiTestReport:
-                match item.reportStatus:
-                    case 'Pass':
-                        passTotal += 1
-                    case 'Fail':
-                        failTotal += 1
-                    case 'Error':
-                        errorTotal += 1
-                    case '':
-                        errorTotal += 1
+                if item.reportStatus == 'Pass':
+                    passTotal += 1
+                elif item.reportStatus == 'Fail':
+                    failTotal += 1
+                elif item.reportStatus == 'Error':
+                    errorTotal += 1
+                else:
+                    errorTotal += 1
             if passTotal != 0:
                 passData.append({'name': i, 'value': [i, passTotal]})
             if failTotal != 0:
@@ -489,13 +488,13 @@ def api_pagehome_select_Formerly_data(request):
             errorTotal = 0
             select_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName=item_reportName)
             for i in select_db_ApiTestReport:
-                match i.reportStatus:
-                    case "Fail":
-                        failTotal += 1
-                    case "Error":
-                        errorTotal += 1
-                    case "":
-                        errorTotal += 1
+                if i.reportStatus=='Fail':
+                    failTotal += 1
+                elif i.reportStatus=='Error':
+                    errorTotal += 1
+                elif  i.reportStatus=='':
+                    errorTotal += 1
+
 
             if select_db_ApiTestReport[0].reportType == 'API':
                 obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)

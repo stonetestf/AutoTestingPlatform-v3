@@ -11,7 +11,6 @@ from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 from Api_TestReport.models import ApiReport as db_ApiReport
 from Api_TestReport.models import ApiQueue as db_ApiQueue
 
-
 # Create reference here.
 from ClassData.Logger import Logging
 from ClassData.GlobalDecorator import GlobalDer
@@ -64,7 +63,7 @@ def select_data(request):
             obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportType=reportType)
             select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         for i in select_db_ApiTestReport:
-            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0,testReport_id=i.id)
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.id)
             obj_db_ApiQueue = db_ApiQueue.objects.filter(testReport_id=i.id)
             dataList.append(
                 {"id": i.id,
@@ -73,7 +72,7 @@ def select_data(request):
                  "queueStatus": obj_db_ApiQueue[0].queueStatus if obj_db_ApiQueue.exists() else None,
                  "runningProgress": f"{obj_db_ApiReportItem.count()}/{i.apiTotal}",
                  "reportStatus": i.reportStatus if i.reportStatus else 'Error',
-                 "runningTime":i.runningTime,
+                 "runningTime": i.runningTime,
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  "userName": i.uid.userName,
                  }
@@ -98,15 +97,15 @@ def delete_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'Api_TestReport', 'delete_data', errorMsg)
     else:
-        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0,id=testReportId)
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, id=testReportId)
         if obj_db_ApiTestReport.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0,testReport_id=testReportId)
+                    obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId)
                     for i in obj_db_ApiReportItem:
-                        db_ApiReport.objects.filter(is_del=0,reportItem_id=i.id).update(is_del=1)
+                        db_ApiReport.objects.filter(is_del=0, reportItem_id=i.id).update(is_del=1)
                     obj_db_ApiReportItem.update(is_del=1)
-                    obj_db_ApiTestReport.update(is_del=1,uid_id=userId)
+                    obj_db_ApiTestReport.update(is_del=1, uid_id=userId)
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'删除失败:{e}'
             else:
@@ -118,7 +117,7 @@ def delete_data(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])# 加载报告数据并返回第1层列表
+@require_http_methods(["GET"])  # 加载报告数据并返回第1层列表
 def load_report_data(request):
     response = {}
     try:

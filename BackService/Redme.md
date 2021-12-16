@@ -14,6 +14,8 @@
 # 运行说明
     /usr/local/nginx/sbin/nginx
 
+    python310 -u manage.py runserver 0.0.0.0:9090
+
 
 # 平台说明
 ##接口维护

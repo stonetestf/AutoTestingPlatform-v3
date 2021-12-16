@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import djcelery
+# import django_redis
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -22,8 +24,41 @@ TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
 # NginxServer
 NGINX_SERVER = 'http://192.168.2.12:9092/'
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+# region Django Celery RabbitMQ
+djcelery.setup_loader()
+BROKER_URL = 'amqp://lipenglo:hbwj@123@192.168.2.8:5672'
+CELERY_TIMEZONE = 'UTC'  # 这里很重要,不然会出现分钟执行 小时不执行 这里必须设置这个值
+CELERY_ENABLE_UTC = True
+
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'  # 任务元数据保存到数据库中
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TASK_RESULT_EXPIRES = 3600  # celery任务执行结果的超时时间，
+CELERYD_CONCURRENCY = 10  # celery worker的并发数
+CELERYD_MAX_TASKS_PER_CHILD = 100  # 每个worker执行了多少任务就会销毁
+# endregion
+# region Reids
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        # 'LOCATION': 'redis://192.168.243.10:6379',  # 测试
+        'LOCATION': 'redis://192.168.2.8:6379',  # GS
+        # 'LOCATION': 'redis://172.16.12.3:6379',  # Docker
+        # 'LOCATION': 'redis://127.0.0.1:6379',  # 生产
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": "Hbwj@123",
+        },
+    },
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+# endregion
+
+# dwebsocket使用 必须要 不然异步启动报错,为所有的URL提供websocket，如果只是单独的视图需要可以不选
+# MIDDLEWARE_CLASSES = ['dwebsocket.middleware.WebSocketMiddleware']
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b@-_njx8ks!#*p=dtcuf+_gwq7v6oi_3^2a^05nyjt*n7hm&_k'
@@ -61,8 +96,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'corsheaders',
+    'djcelery',
+    # 'django_celery_beat',
     'dwebsocket',
     'login',
+    'Task',
     'info',
     'home',
     'upLoad',

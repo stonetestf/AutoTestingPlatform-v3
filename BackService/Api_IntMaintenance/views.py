@@ -1211,6 +1211,13 @@ def send_request(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])# 异步请求
+def asynchronous_request(request):
+    pass
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
 @require_http_methods(["POST"])
 def send_test_request(request):
     response = {}

@@ -55,7 +55,7 @@
                             <el-tab-pane  v-for="pane in RomeData.firstList" :key="pane.name" :label="pane.label" :name="pane.name">
                                 <div v-if="RomeData.reportType=='API' || RomeData.reportType=='CASE'">
                                     <el-collapse>
-                                        <div>
+                                        <div v-loading="loading">
                                             <template>
                                                 <el-tabs v-model="RomeData.activeName">
                                                     <el-tab-pane label="返回主体" name="ResponseInfo">
@@ -857,6 +857,7 @@ export default {
         handleClick_firstMenu(tab, event){//点击1级名称加载2层数据
             PrintConsole(tab, event);
             let self = this;
+            self.loading=true;
             self.ClearApiInfoResultsRomeData();
             if(self.RomeData.reportType=='API' || self.RomeData.reportType=='CASE'){
                 self.$axios.get('/api/ApiTestReport/LoadReportApi',{//请求接口数据
@@ -878,15 +879,15 @@ export default {
                         self.RomeData.TestResults.operationTabelData = res.data.TableData.operationData;
                         self.RomeData.TestResults.errorTableData = res.data.TableData.errorTableData;
 
-                        // self.loading = false;
+                        self.loading = false;
                     }
                     else{
                         self.$message.error('接口步骤获取失败:'+ res.data.errormsg);
-                        // self.loading = false;
+                        self.loading = false;
                     }
                 }).catch(function (error) {
                     console.log(error);
-                    // self.loading = false;
+                    self.loading = false;
                 })
             }
         },

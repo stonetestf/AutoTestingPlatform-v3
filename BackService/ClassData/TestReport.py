@@ -118,13 +118,13 @@ class ApiReport(cls_Logging):
         reportStatus = None
         obj_db_ApiReport = db_ApiReport.objects.filter(is_del=0, reportItem_id=reportItemId)
         for i in obj_db_ApiReport:
-            match i.reportStatus:
-                case 'Pass':
-                    successTotal += 1
-                case 'Fail':
-                    failTotal += 1
-                case 'Error':
-                    errorTotal += 1
+            if i.reportStatus == 'Pass':
+                successTotal += 1
+            elif i.reportStatus == 'Fail':
+                failTotal += 1
+            else:  # Error
+                errorTotal += 1
+
             itemRunningTime += float(i.runningTime)
 
         db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId).update(
@@ -321,11 +321,11 @@ class ApiReport(cls_Logging):
 
                 for item_pre in preOperationInfo:
                     operationData.append({
-                        'operatingPosition':'Pre',
-                        'operationType':item_pre['operationType'],
-                        'callName':item_pre['callName'],
-                        'callResults':item_pre['callResults'],
-                        'resultsState':item_pre['resultsState']
+                        'operatingPosition': 'Pre',
+                        'operationType': item_pre['operationType'],
+                        'callName': item_pre['callName'],
+                        'callResults': item_pre['callResults'],
+                        'resultsState': item_pre['resultsState']
                     })
                 for item_rear in rearOperationInfo:
                     operationData.append({
@@ -351,7 +351,7 @@ class ApiReport(cls_Logging):
                     'extract': extract,
                     'validateResults': validateResults,
                     'operationData': operationData,
-                    'errorTableData':errorTableData,
+                    'errorTableData': errorTableData,
                 }
                 results['state'] = True
                 results['dataDict'] = dataDict
