@@ -361,10 +361,11 @@ class RequstOperation(cls_Logging, cls_Common):
             'report': {
                 'requsetHeaders': {},  # 原始请求头
                 'requestData': {},
-                'responseHeaders': {},
+                # 'responseHeaders': {},
+                # 'extractTable':[],
             },
             'state': False,
-            'errorInfo': '',
+            # 'errorInfo': '',
         }
         reportState = []  # 1(前置状态),2(接口运行完成),3(提取和断言),4(后置状态)
         if is_test:
@@ -446,6 +447,7 @@ class RequstOperation(cls_Logging, cls_Common):
                         onlyCode, extractData, validateData, requestsApi, userId)
                     if performExtractAndValidate['state']:
                         results['tabPane']['extractTable'] = performExtractAndValidate['extractTable']
+                        results['report']['extractTable'] = performExtractAndValidate['extractTable']
                         results['tabPane']['assertionTable'] = performExtractAndValidate['assertionTable']
                     else:  # 失败后的结果
                         results['tabPane']['errorInfoTable'].append({

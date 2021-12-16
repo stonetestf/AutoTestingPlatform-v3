@@ -7,6 +7,6 @@ urlpatterns = [
     # url(r'EditData', views.edit_data, name='EditData'),
     url(r'DeleteData', views.delete_data, name='DeleteData'),
     url(r'loadReportData', views.load_report_data, name='loadReportData'),
-    # url(r'SelectHistory', views.select_history, name='SelectHistory'),
+    url(r'LoadReportApi', views.load_report_api, name='LoadReportApi'),
     # url(r'RestorData', views.restor_data, name='RestorData'),
 ]

@@ -118,7 +118,7 @@ def delete_data(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])
+@require_http_methods(["GET"])# 加载报告数据并返回第1层列表
 def load_report_data(request):
     response = {}
     try:
@@ -132,10 +132,37 @@ def load_report_data(request):
     else:
         reportTopData = cls_ApiReport.get_report_top_data(testReportId)
         if reportTopData['state']:
-
-            response['topData'] = reportTopData['topData']
+            reportFirstList = cls_ApiReport.get_report_first_list(testReportId)
+            if reportFirstList['state']:
+                response['topData'] = reportTopData['topData']
+                response['firstList'] = reportFirstList['firstList']
+            else:
+                response['errorMsg'] = reportFirstList['errorMsg']
         else:
             response['errorMsg'] = reportTopData['errorMsg']
         if 'errorMsg' not in response:
             response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def load_report_api(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        reportItemId = objData.reportItemId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_api', errorMsg)
+    else:
+        getReportApi = cls_ApiReport.get_report_api(reportItemId)
+        if getReportApi['state']:
+            response['statusCode'] = 2000
+            response['TableData'] = getReportApi['dataDict']
+        else:
+            response['errorMsg'] = getReportApi['errorMsg']
     return JsonResponse(response)

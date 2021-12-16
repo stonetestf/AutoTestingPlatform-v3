@@ -35,7 +35,7 @@
                     <div style="margin-top:-15px;">
                         <el-table
                             :data="tableData"
-                            height="596px"
+                            height="619px"
                             border>
                             <el-table-column
                                 label="ID"
@@ -275,6 +275,7 @@ export default {
                 name: "Api_Report",
                 query: {
                     testReportId:row.id,
+                    reportType:row.reportType,
                     // token:self.$cookies.get('token'),
                 }
             });

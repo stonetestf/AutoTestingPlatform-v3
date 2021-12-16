@@ -887,7 +887,7 @@ def edit_data(request):
                             remarks=item_preOperation.remarks,
                             state=1 if item_preOperation.state else 0,
                             is_del=0,
-                            hhistoryCode=historyCode)
+                            historyCode=historyCode)
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion

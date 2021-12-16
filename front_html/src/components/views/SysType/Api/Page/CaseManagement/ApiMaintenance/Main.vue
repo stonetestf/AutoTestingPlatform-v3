@@ -62,7 +62,7 @@
                     <el-table
                         v-loading="loading"
                         :data=tableData
-                        height="636px"
+                        height="630px"
                         border
                         ref="multipleTable"
                         @selection-change="handleSelectionChange"
