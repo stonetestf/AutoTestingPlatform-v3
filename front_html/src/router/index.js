@@ -25,6 +25,7 @@ import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk
 import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
 import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告主页
 import Api_Report from '@/components/views/SysType/Api/Page/TestReport/Report';//测试报告
+import Api_CaseMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/CaseMaintenance/Main';//用例维护
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -89,6 +90,9 @@ export default new Router({
         },
         {path: '/SysType/Api/Page/TestReport/Main',name: 'Api_TestReport',component: Api_TestReport,
           meta:{name: '报告维护',url:'/SysType/Api/Page/TestReport/Main',comp:'Api_TestReport'}
+        },
+        {path: '/SysType/Api/Page/CaseManagement/CaseMaintenance/Main',name: 'Api_CaseMaintenance',component: Api_CaseMaintenance,
+          meta:{name: '用例维护',url:'/SysType/Api/Page/CaseManagement/CaseMaintenance/Main',comp:'Api_CaseMaintenance'}
         },
       ]
     }

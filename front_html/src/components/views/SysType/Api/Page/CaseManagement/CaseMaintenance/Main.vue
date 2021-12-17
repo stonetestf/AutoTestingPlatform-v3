@@ -1,0 +1,377 @@
+<template>
+    <div ref="tab-main"  id="tab-main">
+        <template>
+            <el-card class="MainCard">
+                <template>
+                    <el-form :inline="true"  method="post">
+                        <el-form-item label="所属页面:">
+                            <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
+                                <el-option
+                                    v-for="item in SelectRomeData.pageNameOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="所属功能:">
+                            <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:200px;" @click.native="GetFunNameOption()">
+                                <el-option
+                                    v-for="item in SelectRomeData.funNameOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="用例标签:">
+                            <el-select v-model="SelectRomeData.caseLabel" clearable placeholder="请选择" style="width:200px;">
+                                <el-option
+                                    v-for="item in SelectRomeData.caseLabelOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="用例状态:">
+                            <el-select v-model="SelectRomeData.caseState" clearable placeholder="请选择" style="width:200px;">
+                                <el-option
+                                    v-for="item in SelectRomeData.caseStateOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="用例名称:">
+                            <el-input clearable v-model.trim="SelectRomeData.caseName"></el-input>
+                        </el-form-item>
+                        <el-button type="primary" @click="SelectData()">查询</el-button>
+                        <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+                    </el-form>
+                </template>
+                <template>
+                    <div style="margin-top:-15px;">
+                        <el-table
+                            :data="tableData"
+                            height="596px"
+                            border>
+                            <!-- <el-table-column
+                                type="selection"
+                                align= "center"
+                                width="50">
+                            </el-table-column> -->
+                            <el-table-column 
+                                label="步骤排序" 
+                                width="50px"
+                                type="expand">
+                                <template slot-scope="props">
+                                    <el-form label-position="left" >
+                                        <el-table
+                                            :data="props.row.tableItem"
+                                            border>
+                                            <el-table-column
+                                                label="步骤"
+                                                prop="index"
+                                                align= "center"
+                                                width="100">
+                                            </el-table-column>
+                                            <el-table-column
+                                                prop="intName"
+                                                align= "center"
+                                                label="接口名称">
+                                            </el-table-column>
+                                            <el-table-column
+                                                prop="requestType"
+                                                align= "center"
+                                                label="请求类型">
+                                            </el-table-column>
+                                            <el-table-column
+                                                prop="requestParamsType"
+                                                align= "center"
+                                                label="请求参数类型">
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="接口状态"
+                                                width="150"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-tag type="success" v-if="scope.row.intState==1" >启用</el-tag>
+                                                    <el-tag type="info" v-else >禁用</el-tag>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                prop="updateTime"
+                                                width="200"
+                                                align= "center"
+                                                label="更新时间">
+                                            </el-table-column>
+                                        </el-table>
+                                    </el-form>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="优先级"
+                                width="70px"
+                                align= "center"
+                                prop="priority">
+                            </el-table-column>
+                            <el-table-column
+                                label="测试类型"
+                                align= "center"
+                                width="100px">
+                                <template slot-scope="scope">
+                                    <el-tag type="info" v-if="scope.row.testType=='UnitTest'" >单元测试</el-tag>
+                                    <el-tag type="warning" v-else-if="scope.row.testType=='HybridTest'" >混合测试</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="用例名称"
+                                align= "center"
+                                prop="caseName">
+                            </el-table-column>
+                            <el-table-column
+                                label="所属页面"
+                                width="200px"
+                                align= "center"
+                                prop="pageName">
+                            </el-table-column>
+                            <el-table-column
+                                label="所属功能"
+                                width="200px"
+                                align= "center"
+                                prop="funName">
+                            </el-table-column>
+                            <el-table-column
+                                label="用例标签"
+                                align= "center"
+                                width="120px"
+                                prop="caseLabel">
+                                <template slot-scope="scope">
+                                    <el-tag type="success" v-if="scope.row.caseLabel=='CommonCase'">普通用例</el-tag>
+                                    <el-tag type="warning" v-else-if="scope.row.caseLabel=='RetentCase'">回归用例</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="接口动态"
+                                align= "center"
+                                width="100px">
+                                <template slot-scope="scope">
+                                    <el-tag type="success" v-if="scope.row.Apidynamic==false">无更变</el-tag>
+                                    <el-tag type="danger" v-else>已更变</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="用例状态"
+                                align= "center"
+                                width="100px">
+                                <template slot-scope="scope">
+                                    <el-tag type="warning" v-if="scope.row.caseState=='InDev'">研发中</el-tag>
+                                    <el-tag type="success" v-else-if="scope.row.caseState=='Completed'">已完成</el-tag>
+                                    <!-- <el-tag type="success" v-else-if="scope.row.caseState=='Completed'"><i class="el-icon-check"></i></el-tag> -->
+                                    <el-tag type="info" v-else>弃用</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="更新时间"
+                                width="160px"
+                                align= "center"
+                                prop="updateTime">
+                            </el-table-column>
+                            <el-table-column
+                                label="修改者"
+                                width="120px"
+                                align= "center"
+                                prop="userName">
+                            </el-table-column>
+                            <el-table-column
+                                align="center"
+                                width="260px">
+                            <template slot="header">
+                                <el-button-group>
+                                    <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                                    <el-dropdown @command="handleCommand">
+                                        <el-button type="warning">
+                                            更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
+                                        </el-button>
+                                        <el-dropdown-menu slot="dropdown">
+                                            <el-dropdown-item command="CopyCase">复制用例</el-dropdown-item>
+                                            <el-dropdown-item command="CaseRestore">用例恢复</el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </el-dropdown>
+                                </el-button-group>
+                            </template>
+                            <template slot-scope="scope" style="width:100px">
+                                <el-button
+                                    size="mini"
+                                    type="success"
+                                    @click="OpenDialog_Run(scope.$index, scope.row)">RunCase
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    @click="handleEdit(scope.$index, scope.row)">Edit
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    type="danger"
+                                    @click="handleDelete(scope.$index, scope.row)">Delete
+                                </el-button>
+                            </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </template>
+                <template>
+                    <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                        @size-change="pageSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="page.current" 
+                        :total="page.total"
+                        :page-sizes = [10,30,50,100]
+                        style="margin: 20px auto auto auto;">
+                    </el-pagination>
+                </template>
+            </el-card>
+        </template>
+        <template>
+            <dialog-editor
+                @closeDialog="closeEditDialog" 
+                :isVisible="dialog.editor.dialogVisible" 
+                :dialogPara="dialog.editor.dialogPara"
+                @Succeed="SelectData">
+            </dialog-editor>
+        </template>
+    </div>
+</template>
+
+<script>
+
+import {PrintConsole} from "../../../../../../js/Logger.js";
+import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
+
+import DialogEditor from "./Editor.vue";
+
+export default {
+    components: {
+        DialogEditor
+    },
+    data() {
+        return {
+            tableData: [
+                {'priority':'P0','testType':'UnitTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'CommonCase','Apidynamic':false,'caseState':'InDev','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'},
+                {'priority':'P1','testType':'HybridTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'RetentCase','Apidynamic':true,'caseState':'Completed','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'}
+            ],
+            SelectRomeData:{
+                pageId:'',
+                pageNameOption:[],
+                funId:'',
+                funNameOption:[],
+                caseLabel:'',
+                caseLabelOption:[
+                    {'label':'普通用例','value':'CommonCase'},
+                    {'label':'回归用例','value':'ReturnCase'},
+                ],
+                caseState:'',
+                caseStateOption:[
+                    {'label':'研发中','value':'InDev'},
+                    {'label':'已完成','value':'Completed'},
+                    {'label':'弃用','value':'Discard'},
+                ],
+                caseName:'',
+            },
+            RomeData:{
+         
+            },
+            page: { 
+                current: 1,// 默认显示第几页
+                total: 0,// 总条数，根据接口获取数据长度(注意：这里不能为空)
+                pageSize: 10, // 默认每页显示的条数（可修改）
+            },
+            dialog:{
+                editor:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+            }
+           
+        };
+    },
+    watch:{//当我们输入值后，wacth监听每次修改变化的新值，然后计算输出值
+        'SelectRomeData.pageId': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
+            let self = this;
+            if(newVal!=oldVal){
+                self.SelectRomeData.funId='';
+                self.SelectRomeData.funNameOption=[];
+            }
+        },
+    },
+    mounted(){
+
+    },
+    methods: {
+        SelectData(){
+
+        },
+        ClearSelectRomeData(){
+            let self = this;
+            self.SelectRomeData.pageId='';
+            self.SelectRomeData.funId='';
+            self.SelectRomeData.caseLabel='';
+            self.SelectRomeData.caseState='';
+            self.SelectRomeData.caseName='';
+            self.SelectData();
+        },
+        GetPageNameOption(){
+            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+                this.SelectRomeData.pageNameOption = d;
+            });
+        },
+        GetFunNameOption(){
+            this.SelectRomeData.funNameOption = [];
+            if(this.SelectRomeData.pageId){
+                GetFunNameItems(this.$cookies.get('proId'),this.SelectRomeData.pageId).then(d=>{
+                    this.SelectRomeData.funNameOption = d;
+                });
+            }else{
+                this.$message.warning('请先选择所属页面!');
+            }
+        },
+        handleCommand(command){
+            PrintConsole(command);
+        },
+        pageSizeChange(pageSize) {
+            let self = this;
+            self.page.current = 1;
+            self.page.pageSize = pageSize;
+        },
+        // 显示第几页
+        handleCurrentChange(val) {
+            let self = this;
+            // 改变默认的页数
+            self.page.current=val
+            self.SelectData();
+        },
+        closeEditDialog(){
+            this.dialog.editor.dialogVisible =false;
+        },
+        OpenEditDialog(){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"新增用例",//初始化标题
+                isAddNew:true,//初始化是否新增\修改
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+       
+    }
+};
+</script>
+
+<style>
+
+</style>

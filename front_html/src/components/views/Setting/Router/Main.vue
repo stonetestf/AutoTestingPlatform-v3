@@ -1,6 +1,6 @@
 <template>
     <div ref="tab-main"  id="tab-main">
-        <el-tabs type="border-card" style="height:830px">
+        <el-tabs type="border-card" style="height:843px">
             <el-tab-pane label="路由管理">
                 <template>
                     <el-row :gutter="20">

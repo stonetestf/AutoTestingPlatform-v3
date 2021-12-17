@@ -1,6 +1,6 @@
 <template>
     <div ref="tab-main"  id="tab-main">
-        <el-tabs type="border-card" style="height:850px">
+        <el-tabs type="border-card" style="height:843px">
             <el-tab-pane label="操作信息">
                 <template>
                     <el-form :inline="true" class="demo-form-inline" method="post">
@@ -44,7 +44,7 @@
                 <template>
                     <el-table
                         :data="tableData"
-                        height="619px"
+                        height="660px"
                         border>
                         <el-table-column
                             label="ID"

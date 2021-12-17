@@ -117,9 +117,9 @@
                             width="100px"
                             align= "center">
                             <template slot-scope="scope">
-                                <el-tag type="info" v-if="scope.row.apiState=='InDev'" >研发中</el-tag>
+                                <el-tag type="warning" v-if="scope.row.apiState=='InDev'" >研发中</el-tag>
                                 <el-tag type="success" v-else-if="scope.row.apiState=='Completed'" >已完成</el-tag>
-                                <el-tag type="danger" v-else>弃用</el-tag>
+                                <el-tag type="info" v-else>弃用</el-tag>
                             </template>
                         </el-table-column>   
                         <el-table-column
