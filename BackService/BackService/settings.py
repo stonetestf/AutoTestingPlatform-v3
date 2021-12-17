@@ -58,7 +58,8 @@ SESSION_CACHE_ALIAS = "default"
 # endregion
 
 # dwebsocket使用 必须要 不然异步启动报错,为所有的URL提供websocket，如果只是单独的视图需要可以不选
-# MIDDLEWARE_CLASSES = ['dwebsocket.middleware.WebSocketMiddleware']
+MIDDLEWARE_CLASSES = ['dwebsocket.middleware.WebSocketMiddleware']
+WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b@-_njx8ks!#*p=dtcuf+_gwq7v6oi_3^2a^05nyjt*n7hm&_k'
@@ -117,7 +118,6 @@ INSTALLED_APPS = [
     'Api_IntMaintenance',
     'Api_TestReport',
 ]
-WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets
 # endregion
 
 REST_FRAMEWORK = {

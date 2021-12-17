@@ -56,7 +56,7 @@ def select_operational_info(request):
         if isAdminGroup:
             obj_db_OperateInfo = db_OperateInfo.objects.filter().order_by('-createTime')
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
-            total = obj_db_OperateInfo.count()
+
 
             if sysType:
                 obj_db_OperateInfo = obj_db_OperateInfo.filter(sysType=sysType)
@@ -68,7 +68,7 @@ def select_operational_info(request):
             if isRead:
                 obj_db_OperateInfo = obj_db_OperateInfo.filter(is_read=isRead)
                 select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
-
+            total = obj_db_OperateInfo.count()
             for i in select_db_OperateInfo:
                 dataList.append({
                     'id': i.id,

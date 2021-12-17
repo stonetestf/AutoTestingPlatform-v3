@@ -19,7 +19,7 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="运行方式:" prop="runType">
-                        <el-select v-model="RomeData.runType" clearable placeholder="请选择运行方式" style="float:left">
+                        <el-select v-model="RomeData.runType" placeholder="请选择运行方式" style="float:left">
                             <el-option
                                 v-for="item in RomeData.runTypeOptions"
                                 :key="item.value"
@@ -63,10 +63,10 @@ export default {
                 apiName:'',
                 environmentId:'',
                 environmentNameOption:[],
-                runType:'',
+                runType:'Synchronous',
                 runTypeOptions:[
                     {'label':'同步(显示执行过程)','value':'Synchronous'},
-                    {'label':'异步(不会显示执行过程)','value':'Asynchronous'},
+                    // {'label':'异步(不会显示执行过程)','value':'Asynchronous'},
                 ],
             },
             rules:{
@@ -119,7 +119,7 @@ export default {
             let self = this;
             self.resetForm('RomeData');
             self.RomeData.environmentId='';
-            self.RomeData.runType='';
+            self.RomeData.runType='Synchronous';
         },
         resetForm(formName) {//清除正则验证
             if (this.$refs[formName] !== undefined) {
@@ -129,31 +129,9 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    if(this.RomeData.runType=='Synchronous'){
-                        this.OpenTestReportDialog();
-                    }else{
-                        this.Asynchronous();
-                        this.dialogClose();
-                        this.$message.success('请求已发送置后台,稍后请在测试报告中查看运行结果!');
-                    }
+                    this.OpenTestReportDialog();
                 } 
             });
-        },
-        Asynchronous(){//异步运行
-            let self = this;
-            self.$axios.post('/api/ApiIntMaintenance/SendRequest',Qs.stringify({
-                'apiId':self.RomeData.apiId,
-                'environmentId':self.RomeData.environmentId,
-                'runType':self.RomeData.runType
-            })).then(res => {
-                if(res.data.statusCode==2000){
-                    
-                }else{
-                    self.$message.error('异步接口请求失败'+res.data.errorMsg);
-                }
-            }).catch(function (error) {
-                console.log(error);
-            })
         },
         GetPageEnvironmentNameOption(){
             GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{

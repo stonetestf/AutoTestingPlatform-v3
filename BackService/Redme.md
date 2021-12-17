@@ -1,5 +1,7 @@
 # 部署说明
 ## 环境安装
+### 环境注意
+    要使用dwebsocket时必须使用 Django==2.0.7 dwebsocket==0.4.2 这个版本不然会报错
 ### 安装Python依赖
     1. 安装python310环境
     2. pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --no-dependencies
@@ -14,7 +16,6 @@
 # 运行说明
     /usr/local/nginx/sbin/nginx
 
-    python310 -u manage.py runserver 0.0.0.0:9090
 
 
 # 平台说明
