@@ -130,9 +130,11 @@ class RequstOperation(cls_Logging, cls_Common):
             else:
                 environmentUrl = obj_db_ApiBaseData[0].environment.environmentUrl
             # endregion
+            requestUrlRadio = obj_db_ApiBaseData[0].requestUrlRadio
+            requestUrl = ast.literal_eval(obj_db_ApiBaseData[0].requestUrl)[f'url{requestUrlRadio}']
             results['proId'] = obj_db_ApiBaseData[0].pid_id
             results['requestType'] = obj_db_ApiBaseData[0].requestType
-            results['requestUrl'] = f"{environmentUrl}{obj_db_ApiBaseData[0].requestUrl}"
+            results['requestUrl'] = f"{environmentUrl}{requestUrl}"
             results['requestParamsType'] = obj_db_ApiBaseData[0].requestParamsType  # 最终是以body请求还是以params请求
             # 如果是body请求，还要看他请求的类型来决定以哪种形式发送
             results['bodyRequestType'] = obj_db_ApiBaseData[0].bodyRequestSaveType

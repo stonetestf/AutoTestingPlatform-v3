@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'GlobalVariable',
     'Api_IntMaintenance',
     'Api_TestReport',
+    'Api_CaseMaintenance',
 ]
 # endregion
 

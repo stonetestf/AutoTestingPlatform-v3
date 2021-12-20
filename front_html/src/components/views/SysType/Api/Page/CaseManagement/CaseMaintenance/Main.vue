@@ -260,8 +260,8 @@ export default {
     data() {
         return {
             tableData: [
-                {'priority':'P0','testType':'UnitTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'CommonCase','Apidynamic':false,'caseState':'InDev','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'},
-                {'priority':'P1','testType':'HybridTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'RetentCase','Apidynamic':true,'caseState':'Completed','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'}
+                // {'priority':'P0','testType':'UnitTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'CommonCase','Apidynamic':false,'caseState':'InDev','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'},
+                // {'priority':'P1','testType':'HybridTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'RetentCase','Apidynamic':true,'caseState':'Completed','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'}
             ],
             SelectRomeData:{
                 pageId:'',

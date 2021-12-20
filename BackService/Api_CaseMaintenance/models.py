@@ -2,28 +2,51 @@ from django.db import models
 
 
 # Create your models here.
-class ApiBaseData(models.Model):
+class CaseBaseData(models.Model):
     pid = models.ForeignKey(to='ProjectManagement.ProManagement', to_field='id', on_delete=models.CASCADE)
     page = models.ForeignKey(to='PageManagement.PageManagement', to_field='id', on_delete=models.CASCADE)
     fun = models.ForeignKey(to='FunManagement.FunManagement', to_field='id', on_delete=models.CASCADE)
-    apiName = models.CharField('接口名称', max_length=100, null=False)
-    environment = models.ForeignKey(  # 页面环境
-        to='PageEnvironment.PageEnvironment', to_field='id', on_delete=models.CASCADE)
+    # 页面环境
+    environmentId = models.ForeignKey(to='PageEnvironment.PageEnvironment', to_field='id', on_delete=models.CASCADE)
+    testType = models.CharField("测试类型(UnitTest:单元,HybridTest:混合)", max_length=20, null=False)
+    label = models.CharField("用例标签(CommonCase:普通 ReturnCase:BUG回归)", max_length=20, null=False)
+    priority = models.CharField("优先级(P0-P3)", max_length=10, null=False)
+    caseName = models.CharField('用例名称', max_length=50, null=False)
+    caseState = models.CharField('用例状态(InDev:研发中,Completed:已完成,Discard:弃用)', max_length=10, null=False)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+    updateTime = models.DateTimeField('修改时间', auto_now=True)
+    cuid = models.IntegerField("创建者用户", null=False)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+
+
+class CaseTestSet(models.Model):  # 用例的测试集
+    caseId = models.ForeignKey(to='CaseBaseData', to_field='id', on_delete=models.CASCADE)
+    index = models.IntegerField("排序", null=False)
+    apiId = models.ForeignKey(to='Api_IntMaintenance.ApiBaseData', to_field='id', on_delete=models.CASCADE)
+    # 因为同1用例下出现多个相同的接口,和上面一个Id不等时取这个
+    pluralIntId = models.CharField("多相同接口时用-1，-2来区别,只用编辑读取中用到此id", max_length=50, null=True)
+
+    testName = models.CharField("测试名称", max_length=50, null=True)
+    is_synchronous = models.IntegerField("是否开启同步(1:开启,0:不开启)", null=False)
+    state = models.IntegerField("是否启用(1:启用,0:禁用)", null=False)
+    updateTime = models.DateTimeField('修改时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+
+
+class CaseApiBase(models.Model):
+    testSet = models.ForeignKey(to='CaseTestSet', to_field='id', on_delete=models.CASCADE)
     requestType = models.CharField('请求类型(GET/POST)', max_length=50, null=True)
     requestUrl = models.CharField('请求地址', max_length=500, null=True)
-    requestUrlRadio = models.IntegerField("1 2 3 URl备选", null=False)
-    requestParamsType = models.CharField('请求参数类型(Params、Body)', max_length=10, null=True)  # 此参数必定有
+    requestParamsType = models.CharField('请求参数类型(Params、Body)', max_length=50, null=True)
     bodyRequestSaveType = models.CharField('body数据保存类型(none,form-data,json,raw)', max_length=10, null=True)
-    apiState = models.CharField("接口状态(InDev,Completed,Discard)", max_length=10, null=False)
-    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
-    cuid = models.IntegerField("创建者用户", null=False)
-    createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
 
 
-class ApiHeaders(models.Model):  # 头部参数
-    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+class CaseApiHeaders(models.Model):  # 头部参数
+    testSet = models.ForeignKey(to='CaseTestSet', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("数据排序", null=False)
     key = models.CharField('key', max_length=100, null=True)
     value = models.TextField('value', null=True)
@@ -31,11 +54,10 @@ class ApiHeaders(models.Model):  # 头部参数
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
-class ApiParams(models.Model):
-    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+class CaseApiParams(models.Model):
+    testSet = models.ForeignKey(to='CaseTestSet', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("数据排序", null=False)
     key = models.CharField('key', max_length=100, null=True)
     value = models.TextField('value', null=True)
@@ -43,11 +65,10 @@ class ApiParams(models.Model):
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
-class ApiBody(models.Model):
-    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+class CaseApiBody(models.Model):
+    testSet = models.ForeignKey(to='CaseTestSet', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("数据排序", null=False)
     key = models.CharField('key', max_length=100, null=True)
     value = models.TextField('value/Raw参数/file', null=True)
@@ -55,11 +76,10 @@ class ApiBody(models.Model):
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
-class ApiExtract(models.Model):  # 提取
-    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+class CaseApiExtract(models.Model):  # 提取
+    testSet = models.ForeignKey(to='CaseTestSet', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("数据排序", null=False)
     key = models.CharField('key', max_length=100, null=True)
     value = models.TextField('value', null=True)
@@ -67,11 +87,10 @@ class ApiExtract(models.Model):  # 提取
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
-class ApiValidate(models.Model):  # 断言参数
-    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+class CaseApiValidate(models.Model):  # 断言参数
+    testSet = models.ForeignKey(to='CaseTestSet', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("数据排序", null=False)
     checkName = models.CharField('检查值', max_length=100, null=False)
     validateType = models.CharField('断言类型', max_length=50, null=False)
@@ -81,11 +100,10 @@ class ApiValidate(models.Model):  # 断言参数
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
-class ApiOperation(models.Model):  # 前后置操作
-    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+class CaseApiOperation(models.Model):  # 前后置操作
+    testSet = models.ForeignKey(to='CaseTestSet', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("数据排序", null=False)
     location = models.CharField('位置 前/后(Pre,Rear)', max_length=20, null=False)
     operationType = models.CharField('操作类型(Methods,DataBase)', max_length=20, null=False)
@@ -96,27 +114,3 @@ class ApiOperation(models.Model):  # 前后置操作
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
-
-
-class ApiAssociatedUser(models.Model):  # 接口关联用户表，接口创建时，修改时，被关联者会收到消息提醒
-    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
-    opertateInfo = models.ForeignKey(to='info.OperateInfo', to_field='id', on_delete=models.CASCADE)  # 操作信息ID
-    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 关联用户Id
-    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
-    createTime = models.DateTimeField('创建时间', auto_now=True)
-    updateTime = models.DateTimeField('更新时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
-
-
-class ApiHistory(models.Model):  # 历史记录，恢复使用
-    pid = models.ForeignKey("ProjectManagement.ProManagement", to_field='id', on_delete=models.CASCADE)
-    page = models.ForeignKey("PageManagement.PageManagement", to_field='id', on_delete=models.CASCADE)
-    fun = models.ForeignKey("FunManagement.FunManagement", to_field='id', on_delete=models.CASCADE)
-    api = models.ForeignKey("ApiBaseData", to_field='id', on_delete=models.CASCADE)
-    apiName = models.CharField("页面名称", max_length=20, null=False)
-    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
-    # 如果是删除的话，在恢复数据时取上一个操作的数据
-    operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)
-    restoreData = models.TextField('恢复数据', null=True)
-    createTime = models.DateTimeField('创建时间', auto_now=True)

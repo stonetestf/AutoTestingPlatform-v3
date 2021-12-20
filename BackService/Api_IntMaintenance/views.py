@@ -94,6 +94,8 @@ def select_data(request):
                 associationMy = True
             else:
                 associationMy = False
+            url = ast.literal_eval(i.requestUrl)
+            callIndex = f'url{i.requestUrlRadio}'
             if associations == 'My':
                 if associationMy:
                     dataList.append({
@@ -104,7 +106,7 @@ def select_data(request):
                         'funName': i.fun.funName,
                         'apiName': i.apiName,
                         'requestType': i.requestType,
-                        'requestUrl': i.requestUrl,
+                        'requestUrl': url[f'{callIndex}'],
                         'apiState': i.apiState,
                         'associationMy': associationMy,
                         'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
@@ -120,7 +122,7 @@ def select_data(request):
                     'funName': i.fun.funName,
                     'apiName': i.apiName,
                     'requestType': i.requestType,
-                    'requestUrl': i.requestUrl,
+                    'requestUrl': url[f'{callIndex}'],
                     'apiState': i.apiState,
                     'associationMy': associationMy,
                     'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
@@ -151,9 +153,11 @@ def charm_api_data(request):
         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'charm_api_data', errorMsg)
     else:
         # region 验证 接口名称,请求类型,请求地址
+        requestUrlRadio = apiInfo.requestUrlRadio
+        requestUrl = responseData['ApiInfo']['requestUrl'][f'url{requestUrlRadio}']
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
             is_del=0, pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
-            apiName=basicInfo.apiName, requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl)
+            apiName=basicInfo.apiName, requestType=apiInfo.requestType, requestUrl=requestUrl)
         if obj_db_ApiBaseData.exists():
             if charmType:
                 dataList.append({
@@ -190,10 +194,11 @@ def charm_api_data(request):
                                 'updateTime': cls_Common.get_date_time()})
         # endregion
         # region 验证请求URl
-        if not apiInfo.requestUrl:
+
+        if not requestUrl:
             dataList.append({
                 'stepsName': '接口信息',
-                'errorMsg': '不可新增接口请求地址为空的接口数据!',
+                'errorMsg': f"当前{f'url{requestUrlRadio}'},接口请求地址为空!",
                 'updateTime': cls_Common.get_date_time()})
         # endregion
         # region 验证 headers
@@ -355,7 +360,8 @@ def save_data(request):
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
             is_del=0, pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
-            apiName=basicInfo.apiName, requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl)
+            apiName=basicInfo.apiName, requestType=apiInfo.requestType,
+            requestUrl=apiInfo.requestUrl._object_maker__data)
         if obj_db_ApiBaseData.exists():
             response['errorMsg'] = f'当前所属功能下已有相同数据,请修改后在继续保存!'
         else:
@@ -375,7 +381,8 @@ def save_data(request):
                     save_db_ApiBaseData = db_ApiBaseData.objects.create(
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                         apiName=basicInfo.apiName, environment_id=basicInfo.environmentId, apiState=basicInfo.apiState,
-                        requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl,
+                        requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl._object_maker__data,
+                        requestUrlRadio=apiInfo.requestUrlRadio,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
                         uid_id=assignedUserId, cuid=userId, is_del=0,
@@ -551,6 +558,7 @@ def edit_data(request):
         objData = cls_object_maker(responseData)
         basicInfo = objData.BasicInfo
         apiInfo = objData.ApiInfo
+        requestUrlRadio = apiInfo.requestUrlRadio
         if basicInfo.assignedUserId:
             assignedUserId = basicInfo.assignedUserId[1]
         else:
@@ -756,7 +764,8 @@ def edit_data(request):
                     obj_db_ApiBaseData.update(
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                         apiName=basicInfo.apiName, environment_id=basicInfo.environmentId, apiState=basicInfo.apiState,
-                        requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl,
+                        requestType=apiInfo.requestType, requestUrl=apiInfo.requestUrl._object_maker__data,
+                        requestUrlRadio=requestUrlRadio,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
                         uid_id=assignedUserId, cuid=userId, is_del=0, updateTime=cls_Common.get_date_time()
@@ -1126,9 +1135,16 @@ def load_data(request):
                 })
             # endregion
             # region apiInfo
+            requestUrlRadio = obj_db_ApiBaseData[0].requestUrlRadio
+            requestUrl = ast.literal_eval(obj_db_ApiBaseData[0].requestUrl)
+            currentRequestUrl = requestUrl[f'url{requestUrlRadio}']
             apiInfo = {
                 'requestType': obj_db_ApiBaseData[0].requestType,
-                'requestUrl': obj_db_ApiBaseData[0].requestUrl,
+                'requestUrlRadio':requestUrlRadio,
+                'currentRequestUrl':currentRequestUrl,
+                'requestUrl1':requestUrl['url1'],
+                'requestUrl2': requestUrl['url2'],
+                'requestUrl3': requestUrl['url3'],
                 'request': {
                     'headers': headers,
                     'params': params,
@@ -1251,11 +1267,13 @@ def send_test_request(request):
                 bodyData = testSendData['ApiInfo']['request']['body']['raw']
             else:
                 bodyData = []
+            requestUrlRadio = testSendData["ApiInfo"]["requestUrlRadio"]
+            requestUrl = testSendData["ApiInfo"]["requestUrl"][f'url{requestUrlRadio}']
             requestData = {
                 'state': True,
                 'proId': testSendData['BasicInfo']['proId'],
                 'requestType': testSendData['ApiInfo']['requestType'],
-                'requestUrl': f'{environmentUrl}{testSendData["ApiInfo"]["requestUrl"]}',
+                'requestUrl': f'{environmentUrl}{requestUrl}',
                 'requestParamsType': requestParamsType,
                 'bodyRequestType': bodyRequestType,
                 'headersData': testSendData['ApiInfo']['request']['headers'],
