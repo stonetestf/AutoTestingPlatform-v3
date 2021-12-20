@@ -105,21 +105,65 @@
                         </div>
                     </template>
                     <template v-else-if="StepsRomeData.active==1">
-                        <el-form ref="EditApiRomeData" :model="EditApiRomeData" label-width="100px">
-                            <el-form-item>
-                                <el-input placeholder="请输入接口地址" style="margin-left:-90px;" v-model="EditApiRomeData.requestUrl">
-                                    <el-select v-model="EditApiRomeData.requestType" slot="prepend" style="width:97px">
-                                        <el-option
-                                            v-for="item in EditApiRomeData.requestTypeOption"
-                                            :key="item.value"
-                                            :label="item.label"
-                                            :value="item.value">
-                                        </el-option>
-                                    </el-select>
-                                </el-input>
-                                <el-button type="primary" @click="OpenTestReportDialog()">Send</el-button>
-                            </el-form-item>
-                            <el-tabs v-model="EditApiRomeData.activeName" @tab-click="handleClick" style="margin-top:-10px">
+                        <div>
+                            <el-row>
+                                <el-col :span="16">
+                                    <div v-if="EditApiRomeData.requestUrlRadio==1">
+                                        <el-input placeholder="请输入接口地址"  v-model="EditApiRomeData.requestUrl1">
+                                            <el-select v-model="EditApiRomeData.requestType" slot="prepend" style="width:97px">
+                                                <el-option
+                                                    v-for="item in EditApiRomeData.requestTypeOption"
+                                                    :key="item.value"
+                                                    :label="item.label"
+                                                    :value="item.value">
+                                                </el-option>
+                                            </el-select>
+                                        </el-input>
+                                    </div>
+                                    <div v-else-if="EditApiRomeData.requestUrlRadio==2">
+                                        <el-input placeholder="请输入接口地址"  v-model="EditApiRomeData.requestUrl2">
+                                            <el-select v-model="EditApiRomeData.requestType" slot="prepend" style="width:97px">
+                                                <el-option
+                                                    v-for="item in EditApiRomeData.requestTypeOption"
+                                                    :key="item.value"
+                                                    :label="item.label"
+                                                    :value="item.value">
+                                                </el-option>
+                                            </el-select>
+                                        </el-input>
+                                    </div>
+                                    <div v-else>
+                                        <el-input placeholder="请输入接口地址"  v-model="EditApiRomeData.requestUrl3">
+                                            <el-select v-model="EditApiRomeData.requestType" slot="prepend" style="width:97px">
+                                                <el-option
+                                                    v-for="item in EditApiRomeData.requestTypeOption"
+                                                    :key="item.value"
+                                                    :label="item.label"
+                                                    :value="item.value">
+                                                </el-option>
+                                            </el-select>
+                                        </el-input>
+                                    </div>
+                                </el-col>
+                                <el-col :span="2">
+                                    <div>
+                                        <el-button type="success" @click="OpenTestReportDialog()">Send</el-button>
+                                    </div>
+                                </el-col>
+                                <el-col :span="6">
+                                    <div>
+                                        <el-radio-group v-model="EditApiRomeData.requestUrlRadio">
+                                            <el-radio-button :label="1">URL:1</el-radio-button>
+                                            <el-radio-button :label="2">URL:2</el-radio-button>
+                                            <el-radio-button :label="3">URL:3</el-radio-button>
+                                        </el-radio-group>
+                                    </div>
+                                </el-col>
+                               
+                            </el-row>
+                        </div>
+                        <div>
+                            <el-tabs v-model="EditApiRomeData.activeName" @tab-click="handleClick">
                                 <el-tab-pane :label="EditApiRomeData.headersName" name="Headers">
                                     <div v-if="EditApiRomeData.headersRomeData.editModel=='From'">
                                         <el-table
@@ -271,7 +315,7 @@
                                                         </div>
                                                     </el-col>
                                                 </el-row>
-                                             
+                                                
                                             </div>
                                             <div>
                                                 <el-input
@@ -700,7 +744,7 @@
                                     </el-table>
                                 </el-tab-pane>
                             </el-tabs>
-                        </el-form>
+                        </div>
                     </template>
                     <template v-else>
                          <div slot="header">
@@ -814,7 +858,10 @@ export default {
                 },
             },
             EditApiRomeData:{
-                requestUrl:'',
+                requestUrlRadio:1,//备选1 2 3
+                requestUrl1:'',
+                requestUrl2:'',
+                requestUrl3:'',
                 requestType:'GET',
                 requestTypeOption:[
                     {'label':'GET','value':'GET'},
@@ -946,7 +993,10 @@ export default {
                                                 self.BasicRomeData.pushTo = d.basicInfo.pushTo;
 
                                                 self.EditApiRomeData.requestType = d.apiInfo.requestType;
-                                                self.EditApiRomeData.requestUrl =  d.apiInfo.requestUrl;
+                                                self.EditApiRomeData.requestUrlRadio = d.apiInfo.requestUrlRadio;
+                                                self.EditApiRomeData.requestUrl1 =  d.apiInfo.requestUrl1;
+                                                self.EditApiRomeData.requestUrl2 =  d.apiInfo.requestUrl2;
+                                                self.EditApiRomeData.requestUrl3 =  d.apiInfo.requestUrl3;
                                                 //headers
                                                 d.apiInfo.request.headers.forEach(item_headers=>{
                                                     let obj = {};
@@ -1260,7 +1310,6 @@ export default {
                 this.BasicRomeData.assignedUserNameOptions = d;
             });
         },
-        
         resetForm(formName) {//清除正则验证
             if (this.$refs[formName] !== undefined) {
                 PrintConsole('清除正则验证')
@@ -1272,7 +1321,10 @@ export default {
         ClearEditApiRomeData(){
             let self = this;
             self.EditApiRomeData.requestType='GET';
-            self.EditApiRomeData.requestUrl='';
+            self.EditApiRomeData.requestUrlRadio=1;
+            self.EditApiRomeData.requestUrl1='';
+            self.EditApiRomeData.requestUrl2='';
+            self.EditApiRomeData.requestUrl3='';
             self.EditApiRomeData.activeName='Headers';
             self.EditApiRomeData.headersName='Headers';
             self.EditApiRomeData.paramsName='Params';
@@ -1789,7 +1841,12 @@ export default {
                 },
                 'ApiInfo':{
                     'requestType':self.EditApiRomeData.requestType,
-                    'requestUrl':self.EditApiRomeData.requestUrl,
+                    'requestUrlRadio':self.EditApiRomeData.requestUrlRadio,
+                    'requestUrl':{
+                        'url1':self.EditApiRomeData.requestUrl1,
+                        'url2':self.EditApiRomeData.requestUrl2,
+                        'url3':self.EditApiRomeData.requestUrl3,
+                    },
                     'request':{
                         'headers':self.EditApiRomeData.headersRomeData.tableData,
                         'params':self.EditApiRomeData.paramsRomeData.tableData,
@@ -1846,7 +1903,12 @@ export default {
                         },
                         'ApiInfo':{
                             'requestType':self.EditApiRomeData.requestType,
-                            'requestUrl':self.EditApiRomeData.requestUrl,
+                            'requestUrlRadio':self.EditApiRomeData.requestUrlRadio,
+                            'requestUrl':{
+                                'url1':self.EditApiRomeData.requestUrl1,
+                                'url2':self.EditApiRomeData.requestUrl2,
+                                'url3':self.EditApiRomeData.requestUrl3,
+                            },
                             'request':{
                                 'headers':self.EditApiRomeData.headersRomeData.tableData,
                                 'params':self.EditApiRomeData.paramsRomeData.tableData,
@@ -1887,7 +1949,12 @@ export default {
                         },
                         'ApiInfo':{
                             'requestType':self.EditApiRomeData.requestType,
-                            'requestUrl':self.EditApiRomeData.requestUrl,
+                            'requestUrlRadio':self.EditApiRomeData.requestUrlRadio,
+                            'requestUrl':{
+                                'url1':self.EditApiRomeData.requestUrl1,
+                                'url2':self.EditApiRomeData.requestUrl2,
+                                'url3':self.EditApiRomeData.requestUrl3,
+                            },
                             'request':{
                                 'headers':self.EditApiRomeData.headersRomeData.tableData,
                                 'params':self.EditApiRomeData.paramsRomeData.tableData,
@@ -1949,7 +2016,12 @@ export default {
                     },
                     'ApiInfo':{
                         'requestType':self.EditApiRomeData.requestType,
-                        'requestUrl':self.EditApiRomeData.requestUrl,
+                        'requestUrlRadio':self.EditApiRomeData.requestUrlRadio,
+                        'requestUrl':{
+                            'url1':self.EditApiRomeData.requestUrl1,
+                            'url2':self.EditApiRomeData.requestUrl2,
+                            'url3':self.EditApiRomeData.requestUrl3,
+                        },
                         'request':{
                             'headers':self.EditApiRomeData.headersRomeData.tableData,
                             'params':self.EditApiRomeData.paramsRomeData.tableData,
