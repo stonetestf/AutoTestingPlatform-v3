@@ -905,7 +905,8 @@ export default {
             },
             EditCaseRomeData:{
                 disPlay:false,
-                apiId:'',//点击左侧菜单就会赋值ID
+                tableData:[],//最终数据保存在这里
+                apiId:'',//
                 requestUrl:'',
                 requestType:'GET',
                 requestTypeOption:[
@@ -1016,7 +1017,8 @@ export default {
                 this.ClearBasicRomeData();
                 this.ClearTestSetRomeData();
                 this.ClearEditRomeData();
-
+                this.EditCaseRomeData.apiId='';
+                
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew;
 
@@ -1159,9 +1161,13 @@ export default {
                 //     } 
                 // });
             }else if(self.StepsRomeData.active==1){
-                self.StepsRomeData.active++;
-                self.againCombinationTestSet();
-
+                if(self.TestSetRomeData.tableData.length<1){
+                    self.$message.warning('当前至少新增1条接口数据!');
+                }else{
+                    self.StepsRomeData.active++;
+                    self.againCombinationTestSet();//重新组合测试集
+                    PrintConsole(self.TestSetRomeData.tableData);
+                }
             }else{
                 self.StepsRomeData.active++;
             }
@@ -1285,7 +1291,20 @@ export default {
         },
         handleDelete(index,row){//删除独条的步骤
             let self = this;
+            let tableData = [];
             self.TestSetRomeData.tableData.splice(index,1);
+            self.EditCaseRomeData.tableData.forEach((d,i)=>{
+                // PrintConsole('tableData',self.EditCaseRomeData.tableData)
+                if(d.apiId==row.id){
+                   
+                }else{
+                    tableData.push(d);
+                    // PrintConsole('保留数据',d);
+                }
+            });
+            self.EditCaseRomeData.tableData = tableData;
+            self.ClearEditRomeData();
+            PrintConsole('最终数据',self.EditCaseRomeData.tableData);
         },
         rowDrop() {//排序方法
             PrintConsole('加载可拖动效果')
@@ -1313,7 +1332,7 @@ export default {
                     stepsName = d.apiName;
                 }
                 obj.stepsName=stepsName;
-                obj.collectionData = 'apiId:'+d.id+','+'synchronous:'+d.is_synchronous+','+'apiState:'+d.state;
+                obj.collectionData = 'apiId:'+d.id+','+'testName:'+d.testName+','+'synchronous:'+d.is_synchronous+','+'apiState:'+d.state;
                 self.TestSetRomeData.newTableData.push(obj);
             });
         },
@@ -1322,26 +1341,79 @@ export default {
         handleClick(tab, event){//点击左侧菜单数据
             PrintConsole(tab);
             let self = this;
-            self.ClearEditRomeData();
+            
             self.EditCaseRomeData.disPlay=true;
             let tabData = tab.name.split(',');
             let apiId = tabData[0].split(':')[1];
-            let synchronous = tabData[1].split(':')[1]; //是否开启同步
-            let apiState = tabData[2].split(':')[1];  //接口是否启用
+            let testName = tabData[1].split(':')[1]
+            let synchronous = tabData[2].split(':')[1]; //是否开启同步
+            let apiState = tabData[3].split(':')[1];  //接口是否启用
+            let tempCaseTable = null;
+           
+            
+            PrintConsole('apiId',apiId);
+            PrintConsole('上次的ApiId',self.EditCaseRomeData.apiId);
+            PrintConsole('testName',testName);
+            PrintConsole('synchronous',synchronous);
+            PrintConsole('apiState',apiState);
+
+            //第一次点击的时候是没有apiId值的,所以直接不处理
+            if(self.EditCaseRomeData.apiId){
+                //点击左侧的接口名称的时候 查询当前的数据有没有保存到列表中
+                tempCaseTable = self.EditCaseRomeData.tableData.find(item=>
+                    item.apiId == self.EditCaseRomeData.apiId//这个ID在第一次点击的时候是为空的,每一次点击是显示上一次的点击的ID
+                );
+                if(tempCaseTable){//如果保存到列表中了,就覆盖保存一次
+                    self.EditCaseRomeData.tableData.forEach((d,i)=>{
+                        if(d.apiId==self.EditCaseRomeData.apiId){
+                            self.EditCaseRomeData.tableData[i].requestType =self.EditCaseRomeData.requestType;
+                            self.EditCaseRomeData.tableData[i].requestUrl =self.EditCaseRomeData.requestUrl;
+                        }
+                    });
+                    PrintConsole('覆盖数据id:',self.EditCaseRomeData.apiId);
+                }else{//如果没有保存到列表的话就保存进去
+                    //新增前先查询下测试集中有没有此数据的ID,如果没有的话就不会新增
+                    let tempTestSet= self.TestSetRomeData.tableData.find(item=>
+                        item.id == self.EditCaseRomeData.apiId//这个ID在第一次点击的时候是为空的,每一次点击是显示上一次的点击的ID
+                    );
+                    if(tempTestSet){
+                        let obj = {};
+                        obj.apiId = self.EditCaseRomeData.apiId;
+                        obj.testName = testName;
+                        obj.requestType = self.EditCaseRomeData.requestType;
+                        obj.requestUrl = self.EditCaseRomeData.requestUrl;
+
+                        self.EditCaseRomeData.tableData.push(obj);
+                        PrintConsole('新增数据id:',self.EditCaseRomeData.apiId);
+                    }
+                }
+            }
+            self.ClearEditRomeData();
+
+            //查询当前保存的列表中的数据有没有相同的
+            tempCaseTable = self.EditCaseRomeData.tableData.find(item=>
+                item.apiId == apiId
+            );
+            if(tempCaseTable){//如果有相同的就赋值到当前页面中
+                self.EditCaseRomeData.tableData.forEach((d,i)=>{
+                    if(d.apiId==tempCaseTable.apiId){
+                        self.EditCaseRomeData.requestType = self.EditCaseRomeData.tableData[i].requestType;
+                        self.EditCaseRomeData.requestUrl = self.EditCaseRomeData.tableData[i].requestUrl;
+                        PrintConsole('赋值到页面:',apiId);
+                    }
+                });
+                        
+            }else{//如果没有相同的就不管
+            }
+
+            PrintConsole('当前列表数据:',self.EditCaseRomeData.tableData);
             self.EditCaseRomeData.apiId = apiId;
-
-            PrintConsole('apiId',apiId)
-            PrintConsole('synchronous',synchronous)
-            PrintConsole('apiState',apiState)
-
-            // self.LoadApiData(apiId,synchronous);
-
-
         },
         handleClickTabs(tab, event){//点击头部主体等标签
             PrintConsole(tab);
         },
         ClearEditRomeData(){
+            PrintConsole('ClearEditRomeData');
             let self = this;
             self.EditCaseRomeData.requestType='GET';
             self.EditCaseRomeData.requestUrl='';
