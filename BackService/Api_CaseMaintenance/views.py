@@ -10,8 +10,7 @@ from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from Api_IntMaintenance.models import ApiHeaders as db_ApiHeaders
 from Api_IntMaintenance.models import ApiParams as db_ApiParams
 from Api_IntMaintenance.models import ApiBody as db_ApiBody
-
-from Api_IntMaintenance.models import ApiOperation as db_ApiOperation
+from Api_IntMaintenance.models import ApiDynamic as db_ApiDynamic
 
 from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
@@ -89,14 +88,40 @@ def select_data(request):
             select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
 
         for i in select_db_CaseBaseData:
+            obj_db_ApiDynamic = db_ApiDynamic.objects.filter(is_del=0, case_id=i.id, is_read=0)
+            if obj_db_ApiDynamic.exists():
+                apidynamic = True
+            else:
+                apidynamic = False
+            tableItem = []
+            obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=i.id)
+            for item_testSet in obj_db_CaseTestSet:
+                obj_db_CaseApiBase = db_CaseApiBase.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                if obj_db_CaseApiBase.exists():
+                    requestType = obj_db_CaseApiBase[0].requestType
+                    requestParamsType = obj_db_CaseApiBase[0].requestParamsType
+                else:
+                    requestType = None
+                    requestParamsType = None
+                tableItem.append({
+                    'index': item_testSet.index,
+                    'apiName': item_testSet.apiId.apiName,
+                    'testName': item_testSet.testName,
+                    'requestType': requestType,
+                    'requestParamsType': requestParamsType,
+                    'state': True if item_testSet.state == 1 else False,
+                    'updateTime': str(item_testSet.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                })
             dataList.append({
                 'id': i.id,
+                'tableItem': tableItem,
                 'priority': i.priority,
                 'testType': i.testType,
                 'caseName': i.caseName,
                 'pageName': i.page.pageName,
                 'funName': i.fun.funName,
                 'labelId': i.label,
+                'apidynamic': apidynamic,
                 'caseState': i.caseState,
                 'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 'userName': i.uid.userName,
@@ -700,7 +725,7 @@ def edit_data(request):
                                         'methodsName': item_preOperation.methodsName,
                                         'dataBase': item_preOperation.dataBaseId,
                                         'sql': item_preOperation.sql,
-                                        'remarks':item_preOperation.remarks,
+                                        'remarks': item_preOperation.remarks,
                                     })
                                 # endregion
                                 # region 后置操作
@@ -780,10 +805,10 @@ def edit_data(request):
                         db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
                             is_del=1, updateTime=cls_Common.get_date_time()
                         )
-                    obj_db_CaseTestSet.update(is_del=1, updateTime=cls_Common.get_date_time(),uid_id=userId)
+                    obj_db_CaseTestSet.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                     # endregion
                     # region 更新基本信息
-                    db_CaseBaseData.objects.filter(is_del=0,id=basicInfo.caseId).update(
+                    db_CaseBaseData.objects.filter(is_del=0, id=basicInfo.caseId).update(
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                         environmentId_id=basicInfo.environmentId, testType=basicInfo.testType,
                         label=basicInfo.labelId, priority=basicInfo.priorityId, caseName=basicInfo.caseName,
@@ -945,6 +970,11 @@ def edit_data(request):
                             )
                         db_CaseApiOperation.objects.bulk_create(product_list_to_insert)
                         # endregion
+                    # endregion
+                    # region 更新接口动态表为无更变
+                    db_ApiDynamic.objects.filter(is_del=0,case_id=basicInfo.caseId).update(
+                        updateTime=cls_Common.get_date_time(),is_read=1,uid_id=userId
+                    )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
@@ -1151,7 +1181,7 @@ def load_case_data(request):
                             'methodsName': item_preOperation.methodsName,
                             'dataBase': item_preOperation.dataBaseId,
                             'sql': item_preOperation.sql,
-                            'remarks':item_preOperation.remarks,
+                            'remarks': item_preOperation.remarks,
                         })
                     # endregion
                     # region 后置操作
@@ -1169,6 +1199,12 @@ def load_case_data(request):
                             'remarks': item_rearOperation.remarks,
                         })
                     # endregion
+                obj_db_ApiDynamic = db_ApiDynamic.objects.filter(
+                    case_id=caseId,apiId_id=item_testSet.pluralIntId,is_del=0,is_read=0)
+                if obj_db_ApiDynamic.exists():
+                    apidynamic = 1
+                else:
+                    apidynamic = 0
                 testSet.append({
                     'apiId': item_testSet.pluralIntId,
                     'state': True if item_testSet.state == 1 else False,
@@ -1177,6 +1213,7 @@ def load_case_data(request):
                     'testName': item_testSet.testName,
                     'is_synchronous': True if item_testSet.is_synchronous == 1 else False,
                     'settingParams': settingParams,
+                    'apidynamic':apidynamic,
                     'request': requestData,
                 })
             # endregion

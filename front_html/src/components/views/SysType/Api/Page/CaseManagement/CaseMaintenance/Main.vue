@@ -79,26 +79,33 @@
                                                 width="100">
                                             </el-table-column>
                                             <el-table-column
-                                                prop="intName"
+                                                prop="apiName"
                                                 align= "center"
                                                 label="接口名称">
                                             </el-table-column>
                                             <el-table-column
+                                                prop="testName"
+                                                align= "center"
+                                                label="测试名称">
+                                            </el-table-column>
+                                            <el-table-column
+                                                width="100px"
                                                 prop="requestType"
                                                 align= "center"
                                                 label="请求类型">
                                             </el-table-column>
                                             <el-table-column
+                                                width="120px"
                                                 prop="requestParamsType"
                                                 align= "center"
                                                 label="请求参数类型">
                                             </el-table-column>
                                             <el-table-column
-                                                label="接口状态"
-                                                width="150"
+                                                label="用例接口状态"
+                                                width="130"
                                                 align= "center">
                                                 <template slot-scope="scope">
-                                                    <el-tag type="success" v-if="scope.row.intState==1" >启用</el-tag>
+                                                    <el-tag type="success" v-if="scope.row.state" >启用</el-tag>
                                                     <el-tag type="info" v-else >禁用</el-tag>
                                                 </template>
                                             </el-table-column>
@@ -155,15 +162,6 @@
                                 </template>
                             </el-table-column>
                             <el-table-column
-                                label="接口动态"
-                                align= "center"
-                                width="100px">
-                                <template slot-scope="scope">
-                                    <!-- <el-tag type="success" v-if="scope.row.apidynamic==false">无更变</el-tag>
-                                    <el-tag type="danger" v-else>已更变</el-tag> -->
-                                </template>
-                            </el-table-column>
-                            <el-table-column
                                 label="用例状态"
                                 align= "center"
                                 width="100px">
@@ -172,6 +170,15 @@
                                     <el-tag type="success" v-else-if="scope.row.caseState=='Completed'">已完成</el-tag>
                                     <!-- <el-tag type="success" v-else-if="scope.row.caseState=='Completed'"><i class="el-icon-check"></i></el-tag> -->
                                     <el-tag type="info" v-else>弃用</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                label="接口动态"
+                                align= "center"
+                                width="100px">
+                                <template slot-scope="scope">
+                                    <el-tag type="success" v-if="scope.row.apidynamic==false">无更变</el-tag>
+                                    <el-tag type="danger" v-else>已更变</el-tag>
                                 </template>
                             </el-table-column>
                             <el-table-column
@@ -336,13 +343,14 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
+                        obj.tableItem=d.tableItem;
                         obj.priority=d.priority;
                         obj.testType = d.testType;
                         obj.caseName = d.caseName;
                         obj.pageName=d.pageName;
                         obj.funName=d.funName;
                         obj.labelId = d.labelId;
-
+                        obj.apidynamic=d.apidynamic;
                         obj.caseState = d.caseState;
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;     

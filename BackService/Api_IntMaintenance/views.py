@@ -23,6 +23,8 @@ from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToU
 from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
 from Api_IntMaintenance.models import ApiHistory as db_ApiHistory
 from PageEnvironment.models import PageEnvironment as db_PageEnvironment
+from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
+
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -929,6 +931,26 @@ def edit_data(request):
                             is_del=0
                         )
                         cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
+                    # endregion
+                    # region 添加接口更变信息,用于用例中提醒使用
+                    obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0,apiId_id=basicInfo.apiId)
+                    product_list_to_insert = list()
+                    for item_testSet in obj_db_CaseTestSet:
+                        obj_db_ApiDynamic = db_ApiDynamic.objects.filter(
+                            is_del=0,apiId_id=basicInfo.apiId,case_id=item_testSet.caseId_id,is_read=0)
+                        if obj_db_ApiDynamic.exists():
+                            obj_db_ApiDynamic.update(updateTime=cls_Common.get_date_time(),uid_id=userId)
+                        else:
+                            product_list_to_insert.append(db_ApiDynamic(
+                                apiId_id=basicInfo.apiId,
+                                case_id=item_testSet.caseId_id,
+                                uid_id=userId,
+                                cuid=userId,
+                                is_read=0,
+                                is_del=0,
+                                )
+                            )
+                    db_ApiDynamic.objects.bulk_create(product_list_to_insert)
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'数据修改失败:{e}'

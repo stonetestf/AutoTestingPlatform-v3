@@ -3,7 +3,7 @@
         <template>
             <el-drawer
             :title="dialogTitle"
-            size="1500px"
+            size="1600px"
             :wrapperClosable="false"
             :visible.sync="dialogVisible"
             direction='rtl'
@@ -106,7 +106,7 @@
                         </div>
                     </template>
                     <template v-else-if="StepsRomeData.active==1">
-                        <div style="width:1411px;margin-left:30px">
+                        <div style="width:1511px;margin-left:30px">
                             <el-table
                                 id="TestSet" 
                                 row-key="id"
@@ -164,6 +164,16 @@
                                         <el-tag type="warning" v-else>未设置</el-tag>
                                     </template>
                                 </el-table-column>   
+                                <el-table-column
+                                    label="接口动态"
+                                    width="100px"
+                                    align= "center">
+                                    <template slot-scope="scope">
+                                        <el-tag type="success" v-if="scope.row.apidynamic==0">无更变</el-tag>
+                                        <el-tag type="danger" v-else-if="scope.row.apidynamic==1">已更变</el-tag>
+                                        <el-tag type="warning" v-else>已知晓</el-tag>
+                                    </template>
+                                </el-table-column>  
                                 <el-table-column
                                     label="启用"
                                     align= "center"
@@ -564,6 +574,7 @@ export default {
                 obj.testName='';
                 obj.is_synchronous=false;//是否开启同步
                 obj.settingParams=false;//默认是未设置参数
+                obj.apidynamic=0;//接口动态
                 obj.request = {
                     'requestType':'GET',
                     'requestUrl':'',
@@ -632,6 +643,9 @@ export default {
 
                 tempTestSetTable.request.preOperation =data.preOperation;
                 tempTestSetTable.request.rearOperation =data.rearOperation;
+                if(tempTestSetTable.apidynamic==1){
+                    tempTestSetTable.apidynamic=2;
+                }
 
                 PrintConsole('覆盖数据',self.TestSetRomeData.tableData);
             }else{
@@ -760,11 +774,11 @@ export default {
                         'TestSet':self.TestSetRomeData.tableData
                     }).then(res => {
                         if(res.data.statusCode==2002){
-                            self.$message.success('修改接口成功!');
+                            self.$message.success('修改用例成功!');
                             self.returnToMain();
                         
                         }else{
-                            self.$message.error('修改接口失败'+res.data.errorMsg);
+                            self.$message.error('修改用例失败'+res.data.errorMsg);
                         }
                     }).catch(function (error) {
                         console.log(error);
