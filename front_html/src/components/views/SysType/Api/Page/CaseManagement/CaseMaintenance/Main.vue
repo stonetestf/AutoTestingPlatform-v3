@@ -54,6 +54,7 @@
                 <template>
                     <div style="margin-top:-15px;">
                         <el-table
+                            v-loading="loading"
                             :data="tableData"
                             height="596px"
                             border>
@@ -147,10 +148,10 @@
                                 label="用例标签"
                                 align= "center"
                                 width="120px"
-                                prop="caseLabel">
+                                prop="labelId">
                                 <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.caseLabel=='CommonCase'">普通用例</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.caseLabel=='RetentCase'">回归用例</el-tag>
+                                    <el-tag type="success" v-if="scope.row.labelId=='CommonCase'">普通用例</el-tag>
+                                    <el-tag type="warning" v-else-if="scope.row.labelId=='RetentCase'">回归用例</el-tag>
                                 </template>
                             </el-table-column>
                             <el-table-column
@@ -158,8 +159,8 @@
                                 align= "center"
                                 width="100px">
                                 <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.Apidynamic==false">无更变</el-tag>
-                                    <el-tag type="danger" v-else>已更变</el-tag>
+                                    <!-- <el-tag type="success" v-if="scope.row.apidynamic==false">无更变</el-tag>
+                                    <el-tag type="danger" v-else>已更变</el-tag> -->
                                 </template>
                             </el-table-column>
                             <el-table-column
@@ -246,7 +247,7 @@
 </template>
 
 <script>
-
+import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
@@ -259,6 +260,7 @@ export default {
     },
     data() {
         return {
+            loading:false,
             tableData: [
                 // {'priority':'P0','testType':'UnitTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'CommonCase','Apidynamic':false,'caseState':'InDev','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'},
                 // {'priority':'P1','testType':'HybridTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'RetentCase','Apidynamic':true,'caseState':'Completed','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'}
@@ -311,11 +313,56 @@ export default {
         },
     },
     mounted(){
-
+        this.SelectData();
     },
     methods: {
         SelectData(){
+            let self = this;
+            self.tableData= [];
+            self.loading=true;
+            self.$axios.get('/api/ApiCaseMaintenance/SelectData',{
+                params:{
+                    "proId":self.$cookies.get('proId'),
+                    "pageId":self.SelectRomeData.pageId,
+                    "funId":self.SelectRomeData.funId,
+                    "labelId":self.SelectRomeData.caseLabel,
+                    "caseState":self.SelectRomeData.caseState,
+                    'caseName':self.SelectRomeData.caseName,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.id =d.id;
+                        obj.priority=d.priority;
+                        obj.testType = d.testType;
+                        obj.caseName = d.caseName;
+                        obj.pageName=d.pageName;
+                        obj.funName=d.funName;
+                        obj.labelId = d.labelId;
 
+                        obj.caseState = d.caseState;
+                        obj.updateTime = d.updateTime;
+                        obj.userName = d.userName;     
+
+                        self.tableData.push(obj);
+                    });
+                    if(self.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                    self.loading=false;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+            })
         },
         ClearSelectRomeData(){
             let self = this;
@@ -366,6 +413,41 @@ export default {
                 isAddNew:true,//初始化是否新增\修改
             }
             self.dialog.editor.dialogVisible=true;
+        },
+        handleEdit(index,row){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑用例",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                caseId:row.id,
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                    this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/ApiCaseMaintenance/DeleteData',Qs.stringify({
+                'caseId':id,
+            })).then(res => {
+            if(res.data.statusCode ==2003){
+                self.$message.success('用例删除成功!');
+                self.SelectData();
+            }
+            else{
+                self.$message.error('用例删除失败:'+ res.data.errorMsg);
+            }
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
        
     }

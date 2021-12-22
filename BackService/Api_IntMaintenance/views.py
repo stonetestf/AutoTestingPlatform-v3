@@ -17,6 +17,7 @@ from Api_IntMaintenance.models import ApiExtract as db_ApiExtract
 from Api_IntMaintenance.models import ApiValidate as db_ApiValidate
 from Api_IntMaintenance.models import ApiOperation as db_ApiOperation
 from Api_IntMaintenance.models import ApiAssociatedUser as db_ApiAssociatedUser
+from Api_IntMaintenance.models import ApiDynamic as db_ApiDynamic
 from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
 from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
@@ -1140,9 +1141,9 @@ def load_data(request):
             currentRequestUrl = requestUrl[f'url{requestUrlRadio}']
             apiInfo = {
                 'requestType': obj_db_ApiBaseData[0].requestType,
-                'requestUrlRadio':requestUrlRadio,
-                'currentRequestUrl':currentRequestUrl,
-                'requestUrl1':requestUrl['url1'],
+                'requestUrlRadio': requestUrlRadio,
+                'currentRequestUrl': currentRequestUrl,
+                'requestUrl1': requestUrl['url1'],
                 'requestUrl2': requestUrl['url2'],
                 'requestUrl3': requestUrl['url3'],
                 'request': {
@@ -1227,7 +1228,7 @@ def send_request(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["POST"])# 异步请求
+@require_http_methods(["POST"])  # 异步请求
 def asynchronous_request(request):
     pass
 

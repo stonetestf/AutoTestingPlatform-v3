@@ -114,7 +114,7 @@
                                 height="710px"
                                 border>
                                 <el-table-column
-                                    label="顺序"
+                                    label="步骤"
                                     align= "center"
                                     type="index"
                                     width="80">
@@ -160,7 +160,7 @@
                                     width="100px"
                                     align= "center">
                                     <template slot-scope="scope">
-                                        <el-tag type="success" v-if="scope.row.paramsState" >已设置</el-tag>
+                                        <el-tag type="success" v-if="scope.row.settingParams" >已设置</el-tag>
                                         <el-tag type="warning" v-else>未设置</el-tag>
                                     </template>
                                 </el-table-column>   
@@ -195,12 +195,44 @@
                         </div>
                     </template>
                     <template v-else>
-         
+                        <div slot="header">
+                            {{CharmRomeData.title}}
+                        </div>
+                        <div>
+                            <el-table
+                            :data="CharmRomeData.tableData"
+                            border
+                            height="660px">
+                            <el-table-column
+                                type="index"
+                                align= "center"
+                                label="Index"
+                                width="100">
+                            </el-table-column>
+                            <el-table-column
+                                prop="stepsName"
+                                align= "center"
+                                label="错误步骤"
+                                width="200">
+                            </el-table-column>
+                            <el-table-column
+                                prop="errorMsg"
+                                align= "center"
+                                label="错误信息">
+                            </el-table-column>
+                            <el-table-column
+                                prop="updateTime"
+                                align= "center"
+                                label="错误时间"
+                                width="200">
+                            </el-table-column>
+                            </el-table>
+                        </div>
                     </template>
                 </el-card>
                 <el-button style="margin-top: 12px;" icon="el-icon-arrow-left" type="primary" v-if="StepsRomeData.disPlay_Previous" @click="previous">上一步</el-button>
                 <el-button style="margin-top: 12px;" type="primary" v-if="StepsRomeData.disPlay_Next" @click="next">下一步<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="DataSave()">保存</el-button>
+                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="SaveData()">保存</el-button>
             </el-drawer>
         </template>
         <template>
@@ -253,6 +285,7 @@ export default {
                 disPlay_Previous:false,
             },
             BasicRomeData:{
+                caseId:'',
                 pageId:'',
                 pageNameOption:[],
                 funId:'',
@@ -299,7 +332,10 @@ export default {
             },
             TestSetRomeData:{
                 tableData:[],//测试集数据
-                newTableData:[]//重新组合测试集数据
+            },
+            CharmRomeData:{
+                title:'',
+                tableData:[],
             },
             dialog:{
                 apiMain:{
@@ -348,7 +384,8 @@ export default {
                 this.isAddNew = newval.isAddNew;
 
                 if(newval.isAddNew==false){//进入编辑状态
-                
+                    this.BasicRomeData.caseId = newval.caseId;
+                    this.LoadCaseData(this.BasicRomeData.caseId);
                   
                 }
             }
@@ -388,42 +425,43 @@ export default {
         next() {//下一步
             let self = this;
             if(self.StepsRomeData.active==0){//基本用例数据
-                self.StepsRomeData.active++;
-                // this.$refs['BasicCase'].validate((valid) => {
-                //     if (valid) {//通过
-                //         self.StepsRomeData.active++;
-                //         self.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                //             self.rowDrop();
-                //         })
-                //     } 
-                // });
+                // self.StepsRomeData.active++;
+                this.$refs['BasicRomeData'].validate((valid) => {
+                    if (valid) {//通过
+                        self.StepsRomeData.active++;
+                        self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                            self.rowDrop();
+                        })
+                    } 
+                });
             }else if(self.StepsRomeData.active==1){
                 if(self.TestSetRomeData.tableData.length<1){
                     self.$message.warning('当前至少新增1条接口数据!');
                 }else{
-                    if(self.TestSetRomeData.newTableData.length!=self.TestSetRomeData.tableData.length){
+                    //判断测试集是不是有没有设置参数的数据  有没有填写的就返回 true ,没有就返回 false
+                    let testSetParams = self.judgeTestSetIsNotParams();
+                    if(testSetParams){
                         self.$message.warning('当前测试集中,有未编写的参数数据,请点击参数进行编写完成后在执行下一步操作!');
                     }else{
-                        self.UpdateTestNameToTable();
-                        PrintConsole('最终数据:',self.TestSetRomeData.newTableData);
                         self.StepsRomeData.active++;
+                        self.CharmCaseData();
                     }
+                    PrintConsole('最终数据:',self.TestSetRomeData.tableData);
+                    //调用用例参数验证
                 }
-            }else{
-                
-                self.StepsRomeData.active++;
             }
         },
         previous(){//上一步
             let self = this;
             self.StepsRomeData.processStatus='process';
-            self.StepsRomeData.active--;
-            if(self.StepsRomeData.active==3){
+            if(self.StepsRomeData.active==0){
+
+            }else if(self.StepsRomeData.active==3){
                 self.StepsRomeData.active--;
-            }else if(self.StepsRomeData.active==1){
-                // self.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                //     self.rowDrop();
-                // })
+                self.StepsRomeData.active--;
+            }
+            else{
+                self.StepsRomeData.active--;
             }
             // PrintConsole('步骤',self.StepsRomeData.active)
         },
@@ -487,7 +525,6 @@ export default {
         ClearTestSetRomeData(){
             let self = this;
             self.TestSetRomeData.tableData=[];
-            self.TestSetRomeData.newTableData=[];
             PrintConsole('ClearTestSetRomeData');
         },
         closeApiMainDialog(){
@@ -520,12 +557,28 @@ export default {
                     apiId=item.id;
                 }
                 let obj = {};
-                obj.id=String(apiId);
+                obj.apiId=String(apiId);
                 obj.state=true;
                 obj.apiName=item.apiName;
                 obj.apiState = item.apiState;
                 obj.testName='';
-                obj.is_synchronous=false;
+                obj.is_synchronous=false;//是否开启同步
+                obj.settingParams=false;//默认是未设置参数
+                obj.request = {
+                    'requestType':'GET',
+                    'requestUrl':'',
+                    'headers':[],
+                    'params':[],
+                    'body':{
+                        'requestSaveType':'form-data',
+                        'formData':[],
+                        'rawValue':'',
+                    },
+                    'extract':[],
+                    'validate':[],
+                    'preOperation':[],
+                    'rearOperation':[],
+                };
                 self.TestSetRomeData.tableData.push(obj);
             });
             self.rowDrop();
@@ -539,12 +592,7 @@ export default {
                 type: 'warning'
                 }).then(() => {
                     self.TestSetRomeData.tableData.splice(index,1);
-                    self.TestSetRomeData.newTableData.forEach((d,i)=>{
-                        if(d.apiId==row.id){
-                            self.TestSetRomeData.newTableData.splice(i,1);
-                        }
-                    });
-                    PrintConsole('最终数据:',self.TestSetRomeData.newTableData);
+                    PrintConsole('最终数据:',self.TestSetRomeData.tableData);
                 }).catch(() => {       
             });
            
@@ -564,36 +612,31 @@ export default {
         AddRequestParamsToTable(data){//回调函数,把接口的请求数据返回到测试集页面的最终列表中
             PrintConsole('回调数据:',data);
             let self = this;
-            let tempCaseTable = self.TestSetRomeData.newTableData.find(item=>
+            let tempTestSetTable = self.TestSetRomeData.tableData.find(item=>
                 item.apiId == data.apiId
             );
-            //查询最终列表中有没有此数据,有就覆盖,没有就新增
-            if(tempCaseTable){
-                self.TestSetRomeData.newTableData.forEach((d,i)=>{
-                    if(d.apiId==data.apiId){
-                        self.TestSetRomeData.newTableData[i].requestType = data.requestType;
-                        self.TestSetRomeData.newTableData[i].requestUrl = data.requestUrl;
-                        
-                        self.TestSetRomeData.newTableData[i].headers = data.headers;
-                        self.TestSetRomeData.newTableData[i].params = data.params;
+            if(tempTestSetTable){
+                tempTestSetTable.settingParams = true;
+                tempTestSetTable.request.requestType = data.requestType;
+                tempTestSetTable.request.requestUrl = data.requestUrl;
 
-                        self.TestSetRomeData.newTableData[i].body.requestSaveType = data.body.requestSaveType;
-                        self.TestSetRomeData.newTableData[i].body.formData = data.body.formData;
-                        self.TestSetRomeData.newTableData[i].body.rawValue = data.body.rawValue;
+                tempTestSetTable.request.headers = data.headers;
+                tempTestSetTable.request.params = data.params;
 
-                        self.TestSetRomeData.newTableData[i].extract = data.extract;
-                        self.TestSetRomeData.newTableData[i].validate =data.validate;
+                tempTestSetTable.request.body.requestSaveType = data.body.requestSaveType;
+                tempTestSetTable.request.body.formData = data.body.formData;
+                tempTestSetTable.request.body.rawValue = data.body.rawValue;
 
-                        self.TestSetRomeData.newTableData[i].preOperation =data.preOperation;
-                        self.TestSetRomeData.newTableData[i].rearOperation =data.rearOperation;
-                    }
-                });
-                PrintConsole('覆盖数据');
+                tempTestSetTable.request.extract = data.extract;
+                tempTestSetTable.request.validate =data.validate;
+
+                tempTestSetTable.request.preOperation =data.preOperation;
+                tempTestSetTable.request.rearOperation =data.rearOperation;
+
+                PrintConsole('覆盖数据',self.TestSetRomeData.tableData);
             }else{
-                self.TestSetRomeData.newTableData.push(data);
-                PrintConsole('新增数据');
+                PrintConsole('测试集数据缺损');
             }
-            PrintConsole('数据',self.TestSetRomeData.newTableData);
         },
         closeRequestParamsDialog(){
             this.dialog.requestParams.dialogVisible = false;
@@ -609,29 +652,171 @@ export default {
             
             self.dialog.requestParams.dialogPara={
                 dialogTitle:dialogTitle,//初始化标题
-                apiId:row.id,
-                testName:row.testName,
+                environmentId:self.BasicRomeData.environmentId,
+                apiId:row.apiId,
                 synchronous:row.is_synchronous,
-                state:row.state,
-                tableData:self.TestSetRomeData.newTableData,
+                request:row.request,
             }
             self.dialog.requestParams.dialogVisible=true;
-        },     
-        UpdateTestNameToTable(){//更新测试名称和接口的状态到最终列表,在下一步的时候使用
-            let self = this;
-            self.TestSetRomeData.tableData.forEach(item=>{
-                self.TestSetRomeData.newTableData.forEach((d,i)=>{
-                    if(d.apiId == item.id){
-                        self.TestSetRomeData.newTableData[i].synchronous = item.is_synchronous;
-                        self.TestSetRomeData.newTableData[i].testName = item.testName;
-                        self.TestSetRomeData.newTableData[i].state = item.state;
-                    }
-                });
-               
-            });
-            PrintConsole('更新测试名称');
         },
-       
+        judgeTestSetIsNotParams(){//判断测试集是不是有没有设置参数的数据  有没有填写的就返回 true ,没有就返回 false
+            let self = this;
+            let notParamsNum = 0;
+            
+            self.TestSetRomeData.tableData.forEach(d=>{
+                if(d.settingParams==false){
+                    notParamsNum+=1;
+                }
+            });
+            if(notParamsNum!=0){
+                return true
+            }else{
+                return false
+            }
+        },
+
+        //效验
+        CharmCaseData(){//验证用例数据的完整性
+            let self = this;
+            self.CharmRomeData.tableData = [];
+            self.CharmRomeData.title = '';
+            self.$axios.post('/api/ApiCaseMaintenance/CharmCaseData',{
+                'CharmType':self.isAddNew,
+                'BasicInfo':{
+                    'caseId':self.BasicRomeData.caseId,
+                    'proId':self.$cookies.get('proId'),
+                    'pageId':self.BasicRomeData.pageId,
+                    'funId':self.BasicRomeData.funId,
+                    'labelId':self.BasicRomeData.labelId,
+                    'testType':self.BasicRomeData.testType,
+                    'caseName':self.BasicRomeData.caseName,
+                },
+                'TestSet':self.TestSetRomeData.tableData
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.stepsName =d.stepsName;
+                        obj.errorMsg = d.errorMsg;
+                        obj.updateTime = d.updateTime;
+                        self.CharmRomeData.tableData.push(obj);
+                    });
+                    if(self.CharmRomeData.tableData.length!=0){
+                        self.StepsRomeData.processStatus='error';
+                        self.CharmRomeData.title = '效验结果:失败,共发现错误数:'+self.CharmRomeData.tableData.length;
+                    }else{
+                        self.StepsRomeData.active++;
+                        self.CharmRomeData.title = '效验结果:完成,请点击保存';
+                    }
+                }else{
+                    self.$message.error('效验用例信息发生错误:'+res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
+        SaveData(){//保存接口
+            let self = this;
+            if(self.CharmRomeData.tableData.length==0){
+                if(self.isAddNew){  
+                    self.$axios.post('/api/ApiCaseMaintenance/SaveData',{
+                        'BasicInfo':{
+                            'proId':self.$cookies.get('proId'),
+                            'pageId':self.BasicRomeData.pageId,
+                            'funId':self.BasicRomeData.funId,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'priorityId':self.BasicRomeData.priorityId,
+                            'labelId':self.BasicRomeData.labelId,
+                            'testType':self.BasicRomeData.testType,
+                            'caseName':self.BasicRomeData.caseName,
+                            'caseState':self.BasicRomeData.caseState,
+                        },
+                        'TestSet':self.TestSetRomeData.tableData
+                    }).then(res => {
+                        if(res.data.statusCode==2001){
+                            self.$message.success('新增用例成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('保存失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }else{
+                    self.$axios.post('/api/ApiCaseMaintenance/EditData',{
+                       'BasicInfo':{
+                            'caseId':self.BasicRomeData.caseId,
+                            'proId':self.$cookies.get('proId'),
+                            'pageId':self.BasicRomeData.pageId,
+                            'funId':self.BasicRomeData.funId,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'priorityId':self.BasicRomeData.priorityId,
+                            'labelId':self.BasicRomeData.labelId,
+                            'testType':self.BasicRomeData.testType,
+                            'caseName':self.BasicRomeData.caseName,
+                            'caseState':self.BasicRomeData.caseState,
+                        },
+                        'TestSet':self.TestSetRomeData.tableData
+                    }).then(res => {
+                        if(res.data.statusCode==2002){
+                            self.$message.success('修改接口成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('修改接口失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }
+            }else{
+                self.$message.warning('请先修改错误数据后,在进行保存!');
+            }
+        },
+        LoadCaseData(caseId){
+            let self = this;
+            self.loading=true;
+            self.$axios.get('/api/ApiCaseMaintenance/LoadCaseData',{
+                params:{
+                    'caseId':caseId
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    GetPageNameItems(self.$cookies.get('proId')).then(d=>{
+                        self.BasicRomeData.pageNameOption = d;
+                        self.BasicRomeData.pageId = res.data.dataTable.basicInfo.pageId;
+                        GetFunNameItems(self.$cookies.get('proId'),self.BasicRomeData.pageId).then(d=>{
+                            self.BasicRomeData.funNameOption = d;
+                            self.BasicRomeData.funId = res.data.dataTable.basicInfo.funId;
+                            GetPageEnvironmentNameItems(self.$cookies.get('proId')).then(d=>{
+                                self.BasicRomeData.environmentNameOption = d;
+                                self.BasicRomeData.environmentId = res.data.dataTable.basicInfo.environmentId;
+
+                                self.BasicRomeData.testType = res.data.dataTable.basicInfo.testType;
+                                self.BasicRomeData.labelId = res.data.dataTable.basicInfo.labelId;
+                                self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
+                                self.BasicRomeData.caseName = res.data.dataTable.basicInfo.caseName;
+                                self.BasicRomeData.caseState = res.data.dataTable.basicInfo.caseState;
+
+                                self.TestSetRomeData.tableData = res.data.dataTable.testSet;
+
+
+                            });
+                        });
+                    });
+                    self.loading=false;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+                self.dialogClose();
+            })
+        },
     }
 };
 </script>

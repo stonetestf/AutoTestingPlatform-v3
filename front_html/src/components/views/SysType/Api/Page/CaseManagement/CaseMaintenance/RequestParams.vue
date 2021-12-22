@@ -30,7 +30,7 @@
                             <el-col :span="5">
                                 <div>
                                     <el-button-group>
-                                        <el-button type="primary" @click="SendRequest()">调试接口</el-button>
+                                        <el-button type="primary" @click="OpenTestReportDialog()">调试接口</el-button>
                                         <el-button type="warning" @click="ReferenceOriginalSet()" >引用原设</el-button>
                                         <el-button icon="el-icon-question" circle plain @click="helpMsg()"></el-button>
                                     </el-button-group>
@@ -628,16 +628,24 @@
                 </div>
             </el-drawer>
         </template>
+        <template>
+            <dialog-test-report
+                @closeDialog="closeTestReportDialog" 
+                :isVisible="dialog.testReport.dialogVisible" 
+                :dialogPara="dialog.testReport.dialogPara">
+            </dialog-test-report>
+        </template>
     </div>
 </template>
 
 <script>
 import Sortable from 'sortablejs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
+import DialogTestReport from "../ApiMaintenance/TestReport.vue";
 
 export default {
     components: {
-
+        DialogTestReport
     },
     data() {
         return {
@@ -645,6 +653,7 @@ export default {
             dialogVisible:false,
             loading:false,
             RomeData:{
+                environmentId:'',
                 apiId:'',
                 requestUrl:'',
                 requestType:'GET',
@@ -720,6 +729,15 @@ export default {
 
 
             },
+            dialog:{
+                testReport:{//运行过程
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+            },
 
         };
     },
@@ -744,16 +762,19 @@ export default {
             {
                 PrintConsole(newval);
                 this.ClearRomeData();
+                this.RomeData.environmentId='';
+                this.RomeData.apiId='';
                 this.dialogTitle = newval.dialogTitle;
                 this.RomeData.apiId = newval.apiId;
+                this.RomeData.environmentId = newval.environmentId;
 
                 this.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                    this.findApiData(newval.apiId,newval.tableData);//查询最终列表中有没有此id的数据,如果有的话就赋值,没有的话才是全空填写
+                    this.assignmentData(newval.request);//查询最终列表中有没有此id的数据,如果有的话就赋值,没有的话才是全空填写
                 })
                
                 if(newval.synchronous){//同步开启时
                     PrintConsole('当前同步开启','正在同步数据');
-                    this.LoadApiData(newval.apiId);
+                    this.LoadApiData(this.RomeData.apiId);
                 }
             }
         },
@@ -852,7 +873,6 @@ export default {
         ClearRomeData(){
             PrintConsole('ClearRomeData');
             let self = this;
-            self.RomeData.apiId='';
 
             self.RomeData.requestType='GET';
             self.RomeData.requestUrl='';
@@ -899,129 +919,119 @@ export default {
             self.RomeData.rearOperationRomeData.tableData=[];
             self.RomeData.rearOperationRomeData.index=0;
         },
-        findApiData(apiId,tableData){
+        assignmentData(request){//赋值数据到页面
             let self = this;
-            let tempTable = tableData.find(item=>
-                item.apiId == apiId
-            );
-            if(tempTable){
-                self.RomeData.requestType = tempTable.requestType;
-                self.RomeData.requestUrl = tempTable.requestUrl;
-                
-                //headers
-                tempTable.headers.forEach(item_headers=>{
+            self.RomeData.requestType = request.requestType;
+            self.RomeData.requestUrl = request.requestUrl;
+            
+            //headers
+            request.headers.forEach(item_headers=>{
+                let obj = {};
+                obj.index = item_headers.index;
+                obj.state =item_headers.state;
+                obj.key =item_headers.key;
+                obj.value=item_headers.value;
+                obj.remarks=item_headers.remarks;
+                self.RomeData.headersRomeData.tableData.push(obj);
+                self.RomeData.headersRomeData.index+=1;
+            });
+            
+            //params
+            request.params.forEach(item_params=>{
+                let obj = {};
+                obj.index = item_params.index;
+                obj.state =item_params.state;
+                obj.key =item_params.key;
+                obj.value=item_params.value;
+                obj.remarks=item_params.remarks;
+
+                self.RomeData.paramsRomeData.tableData.push(obj);
+                self.RomeData.paramsRomeData.index+=1;
+            });
+
+            //body
+            self.RomeData.bodyRomeData.requestSaveType = request.body.requestSaveType;
+            if(self.RomeData.bodyRomeData.requestSaveType=='form-data'){
+                request.body.formData.forEach(item_body=>{
                     let obj = {};
-                    obj.index = item_headers.index;
-                    obj.state =item_headers.state;
-                    obj.key =item_headers.key;
-                    obj.value=item_headers.value;
-                    obj.remarks=item_headers.remarks;
-                    self.RomeData.headersRomeData.tableData.push(obj);
-                    self.RomeData.headersRomeData.index+=1;
+                    obj.index = item_body.index;
+                    obj.state =item_body.state;
+                    obj.key =item_body.key;
+                    obj.value=item_body.value;
+                    obj.remarks=item_body.remarks;
+
+                    self.RomeData.bodyRomeData.tableData.push(obj);
+                    self.RomeData.bodyRomeData.index+=1;
                 });
-               
-                //params
-                tempTable.params.forEach(item_params=>{
-                    let obj = {};
-                    obj.index = item_params.index;
-                    obj.state =item_params.state;
-                    obj.key =item_params.key;
-                    obj.value=item_params.value;
-                    obj.remarks=item_params.remarks;
-
-                    self.RomeData.paramsRomeData.tableData.push(obj);
-                    self.RomeData.paramsRomeData.index+=1;
-                });
-
-                //body
-                self.RomeData.bodyRomeData.requestSaveType = tempTable.body.requestSaveType;
-                if(self.RomeData.bodyRomeData.requestSaveType=='form-data'){
-                    tempTable.body.formData.forEach(item_body=>{
-                        let obj = {};
-                        obj.index = item_body.index;
-                        obj.state =item_body.state;
-                        obj.key =item_body.key;
-                        obj.value=item_body.value;
-                        obj.remarks=item_body.remarks;
-
-                        self.RomeData.bodyRomeData.tableData.push(obj);
-                        self.RomeData.bodyRomeData.index+=1;
-                    });
-                    
-                }else if(self.RomeData.bodyRomeData.requestSaveType=='raw'){
-                    self.RomeData.bodyRomeData.rawValue = tempTable.body.rawValue;
-                }
-                
-                //extract
-                tempTable.extract.forEach(item_extract=>{
-                    let obj = {};
-                    obj.index = item_extract.index;
-                    obj.state =item_extract.state;
-                    obj.key =item_extract.key;
-                    obj.value=item_extract.value;
-                    obj.remarks=item_extract.remarks;
-
-                    self.RomeData.extractRomeData.tableData.push(obj);
-                    self.RomeData.extractRomeData.index+=1;
-                });
-                
-
-                //validate
-                tempTable.validate.forEach(item_validate=>{
-                    let obj = {};
-                    obj.index = item_validate.index;
-                    obj.state =item_validate.state;
-                    obj.checkName =item_validate.checkName;
-                    obj.validateType=item_validate.validateType;
-                    obj.valueType=item_validate.valueType;
-                    obj.expectedResults=item_validate.expectedResults;
-                    obj.remarks=item_validate.remarks;
-
-                    self.RomeData.validateRomeData.tableData.push(obj);
-                    self.RomeData.validateRomeData.index+=1;
-                });
-                
-
-                //preOperation
-                tempTable.preOperation.forEach(item_preOperation=>{
-                    let obj = {};
-                    obj.index = item_preOperation.index;
-                    obj.state =item_preOperation.state;
-                    obj.operationType =item_preOperation.operationType;
-                    obj.methodsName=item_preOperation.methodsName;
-                    obj.dataBase=item_preOperation.dataBase;
-                    obj.sql=item_preOperation.sql;
-                    obj.remarks=item_preOperation.remarks;
-
-                    self.RomeData.preOperationRomeData.tableData.push(obj);
-                    self.RomeData.preOperationRomeData.index+=1;
-                });
-                
-
-                //rearOperation
-                tempTable.rearOperation.forEach(item_rearOperation=>{
-                    let obj = {};
-                    obj.index = item_rearOperation.index;
-                    obj.state =item_rearOperation.state;
-                    obj.operationType =item_rearOperation.operationType;
-                    obj.methodsName=item_rearOperation.methodsName;
-                    obj.dataBase=item_rearOperation.dataBase;
-                    obj.sql=item_rearOperation.sql;
-                    obj.remarks=item_rearOperation.remarks;
-
-                    self.RomeData.rearOperationRomeData.tableData.push(obj);
-                    self.RomeData.rearOperationRomeData.index+=1;
-                });
-                
-
-                PrintConsole('apiId存在:'+apiId,'赋值到页面');
+            }else if(self.RomeData.bodyRomeData.requestSaveType=='raw'){
+                self.RomeData.bodyRomeData.rawValue = request.body.rawValue;
             }
+            
+            //extract
+            request.extract.forEach(item_extract=>{
+                let obj = {};
+                obj.index = item_extract.index;
+                obj.state =item_extract.state;
+                obj.key =item_extract.key;
+                obj.value=item_extract.value;
+                obj.remarks=item_extract.remarks;
+
+                self.RomeData.extractRomeData.tableData.push(obj);
+                self.RomeData.extractRomeData.index+=1;
+            });
+            
+            //validate
+            request.validate.forEach(item_validate=>{
+                let obj = {};
+                obj.index = item_validate.index;
+                obj.state =item_validate.state;
+                obj.checkName =item_validate.checkName;
+                obj.validateType=item_validate.validateType;
+                obj.valueType=item_validate.valueType;
+                obj.expectedResults=item_validate.expectedResults;
+                obj.remarks=item_validate.remarks;
+
+                self.RomeData.validateRomeData.tableData.push(obj);
+                self.RomeData.validateRomeData.index+=1;
+            });
+            
+            //preOperation
+            request.preOperation.forEach(item_preOperation=>{
+                let obj = {};
+                obj.index = item_preOperation.index;
+                obj.state =item_preOperation.state;
+                obj.operationType =item_preOperation.operationType;
+                obj.methodsName=item_preOperation.methodsName;
+                obj.dataBase=item_preOperation.dataBase;
+                obj.sql=item_preOperation.sql;
+                obj.remarks=item_preOperation.remarks;
+
+                self.RomeData.preOperationRomeData.tableData.push(obj);
+                self.RomeData.preOperationRomeData.index+=1;
+            });
+            
+            //rearOperation
+            request.rearOperation.forEach(item_rearOperation=>{
+                let obj = {};
+                obj.index = item_rearOperation.index;
+                obj.state =item_rearOperation.state;
+                obj.operationType =item_rearOperation.operationType;
+                obj.methodsName=item_rearOperation.methodsName;
+                obj.dataBase=item_rearOperation.dataBase;
+                obj.sql=item_rearOperation.sql;
+                obj.remarks=item_rearOperation.remarks;
+
+                self.RomeData.rearOperationRomeData.tableData.push(obj);
+                self.RomeData.rearOperationRomeData.index+=1;
+            });
+            
+            PrintConsole('赋值到页面');
         },
         LoadApiData(apiId){//加载接口的数据
             let self = this;
             self.$axios.get('/api/ApiCaseMaintenance/LoadData',{
                 params:{
-                  'apiId':apiId,
+                  'apiId':apiId.split('-')[0],
                 }
             }).then(res => {
                if(res.data.statusCode==2000){
@@ -1098,6 +1108,178 @@ export default {
             }).catch(function (error) {
                 console.log(error);
             })
+        },
+        ReferenceOriginalSet(){
+            let self = this;
+            self.$confirm('引用原接口设置,会清空当前您所填写的参数,请确定是否引用?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                self.ClearRomeData();
+                self.loading=true;
+                self.$axios.get('/api/ApiIntMaintenance/LoadData',{
+                    params:{
+                        'apiId':self.RomeData.apiId.split('-')[0]
+                    }
+                }).then(res => {
+                    if(res.data.statusCode==2000){
+                        self.RomeData.requestType=res.data.apiInfo.requestType;
+                        self.RomeData.requestUrl=res.data.apiInfo.currentRequestUrl;
+                    
+                        //headers
+                        res.data.apiInfo.request.headers.forEach(item_headers=>{
+                            let obj = {};
+                            obj.index = item_headers.index;
+                            obj.state =item_headers.state;
+                            obj.key =item_headers.key;
+                            obj.value=item_headers.value;
+                            obj.remarks=item_headers.remarks;
+
+                            self.RomeData.headersRomeData.tableData.push(obj);
+                            self.RomeData.headersRomeData.index+=1;
+                        });
+
+                        //params
+                        res.data.apiInfo.request.params.forEach(item_params=>{
+                            let obj = {};
+                            obj.index = item_params.index;
+                            obj.state =item_params.state;
+                            obj.key =item_params.key;
+                            obj.value=item_params.value;
+                            obj.remarks=item_params.remarks;
+                            self.RomeData.paramsRomeData.tableData.push(obj);
+
+                            self.RomeData.paramsRomeData.index+=1;
+                        });
+
+                        //body
+                        self.RomeData.bodyRomeData.requestSaveType = res.data.apiInfo.request.body.requestSaveType;
+                        if(res.data.apiInfo.request.body.requestSaveType=='form-data'){
+                            res.data.apiInfo.request.body.bodyData.forEach(item_body=>{
+                                let obj = {};
+                                obj.index = item_body.index;
+                                obj.state =item_body.state;
+                                obj.key =item_body.key;
+                                obj.value=item_body.value;
+                                obj.remarks=item_body.remarks;
+
+                                self.RomeData.bodyRomeData.tableData.push(obj);
+                                self.RomeData.bodyRomeData.index+=1;
+                            });
+                        }else if(res.data.apiInfo.request.body.requestSaveType=='raw'){
+                            self.RomeData.bodyRomeData.rawValue = res.data.apiInfo.request.body.bodyData;
+                        }
+                
+                        //extract
+                        res.data.apiInfo.request.extract.forEach(item_extract=>{
+                            let obj = {};
+                            obj.index = item_extract.index;
+                            obj.state =item_extract.state;
+                            obj.key =item_extract.key;
+                            obj.value=item_extract.value;
+                            obj.remarks=item_extract.remarks;
+
+                            self.RomeData.extractRomeData.tableData.push(obj);
+                            self.RomeData.extractRomeData.index+=1;
+                        });
+
+                        //validate
+                        res.data.apiInfo.request.validate.forEach(item_validate=>{
+                            let obj = {};
+                            obj.index = item_validate.index;
+                            obj.state =item_validate.state;
+                            obj.checkName =item_validate.checkName;
+                            obj.validateType=item_validate.validateType;
+                            obj.valueType=item_validate.valueType;
+                            obj.expectedResults=item_validate.expectedResults;
+                            obj.remarks=item_validate.remarks;
+
+                            self.RomeData.validateRomeData.tableData.push(obj);
+                            self.RomeData.validateRomeData.index+=1;
+                        });
+
+                        //preOperation
+                        res.data.apiInfo.request.preOperation.forEach(item_preOperation=>{
+                            let obj = {};
+                            obj.index = item_preOperation.index;
+                            obj.state =item_preOperation.state;
+                            obj.operationType =item_preOperation.operationType;
+                            obj.methodsName=item_preOperation.methodsName;
+                            obj.dataBase=item_preOperation.dataBase;
+                            obj.sql=item_preOperation.sql;
+                            obj.remarks=item_preOperation.remarks;
+
+                            self.RomeData.preOperationRomeData.tableData.push(obj);
+                            self.RomeData.preOperationRomeData.index+=1;
+                        });
+
+                        //rearOperation
+                        res.data.apiInfo.request.rearOperation.forEach(item_rearOperation=>{
+                            let obj = {};
+                            obj.index = item_rearOperation.index;
+                            obj.state =item_rearOperation.state;
+                            obj.operationType =item_rearOperation.operationType;
+                            obj.methodsName=item_rearOperation.methodsName;
+                            obj.dataBase=item_rearOperation.dataBase;
+                            obj.sql=item_rearOperation.sql;
+                            obj.remarks=item_rearOperation.remarks;
+
+                            self.RomeData.rearOperationRomeData.tableData.push(obj);
+                            self.RomeData.rearOperationRomeData.index+=1;
+                        });
+                        self.loading=false;
+                    }else{
+                        self.$message.error('数据加载失败:',res.data.errorMsg);
+                        self.loading=false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.loading=false;
+                })
+            }).catch(function (error){     
+                console.log(error);   
+            }); 
+        },
+        //测试请求
+        closeTestReportDialog(){
+            this.dialog.testReport.dialogVisible =false;
+        },
+        OpenTestReportDialog(index,row){
+            let self = this;
+            self.dialog.testReport.dialogPara={
+                dialogTitle:self.dialogTitle,//初始化标题
+                isTest:true,
+                testSendData:{
+                    'BasicInfo':{
+                        'proId':self.$cookies.get('proId'),
+                        'environmentId':self.RomeData.environmentId,
+                    },
+                    'ApiInfo':{
+                        'requestType':self.RomeData.requestType,
+                        'requestUrlRadio':1,
+                        'requestUrl':{
+                            'url1':self.RomeData.requestUrl,
+                            'url2':'',
+                            'url3':'',
+                        },
+                        'request':{
+                            'headers':self.RomeData.headersRomeData.tableData,
+                            'params':self.RomeData.paramsRomeData.tableData,
+                            'body':{
+                                'requestSaveType':self.RomeData.bodyRomeData.requestSaveType,
+                                'formData':self.RomeData.bodyRomeData.tableData,
+                                'raw':self.RomeData.bodyRomeData.rawValue,
+                            },
+                            'extract':self.RomeData.extractRomeData.tableData,
+                            'validate':self.RomeData.validateRomeData.tableData,
+                            'preOperation':self.RomeData.preOperationRomeData.tableData,
+                            'rearOperation':self.RomeData.rearOperationRomeData.tableData,
+                        }
+                    }
+                }
+            }
+            self.dialog.testReport.dialogVisible=true;
         },
 
         //headersRomeData
@@ -1549,27 +1731,30 @@ export default {
 
         SaveData(){
             let self = this;
-            let obj = {}
-            obj.apiId = self.RomeData.apiId;
-            obj.requestType = self.RomeData.requestType;
-            obj.requestUrl = self.RomeData.requestUrl;
-            obj.headers = self.RomeData.headersRomeData.tableData;
-            obj.params = self.RomeData.paramsRomeData.tableData;
-            obj.body = {
-                'requestSaveType':self.RomeData.bodyRomeData.requestSaveType,
-                'formData':self.RomeData.bodyRomeData.tableData,
-                'rawValue':self.RomeData.bodyRomeData.rawValue
-            };
-            obj.extract = self.RomeData.extractRomeData.tableData;
-            obj.validate = self.RomeData.validateRomeData.tableData;
-            obj.preOperation = self.RomeData.preOperationRomeData.tableData;
-            obj.rearOperation = self.RomeData.rearOperationRomeData.tableData;
+            if(self.RomeData.requestUrl==''){
+                self.$message.warning('不可保存空请求');
+            }else{
+                let obj = {}
+                obj.apiId = self.RomeData.apiId;
+                obj.requestType = self.RomeData.requestType;
+                obj.requestUrl = self.RomeData.requestUrl;
+                obj.headers = self.RomeData.headersRomeData.tableData;
+                obj.params = self.RomeData.paramsRomeData.tableData;
+                obj.body = {
+                    'requestSaveType':self.RomeData.bodyRomeData.requestSaveType,
+                    'formData':self.RomeData.bodyRomeData.tableData,
+                    'rawValue':self.RomeData.bodyRomeData.rawValue
+                };
+                obj.extract = self.RomeData.extractRomeData.tableData;
+                obj.validate = self.RomeData.validateRomeData.tableData;
+                obj.preOperation = self.RomeData.preOperationRomeData.tableData;
+                obj.rearOperation = self.RomeData.rearOperationRomeData.tableData;
 
-            self.$emit('getData',obj);//回调传值
-            self.dialogClose();
+                self.$emit('getData',obj);//回调传值
+                self.dialogClose();
+            }
         },
-        
-       
+     
     }
 };
 </script>

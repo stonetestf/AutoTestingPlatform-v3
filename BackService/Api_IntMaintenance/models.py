@@ -120,3 +120,14 @@ class ApiHistory(models.Model):  # 历史记录，恢复使用
     operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)
     restoreData = models.TextField('恢复数据', null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
+
+
+class ApiDynamic(models.Model):  # 接口动态表
+    apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
+    case = models.ForeignKey(to='Api_CaseMaintenance.CaseBaseData', to_field='id', on_delete=models.CASCADE)
+    is_read = models.IntegerField("是否删除(1:已看,0:未看)", null=False)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+    updateTime = models.DateTimeField('更新时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+    cuid = models.IntegerField("创建者用户", null=False)
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
