@@ -24,8 +24,18 @@
                                 </el-option>
                             </el-select>
                         </el-form-item>
+                        <el-form-item label="测试类型:">
+                            <el-select v-model="SelectRomeData.testType" clearable placeholder="请选择" style="width:120px;">
+                                <el-option
+                                    v-for="item in SelectRomeData.testTypelOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
                         <el-form-item label="用例标签:">
-                            <el-select v-model="SelectRomeData.caseLabel" clearable placeholder="请选择" style="width:200px;">
+                            <el-select v-model="SelectRomeData.caseLabel" clearable placeholder="请选择" style="width:120px;">
                                 <el-option
                                     v-for="item in SelectRomeData.caseLabelOption"
                                     :key="item.value"
@@ -35,7 +45,7 @@
                             </el-select>
                         </el-form-item>
                         <el-form-item label="用例状态:">
-                            <el-select v-model="SelectRomeData.caseState" clearable placeholder="请选择" style="width:200px;">
+                            <el-select v-model="SelectRomeData.caseState" clearable placeholder="请选择" style="width:120px;">
                                 <el-option
                                     v-for="item in SelectRomeData.caseStateOption"
                                     :key="item.value"
@@ -195,7 +205,7 @@
                             </el-table-column>
                             <el-table-column
                                 align="center"
-                                width="260px">
+                                width="240px">
                             <template slot="header">
                                 <el-button-group>
                                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
@@ -211,6 +221,7 @@
                                 </el-button-group>
                             </template>
                             <template slot-scope="scope" style="width:100px">
+                                <el-button-group>
                                 <el-button
                                     size="mini"
                                     type="success"
@@ -225,6 +236,7 @@
                                     type="danger"
                                     @click="handleDelete(scope.$index, scope.row)">Delete
                                 </el-button>
+                                </el-button-group>
                             </template>
                             </el-table-column>
                         </el-table>
@@ -277,6 +289,11 @@ export default {
                 pageNameOption:[],
                 funId:'',
                 funNameOption:[],
+                testType:'',
+                testTypelOption:[
+                    {'label':'单元测试','value':'UnitTest'},
+                    {'label':'混合测试','value':'HybridTest'},
+                ],
                 caseLabel:'',
                 caseLabelOption:[
                     {'label':'普通用例','value':'CommonCase'},
@@ -332,6 +349,7 @@ export default {
                     "proId":self.$cookies.get('proId'),
                     "pageId":self.SelectRomeData.pageId,
                     "funId":self.SelectRomeData.funId,
+                    'testType':self.SelectRomeData.testType,
                     "labelId":self.SelectRomeData.caseLabel,
                     "caseState":self.SelectRomeData.caseState,
                     'caseName':self.SelectRomeData.caseName,
@@ -376,6 +394,7 @@ export default {
             let self = this;
             self.SelectRomeData.pageId='';
             self.SelectRomeData.funId='';
+            self.SelectRomeData.testType='';
             self.SelectRomeData.caseLabel='';
             self.SelectRomeData.caseState='';
             self.SelectRomeData.caseName='';

@@ -56,6 +56,7 @@ def select_data(request):
         proId = objData.proId
         pageId = objData.pageId
         funId = objData.funId
+        testType = objData.testType
         labelId = objData.labelId
         caseState = objData.caseState
         caseName = objData.caseName
@@ -76,6 +77,9 @@ def select_data(request):
             select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if funId:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(fun_id=funId)
+            select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
+        if testType:
+            obj_db_CaseBaseData = obj_db_CaseBaseData.filter(testType=testType)
             select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if labelId:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(label=labelId)

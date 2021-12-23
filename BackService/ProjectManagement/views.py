@@ -20,6 +20,7 @@ from ClassData.FindCommonTable import FindTable
 from ClassData.Common import Common
 from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
+from ClassData.Redis import RedisHandle
 
 # Create info here.
 cls_Logging = Logging()
@@ -27,6 +28,7 @@ cls_GlobalDer = GlobalDer()
 cls_FindTable = FindTable()
 cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
+cls_RedisHandle = RedisHandle()
 
 
 # Create your views here.
@@ -562,7 +564,7 @@ def select_history(request):
         cls_Logging.record_error_info('API', 'ProjectManagement', 'select_history', errorMsg)
     else:
         if proId:
-            obj_db_ProHistory = db_ProHistory.objects.filter(pid_id=proId,pid__sysType=sysType).order_by('-createTime')
+            obj_db_ProHistory = db_ProHistory.objects.filter(pid_id=proId, pid__sysType=sysType).order_by('-createTime')
         else:
             obj_db_ProHistory = db_ProHistory.objects.filter(pid__sysType=sysType).order_by('-createTime')
         for i in obj_db_ProHistory:
@@ -622,7 +624,7 @@ def restor_data(request):
                             obj_db_ProManagement = db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id)
                             if obj_db_ProManagement.exists():
                                 obj_db_ProManagement.update(
-                                    uid_id=userId,updateTime=cls_Common.get_date_time(),is_del=0
+                                    uid_id=userId, updateTime=cls_Common.get_date_time(), is_del=0
                                 )
                             else:
                                 response['errorMsg'] = "未找到当前可恢复的数据!"
