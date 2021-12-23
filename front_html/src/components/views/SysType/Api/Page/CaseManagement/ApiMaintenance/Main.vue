@@ -166,7 +166,7 @@
                             <el-button
                                 size="mini"
                                 type="success"
-                                @click="OpenRequestApiDialog(scope.$index, scope.row)">Request</el-button>
+                                @click="OpenRunTypeDialog(scope.$index, scope.row)">Request</el-button>
                             <el-button
                                 type="warning"
                                 size="mini"
@@ -207,12 +207,12 @@
             </dialog-editor>
         </template>
         <template>
-            <dialog-request-api
-                @closeDialog="closeRequestApiDialog" 
-                :isVisible="dialog.requestApi.dialogVisible" 
-                :dialogPara="dialog.requestApi.dialogPara"
+            <dialog-run-type
+                @closeDialog="closeRunTypeDialog" 
+                :isVisible="dialog.runType.dialogVisible" 
+                :dialogPara="dialog.runType.dialogPara"
                 @Succeed="SelectData">
-            </dialog-request-api>
+            </dialog-run-type>
         </template>
         <template>
             <dialog-work-order
@@ -239,13 +239,13 @@ import {PrintConsole} from "../../../../../../js/Logger.js";
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import DialogEditor from "./Editor.vue";
-import DialogRequestApi from "./RequestApi.vue";
+import DialogRunType from "./RunType.vue";
 import DialogWorkOrder from "../../../../../WorkorderManagement/WorkorderMaintenance/Editor.vue";
 import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-        DialogEditor,DialogRequestApi,DialogWorkOrder,DialogHistoryInfo
+        DialogEditor,DialogRunType,DialogWorkOrder,DialogHistoryInfo
     },
     data() {
         return {
@@ -288,7 +288,7 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
-                requestApi:{
+                runType:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -396,17 +396,17 @@ export default {
             }
             self.dialog.editor.dialogVisible=true;
         },
-        closeRequestApiDialog(){
-            this.dialog.requestApi.dialogVisible =false;
+        closeRunTypeDialog(){
+            this.dialog.runType.dialogVisible =false;
         },
-        OpenRequestApiDialog(index,row){
+        OpenRunTypeDialog(index,row){
             let self = this;
-            self.dialog.requestApi.dialogPara={
+            self.dialog.runType.dialogPara={
                 dialogTitle:'选择运行',//初始化标题
                 apiId:row.id,
                 apiName:row.apiName,
             }
-            self.dialog.requestApi.dialogVisible=true;
+            self.dialog.runType.dialogVisible=true;
         },
         closeWorkOrderDialog(){
             this.dialog.workOrder.dialogVisible =false;

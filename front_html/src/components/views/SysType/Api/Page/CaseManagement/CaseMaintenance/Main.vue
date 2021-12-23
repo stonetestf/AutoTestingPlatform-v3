@@ -225,7 +225,7 @@
                                 <el-button
                                     size="mini"
                                     type="success"
-                                    @click="OpenDialog_Run(scope.$index, scope.row)">RunCase
+                                    @click="OpenRunTypeDialog(scope.$index, scope.row)">RunCase
                                 </el-button>
                                 <el-button
                                     size="mini"
@@ -262,6 +262,14 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+            <dialog-run-type
+                @closeDialog="closeRunTypeDialog" 
+                :isVisible="dialog.runType.dialogVisible" 
+                :dialogPara="dialog.runType.dialogPara"
+                @Succeed="SelectData">
+            </dialog-run-type>
+        </template>
     </div>
 </template>
 
@@ -272,10 +280,11 @@ import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 
 import DialogEditor from "./Editor.vue";
+import DialogRunType from "./RunType.vue";
 
 export default {
     components: {
-        DialogEditor
+        DialogEditor,DialogRunType
     },
     data() {
         return {
@@ -317,6 +326,13 @@ export default {
             },
             dialog:{
                 editor:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                runType:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -475,6 +491,18 @@ export default {
             }).catch(function (error) {
                 console.log(error);
             })
+        },
+        closeRunTypeDialog(){
+            this.dialog.runType.dialogVisible =false;
+        },
+        OpenRunTypeDialog(index,row){
+            let self = this;
+            self.dialog.runType.dialogPara={
+                dialogTitle:'选择运行',//初始化标题
+                caseId:row.id,
+                caseName:row.caseName,
+            }
+            self.dialog.runType.dialogVisible=true;
         },
        
     }

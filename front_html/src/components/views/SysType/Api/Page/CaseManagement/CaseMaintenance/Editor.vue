@@ -138,9 +138,9 @@
                                     align= "center"
                                     width="90px">
                                     <template slot-scope="scope">
-                                    <el-switch v-model="scope.row.is_synchronous" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                        <el-switch v-model="scope.row.is_synchronous" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
                                         <el-tooltip placement="right">
-                                            <div slot="content">此为单向同步,开启后只会同步:URL,请求的入参,不会同步参数值!<br/>开启时:在接口维护中修改此接口入参时,此接口在被用例运行时会以接口维护中的 <b>入参</b> 为准!<br/>关闭时:双向参数信息为独立!</div>
+                                            <div slot="content">此为单向同步,开启后只会同步:URL,请求的入参,不会同步参数值!<br/>开启时(推荐):在接口维护中修改此接口入参时,此接口在被用例运行时会以接口维护中的 <b>入参</b> 为准!<br/>关闭时:双向参数信息为独立!</div>
                                             <i class='el-icon-info'></i>
                                         </el-tooltip>
                                     </template>
@@ -163,6 +163,10 @@
                                         <el-tag type="success" v-if="scope.row.apidynamic==0">无更变</el-tag>
                                         <el-tag type="danger" v-else-if="scope.row.apidynamic==1">已更变</el-tag>
                                         <el-tag type="warning" v-else>已知晓</el-tag>
+                                        <el-tooltip placement="right">
+                                            <div slot="content">是否同步开启时:当接口维护中此接口修改时,此处会显示提示!</div>
+                                            <i class='el-icon-info'></i>
+                                        </el-tooltip>
                                     </template>
                                 </el-table-column> 
                                 <el-table-column
