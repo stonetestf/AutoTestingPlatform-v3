@@ -156,15 +156,6 @@
                                     </template>
                                 </el-table-column>   
                                 <el-table-column
-                                    label="设置参数"
-                                    width="100px"
-                                    align= "center">
-                                    <template slot-scope="scope">
-                                        <el-tag type="success" v-if="scope.row.settingParams" >已设置</el-tag>
-                                        <el-tag type="warning" v-else>未设置</el-tag>
-                                    </template>
-                                </el-table-column>   
-                                <el-table-column
                                     label="接口动态"
                                     width="100px"
                                     align= "center">
@@ -173,7 +164,16 @@
                                         <el-tag type="danger" v-else-if="scope.row.apidynamic==1">已更变</el-tag>
                                         <el-tag type="warning" v-else>已知晓</el-tag>
                                     </template>
-                                </el-table-column>  
+                                </el-table-column> 
+                                <el-table-column
+                                    label="设置参数"
+                                    width="100px"
+                                    align= "center">
+                                    <template slot-scope="scope">
+                                        <el-tag type="success" v-if="scope.row.settingParams" >已设置</el-tag>
+                                        <el-tag type="warning" v-else>未设置</el-tag>
+                                    </template>
+                                </el-table-column>    
                                 <el-table-column
                                     label="启用"
                                     align= "center"
@@ -555,19 +555,28 @@ export default {
             //将重复的id给用 id-次数来处理
             let findCount = 0;
             data.forEach(item=>{
-                let apiId = null;
+                let pluralIntId = null;
                 self.TestSetRomeData.tableData.forEach((d,i)=>{
-                    if(d.id == item.id || d.id == item.id+'-'+findCount){
+                    if(d.apiId == item.id){
+                        self.TestSetRomeData.tableData[i].id= item.id+'-'+i;
+                    }
+                });
+
+                self.TestSetRomeData.tableData.forEach((d,i)=>{
+                    if(d.apiId == item.id){
                         findCount++;
                     }
                 });
-                if(findCount!=0){
-                    apiId=item.id+'-'+findCount;
-                }else{
-                    apiId=item.id;
-                }
+                
+                // if(findCount!=0){
+                pluralIntId = item.id+'-'+findCount;
+                // }else{
+                //     pluralIntId = item.id
+                // }
+
                 let obj = {};
-                obj.apiId=String(apiId);
+                obj.id =String(pluralIntId);
+                obj.apiId=item.id;
                 obj.state=true;
                 obj.apiName=item.apiName;
                 obj.apiState = item.apiState;
@@ -624,7 +633,7 @@ export default {
             PrintConsole('回调数据:',data);
             let self = this;
             let tempTestSetTable = self.TestSetRomeData.tableData.find(item=>
-                item.apiId == data.apiId
+                item.id == data.id
             );
             if(tempTestSetTable){
                 tempTestSetTable.settingParams = true;
@@ -667,6 +676,7 @@ export default {
             self.dialog.requestParams.dialogPara={
                 dialogTitle:dialogTitle,//初始化标题
                 environmentId:self.BasicRomeData.environmentId,
+                id:row.id,
                 apiId:row.apiId,
                 synchronous:row.is_synchronous,
                 request:row.request,

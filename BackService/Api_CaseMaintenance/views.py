@@ -438,8 +438,8 @@ def save_data(request):
                     # endregion
                     # region 测试集
                     for item_index, item_testSet in enumerate(testSet, 0):
-                        pluralIntId = item_testSet.apiId
-                        apiId = pluralIntId.split('-')[0]
+                        pluralIntId = item_testSet.id
+                        apiId = item_testSet.apiId
                         save_db_CaseTestSet = db_CaseTestSet.objects.create(
                             caseId_id=save_db_CaseBaseData.id,
                             index=item_index,
@@ -817,8 +817,8 @@ def edit_data(request):
                     # endregion
                     # region 测试集
                     for item_index, item_testSet in enumerate(testSet, 0):
-                        pluralIntId = item_testSet.apiId
-                        apiId = pluralIntId.split('-')[0]
+                        pluralIntId = item_testSet.id
+                        apiId = item_testSet.apiId
                         save_db_CaseTestSet = db_CaseTestSet.objects.create(
                             caseId_id=basicInfo.caseId,
                             index=item_index,
@@ -972,8 +972,8 @@ def edit_data(request):
                         # endregion
                     # endregion
                     # region 更新接口动态表为无更变
-                    db_ApiDynamic.objects.filter(is_del=0,case_id=basicInfo.caseId).update(
-                        updateTime=cls_Common.get_date_time(),is_read=1,uid_id=userId
+                    db_ApiDynamic.objects.filter(is_del=0, case_id=basicInfo.caseId).update(
+                        updateTime=cls_Common.get_date_time(), is_read=1, uid_id=userId
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -1028,6 +1028,8 @@ def delete_data(request):
                         )
                     obj_db_CaseTestSet.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                     obj_db_CaseBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                    db_ApiDynamic.objects.filter(is_del=0, case_id=caseId).update(
+                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                     # endregion
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
@@ -1082,6 +1084,7 @@ def load_case_data(request):
             obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
             for item_testSet in obj_db_CaseTestSet:
                 settingParams = False
+                synchronous = True if item_testSet.is_synchronous == 1 else False
                 requestData = {
                     'requestType': 'GET',
                     'requestUrl': '',
@@ -1200,20 +1203,25 @@ def load_case_data(request):
                         })
                     # endregion
                 obj_db_ApiDynamic = db_ApiDynamic.objects.filter(
-                    case_id=caseId,apiId_id=item_testSet.pluralIntId,is_del=0,is_read=0)
+                    case_id=caseId, apiId_id=item_testSet.apiId_id, is_del=0, is_read=0)
+                # 0 无更变、1 已更变、2 已知晓
                 if obj_db_ApiDynamic.exists():
-                    apidynamic = 1
+                    if synchronous:  # 只对开启同步功能的接口 提示接口动态，未开始同步的接口因为是独立的参数可不提醒
+                        apidynamic = 1
+                    else:
+                        apidynamic = 0
                 else:
                     apidynamic = 0
                 testSet.append({
-                    'apiId': item_testSet.pluralIntId,
+                    'id': item_testSet.pluralIntId,
+                    'apiId': item_testSet.apiId_id,
                     'state': True if item_testSet.state == 1 else False,
                     'apiName': item_testSet.apiId.apiName,
                     'apiState': item_testSet.apiId.apiState,
                     'testName': item_testSet.testName,
-                    'is_synchronous': True if item_testSet.is_synchronous == 1 else False,
+                    'is_synchronous': synchronous,
                     'settingParams': settingParams,
-                    'apidynamic':apidynamic,
+                    'apidynamic': apidynamic,
                     'request': requestData,
                 })
             # endregion

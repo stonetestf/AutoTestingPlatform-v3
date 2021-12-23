@@ -653,6 +653,7 @@ export default {
             dialogVisible:false,
             loading:false,
             RomeData:{
+                id:'',
                 environmentId:'',
                 apiId:'',
                 requestUrl:'',
@@ -765,7 +766,8 @@ export default {
                 this.RomeData.environmentId='';
                 this.RomeData.apiId='';
                 this.dialogTitle = newval.dialogTitle;
-                this.RomeData.apiId = newval.apiId;
+                this.RomeData.id = newval.id;//这是唯一值
+                this.RomeData.apiId = newval.apiId;//这个不是唯一值
                 this.RomeData.environmentId = newval.environmentId;
 
                 this.$nextTick(function () {//当DOM加载完成后才会执行这个!
@@ -1031,7 +1033,7 @@ export default {
             let self = this;
             self.$axios.get('/api/ApiCaseMaintenance/LoadData',{
                 params:{
-                  'apiId':apiId.split('-')[0],
+                  'apiId':apiId
                 }
             }).then(res => {
                if(res.data.statusCode==2000){
@@ -1120,7 +1122,7 @@ export default {
                 self.loading=true;
                 self.$axios.get('/api/ApiIntMaintenance/LoadData',{
                     params:{
-                        'apiId':self.RomeData.apiId.split('-')[0]
+                        'apiId':self.RomeData.apiId
                     }
                 }).then(res => {
                     if(res.data.statusCode==2000){
@@ -1735,6 +1737,7 @@ export default {
                 self.$message.warning('不可保存空请求');
             }else{
                 let obj = {}
+                obj.id = self.RomeData.id;
                 obj.apiId = self.RomeData.apiId;
                 obj.requestType = self.RomeData.requestType;
                 obj.requestUrl = self.RomeData.requestUrl;
