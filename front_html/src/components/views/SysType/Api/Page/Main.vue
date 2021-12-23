@@ -90,7 +90,7 @@
                     </div>
                     <div style="margin-top:10px">
                       <el-table
-                        height="340px"
+                        height="330px"
                         :data="RomeData.formerlyTableData">
                         <el-table-column
                           prop="index"
@@ -144,7 +144,7 @@
                     </div>
                     <div style="margin-top:10px">
                       <el-table
-                        height="340px"
+                        height="330px"
                         :data="RomeData.queueTableData">
                         <el-table-column
                           prop="itsName"
@@ -443,13 +443,13 @@ export default {
 
 <style>
 .MainCard{
-  height: 760px;
+  height: 750px;
 }
 .TopCard{
   height: 320px;
 }
 .DownCard{
-  height: 400px;
+  height: 390px;
 }
 
 </style>
