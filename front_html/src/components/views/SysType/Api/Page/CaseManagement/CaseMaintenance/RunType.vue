@@ -145,6 +145,7 @@ export default {
             let self = this;
             self.dialog.testReport.dialogPara={
                 dialogTitle:self.RomeData.caseName,//初始化标题
+                runType:self.RomeData.runType,
                 caseId:self.RomeData.caseId,
                 environmentId:self.RomeData.environmentId,
             }

@@ -1237,3 +1237,22 @@ def load_case_data(request):
         else:
             response['errorMsg'] = "当前选择的数据不存在,请刷新后在重新尝试!"
     return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 执行用例
+def execute_case(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        runType = request.POST['runType']
+        caseId = request.POST['caseId']
+        environmentId = request.POST['environmentId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_CaseMaintenance', 'execute_case', errorMsg)
+    else:
+        pass
+    return JsonResponse(response)
