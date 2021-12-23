@@ -5,7 +5,11 @@
         :visible.sync="dialogVisible"
         direction="rtl"
         :before-close="dialogClose">
-        <el-card style="height:870px">
+        <el-card 
+        style="height:870px"
+        v-loading="loading"
+        element-loading-text="拼命返回请求信息中"
+        element-loading-spinner="el-icon-loading">
             <div>
                 <el-card style="height:250px" shadow="never">
                     <el-row>
@@ -267,10 +271,17 @@ export default {
                 this.dialogTitle = newval.dialogTitle;
                 this.$nextTick(function () {//当DOM加载完成后才会执行这个!
                     this.MyChart_pie = echarts.init(document.getElementById('EchartContainer-pie'));//初始化
-                    this.PieChart();
-                })
-                
+                    // this.PieChart();
+                    let self = this;
+                    self.executeCase(newval.runType,newval.caseId,newval.environmentId).then(res=>{
+                        self.loading=false;
+                        if(res){
 
+                        }else{
+                            self.dialogClose();
+                        }
+                    });
+                })
             }
         },
     },
@@ -327,6 +338,24 @@ export default {
                 }] 
             };
             this.MyChart_pie.setOption(option,true);//加载属性后显示 true自动每次清除数据
+        },
+        executeCase(runType,caseId,environmentId){//执行用例,先获取到用例的基本数据赋值,之后由异步继续执行
+            let self = this;
+            self.loading=true;
+            return self.$axios.post('/api/ApiCaseMaintenance/ExecuteCase',Qs.stringify({
+                'runType':runType,
+                'caseId':caseId,
+                'environmentId':environmentId,
+            })).then(res => {
+                if(res.data.statusCode==2001){
+                    return res.data;
+                }else{
+                    self.$message.error('测试用例运行失败:'+res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                self.$message.error('测试用例运行失败:'+error);
+                console.log(error);
+            })
         },
     }  
 };
