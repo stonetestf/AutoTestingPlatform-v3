@@ -271,16 +271,8 @@ export default {
                 this.dialogTitle = newval.dialogTitle;
                 this.$nextTick(function () {//当DOM加载完成后才会执行这个!
                     this.MyChart_pie = echarts.init(document.getElementById('EchartContainer-pie'));//初始化
-                    // this.PieChart();
-                    let self = this;
-                    self.executeCase(newval.runType,newval.caseId,newval.environmentId).then(res=>{
-                        self.loading=false;
-                        if(res){
-
-                        }else{
-                            self.dialogClose();
-                        }
-                    });
+                    this.PieChart();
+                    this.runCase(newval.runType,newval.caseId,newval.environmentId);
                 })
             }
         },
@@ -338,6 +330,22 @@ export default {
                 }] 
             };
             this.MyChart_pie.setOption(option,true);//加载属性后显示 true自动每次清除数据
+        },
+        runCase(runType,caseId,environmentId){
+            let self = this;
+            self.executeCase(runType,caseId,environmentId).then(res=>{
+                if(res){
+                    self.RomeData.topData.leftData.failedTotal = res.leftData.failedTotal;
+                    self.RomeData.topData.rightData.preOperationTotal = res.rightData.preOperationTotal;
+                    self.RomeData.topData.rightData.rearOperationTotal = res.rightData.rearOperationTotal;
+                    self.RomeData.topData.rightData.extractTotal = res.rightData.extractTotal;
+                    self.RomeData.topData.rightData.assertionsTotal = res.rightData.assertionsTotal;
+                    self.$message.success('任务ID:'+res.redisKey+',请求已建立,请耐心等待返回结果!');
+                    self.loading=false;
+                }else{
+                    // self.dialogClose();
+                }
+            });
         },
         executeCase(runType,caseId,environmentId){//执行用例,先获取到用例的基本数据赋值,之后由异步继续执行
             let self = this;
