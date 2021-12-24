@@ -32,6 +32,8 @@ from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.Request import RequstOperation
 from ClassData.TestReport import ApiReport
 
+from Task.tasks import api_asynchronous_run_case
+
 # Create info here.
 cls_Logging = Logging()
 cls_GlobalDer = GlobalDer()
@@ -1243,16 +1245,51 @@ def load_case_data(request):
 @cls_GlobalDer.foo_isToken
 @require_http_methods(["POST"])  # 执行用例
 def execute_case(request):
-    response = {}
+    response = {
+        'leftData': {},
+        'rightData': {},
+    }
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         runType = request.POST['runType']
         caseId = request.POST['caseId']
         environmentId = request.POST['environmentId']
+        redisKey = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'Api_CaseMaintenance', 'execute_case', errorMsg)
     else:
-        pass
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, id=caseId)
+        if obj_db_CaseBaseData.exists():
+            # region 获取TopData
+            preOperationTotal = 0  # 前置总数
+            rearOperationTotal = 0  # 后置总数
+            extractTotal = 0  # 提取总数
+            assertionsTotal = 0  # 断言总数
+
+            obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
+            response['leftData']['failedTotal'] = obj_db_CaseTestSet.count()
+            for item_testSet in obj_db_CaseTestSet:
+                obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                preOperationTotal += obj_db_CaseApiOperation.filter(location='Pre').count()
+                rearOperationTotal += obj_db_CaseApiOperation.filter(location='Rear').count()
+
+                obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                extractTotal += obj_db_CaseApiExtract.count()
+
+                obj_db_CaseApiValidate = db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                assertionsTotal += obj_db_CaseApiValidate.count()
+            response['rightData']['preOperationTotal'] = preOperationTotal
+            response['rightData']['rearOperationTotal'] = rearOperationTotal
+            response['rightData']['extractTotal'] = extractTotal
+            response['rightData']['assertionsTotal'] = assertionsTotal
+            # endregion
+            result = api_asynchronous_run_case.delay(redisKey,caseId,environmentId,userId)
+            if result.task_id:
+                response['statusCode'] = 2001
+                response['redisKey'] = redisKey
+        else:
+            response['errorMsg'] = '当前选择的用例不存在,请刷新后在重新尝试'
+        # result = api_asynchronous_run_case.delay(batchId, runList, userId, redisKey, runType)
     return JsonResponse(response)

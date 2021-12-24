@@ -1228,7 +1228,7 @@ def send_request(request):
                     reportItemId = createReportItems['reportItemId']
                     cls_ApiReport.update_queue(queueId, 1, userId)
                     # 请求运行
-                    response = cls_RequstOperation.run_request(
+                    response = cls_RequstOperation.run_api(
                         False, onlyCode, userId, apiId=apiId, environmentId=environmentId, reportItemId=reportItemId)
                     if response['state']:
                         response['statusCode'] = 2000
@@ -1307,7 +1307,7 @@ def send_test_request(request):
                 'PreOperation': testSendData['ApiInfo']['request']['preOperation'],
                 'RearOperation': testSendData['ApiInfo']['request']['rearOperation'],
             }
-            response = cls_RequstOperation.run_request(True, onlyCode, userId, requestData=requestData)
+            response = cls_RequstOperation.run_api(True, onlyCode, userId, requestData=requestData)
             if response['state']:
                 response['statusCode'] = 2000
         else:
