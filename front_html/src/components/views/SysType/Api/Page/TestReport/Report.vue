@@ -919,7 +919,7 @@ export default {
                         let lebel = '';
                         if(d.reportStatus=='Fail'){
                             lebel='<失败>---'+d.name;
-                        }else if(d.issuccess=='Error'){
+                        }else if(d.reportStatus=='Error'){
                             lebel='<错误>---'+d.name;
                         }else{
                             lebel=d.name;
