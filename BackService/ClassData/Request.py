@@ -937,7 +937,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-用例执行
-    def execute_case(self, redisKey, testReportId, queueId, caseId, environmentId, userId):
+    def execute_case(self, redisKey, testReportId, caseId, environmentId, userId):
         results = {
             'itemResults': []
         }
@@ -1066,6 +1066,7 @@ class RequstOperation(cls_Logging, cls_Common):
                                     'code': resultOfExecution['responseCode'],
                                     'time': resultOfExecution['time'],
                                     'reportState': resultOfExecution['reportState'],
+                                    'children':[]
                                 }
                             }
                             # endregion

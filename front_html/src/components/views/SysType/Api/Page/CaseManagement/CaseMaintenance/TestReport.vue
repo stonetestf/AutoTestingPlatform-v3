@@ -183,7 +183,7 @@
                     <el-button
                         type="warning"
                         size="mini"
-                        @click="OpenWorkOrderDialog(scope.$index, scope.row)">详情</el-button>
+                        @click="OpendDetailsDialog(scope.$index, scope.row)">详情</el-button>
                 </template>
                 </el-table-column>
             </el-table>
@@ -470,6 +470,10 @@ export default {
                 socket.close(); //关闭TCP连接
             };
             if (socket.readyState == WebSocket.OPEN) socket.onopen();       
+        },
+        OpendDetailsDialog(index,row){
+            PrintConsole(row)
+
         },
     }  
 };
