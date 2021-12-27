@@ -1,6 +1,9 @@
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db import transaction
+from dwebsocket.decorators import accept_websocket
+from django.db.models import Q
+from time import sleep
 
 import json
 import ast
@@ -31,6 +34,7 @@ from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.Request import RequstOperation
 from ClassData.TestReport import ApiReport
+from ClassData.Redis import RedisHandle
 
 from Task.tasks import api_asynchronous_run_case
 
@@ -42,6 +46,7 @@ cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
 cls_RequstOperation = RequstOperation()
 cls_ApiReport = ApiReport()
+cls_RedisHandle = RedisHandle()
 
 
 # Create your views here.
@@ -1269,27 +1274,79 @@ def execute_case(request):
             assertionsTotal = 0  # 断言总数
 
             obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
-            response['leftData']['failedTotal'] = obj_db_CaseTestSet.count()
+            failedTotal = obj_db_CaseTestSet.filter(state=1).count()
+            response['leftData']['failedTotal'] = failedTotal
             for item_testSet in obj_db_CaseTestSet:
-                obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id)
-                preOperationTotal += obj_db_CaseApiOperation.filter(location='Pre').count()
-                rearOperationTotal += obj_db_CaseApiOperation.filter(location='Rear').count()
+                state = True if item_testSet.state == 1 else False
+                if state:
+                    obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                    preOperationTotal += obj_db_CaseApiOperation.filter(location='Pre').count()
+                    rearOperationTotal += obj_db_CaseApiOperation.filter(location='Rear').count()
 
-                obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id)
-                extractTotal += obj_db_CaseApiExtract.count()
+                    obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                    extractTotal += obj_db_CaseApiExtract.count()
 
-                obj_db_CaseApiValidate = db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id)
-                assertionsTotal += obj_db_CaseApiValidate.count()
+                    obj_db_CaseApiValidate = db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                    assertionsTotal += obj_db_CaseApiValidate.count()
             response['rightData']['preOperationTotal'] = preOperationTotal
             response['rightData']['rearOperationTotal'] = rearOperationTotal
             response['rightData']['extractTotal'] = extractTotal
             response['rightData']['assertionsTotal'] = assertionsTotal
             # endregion
-            result = api_asynchronous_run_case.delay(redisKey,caseId,environmentId,userId)
-            if result.task_id:
-                response['statusCode'] = 2001
-                response['redisKey'] = redisKey
+            # region 创建1级主报告
+            createTestReport = cls_ApiReport.create_test_report(
+                obj_db_CaseBaseData[0].pid_id,
+                obj_db_CaseBaseData[0].caseName,
+                'CASE', caseId, failedTotal, userId
+            )
+            # endregion
+            if createTestReport['state']:
+                testReportId = createTestReport['testReportId']
+                # region 创建队列
+                queueId = cls_ApiReport.create_queue(
+                    obj_db_CaseBaseData[0].pid_id, obj_db_CaseBaseData[0].page_id, obj_db_CaseBaseData[0].fun_id
+                    , 'CASE', caseId, testReportId, userId)  # 创建队列
+                # endregion
+                result = api_asynchronous_run_case.delay(redisKey, testReportId,queueId, caseId, environmentId, userId)
+                if result.task_id:
+                    response['statusCode'] = 2001
+                    response['redisKey'] = redisKey
+            else:
+                response['errorMsg'] = f'创建主测试报告失败:{createTestReport["errorMsg"]}'
         else:
             response['errorMsg'] = '当前选择的用例不存在,请刷新后在重新尝试'
-        # result = api_asynchronous_run_case.delay(batchId, runList, userId, redisKey, runType)
     return JsonResponse(response)
+
+
+@accept_websocket  # 读取redis数据
+def read_case_result(request):
+    counter = 0  # 计数器 到100就会断开通信
+    if request.is_websocket():
+        retMessage = str(request.websocket.wait(), 'utf-8')  # 接受前段发送来的数据
+        if retMessage:
+            objData = cls_object_maker(json.loads(retMessage))
+            redisKey = objData.Params.redisKey
+            if objData.Message == "Start":  # 开始执行
+                while True:
+                    try:
+                        retMessage = request.websocket.read()
+                    except BaseException as e:
+                        cls_Logging.print_log('info', 'get_server_indicators', f'前端已关闭,断开连接:{e}')
+                        break
+                    else:
+                        readTypeList = cls_RedisHandle.read_type_list(redisKey)
+                        if readTypeList:
+                            request.websocket.send(json.dumps(readTypeList, ensure_ascii=False).encode('utf-8'))
+
+                        if retMessage:
+                            objData = cls_object_maker(json.loads(retMessage))
+                            if objData.Message == 'Heartbeat':
+                                counter = 0
+                        else:
+                            counter += 1
+                            # 这里的时间 需要在调试的时候改！
+                            if counter >= 10000:
+                                request.websocket.close()
+                                cls_Logging.print_log('error', 'read_case_result', f'心跳包:{counter}秒内无响应,断开连接')
+                                break
+                        # sleep(0.5)

@@ -65,6 +65,10 @@ def select_data(request):
         for i in select_db_ApiTestReport:
             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.id)
             obj_db_ApiQueue = db_ApiQueue.objects.filter(testReport_id=i.id)
+            if i.runningTime:
+                runningTime=round(i.runningTime,2)
+            else:
+                runningTime = None
             dataList.append(
                 {"id": i.id,
                  "reportName": i.reportName,
@@ -72,7 +76,7 @@ def select_data(request):
                  "queueStatus": obj_db_ApiQueue[0].queueStatus if obj_db_ApiQueue.exists() else None,
                  "runningProgress": f"{obj_db_ApiReportItem.count()}/{i.apiTotal}",
                  "reportStatus": i.reportStatus if i.reportStatus else 'Error',
-                 "runningTime": i.runningTime,
+                 "runningTime": runningTime,
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                  "userName": i.uid.userName,
                  }

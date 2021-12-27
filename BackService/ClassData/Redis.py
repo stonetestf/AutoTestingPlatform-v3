@@ -1,4 +1,5 @@
 import json
+import ast
 
 from django_redis import get_redis_connection
 from ClassData.Logger import Logging as cls_Logging
@@ -33,7 +34,7 @@ class RedisHandle(cls_Logging):
         else:
             return None
 
-    def witer_type_listdict(self, label,dictData, timeOut=None):
+    def witer_type_list(self, label,dictData, timeOut=300):
         """
         :param label: '标记':[{'k':'v','k':v}]
         :param dictData:
@@ -51,5 +52,23 @@ class RedisHandle(cls_Logging):
             return False
         else:
             return True
+
+    def read_type_list(self,label):
+        try:
+            rowData = None
+            conn = get_redis_connection("default")
+            exists = conn.exists(label)  # 若 key 存在，返回 1 ，否则返回 0
+            if exists:
+                readData = conn.blpop(label)  # 从头开始读1个删除1个， 如果列表为空,就会删除此Key
+                if len(readData) == 2:
+                    rowData = readData[1].decode("UTF-8")
+                    rowData = ast.literal_eval(rowData)
+
+        except BaseException as e:
+            cls_Logging.print_log(self, 'error', 'Redis>read_type_list', e)
+            cls_Logging.record_error_info(self, 'ALL', 'ClassData', 'Redis>read_type_list', e)
+            return False
+        else:
+            return rowData
 
 

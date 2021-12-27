@@ -54,9 +54,9 @@
                                         <el-col :span="5">
                                             <div>失败:<strong>{{RomeData.topData.rightData.preFailTotal}}</strong></div>
                                         </el-col>
-                                        <el-col :span="4">
+                                        <!-- <el-col :span="4">
                                             <div>错误:<strong>{{RomeData.topData.rightData.preErrorTotal}}</strong></div>
-                                        </el-col>
+                                        </el-col> -->
                                     </el-row>
                                 </div>
                                 <div class="TopMargin">
@@ -73,9 +73,9 @@
                                         <el-col :span="5">
                                             <div>失败:<strong>{{RomeData.topData.rightData.rearFailTotal}}</strong></div>
                                         </el-col>
-                                        <el-col :span="4">
+                                        <!-- <el-col :span="4">
                                             <div>错误:<strong>{{RomeData.topData.rightData.rearErrorTotal}}</strong></div>
-                                        </el-col>
+                                        </el-col> -->
                                     </el-row>
                                 </div>
                                 <div class="TopMargin">
@@ -195,6 +195,7 @@
 <script>
 import * as echarts from 'echarts';
 import Qs from 'qs';
+import store from '../../../../../../../store/index'
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
 export default {
@@ -207,6 +208,7 @@ export default {
             dialogVisible:false,  
             loading:false,
             MyChart_pie:'',
+            socket:"",
             RomeData:{
                 topData:{//头部数据
                     leftData:{
@@ -222,12 +224,12 @@ export default {
                         preOperationTotal:0,
                         prePassTotal:0,
                         preFailTotal:0,
-                        preErrorTotal:0,
+                        // preErrorTotal:0,
 
                         rearOperationTotal:0,
                         rearPassTotal:0,
                         rearFailTotal:0,
-                        rearErrorTotal:0,
+                        // rearErrorTotal:0,
                         
                         extractTotal:0,
                         extractPassTotal:0,
@@ -268,6 +270,7 @@ export default {
             handler(newval,oldval)
             {
                 PrintConsole('newval',newval);
+                this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
                 this.$nextTick(function () {//当DOM加载完成后才会执行这个!
                     this.MyChart_pie = echarts.init(document.getElementById('EchartContainer-pie'));//初始化
@@ -284,6 +287,35 @@ export default {
     methods: {
         dialogClose(done){//用于调用父页面方法
             this.$emit('closeDialog');
+        },
+        ClearRomeData(){
+            let self = this;
+            self.RomeData.topData.leftData.passTotal = 0;
+            self.RomeData.topData.leftData.failedTotal = 0;
+            self.RomeData.topData.rightData.preOperationTotal = 0;
+            self.RomeData.topData.rightData.rearOperationTotal = 0;
+            self.RomeData.topData.rightData.extractTotal = 0;
+            self.RomeData.topData.rightData.assertionsTotal =0;
+            self.RomeData.topData.rightData.passRate =0;
+
+
+            self.RomeData.topData.rightData.cumulativeTime=0;
+            self.RomeData.topData.rightData.preOperationTotal=0;
+            self.RomeData.topData.rightData.prePassTotal=0;
+            self.RomeData.topData.rightData.preFailTotal=0;
+            // self.RomeData.topData.rightData.preErrorTotal=0;
+            self.RomeData.topData.rightData.rearOperationTotal=0;
+            self.RomeData.topData.rightData.rearPassTotal=0;
+            self.RomeData.topData.rightData.rearFailTotal=0;
+            // self.RomeData.topData.rightData.rearErrorTotal=0;
+            self.RomeData.topData.rightData.extractTotal=0;
+            self.RomeData.topData.rightData.extractPassTotal=0;
+            self.RomeData.topData.rightData.extractFailTotal=0;
+            self.RomeData.topData.rightData.assertionsTotal=0;
+            self.RomeData.topData.rightData.assertionsPassTotal=0;
+            self.RomeData.topData.rightData.assertionsFailTotal=0;
+
+            self.RomeData.tableData=[];
         },
         PieChart(){
             let self = this;
@@ -340,7 +372,9 @@ export default {
                     self.RomeData.topData.rightData.rearOperationTotal = res.rightData.rearOperationTotal;
                     self.RomeData.topData.rightData.extractTotal = res.rightData.extractTotal;
                     self.RomeData.topData.rightData.assertionsTotal = res.rightData.assertionsTotal;
-                    self.$message.success('任务ID:'+res.redisKey+',请求已建立,请耐心等待返回结果!');
+                    
+                    self.CreateSocket(res.redisKey,res.leftData.failedTotal);
+
                     self.loading=false;
                 }else{
                     // self.dialogClose();
@@ -364,6 +398,78 @@ export default {
                 self.$message.error('测试用例运行失败:'+error);
                 console.log(error);
             })
+        },
+        CreateSocket(redisKey,caseTotal){//创建socket连接
+            let self = this;
+            var socket = new WebSocket(store.state.WebSock+'/api/ApiCaseMaintenance/ReadCaseResult');
+            self.socket = socket;
+            
+            socket.onopen = function () {
+                PrintConsole('WebSocket open');//成功连接上Websocket
+                var data ={};
+                data.Message = 'Start';
+                data.Params = {
+                    'redisKey':redisKey
+                }
+                socket.send(JSON.stringify(data));//发送数据到服务端
+                self.$message.success('任务ID:'+redisKey+',请求已建立,请耐心等待返回结果!');
+            };
+            socket.onmessage = function (e) {
+                PrintConsole('message: ' + e.data);//打印服务端返回的数据
+                let retData = JSON.parse(e.data)
+                //leftData
+                self.RomeData.topData.leftData.passTotal = retData.topData.leftData.passTotal;
+                self.RomeData.topData.leftData.failTotal = retData.topData.leftData.failTotal;
+                self.RomeData.topData.leftData.errorTotal = retData.topData.leftData.errorTotal;
+                self.RomeData.topData.leftData.passRate = retData.topData.leftData.passRate;
+                self.RomeData.topData.leftData.failedTotal = retData.topData.leftData.failedTotal;
+                self.PieChart();
+
+                //rightData
+                self.RomeData.topData.rightData.cumulativeTime = retData.topData.rightData.runningTime;
+
+                self.RomeData.topData.rightData.prePassTotal = retData.topData.rightData.prePassTotal;
+                self.RomeData.topData.rightData.preFailTotal = self.RomeData.topData.rightData.preOperationTotal- retData.topData.rightData.prePassTotal;
+
+                self.RomeData.topData.rightData.rearPassTotal = retData.topData.rightData.rearPassTotal;
+                self.RomeData.topData.rightData.rearFailTotal = self.RomeData.topData.rightData.rearOperationTotal- retData.topData.rightData.rearPassTotal;
+
+                self.RomeData.topData.rightData.extractPassTotal = retData.topData.rightData.extractPassTotal;
+                self.RomeData.topData.rightData.extractFailTotal = self.RomeData.topData.rightData.extractTotal- retData.topData.rightData.extractPassTotal;
+
+                self.RomeData.topData.rightData.assertionsPassTotal = retData.topData.rightData.assertionsPassTotal;
+                self.RomeData.topData.rightData.assertionsFailTotal = self.RomeData.topData.rightData.assertionsTotal-retData.topData.rightData.assertionsPassTotal;
+
+                //TableData
+                let obj = {};
+                obj.index = retData.tableData.index;
+                obj.testName = retData.tableData.testName;
+                obj.requestType = retData.tableData.requestType;
+                obj.requestUrl = retData.tableData.requestUrl;
+                obj.code = retData.tableData.code;
+                obj.timeConsuming = retData.tableData.time;
+                obj.reportState = retData.tableData.reportState;
+
+                self.RomeData.tableData.push(obj);
+
+                
+                var data ={};
+                data.Message = 'Heartbeat';
+                data.Params = {
+                    'time':'Date()'
+                }
+                socket.send(JSON.stringify(data));//发送数据到服务端
+                if(caseTotal==retData.tableData.index){
+                    self.$message.success('任务ID:'+redisKey+',运行完成!');
+                    PrintConsole("运行完成关闭TCP连接",e);
+                    socket.close(); //关闭TCP连接
+                }
+            };
+            socket.onclose=function(e){
+                PrintConsole("关闭TCP连接onclose",e);
+                socket.close(); //关闭TCP连接
+            };
+            if (socket.readyState == WebSocket.OPEN) socket.onopen();       
         },
     }  
 };

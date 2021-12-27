@@ -10,7 +10,7 @@ urlpatterns = [
     url(r'LoadData', views.load_data, name='LoadData'),
     url(r'CharmCaseData', views.charm_case_data, name='CharmCaseData'),
     url(r'ExecuteCase', views.execute_case, name='ExecuteCase'),
-    # url(r'CopyApi', views.copy_api, name='CopyApi'),
+    url(r'ReadCaseResult', views.read_case_result, name='ReadCaseResult'),
     # url(r'SelectHistory', views.select_history, name='SelectHistory'),
     # url(r'RestorData', views.restor_data, name='RestorData'),
 

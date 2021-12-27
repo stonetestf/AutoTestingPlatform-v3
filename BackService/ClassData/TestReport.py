@@ -84,23 +84,25 @@ class ApiReport(cls_Logging):
         try:
             db_ApiReport.objects.create(
                 reportItem_id=reportItemId,
-                requestUrl=results['requestUrl'],
-                requestType=results['requestType'],
-                requestHeaders=results['report']['requsetHeaders'],
-                requestData=results['report']['requestData'],
+                requestUrl=results['request']['requestUrl'],
+                requestType=results['request']['requestType'],
+                requestHeaders=results['request']['headersDict'],
+                requestData=results['request']['requestDataDict'],
                 # requestFile=results['requestFile'],
-                reportStatus=results['reportState'],
+                reportStatus=results['response']['reportState'],
 
-                statusCode=results['responseCode'],
-                responseHeaders=results['tabPane']['responseHeaders'],
-                responseInfo=results['tabPane']['text'],
-                requestExtract=results['tabPane']['extractTable'],
-                # requestValidate=results['requestValidate'],
-                responseValidate=results['tabPane']['assertionTable'],
-                preOperationInfo=results['tabPane']['preOperationTable'],
-                rearOperationInfo=results['tabPane']['rearOperationTable'],
-                errorInfo=results['tabPane']['errorInfoTable'],
-                runningTime=results['time'],
+                statusCode=results['response']['responseCode'],
+                responseHeaders=results['response']['responseHeaders'],
+                responseInfo=results['response']['text'],
+                requestExtract=results['response']['extractTable'],
+
+                # responseExtract=results['response']['responseExtract'],
+                responseValidate=results['response']['assertionTable'],
+
+                preOperationInfo=results['response']['preOperationTable'],
+                rearOperationInfo=results['response']['rearOperationTable'],
+                errorInfo=results['response']['errorInfoTable'],
+                runningTime=results['response']['time'],
                 is_del=0,
             )
         except BaseException as e:
@@ -127,7 +129,8 @@ class ApiReport(cls_Logging):
 
             itemRunningTime += float(i.runningTime)
 
-        db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId).update(
+        # 更新报告成功失败数
+        db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId, id=reportItemId).update(
             successTotal=successTotal, failTotal=failTotal, errorTotal=errorTotal, runningTime=itemRunningTime,
             updateTime=cls_Common.get_date_time()
         )
@@ -184,6 +187,7 @@ class ApiReport(cls_Logging):
                 'failTotal': 0,
                 'errorTotal': 0,
                 'passRate': 0,  # 通过率
+                'failedTotal': 0,  # 未执行'
             }
         }
 
@@ -192,6 +196,7 @@ class ApiReport(cls_Logging):
             reportName = obj_db_ApiTestReport[0].reportName
             createTime = str(obj_db_ApiTestReport[0].updateTime.strftime('%Y-%m-%d %H:%M:%S'))
             reportStatus = obj_db_ApiTestReport[0].reportStatus
+            apiTotal = obj_db_ApiTestReport[0].apiTotal
             results['topData']['reportName'] = reportName
             results['topData']['createTime'] = createTime
             results['topData']['reportStatus'] = reportStatus
@@ -201,22 +206,68 @@ class ApiReport(cls_Logging):
             failTotal = 0
             errorTotal = 0
             runningTime = 0
+            failedTotal = apiTotal  # 未执行数
+
+            prePassTotal = 0  # 前置成功
+            rearPassTotal = 0  # 后置成功
+            extractPassTotal = 0  # 提取成功
+            assertionsPassTotal = 0  # 断言成功
             for item_reportItem in obj_db_ApiReportItem:
                 passTotal += float(item_reportItem.successTotal)
                 failTotal += float(item_reportItem.failTotal)
                 errorTotal += float(item_reportItem.errorTotal)
+                failedTotal -= 1
 
                 obj_db_ApiReport = db_ApiReport.objects.filter(is_del=0, reportItem_id=item_reportItem.id)
                 for item_apiReport in obj_db_ApiReport:
                     runningTime += float(item_apiReport.runningTime)
+                    # region 前置数
+                    if item_apiReport.preOperationInfo:
+                        preOperationInfo = ast.literal_eval(item_apiReport.preOperationInfo)
+                    else:
+                        preOperationInfo = []
+                    for item_pre in preOperationInfo:
+                        if item_pre['resultsState']:
+                            prePassTotal += 1
+                    # endregion
+                    # region 后置数
+                    if item_apiReport.rearOperationInfo:
+                        rearOperationInfo = ast.literal_eval(item_apiReport.rearOperationInfo)
+                    else:
+                        rearOperationInfo = []
+                    for item_rear in rearOperationInfo:
+                        if item_rear['resultsState']:
+                            rearPassTotal += 1
+                    # endregion
+                    # region 提取数
+                    if item_apiReport.requestExtract:
+                        requestExtract = ast.literal_eval(item_apiReport.requestExtract)
+                        extractPassTotal += len(requestExtract)
+
+                    # endregion
+                    # region 断言数
+                    if item_apiReport.responseValidate:
+                        responseValidate = ast.literal_eval(item_apiReport.responseValidate)
+                    else:
+                        responseValidate = []
+                    for item_validate in responseValidate:
+                        if item_validate['results']:
+                            assertionsPassTotal += 1
+                    # endregion
             results['topData']['passTotal'] = passTotal
             results['topData']['failTotal'] = failTotal
             results['topData']['errorTotal'] = errorTotal
-            results['topData']['runningTime'] = runningTime
+            results['topData']['runningTime'] = round(runningTime, 2)
+            results['topData']['failedTotal'] = failedTotal
 
             allTotal = passTotal + failTotal + errorTotal
             passRate = passTotal / allTotal * 100
             results['topData']['passRate'] = int(passRate)
+
+            results['topData']['prePassTotal'] = prePassTotal
+            results['topData']['rearPassTotal'] = rearPassTotal
+            results['topData']['assertionsPassTotal'] = assertionsPassTotal
+            results['topData']['extractPassTotal'] = extractPassTotal
             results['state'] = True
         else:
             results['state'] = False

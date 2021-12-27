@@ -476,24 +476,26 @@ export default {
                     'testSendData':testSendData,
                 }).then(res => {
                     if(res.data.statusCode==2000){
-                        self.RomeData.requestUrl = res.data.requestUrl;
-                        self.RomeData.requestType = res.data.requestType;
-                        self.RomeData.stateCode = res.data.responseCode;
-                        self.RomeData.time = res.data.time;
-                        self.RomeData.reportState = res.data.reportState;
+                         self.RomeData.requestUrl = res.data.request.requestUrl;
+                        self.RomeData.requestType = res.data.request.requestType;
+                        self.RomeData.stateCode = res.data.response.responseCode;
 
-                        self.docInfoRomeData.originalUrl = res.data.originalUrl;
-                        self.docInfoRomeData.headersTableData = res.data.tabPane.requsetHeaders;
-                        self.docInfoRomeData.requestDataTableData = res.data.tabPane.requestData;
+                        self.RomeData.time = res.data.response.time;
+                        self.RomeData.reportState = res.data.response.reportState;
 
-                        self.RomeData.responseText = res.data.tabPane.content;
-                        self.RomeData.responseHeadersTableData = res.data.tabPane.responseHeaders;
-                        self.RomeData.extractTableData = res.data.tabPane.extractTable;
-                        self.RomeData.assertionTableData = res.data.tabPane.assertionTable;
-                        self.RomeData.preOperationTableData= res.data.tabPane.preOperationTable;
-                        self.RomeData.rearOperationTableData= res.data.tabPane.rearOperationTable;
+                        self.docInfoRomeData.originalUrl = res.data.request.apiUrl;
+                        self.docInfoRomeData.headersTableData = res.data.request.headersList;
+                        self.docInfoRomeData.requestDataTableData = res.data.request.requestDataList;
 
-                        self.RomeData.errorInfoTableData = res.data.tabPane.errorInfoTable;
+                        self.RomeData.responseText = res.data.response.content;
+                        self.RomeData.responseHeadersTableData = res.data.response.responseHeaders;
+
+                        self.RomeData.extractTableData = res.data.response.extractTable;
+                        self.RomeData.assertionTableData = res.data.response.assertionTable;
+                        self.RomeData.preOperationTableData= res.data.response.preOperationTable;
+                        self.RomeData.rearOperationTableData= res.data.response.rearOperationTable;
+
+                        self.RomeData.errorInfoTableData = res.data.response.errorInfoTable;
                         self.loading=false;
                     }else{
                         self.$message.error('接口请求失败'+res.data.errorMsg);
@@ -509,24 +511,26 @@ export default {
                     'environmentId':environmentId,
                 })).then(res => {
                     if(res.data.statusCode==2000){
-                        self.RomeData.requestUrl = res.data.requestUrl;
-                        self.RomeData.requestType = res.data.requestType;
-                        self.RomeData.stateCode = res.data.responseCode;
-                        self.RomeData.time = res.data.time;
-                        self.RomeData.reportState = res.data.reportState;
+                        self.RomeData.requestUrl = res.data.request.requestUrl;
+                        self.RomeData.requestType = res.data.request.requestType;
+                        self.RomeData.stateCode = res.data.response.responseCode;
 
-                        self.docInfoRomeData.originalUrl = res.data.originalUrl;
-                        self.docInfoRomeData.headersTableData = res.data.tabPane.requsetHeaders;
-                        self.docInfoRomeData.requestDataTableData = res.data.tabPane.requestData;
+                        self.RomeData.time = res.data.response.time;
+                        self.RomeData.reportState = res.data.response.reportState;
 
-                        self.RomeData.responseText = res.data.tabPane.content;
-                        self.RomeData.responseHeadersTableData = res.data.tabPane.responseHeaders;
-                        self.RomeData.extractTableData = res.data.tabPane.extractTable;
-                        self.RomeData.assertionTableData = res.data.tabPane.assertionTable;
-                        self.RomeData.preOperationTableData= res.data.tabPane.preOperationTable;
-                        self.RomeData.rearOperationTableData= res.data.tabPane.rearOperationTable;
+                        self.docInfoRomeData.originalUrl = res.data.request.apiUrl;
+                        self.docInfoRomeData.headersTableData = res.data.request.headersList;
+                        self.docInfoRomeData.requestDataTableData = res.data.request.requestDataList;
 
-                        self.RomeData.errorInfoTableData = res.data.tabPane.errorInfoTable;
+                        self.RomeData.responseText = res.data.response.content;
+                        self.RomeData.responseHeadersTableData = res.data.response.responseHeaders;
+
+                        self.RomeData.extractTableData = res.data.response.extractTable;
+                        self.RomeData.assertionTableData = res.data.response.assertionTable;
+                        self.RomeData.preOperationTableData= res.data.response.preOperationTable;
+                        self.RomeData.rearOperationTableData= res.data.response.rearOperationTable;
+
+                        self.RomeData.errorInfoTableData = res.data.response.errorInfoTable;
                         self.loading=false;
                     }else{
                         self.$message.error('接口请求失败'+res.data.errorMsg);
