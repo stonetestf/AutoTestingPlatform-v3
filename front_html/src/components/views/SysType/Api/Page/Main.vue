@@ -34,9 +34,9 @@
                       </el-table-column>
                       <el-table-column
                         width="80px"
-                        prop="unitTotal"
+                        prop="unitAndCaseTotal"
                         align= "center"
-                        label="单元测试">
+                        label="单元/混合">
                       </el-table-column>
                       <el-table-column
                         width="80px"
@@ -105,6 +105,11 @@
                           </template>
                         </el-table-column>
                         <el-table-column
+                          prop="taskName"
+                          align= "center"
+                          label="任务名称">
+                        </el-table-column>
+                        <el-table-column
                           prop="itsName"
                           align= "center"
                           label="所属页面/功能">
@@ -119,11 +124,6 @@
                               <el-tag type="warning" v-else-if="scope.row.taskType=='TASK'" >定时任务</el-tag>
                               <el-tag type="danger" v-else-if="scope.row.taskType=='BATCH'" >批量任务</el-tag>
                           </template>
-                        </el-table-column>
-                        <el-table-column
-                          prop="taskName"
-                          align= "center"
-                          label="任务名称">
                         </el-table-column>
                         <el-table-column
                           prop="number"
@@ -147,6 +147,11 @@
                         height="330px"
                         :data="RomeData.queueTableData">
                         <el-table-column
+                          prop="taskName"
+                          align= "center"
+                          label="任务名称">
+                        </el-table-column>
+                        <el-table-column
                           prop="itsName"
                           align= "center"
                           label="所属页面/功能">
@@ -161,11 +166,6 @@
                               <el-tag type="warning" v-else-if="scope.row.taskType=='TASK'" >定时任务</el-tag>
                               <el-tag type="danger" v-else-if="scope.row.taskType=='BATCH'" >批量任务</el-tag>
                           </template>
-                        </el-table-column>
-                        <el-table-column
-                          prop="taskName"
-                          align= "center"
-                          label="任务名称">
                         </el-table-column>
                         <el-table-column
                           width="100px"
