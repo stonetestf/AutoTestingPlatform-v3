@@ -149,7 +149,11 @@ export default {
                 caseId:self.RomeData.caseId,
                 environmentId:self.RomeData.environmentId,
             }
-            self.dialog.testReport.dialogVisible=true;
+            if(self.RomeData.runType=="Synchronous"){
+                self.dialog.testReport.dialogVisible=true;
+            }else{
+                self.$message.success('异步任务指令已发出,请稍后在测试报告中查看结果!');
+            }
             self.dialogClose();
         },
     }

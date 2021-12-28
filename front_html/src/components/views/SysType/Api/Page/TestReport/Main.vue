@@ -109,6 +109,7 @@
                                 align="center"
                                 width="230px">
                             <template slot-scope="scope" style="width:100px">
+                              <el-button-group>
                                 <el-button
                                     size="mini"
                                     type="warning"
@@ -124,6 +125,7 @@
                                     type="danger"
                                     @click="handleDelete(scope.$index, scope.row)">Delete
                                 </el-button>
+                              </el-button-group>
                             </template>
                             </el-table-column>
                         </el-table>
@@ -214,7 +216,12 @@ export default {
                     obj.queueStatus = d.queueStatus;
                     obj.runningProgress = d.runningProgress;
                     obj.reportStatus = d.reportStatus;
-                    obj.runningTime=d.runningTime;
+                    if(d.runningTime!=null){
+                        obj.runningTime=d.runningTime+' ms';
+                    }else{
+                        obj.runningTime='Null';
+                    }
+                    
                     obj.updateTime = d.updateTime;
                     obj.userName = d.userName;
 
