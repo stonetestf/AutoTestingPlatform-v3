@@ -1066,7 +1066,24 @@ class RequstOperation(cls_Logging, cls_Common):
                                     'code': resultOfExecution['responseCode'],
                                     'time': resultOfExecution['time'],
                                     'reportState': resultOfExecution['reportState'],
-                                    'children':[]
+                                    'details':{
+                                        'requestUrl': conversionRequestUrl,
+                                        'requestType': item_request['requestType'],
+                                        'code': resultOfExecution['responseCode'],
+                                        'time': resultOfExecution['time'],
+                                        'reportState': resultOfExecution['reportState'],
+                                        'originalUrl': conversionRequestUrl,
+                                        'headersTableData':item_request['headersData'],
+                                        'requestDataTableData':item_request['bodyData'],
+                                        'responseText':resultOfExecution['content'],
+                                        'responseHeadersTableData':resultOfExecution['responseHeaders'],
+                                        'extractTableData':resultOfExecution['extractTable'],
+                                        'assertionTableData':resultOfExecution['assertionTable'],
+                                        'preOperationTableData':resultOfExecution['preOperationTable'],
+                                        'rearOperationTableData':resultOfExecution['rearOperationTable'],
+                                        'errorInfoTableData':resultOfExecution['errorInfoTable'],
+
+                                    }
                                 }
                             }
                             # endregion

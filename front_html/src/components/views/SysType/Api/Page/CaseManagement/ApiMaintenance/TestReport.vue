@@ -366,11 +366,15 @@ export default {
                 PrintConsole('newval',newval);
                 this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
-                this.RequestApi(
-                    newval.isTest,
-                    newval.apiId,
-                    newval.environmentId,
-                    newval.testSendData);
+                if(newval.source=="API"){
+                    this.RequestApi(
+                        newval.isTest,
+                        newval.apiId,
+                        newval.environmentId,
+                        newval.testSendData);
+                }else{
+                    this.assignmentDataToPage(newval.details);
+                }
             }
         },
         'RomeData.responseHeadersTableData': function (newVal,oldVal) {//实时更新当前有多少个数据到标题上
@@ -476,7 +480,7 @@ export default {
                     'testSendData':testSendData,
                 }).then(res => {
                     if(res.data.statusCode==2000){
-                         self.RomeData.requestUrl = res.data.request.requestUrl;
+                        self.RomeData.requestUrl = res.data.request.requestUrl;
                         self.RomeData.requestType = res.data.request.requestType;
                         self.RomeData.stateCode = res.data.response.responseCode;
 
@@ -541,6 +545,31 @@ export default {
                     self.loading=false;
                 })
             }
+        },
+        assignmentDataToPage(details){//赋值数据到页面
+            let self = this;
+
+            self.RomeData.requestUrl = details.requestUrl;
+            self.RomeData.requestType = details.requestType;
+            self.RomeData.stateCode = details.code;
+
+            self.RomeData.time = details.time;
+            self.RomeData.reportState = details.reportState;
+
+            self.docInfoRomeData.originalUrl = details.originalUrl;
+            self.docInfoRomeData.headersTableData = details.headersTableData;
+            self.docInfoRomeData.requestDataTableData = details.requestDataTableData;
+
+            self.RomeData.responseText = details.responseText;
+            self.RomeData.responseHeadersTableData = details.responseHeadersTableData;
+
+            self.RomeData.extractTableData = details.extractTableData;
+            self.RomeData.assertionTableData = details.assertionTableData;
+            self.RomeData.preOperationTableData= details.preOperationTableData;
+            self.RomeData.rearOperationTableData= details.rearOperationTableData;
+
+            self.RomeData.errorInfoTableData = details.errorInfoTableData;
+            self.loading=false;
         },
         
     }  

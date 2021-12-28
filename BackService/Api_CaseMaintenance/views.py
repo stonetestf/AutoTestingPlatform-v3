@@ -1331,7 +1331,7 @@ def read_case_result(request):
                     try:
                         retMessage = request.websocket.read()
                     except BaseException as e:
-                        cls_Logging.print_log('info', 'get_server_indicators', f'前端已关闭,断开连接:{e}')
+                        cls_Logging.print_log('error', 'get_server_indicators', f'前端已关闭,断开连接:{e}')
                         break
                     else:
                         readTypeList = cls_RedisHandle.read_type_list(redisKey)
@@ -1345,8 +1345,8 @@ def read_case_result(request):
                         else:
                             counter += 1
                             # 这里的时间 需要在调试的时候改！
-                            if counter >= 10000:
+                            if counter >= 180:
                                 request.websocket.close()
                                 cls_Logging.print_log('error', 'read_case_result', f'心跳包:{counter}秒内无响应,断开连接')
                                 break
-                        # sleep(0.5)
+                        sleep(0.5)

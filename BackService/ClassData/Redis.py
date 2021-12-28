@@ -62,7 +62,7 @@ class RedisHandle(cls_Logging):
                 readData = conn.blpop(label)  # 从头开始读1个删除1个， 如果列表为空,就会删除此Key
                 if len(readData) == 2:
                     rowData = readData[1].decode("UTF-8")
-                    rowData = ast.literal_eval(rowData)
+                    rowData = ast.literal_eval(rowData.replace('true','True').replace('false','False'))
 
         except BaseException as e:
             cls_Logging.print_log(self, 'error', 'Redis>read_type_list', e)

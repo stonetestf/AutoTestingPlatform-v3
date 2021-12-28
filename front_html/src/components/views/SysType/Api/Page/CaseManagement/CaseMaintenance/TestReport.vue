@@ -1,195 +1,206 @@
 <template>
-   <el-drawer
-        :title="dialogTitle"
-        size="1300px"
-        :visible.sync="dialogVisible"
-        direction="rtl"
-        :before-close="dialogClose">
-        <el-card 
-        style="height:870px"
-        v-loading="loading"
-        element-loading-text="拼命返回请求信息中"
-        element-loading-spinner="el-icon-loading">
-            <div>
-                <el-card style="height:250px" shadow="never">
-                    <el-row>
-                        <el-col :span="12">
+    <div>
+        <template>
+            <el-drawer
+                :title="dialogTitle"
+                size="1300px"
+                :visible.sync="dialogVisible"
+                direction="rtl"
+                :before-close="dialogClose">
+                <el-card 
+                style="height:870px"
+                v-loading="loading"
+                element-loading-text="拼命返回请求信息中"
+                element-loading-spinner="el-icon-loading">
+                    <div>
+                        <el-card style="height:250px" shadow="never">
                             <el-row>
                                 <el-col :span="12">
-                                    <div style="margin:-55px 0 0 30px;" id="EchartContainer-pie" class="EchartContainer-pie"></div>   
+                                    <el-row>
+                                        <el-col :span="12">
+                                            <div style="margin:-55px 0 0 30px;" id="EchartContainer-pie" class="EchartContainer-pie"></div>   
+                                        </el-col>
+                                        <el-col :span="12">
+                                            <div style="margin:18px 0 0 80px;">
+                                                <div style="font-size: 14px;">{{RomeData.topData.leftData.passTotal}}</div>
+                                                <div style="font-size: 14px;margin:8px">{{RomeData.topData.leftData.failTotal}}</div>
+                                                <div style="font-size: 14px;margin:8px">{{RomeData.topData.leftData.errorTotal}}</div>
+                                                <div style="font-size: 14px;margin:8px">{{RomeData.topData.leftData.failedTotal}}</div>
+                                            </div>
+                                        </el-col>
+                                    </el-row>
                                 </el-col>
                                 <el-col :span="12">
-                                    <div style="margin:18px 0 0 80px;">
-                                        <div style="font-size: 14px;">{{RomeData.topData.leftData.passTotal}}</div>
-                                        <div style="font-size: 14px;margin:8px">{{RomeData.topData.leftData.failTotal}}</div>
-                                        <div style="font-size: 14px;margin:8px">{{RomeData.topData.leftData.errorTotal}}</div>
-                                        <div style="font-size: 14px;margin:8px">{{RomeData.topData.leftData.failedTotal}}</div>
+                                    <div style="text-align: left;margin:43px 0 0 -40px">
+                                        <div class="TopMargin">
+                                            <el-row>
+                                                <el-col :span="6">
+                                                    <strong>实时耗时</strong>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div><strong>{{RomeData.topData.rightData.cumulativeTime}} 秒</strong></div>
+                                                </el-col>
+                                            </el-row>
+                                        </div>
+                                        <div class="TopMargin">
+                                            <el-row>
+                                                <el-col :span="6">
+                                                    <strong>前置操作数</strong>
+                                                </el-col>
+                                                <el-col :span="4">
+                                                    <div>总:<strong>{{RomeData.topData.rightData.preOperationTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>成功:<strong>{{RomeData.topData.rightData.prePassTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>失败:<strong>{{RomeData.topData.rightData.preFailTotal}}</strong></div>
+                                                </el-col>
+                                                <!-- <el-col :span="4">
+                                                    <div>错误:<strong>{{RomeData.topData.rightData.preErrorTotal}}</strong></div>
+                                                </el-col> -->
+                                            </el-row>
+                                        </div>
+                                        <div class="TopMargin">
+                                            <el-row>
+                                                <el-col :span="6">
+                                                    <strong>后置操作数</strong>
+                                                </el-col>
+                                                <el-col :span="4">
+                                                    <div>总:<strong>{{RomeData.topData.rightData.rearOperationTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>成功:<strong>{{RomeData.topData.rightData.rearPassTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>失败:<strong>{{RomeData.topData.rightData.rearFailTotal}}</strong></div>
+                                                </el-col>
+                                                <!-- <el-col :span="4">
+                                                    <div>错误:<strong>{{RomeData.topData.rightData.rearErrorTotal}}</strong></div>
+                                                </el-col> -->
+                                            </el-row>
+                                        </div>
+                                        <div class="TopMargin">
+                                            <el-row>
+                                                <el-col :span="6">
+                                                    <strong>提取数</strong>
+                                                </el-col>
+                                            <el-col :span="4">
+                                                    <div>总:<strong>{{RomeData.topData.rightData.extractTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>成功:<strong>{{RomeData.topData.rightData.extractPassTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>失败:<strong>{{RomeData.topData.rightData.extractFailTotal}}</strong></div>
+                                                </el-col>
+                                            </el-row>
+                                        </div>
+                                        <div class="TopMargin">
+                                            <el-row>
+                                                <el-col :span="6">
+                                                    <strong>断言数</strong>
+                                                </el-col>
+                                                <el-col :span="4">
+                                                    <div>总:<strong>{{RomeData.topData.rightData.assertionsTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>成功:<strong>{{RomeData.topData.rightData.assertionsPassTotal}}</strong></div>
+                                                </el-col>
+                                                <el-col :span="5">
+                                                    <div>失败:<strong>{{RomeData.topData.rightData.assertionsFailTotal}}</strong></div>
+                                                </el-col>
+                                            </el-row>
+                                        </div>
                                     </div>
                                 </el-col>
                             </el-row>
-                        </el-col>
-                        <el-col :span="12">
-                            <div style="text-align: left;margin:43px 0 0 -40px">
-                                <div class="TopMargin">
-                                    <el-row>
-                                        <el-col :span="6">
-                                            <strong>实时耗时</strong>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div><strong>{{RomeData.topData.rightData.cumulativeTime}} 秒</strong></div>
-                                        </el-col>
-                                    </el-row>
-                                </div>
-                                <div class="TopMargin">
-                                    <el-row>
-                                        <el-col :span="6">
-                                            <strong>前置操作数</strong>
-                                        </el-col>
-                                        <el-col :span="4">
-                                            <div>总:<strong>{{RomeData.topData.rightData.preOperationTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>成功:<strong>{{RomeData.topData.rightData.prePassTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>失败:<strong>{{RomeData.topData.rightData.preFailTotal}}</strong></div>
-                                        </el-col>
-                                        <!-- <el-col :span="4">
-                                            <div>错误:<strong>{{RomeData.topData.rightData.preErrorTotal}}</strong></div>
-                                        </el-col> -->
-                                    </el-row>
-                                </div>
-                                <div class="TopMargin">
-                                    <el-row>
-                                        <el-col :span="6">
-                                            <strong>后置操作数</strong>
-                                        </el-col>
-                                        <el-col :span="4">
-                                            <div>总:<strong>{{RomeData.topData.rightData.rearOperationTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>成功:<strong>{{RomeData.topData.rightData.rearPassTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>失败:<strong>{{RomeData.topData.rightData.rearFailTotal}}</strong></div>
-                                        </el-col>
-                                        <!-- <el-col :span="4">
-                                            <div>错误:<strong>{{RomeData.topData.rightData.rearErrorTotal}}</strong></div>
-                                        </el-col> -->
-                                    </el-row>
-                                </div>
-                                <div class="TopMargin">
-                                    <el-row>
-                                        <el-col :span="6">
-                                            <strong>提取数</strong>
-                                        </el-col>
-                                       <el-col :span="4">
-                                            <div>总:<strong>{{RomeData.topData.rightData.extractTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>成功:<strong>{{RomeData.topData.rightData.extractPassTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>失败:<strong>{{RomeData.topData.rightData.extractFailTotal}}</strong></div>
-                                        </el-col>
-                                    </el-row>
-                                </div>
-                                <div class="TopMargin">
-                                    <el-row>
-                                        <el-col :span="6">
-                                            <strong>断言数</strong>
-                                        </el-col>
-                                        <el-col :span="4">
-                                            <div>总:<strong>{{RomeData.topData.rightData.assertionsTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>成功:<strong>{{RomeData.topData.rightData.assertionsPassTotal}}</strong></div>
-                                        </el-col>
-                                        <el-col :span="5">
-                                            <div>失败:<strong>{{RomeData.topData.rightData.assertionsFailTotal}}</strong></div>
-                                        </el-col>
-                                    </el-row>
-                                </div>
-                            </div>
-                        </el-col>
-                    </el-row>
-                </el-card>
-            </div>
-            <div style="margin-top:10px">
-            <el-table
-                :data="RomeData.tableData"
-                height="570px"
-                border>
-                <el-table-column
-                    label="步骤排序"
-                    width="80px"
-                    align= "center"
-                    prop="index">
-                </el-table-column>
-                <el-table-column
-                    label="测试名称"
-                    width="350px"
-                    align= "center"
-                    prop="testName">
-                </el-table-column>
-                <el-table-column
-                    label="接口类型"
-                    width="100px"
-                    align= "center">
-                    <template slot-scope="scope">
-                        <el-tag type="success" v-if="scope.row.requestType=='GET'" >GET</el-tag>
-                        <el-tag type="warning" v-else-if="scope.row.requestType=='POST'">POST</el-tag>
-                        <el-tag type="info" v-else>{{scope.row.requestType}}</el-tag>
-                    </template>
-                </el-table-column>    
-                <el-table-column
-                    label="接口地址"
-                    align= "center"
-                    prop="requestUrl">
-                </el-table-column>
-                <el-table-column
-                    label="状态码"
-                    width="100px"
-                    align= "center">
-                    <template slot-scope="scope">
-                        <el-tag type="success" v-if="scope.row.code==200" >{{scope.row.code}}</el-tag>
-                        <el-tag type="danger" v-else>{{scope.row.code}}</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column
-                    label="耗时"
-                    align= "center"
-                    width="100px">
-                    <template slot-scope="scope">
-                        <div v-bind:style="{color:scope.row.timeConsuming<=5000 ? '#91cc75' : '#fac858'}">{{scope.row.timeConsuming}} ms</div>
-                        <!-- <el-tag type="success">{{scope.row.timeConsuming}} ms</el-tag> -->
-                    </template>
-                </el-table-column>
-                <el-table-column
-                    label="报告状态"
-                    width="100px"
-                    align= "center">
-                    <template slot-scope="scope">
-                        <el-tag v-if="scope.row.reportState=='Pass'" type="success">通过</el-tag>
-                        <el-tag v-else-if="scope.row.reportState=='Fail'" type="warning">失败</el-tag>
-                        <el-tag v-else type="danger">错误</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column
-                    label="详情"
-                    align="center"
-                    width="100px">
-                <template slot-scope="scope" style="width:100px">
-                    <el-button
-                        type="warning"
-                        size="mini"
-                        @click="OpendDetailsDialog(scope.$index, scope.row)">详情</el-button>
-                </template>
-                </el-table-column>
-            </el-table>
-            </div>
-        </el-card>                        
-    </el-drawer>
+                        </el-card>
+                    </div>
+                    <div style="margin-top:10px">
+                    <el-table
+                        :data="RomeData.tableData"
+                        height="570px"
+                        border>
+                        <el-table-column
+                            label="步骤排序"
+                            width="80px"
+                            align= "center"
+                            prop="index">
+                        </el-table-column>
+                        <el-table-column
+                            label="测试名称"
+                            width="350px"
+                            align= "center"
+                            prop="testName">
+                        </el-table-column>
+                        <el-table-column
+                            label="接口类型"
+                            width="100px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.requestType=='GET'" >GET</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.requestType=='POST'">POST</el-tag>
+                                <el-tag type="info" v-else>{{scope.row.requestType}}</el-tag>
+                            </template>
+                        </el-table-column>    
+                        <el-table-column
+                            label="接口地址"
+                            align= "center"
+                            prop="requestUrl">
+                        </el-table-column>
+                        <el-table-column
+                            label="状态码"
+                            width="100px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.code==200" >{{scope.row.code}}</el-tag>
+                                <el-tag type="danger" v-else>{{scope.row.code}}</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="耗时"
+                            align= "center"
+                            width="100px">
+                            <template slot-scope="scope">
+                                <div v-bind:style="{color:scope.row.timeConsuming<=5000 ? '#91cc75' : '#fac858'}">{{scope.row.timeConsuming}} ms</div>
+                                <!-- <el-tag type="success">{{scope.row.timeConsuming}} ms</el-tag> -->
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="报告状态"
+                            width="100px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag v-if="scope.row.reportState=='Pass'" type="success">通过</el-tag>
+                                <el-tag v-else-if="scope.row.reportState=='Fail'" type="warning">失败</el-tag>
+                                <el-tag v-else type="danger">错误</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="详情"
+                            align="center"
+                            width="100px">
+                        <template slot-scope="scope" style="width:100px">
+                            <el-button
+                                type="warning"
+                                size="mini"
+                                @click="OpendDetailsDialog(scope.$index, scope.row)">详情</el-button>
+                        </template>
+                        </el-table-column>
+                    </el-table>
+                    </div>
+                </el-card>                        
+            </el-drawer>
+        </template>
+        <template>
+            <dialog-test-report
+                @closeDialog="closeTestReportDialog" 
+                :isVisible="dialog.testReport.dialogVisible" 
+                :dialogPara="dialog.testReport.dialogPara">
+            </dialog-test-report>
+        </template>
+    </div>
 </template>
 
 <script>
@@ -197,10 +208,11 @@ import * as echarts from 'echarts';
 import Qs from 'qs';
 import store from '../../../../../../../store/index'
 import {PrintConsole} from "../../../../../../js/Logger.js";
+import DialogTestReport from "../ApiMaintenance/TestReport.vue";
 
 export default {
     components: {
-        
+        DialogTestReport
     },
     data() {
         return {
@@ -240,19 +252,18 @@ export default {
                         assertionsFailTotal:0,
                     },
                 },
-                tableData:[
-                    // {'index':1,
-                    // 'testName':'登录(无用户名)',
-                    // 'requestType':'GET',
-                    // 'requestUrl':'/api/login',
-                    // 'details':{
-                      
-                    // },
-                    // 'timeConsuming':20000,
-                    // 'code':200,
-                    // 'reportState':'Pass'}
-                ],
+                tableData:[],
             },
+            dialog:{
+                testReport:{//运行过程
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+            },
+
    
         };
     },
@@ -449,6 +460,7 @@ export default {
                 obj.code = retData.tableData.code;
                 obj.timeConsuming = retData.tableData.time;
                 obj.reportState = retData.tableData.reportState;
+                obj.details = retData.tableData.details;
 
                 self.RomeData.tableData.push(obj);
 
@@ -471,8 +483,18 @@ export default {
             };
             if (socket.readyState == WebSocket.OPEN) socket.onopen();       
         },
+        closeTestReportDialog(){
+            this.dialog.testReport.dialogVisible =false;
+        },
         OpendDetailsDialog(index,row){
             PrintConsole(row)
+            let self = this;
+            self.dialog.testReport.dialogPara={
+                dialogTitle:row.testName,//初始化标题
+                source:'CASE',
+                details:row.details,
+            }
+            self.dialog.testReport.dialogVisible=true;
 
         },
     }  
