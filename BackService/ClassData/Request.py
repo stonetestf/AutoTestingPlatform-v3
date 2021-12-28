@@ -53,7 +53,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return requestParamsType
 
     # 转换参数中带有引用的数据
-    def conversion_params_import_data(self,onlyCode, proId, requestUrl, requestHeaders, requestData):
+    def conversion_params_import_data(self, onlyCode, proId, requestUrl, requestHeaders, requestData):
         results = {}
         conversionRequestUrl = requestUrl
         conversionHeaders = {}
@@ -73,7 +73,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 splitHeaders = item_headersValue.split('{{')
                 globalName = splitHeaders[1].replace('}}', '')
                 # 1.先查找临时存储库
-                obj_db_TempExtractData = db_TempExtractData.objects.filter(onlyCode=onlyCode,keys=globalName)
+                obj_db_TempExtractData = db_TempExtractData.objects.filter(onlyCode=onlyCode, keys=globalName)
                 if obj_db_TempExtractData.exists():
                     conversionHeaders[item_headersKey] = obj_db_TempExtractData[0].values
                 else:
@@ -134,7 +134,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 转换参数为最后请求的数据
-    def conversion_data_to_request_data(self,onlyCode, getRequestData):
+    def conversion_data_to_request_data(self, onlyCode, getRequestData):
         results = {'state': False}
         proId = getRequestData['proId']
         requestUrl = getRequestData['requestUrl']
@@ -161,7 +161,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
             # 转换参数中带有引用的数据
             conversionImportData = self.conversion_params_import_data(onlyCode,
-                proId, requestUrl, requestHeaders, requestData)
+                                                                      proId, requestUrl, requestHeaders, requestData)
             if conversionImportData['state']:
                 conversionRequestUrl = conversionImportData['requestUrl']
                 conversionHeadersData = conversionImportData['headersData']
@@ -179,14 +179,17 @@ class RequstOperation(cls_Logging, cls_Common):
 
     # 提取并推送给当前执行的用户提取失败的信息
     def request_extract(self, userId, onlyCode, content, statuscode, extract):
-        results = {}
+        results = {
+            'state': True,
+            'errorInfoTable': []
+        }
         extractList = []
 
         if type(content) == dict:
             for item in extract:
                 extractKey = item['key']
                 extractValue = item['value']
-                retValue = None  # 返回结果值
+                retValue = ''  # 返回结果值
                 if extractKey == 'statuscode':
                     retValue = statuscode
                 else:
@@ -208,8 +211,11 @@ class RequstOperation(cls_Logging, cls_Common):
                             # 能进这里的肯定是设置了无法被提取到的参数
                             message = f"提取失败:无法提取到:{combination_content}," \
                                       f"下的返回值,请确认Response返回值中有此数据!"
-                            results['state'] = False
-                            results['errorMsg'] = message
+                            results['errorInfoTable'].append({
+                                'createTime': cls_Common.get_date_time(self),
+                                'errorName': '提取失败',
+                                'errorInfo': message
+                            })
                             cls_Logging.print_log(self, 'warning', 'requests_api', message)
 
                             # region 添加操作信息
@@ -247,10 +253,8 @@ class RequstOperation(cls_Logging, cls_Common):
         else:
             results['state'] = False
             results['errorMsg'] = f"使用了未录入的提取类型:{type(content)}"
-        if 'errorMsg' not in results:
-            cls_Logging.print_log(self, 'info', 'request_extract', f'返回提取数据:{extractList}')
-            results['state'] = True
-            results['extractList'] = extractList
+        cls_Logging.print_log(self, 'info', 'request_extract', f'返回提取数据:{extractList}')
+        results['extractList'] = extractList
         return results
 
     # 断言
@@ -259,77 +263,78 @@ class RequstOperation(cls_Logging, cls_Common):
         validateReport = []
         reportState = True
         for item_validate in validate:
-            checkName = item_validate['checkName']  # 检查值
-            validateType = item_validate['validateType']
-            valueType = eval(item_validate['valueType'])
-            expectedResults = item_validate['expectedResults']  # 预期结果
+            if item_validate['checkName'] and item_validate['validateType'] and item_validate['valueType']:
+                checkName = item_validate['checkName']  # 检查值
+                validateType = item_validate['validateType']
+                valueType = eval(item_validate['valueType'])
+                expectedResults = item_validate['expectedResults']  # 预期结果
 
-            if valueType == str:
-                retValueType = "Str"
-            elif valueType == int:
-                retValueType = "Int"
-            elif valueType == list:
-                retValueType = "List"
-            else:
-                retValueType = ""
+                if valueType == str:
+                    retValueType = "Str"
+                elif valueType == int:
+                    retValueType = "Int"
+                elif valueType == list:
+                    retValueType = "List"
+                else:
+                    retValueType = ""
 
-            for item_extract in extractList:
-                extractKey = item_extract['key']
-                extractValue = item_extract['value']
-                extractValueType = eval(item_extract['valueType'])
-                if extractKey == checkName:
-                    if validateType == 'equals':  # ==
-                        if valueType == list:
-                            try:
-                                list_expected = eval(expectedResults)
-                            except BaseException as e:
-                                reportState = False
+                for item_extract in extractList:
+                    extractKey = item_extract['key']
+                    extractValue = item_extract['value']
+                    extractValueType = eval(item_extract['valueType'])
+                    if extractKey == checkName:
+                        if validateType == 'equals':  # ==
+                            if valueType == list:
+                                try:
+                                    list_expected = eval(expectedResults)
+                                except BaseException as e:
+                                    reportState = False
+                                else:
+                                    if list_expected == extractValue:
+                                        reportState = True
+                                    else:
+                                        reportState = False
                             else:
-                                if list_expected == extractValue:
-                                    reportState = True
-                                else:
+                                try:  # 可能会出现 int(str)这种的断言,所以这里要捕获这种错误
+                                    if valueType(expectedResults) == extractValueType(extractValue):
+                                        reportState = True
+                                    else:
+                                        reportState = False
+                                except:
                                     reportState = False
-                        else:
-                            try:  # 可能会出现 int(str)这种的断言,所以这里要捕获这种错误
-                                if valueType(expectedResults) == extractValueType(extractValue):
-                                    reportState = True
-                                else:
-                                    reportState = False
-                            except:
+                        elif validateType == 'contains':  # in
+                            if str(expectedResults) in str(extractValue):
+                                reportState = True
+                            else:
                                 reportState = False
-                    elif validateType == 'contains':  # in
-                        if str(expectedResults) in str(extractValue):
-                            reportState = True
-                        else:
-                            reportState = False
-                    elif validateType == 'not_equals':  # !=
-                        if valueType(expectedResults) != extractValueType(extractValue):
-                            reportState = True
-                        else:
-                            reportState = False
+                        elif validateType == 'not_equals':  # !=
+                            if valueType(expectedResults) != extractValueType(extractValue):
+                                reportState = True
+                            else:
+                                reportState = False
 
-                    if extractValueType == str:
-                        extractValueType = "Str"
-                    elif extractValueType == int:
-                        extractValueType = "Int"
-                    elif extractValueType == list:
-                        extractValueType = "List"
+                        if extractValueType == str:
+                            extractValueType = "Str"
+                        elif extractValueType == int:
+                            extractValueType = "Int"
+                        elif extractValueType == list:
+                            extractValueType = "List"
+                        validateReport.append(
+                            {'checkName': checkName,
+                             'retCheckOut': f'{retValueType}({expectedResults})',  # 预期结果
+                             'validateType': validateType,
+                             'retExtractorOut': f'{extractValueType}({extractValue})',  # 实际返回
+                             'results': reportState}
+                        )
+                        break
+                else:
                     validateReport.append(
                         {'checkName': checkName,
                          'retCheckOut': f'{retValueType}({expectedResults})',  # 预期结果
                          'validateType': validateType,
-                         'retExtractorOut': f'{extractValueType}({extractValue})',  # 实际返回
-                         'results': reportState}
+                         'retExtractorOut': '没有找到当前检查值的可提取数据,请检查提取设置中是否有此检查值!',
+                         'results': False}
                     )
-                    break
-            else:
-                validateReport.append(
-                    {'checkName': checkName,
-                     'retCheckOut': f'{retValueType}({expectedResults})',  # 预期结果
-                     'validateType': validateType,
-                     'retExtractorOut': '没有找到当前检查值的可提取数据,请检查提取设置中是否有此检查值!',
-                     'results': False}
-                )
         passNum = 0
         failNum = 0
         for i in validateReport:
@@ -345,8 +350,11 @@ class RequstOperation(cls_Logging, cls_Common):
 
     # 执行提取和断言操作
     def perform_extract_and_validate(self, onlyCode, extractData, validateData, requestsApi, userId):
-        results = {'extractTable': [],
-                   'assertionTable': []}
+        results = {
+            'extractTable': [],
+            'assertionTable': [],
+            'errorInfoTable': []
+        }
         if extractData:  # 如果有提取的数据才会执行断言
             requestExtract = self.request_extract(userId, onlyCode,
                                                   requestsApi['content'],
@@ -354,6 +362,7 @@ class RequstOperation(cls_Logging, cls_Common):
                                                   extractData)
             if requestExtract['state']:
                 results['extractTable'] = requestExtract['extractList']
+                results['errorInfoTable'] = requestExtract['errorInfoTable']
 
                 # 断言数据
                 requestValidate = self.request_validate(requestExtract['extractList'],
@@ -575,7 +584,7 @@ class RequstOperation(cls_Logging, cls_Common):
             results['request']['requestType'] = getRequestData['requestType']
 
             # 转换参数为最后请求的数据
-            conversionDataToRequestData = self.conversion_data_to_request_data(onlyCode,getRequestData)
+            conversionDataToRequestData = self.conversion_data_to_request_data(onlyCode, getRequestData)
             if conversionDataToRequestData['state']:
                 conversionRequestUrl = conversionDataToRequestData['conversionRequestUrl']
                 conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
@@ -702,6 +711,8 @@ class RequstOperation(cls_Logging, cls_Common):
             performExtractAndValidate = self.perform_extract_and_validate(
                 onlyCode, extractData, validateData, requestsApi, userId)
             if performExtractAndValidate['state']:
+                for i in performExtractAndValidate['errorInfoTable']:
+                    errorInfoTable.append(i)
                 results['extractTable'] = performExtractAndValidate['extractTable']
                 results['assertionTable'] = performExtractAndValidate['assertionTable']
             else:  # 失败后的结果
@@ -989,7 +1000,7 @@ class RequstOperation(cls_Logging, cls_Common):
                     itemResults['request']['requestType'] = item_request['requestType']
 
                     # 转换参数为最后请求的数据
-                    conversionDataToRequestData = self.conversion_data_to_request_data(redisKey,item_request)
+                    conversionDataToRequestData = self.conversion_data_to_request_data(redisKey, item_request)
                     if conversionDataToRequestData['state']:
                         conversionRequestUrl = conversionDataToRequestData['conversionRequestUrl']
                         conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
@@ -1072,22 +1083,23 @@ class RequstOperation(cls_Logging, cls_Common):
                                     'code': resultOfExecution['responseCode'],
                                     'time': resultOfExecution['time'],
                                     'reportState': resultOfExecution['reportState'],
-                                    'details':{
+                                    'details': {
                                         'requestUrl': conversionRequestUrl,
                                         'requestType': item_request['requestType'],
                                         'code': resultOfExecution['responseCode'],
                                         'time': resultOfExecution['time'],
                                         'reportState': resultOfExecution['reportState'],
                                         'originalUrl': item_request['apiUrl'],
-                                        'headersTableData':cls_Common.conversion_dict_to_kv(self,conversionHeadersData),
-                                        'requestDataTableData':conversionDataToRequestData['requestData'],
-                                        'responseText':resultOfExecution['content'],
-                                        'responseHeadersTableData':resultOfExecution['responseHeaders'],
-                                        'extractTableData':resultOfExecution['extractTable'],
-                                        'assertionTableData':resultOfExecution['assertionTable'],
-                                        'preOperationTableData':resultOfExecution['preOperationTable'],
-                                        'rearOperationTableData':resultOfExecution['rearOperationTable'],
-                                        'errorInfoTableData':resultOfExecution['errorInfoTable'],
+                                        'headersTableData': cls_Common.conversion_dict_to_kv(self,
+                                                                                             conversionHeadersData),
+                                        'requestDataTableData': conversionDataToRequestData['requestData'],
+                                        'responseText': resultOfExecution['content'],
+                                        'responseHeadersTableData': resultOfExecution['responseHeaders'],
+                                        'extractTableData': resultOfExecution['extractTable'],
+                                        'assertionTableData': resultOfExecution['assertionTable'],
+                                        'preOperationTableData': resultOfExecution['preOperationTable'],
+                                        'rearOperationTableData': resultOfExecution['rearOperationTable'],
+                                        'errorInfoTableData': resultOfExecution['errorInfoTable'],
 
                                     }
                                 }
