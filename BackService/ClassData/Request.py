@@ -53,7 +53,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return requestParamsType
 
     # 转换参数中带有引用的数据
-    def conversion_params_import_data(self, proId, requestUrl, requestHeaders, requestData):
+    def conversion_params_import_data(self,onlyCode, proId, requestUrl, requestHeaders, requestData):
         results = {}
         conversionRequestUrl = requestUrl
         conversionHeaders = {}
@@ -72,12 +72,18 @@ class RequstOperation(cls_Logging, cls_Common):
             if '{{' in item_headersValue:
                 splitHeaders = item_headersValue.split('{{')
                 globalName = splitHeaders[1].replace('}}', '')
-                obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
-                    sysType='API', is_del=0, pid_id=proId, globalName=globalName)
-                if obj_db_GlobalVariable.exists():
-                    conversionHeaders[item_headersKey] = obj_db_GlobalVariable[0].globalValue
+                # 1.先查找临时存储库
+                obj_db_TempExtractData = db_TempExtractData.objects.filter(onlyCode=onlyCode,keys=globalName)
+                if obj_db_TempExtractData.exists():
+                    conversionHeaders[item_headersKey] = obj_db_TempExtractData[0].values
                 else:
-                    conversionHeaders[item_headersKey] = item_headersValue
+                    # 如果临时存储库存在了就不会去找全局库
+                    obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
+                        sysType='API', is_del=0, pid_id=proId, globalName=globalName)
+                    if obj_db_GlobalVariable.exists():
+                        conversionHeaders[item_headersKey] = obj_db_GlobalVariable[0].globalValue
+                    else:
+                        conversionHeaders[item_headersKey] = item_headersValue
             else:
                 conversionHeaders[item_headersKey] = item_headersValue
 
@@ -128,7 +134,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 转换参数为最后请求的数据
-    def conversion_data_to_request_data(self, getRequestData):
+    def conversion_data_to_request_data(self,onlyCode, getRequestData):
         results = {'state': False}
         proId = getRequestData['proId']
         requestUrl = getRequestData['requestUrl']
@@ -154,7 +160,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 results['requestData'] = paramsData
 
             # 转换参数中带有引用的数据
-            conversionImportData = self.conversion_params_import_data(
+            conversionImportData = self.conversion_params_import_data(onlyCode,
                 proId, requestUrl, requestHeaders, requestData)
             if conversionImportData['state']:
                 conversionRequestUrl = conversionImportData['requestUrl']
@@ -569,7 +575,7 @@ class RequstOperation(cls_Logging, cls_Common):
             results['request']['requestType'] = getRequestData['requestType']
 
             # 转换参数为最后请求的数据
-            conversionDataToRequestData = self.conversion_data_to_request_data(getRequestData)
+            conversionDataToRequestData = self.conversion_data_to_request_data(onlyCode,getRequestData)
             if conversionDataToRequestData['state']:
                 conversionRequestUrl = conversionDataToRequestData['conversionRequestUrl']
                 conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
@@ -983,7 +989,7 @@ class RequstOperation(cls_Logging, cls_Common):
                     itemResults['request']['requestType'] = item_request['requestType']
 
                     # 转换参数为最后请求的数据
-                    conversionDataToRequestData = self.conversion_data_to_request_data(item_request)
+                    conversionDataToRequestData = self.conversion_data_to_request_data(redisKey,item_request)
                     if conversionDataToRequestData['state']:
                         conversionRequestUrl = conversionDataToRequestData['conversionRequestUrl']
                         conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
@@ -1062,7 +1068,7 @@ class RequstOperation(cls_Logging, cls_Common):
                                     'index': item_index,
                                     'testName': item_request['testName'],
                                     'requestType': item_request['requestType'],
-                                    'requestUrl': conversionRequestUrl,
+                                    'apiUrl': item_request['apiUrl'],
                                     'code': resultOfExecution['responseCode'],
                                     'time': resultOfExecution['time'],
                                     'reportState': resultOfExecution['reportState'],
@@ -1072,9 +1078,9 @@ class RequstOperation(cls_Logging, cls_Common):
                                         'code': resultOfExecution['responseCode'],
                                         'time': resultOfExecution['time'],
                                         'reportState': resultOfExecution['reportState'],
-                                        'originalUrl': conversionRequestUrl,
-                                        'headersTableData':item_request['headersData'],
-                                        'requestDataTableData':item_request['bodyData'],
+                                        'originalUrl': item_request['apiUrl'],
+                                        'headersTableData':cls_Common.conversion_dict_to_kv(self,conversionHeadersData),
+                                        'requestDataTableData':conversionDataToRequestData['requestData'],
                                         'responseText':resultOfExecution['content'],
                                         'responseHeadersTableData':resultOfExecution['responseHeaders'],
                                         'extractTableData':resultOfExecution['extractTable'],

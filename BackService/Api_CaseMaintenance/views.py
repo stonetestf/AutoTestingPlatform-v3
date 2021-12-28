@@ -823,7 +823,7 @@ def edit_data(request):
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                         environmentId_id=basicInfo.environmentId, testType=basicInfo.testType,
                         label=basicInfo.labelId, priority=basicInfo.priorityId, caseName=basicInfo.caseName,
-                        caseState=basicInfo.caseState, uid_id=userId,
+                        caseState=basicInfo.caseState, uid_id=userId,updateTime=cls_Common.get_date_time()
                     )
                     # endregion
                     # region 测试集

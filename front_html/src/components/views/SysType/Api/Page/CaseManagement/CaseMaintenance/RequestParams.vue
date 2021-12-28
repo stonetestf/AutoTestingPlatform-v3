@@ -1251,6 +1251,7 @@ export default {
             let self = this;
             self.dialog.testReport.dialogPara={
                 dialogTitle:self.dialogTitle,//初始化标题
+                source:'API',
                 isTest:true,
                 testSendData:{
                     'BasicInfo':{

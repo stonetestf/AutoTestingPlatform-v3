@@ -147,6 +147,7 @@ export default {
             let self = this;
             self.dialog.testReport.dialogPara={
                 dialogTitle:self.RomeData.apiName,//初始化标题
+                source:'API',
                 apiId:self.RomeData.apiId,
                 environmentId:self.RomeData.environmentId,
                 isTest:false,

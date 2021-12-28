@@ -129,3 +129,11 @@ class Common(object):
         for item in kv:
             dicts[item['key']] = item['value']
         return dicts
+
+    def conversion_dict_to_kv(self,dicts):
+        dictList = []
+        for item in dicts:
+            key = item
+            value = dicts[item]
+            dictList.append({'key': key, 'value': value})
+        return dictList

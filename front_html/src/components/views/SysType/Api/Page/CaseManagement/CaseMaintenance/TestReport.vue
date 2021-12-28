@@ -147,7 +147,7 @@
                         <el-table-column
                             label="接口地址"
                             align= "center"
-                            prop="requestUrl">
+                            prop="apiUrl">
                         </el-table-column>
                         <el-table-column
                             label="状态码"
@@ -456,7 +456,7 @@ export default {
                 obj.index = retData.tableData.index;
                 obj.testName = retData.tableData.testName;
                 obj.requestType = retData.tableData.requestType;
-                obj.requestUrl = retData.tableData.requestUrl;
+                obj.apiUrl = retData.tableData.apiUrl;
                 obj.code = retData.tableData.code;
                 obj.timeConsuming = retData.tableData.time;
                 obj.reportState = retData.tableData.reportState;
