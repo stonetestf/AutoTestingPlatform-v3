@@ -24,6 +24,7 @@ from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from PageManagement.models import PageManagement as db_PageManagement
 from Api_TestReport.models import ApiQueue as db_ApiQueue
 from Api_TestReport.models import ApiReportItem as db_ApiReportItem
+from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -444,10 +445,13 @@ def api_pagehome_select_pro_statistical(request):
                 pid_id=proId, page_id=item_page.id, updateTime__gte=staTime, updateTime__lte=endTime).count()
             # endregion
             perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
+            obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0,page_id=item_page.id)
             dataTable.append({
                 'pageName': item_page.pageName,
                 'apiTotal': apiTotal,
-
+                'unitAndCaseTotal':f'{obj_db_CaseBaseData.filter(testType="UnitTest").count()}/'
+                                   f'{obj_db_CaseBaseData.filter(testType="HybridTest").count()}',
+                'caseTotal':obj_db_CaseBaseData.count(),
                 'weekTotal': weekTotal,
                 'performWeekTotal': performWeekTotal,
                 'perforHistoryTotal': perforHistoryTotal
@@ -488,18 +492,23 @@ def api_pagehome_select_Formerly_data(request):
             errorTotal = 0
             select_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName=item_reportName)
             for i in select_db_ApiTestReport:
-                if i.reportStatus=='Fail':
+                if i.reportStatus == 'Fail':
                     failTotal += 1
-                elif i.reportStatus=='Error':
+                elif i.reportStatus == 'Error':
                     errorTotal += 1
-                elif  i.reportStatus=='':
+                elif i.reportStatus == '':
                     errorTotal += 1
-
 
             if select_db_ApiTestReport[0].reportType == 'API':
                 obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)
                 if obj_db_ApiBaseData.exists():
                     itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
+            elif select_db_ApiTestReport[0].reportType == 'CASE':
+                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)
+                if obj_db_CaseBaseData.exists():
+                    itsName = f"{obj_db_CaseBaseData[0].page.pageName}/{obj_db_CaseBaseData[0].fun.funName}"
                 else:
                     itsName = ""
             else:
@@ -544,9 +553,15 @@ def api_pagehome_select_pro_queue(request):
                     itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
                 else:
                     itsName = ""
+            elif i.taskType == 'CASE':
+                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=i.taskId)
+                if obj_db_CaseBaseData.exists():
+                    itsName = f"{obj_db_CaseBaseData[0].page.pageName}/{obj_db_CaseBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
             else:
                 itsName = ""
-            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.id)
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.testReport_id)
             dataTable.append({
                 'id': i.id,
                 'itsName': itsName,

@@ -1267,52 +1267,57 @@ def execute_case(request):
     else:
         obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, id=caseId)
         if obj_db_CaseBaseData.exists():
-            # region 获取TopData
-            preOperationTotal = 0  # 前置总数
-            rearOperationTotal = 0  # 后置总数
-            extractTotal = 0  # 提取总数
-            assertionsTotal = 0  # 断言总数
-
-            obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
-            failedTotal = obj_db_CaseTestSet.filter(state=1).count()
-            response['leftData']['failedTotal'] = failedTotal
-            for item_testSet in obj_db_CaseTestSet:
-                state = True if item_testSet.state == 1 else False
-                if state:
-                    obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id)
-                    preOperationTotal += obj_db_CaseApiOperation.filter(location='Pre').count()
-                    rearOperationTotal += obj_db_CaseApiOperation.filter(location='Rear').count()
-
-                    obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id)
-                    extractTotal += obj_db_CaseApiExtract.count()
-
-                    obj_db_CaseApiValidate = db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id)
-                    assertionsTotal += obj_db_CaseApiValidate.count()
-            response['rightData']['preOperationTotal'] = preOperationTotal
-            response['rightData']['rearOperationTotal'] = rearOperationTotal
-            response['rightData']['extractTotal'] = extractTotal
-            response['rightData']['assertionsTotal'] = assertionsTotal
-            # endregion
-            # region 创建1级主报告
-            createTestReport = cls_ApiReport.create_test_report(
-                obj_db_CaseBaseData[0].pid_id,
-                obj_db_CaseBaseData[0].caseName,
-                'CASE', caseId, failedTotal, userId
-            )
-            # endregion
-            if createTestReport['state']:
-                testReportId = createTestReport['testReportId']
-                # region 创建队列
-                queueId = cls_ApiReport.create_queue(
-                    obj_db_CaseBaseData[0].pid_id, obj_db_CaseBaseData[0].page_id, obj_db_CaseBaseData[0].fun_id
-                    , 'CASE', caseId, testReportId, userId)  # 创建队列
-                # endregion
-                result = api_asynchronous_run_case.delay(redisKey, testReportId,queueId, caseId, environmentId, userId)
-                if result.task_id:
-                    response['statusCode'] = 2001
-                    response['redisKey'] = redisKey
+            queueState = cls_FindTable.get_queue_state('CASE', caseId)
+            if queueState:
+                response['errorMsg'] = '当前已有相同用例在运行,不可重复运行!您可在主页中项目里查看此用例的动态!' \
+                                       '如遇错误可取消该项目队列后重新运行!'
             else:
-                response['errorMsg'] = f'创建主测试报告失败:{createTestReport["errorMsg"]}'
+                # region 获取TopData
+                preOperationTotal = 0  # 前置总数
+                rearOperationTotal = 0  # 后置总数
+                extractTotal = 0  # 提取总数
+                assertionsTotal = 0  # 断言总数
+
+                obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
+                failedTotal = obj_db_CaseTestSet.filter(state=1).count()
+                response['leftData']['failedTotal'] = failedTotal
+                for item_testSet in obj_db_CaseTestSet:
+                    state = True if item_testSet.state == 1 else False
+                    if state:
+                        obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        preOperationTotal += obj_db_CaseApiOperation.filter(location='Pre').count()
+                        rearOperationTotal += obj_db_CaseApiOperation.filter(location='Rear').count()
+
+                        obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        extractTotal += obj_db_CaseApiExtract.count()
+
+                        obj_db_CaseApiValidate = db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        assertionsTotal += obj_db_CaseApiValidate.count()
+                response['rightData']['preOperationTotal'] = preOperationTotal
+                response['rightData']['rearOperationTotal'] = rearOperationTotal
+                response['rightData']['extractTotal'] = extractTotal
+                response['rightData']['assertionsTotal'] = assertionsTotal
+                # endregion
+                # region 创建1级主报告
+                createTestReport = cls_ApiReport.create_test_report(
+                    obj_db_CaseBaseData[0].pid_id,
+                    obj_db_CaseBaseData[0].caseName,
+                    'CASE', caseId, failedTotal, userId
+                )
+                # endregion
+                if createTestReport['state']:
+                    testReportId = createTestReport['testReportId']
+                    # region 创建队列
+                    queueId = cls_ApiReport.create_queue(
+                        obj_db_CaseBaseData[0].pid_id, obj_db_CaseBaseData[0].page_id, obj_db_CaseBaseData[0].fun_id
+                        , 'CASE', caseId, testReportId, userId)  # 创建队列
+                    # endregion
+                    result = api_asynchronous_run_case.delay(redisKey, testReportId,queueId, caseId, environmentId, userId)
+                    if result.task_id:
+                        response['statusCode'] = 2001
+                        response['redisKey'] = redisKey
+                else:
+                    response['errorMsg'] = f'创建主测试报告失败:{createTestReport["errorMsg"]}'
         else:
             response['errorMsg'] = '当前选择的用例不存在,请刷新后在重新尝试'
     return JsonResponse(response)

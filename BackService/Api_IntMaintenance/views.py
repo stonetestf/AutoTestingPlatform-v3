@@ -1209,50 +1209,48 @@ def send_request(request):
         cls_Logging.print_log('info', 'send_request', '-----------------------------start-----------------------------')
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
         if obj_db_ApiBaseData.exists():
-            # region 创建1级主报告
-            createTestReport = cls_ApiReport.create_test_report(
-                obj_db_ApiBaseData[0].pid_id,
-                obj_db_ApiBaseData[0].apiName,
-                'API', apiId, 1, userId
-            )
-            # endregion
-            if createTestReport['state']:
-                # region  创建2级报告
-                testReportId = createTestReport['testReportId']
-                queueId = cls_ApiReport.create_queue(
-                    obj_db_ApiBaseData[0].pid_id, obj_db_ApiBaseData[0].page_id, obj_db_ApiBaseData[0].fun_id
-                    , 'API', apiId, testReportId, userId)  # 创建队列
-                apiName = obj_db_ApiBaseData[0].apiName
-                createReportItems = cls_ApiReport.create_report_items(testReportId, apiId, apiName)
-                if createReportItems['state']:
-                    reportItemId = createReportItems['reportItemId']
-                    cls_ApiReport.update_queue(queueId, 1, userId)
-                    # 请求运行
-                    response = cls_RequstOperation.execute_api(
-                        False,onlyCode, userId,apiId=apiId, environmentId=environmentId, reportItemId=reportItemId)
-                    if response['state']:
-                        response['statusCode'] = 2000
-                    else:
-                        response['errorMsg'] = response['errorMsg']
-                    # 更新2级报告
-                    cls_ApiReport.update_report_items(testReportId, reportItemId)
-                    cls_ApiReport.update_queue(queueId, 2, userId)
-                else:
-                    response['errorMsg'] = createReportItems['errorMsg']
-                # endregion
+            queueState = cls_FindTable.get_queue_state('API',apiId)
+            if queueState:
+                response['errorMsg'] = '当前已有相同接口在运行,不可重复运行!您可在主页中项目里查看此接口的动态!' \
+                                       '如遇错误可取消该项目队列后重新运行!'
             else:
-                response['errorMsg'] = createTestReport['errorMsg']
+                # region 创建1级主报告
+                createTestReport = cls_ApiReport.create_test_report(
+                    obj_db_ApiBaseData[0].pid_id,
+                    obj_db_ApiBaseData[0].apiName,
+                    'API', apiId, 1, userId
+                )
+                # endregion
+                if createTestReport['state']:
+                    # region  创建2级报告
+                    testReportId = createTestReport['testReportId']
+                    queueId = cls_ApiReport.create_queue(
+                        obj_db_ApiBaseData[0].pid_id, obj_db_ApiBaseData[0].page_id, obj_db_ApiBaseData[0].fun_id
+                        , 'API', apiId, testReportId, userId)  # 创建队列
+                    apiName = obj_db_ApiBaseData[0].apiName
+                    createReportItems = cls_ApiReport.create_report_items(testReportId, apiId, apiName)
+                    if createReportItems['state']:
+                        reportItemId = createReportItems['reportItemId']
+                        cls_ApiReport.update_queue(queueId, 1, userId)
+                        # 请求运行
+                        response = cls_RequstOperation.execute_api(
+                            False,onlyCode, userId,apiId=apiId, environmentId=environmentId, reportItemId=reportItemId)
+                        if response['state']:
+                            response['statusCode'] = 2000
+                        else:
+                            response['errorMsg'] = response['errorMsg']
+                        # 更新2级报告
+                        cls_ApiReport.update_report_items(testReportId, reportItemId)
+                        cls_ApiReport.update_queue(queueId, 2, userId)
+                    else:
+                        response['errorMsg'] = createReportItems['errorMsg']
+                    # endregion
+                else:
+                    response['errorMsg'] = createTestReport['errorMsg']
         else:
             response['errorMsg'] = '当前请求的接口不存在,请刷新后在重新尝试'
         cls_Logging.print_log('info', 'send_request', '-----------------------------END-----------------------------')
     return JsonResponse(response)
-
-
-@cls_Logging.log
-@cls_GlobalDer.foo_isToken
-@require_http_methods(["POST"])  # 异步请求
-def asynchronous_request(request):
-    pass
 
 
 @cls_Logging.log

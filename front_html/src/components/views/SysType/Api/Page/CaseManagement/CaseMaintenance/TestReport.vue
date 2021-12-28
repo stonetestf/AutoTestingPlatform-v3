@@ -404,10 +404,14 @@ export default {
                     return res.data;
                 }else{
                     self.$message.error('测试用例运行失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
                 }
             }).catch(function (error) {
                 self.$message.error('测试用例运行失败:'+error);
                 console.log(error);
+                self.loading=false;
+                self.dialogClose();
             })
         },
         CreateSocket(redisKey,caseTotal){//创建socket连接

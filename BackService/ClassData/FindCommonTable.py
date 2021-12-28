@@ -1,4 +1,5 @@
 # Create your db here.
+from django.db.models import Q
 from rest_framework.authtoken.models import Token as db_Token
 from login.models import UserTable as db_UserTable
 from login.models import UserBindRole as db_UserBindRole
@@ -6,6 +7,7 @@ from ProjectManagement.models import ProManagement as db_ProManagement
 from PageManagement.models import PageManagement as db_PageManagement
 from FunManagement.models import FunManagement as db_FunManagement
 from role.models import BasicRole as db_BasicRole
+from Api_TestReport.models import ApiQueue as db_ApiQueue
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
@@ -67,3 +69,10 @@ class FindTable(cls_Logging):
             return obj_db_FunManagement[0].funName
         else:
             return None
+
+    def get_queue_state(self,taskType,taskId):
+        obj_db_ApiQueue = db_ApiQueue.objects.filter(~Q(queueStatus=2),taskType=taskType,taskId=taskId)
+        if obj_db_ApiQueue.exists():
+            return True
+        else:
+            return False

@@ -504,10 +504,12 @@ export default {
                     }else{
                         self.$message.error('接口请求失败'+res.data.errorMsg);
                         self.loading=false;
+                        self.dialogClose();
                     }
                 }).catch(function (error) {
                     console.log(error);
                     self.loading=false;
+                    self.dialogClose();
                 })
             }else{
                 self.$axios.post('/api/ApiIntMaintenance/SendRequest',Qs.stringify({
@@ -539,10 +541,12 @@ export default {
                     }else{
                         self.$message.error('接口请求失败'+res.data.errorMsg);
                         self.loading=false;
+                        self.dialogClose();
                     }
                 }).catch(function (error) {
                     console.log(error);
                     self.loading=false;
+                    self.dialogClose();
                 })
             }
         },
