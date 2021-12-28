@@ -45,7 +45,7 @@ class ApiReport(models.Model):  # 三级用例报告
     # requestFile = models.TextField('请求文件', null=True)
     reportStatus = models.CharField("测试报告状态(Pass,Fail,Error)", max_length=10, null=False)
 
-    statusCode = models.IntegerField("返回代码", null=False)
+    statusCode = models.IntegerField("返回代码", null=True)
     responseHeaders = models.TextField('返回头部', null=True)
     responseInfo = models.TextField('返回信息', null=True)
     requestExtract = models.TextField('请求提取信息', null=True)

@@ -26,10 +26,10 @@ cls_ApiReport = ApiReport()
 
 
 @shared_task  # 异步任务-测试用例运行
-def api_asynchronous_run_case(redisKey, testReportId, queueId, caseId, environmentId, userId):
+def api_asynchronous_run_case(remindLabel,redisKey, testReportId, queueId, caseId, environmentId, userId):
     cls_ApiReport.update_queue(queueId, 1, userId)  # 更新队列-执行中
     # 组合成Case执行的用例
-    cls_RequstOperation.execute_case(redisKey, testReportId, caseId, environmentId, userId)
+    cls_RequstOperation.execute_case(remindLabel,redisKey, testReportId, caseId, environmentId, userId)
     cls_ApiReport.get_report_top_data(testReportId)  # 更新主测试报告
     cls_ApiReport.update_queue(queueId, 2, userId)  # 更新队列-完成
 

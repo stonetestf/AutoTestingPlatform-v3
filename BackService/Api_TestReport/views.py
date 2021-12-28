@@ -65,8 +65,8 @@ def select_data(request):
         for i in select_db_ApiTestReport:
             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.id)
             obj_db_ApiQueue = db_ApiQueue.objects.filter(testReport_id=i.id)
-            if i.runningTime:
-                runningTime=round(i.runningTime,2)
+            if i.runningTime is not None:
+                runningTime = round(i.runningTime, 2)
             else:
                 runningTime = None
             dataList.append(

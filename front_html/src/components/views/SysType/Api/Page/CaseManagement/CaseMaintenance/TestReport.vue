@@ -283,11 +283,13 @@ export default {
                 PrintConsole('newval',newval);
                 this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
-                this.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                    this.MyChart_pie = echarts.init(document.getElementById('EchartContainer-pie'));//初始化
-                    this.PieChart();
-                    this.runCase(newval.runType,newval.caseId,newval.environmentId);
-                })
+                if(newval.runType=='Synchronous'){//同步时才加载 DOM
+                    this.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                        this.MyChart_pie = echarts.init(document.getElementById('EchartContainer-pie'));//初始化
+                        this.PieChart();
+                    });
+                }
+                this.runCase(newval.runType,newval.caseId,newval.environmentId);
             }
         },
     },
@@ -378,15 +380,16 @@ export default {
             let self = this;
             self.executeCase(runType,caseId,environmentId).then(res=>{
                 if(res){
-                    self.RomeData.topData.leftData.failedTotal = res.leftData.failedTotal;
-                    self.RomeData.topData.rightData.preOperationTotal = res.rightData.preOperationTotal;
-                    self.RomeData.topData.rightData.rearOperationTotal = res.rightData.rearOperationTotal;
-                    self.RomeData.topData.rightData.extractTotal = res.rightData.extractTotal;
-                    self.RomeData.topData.rightData.assertionsTotal = res.rightData.assertionsTotal;
+                    if(runType=="Synchronous"){
+                        self.RomeData.topData.leftData.failedTotal = res.leftData.failedTotal;
+                        self.RomeData.topData.rightData.preOperationTotal = res.rightData.preOperationTotal;
+                        self.RomeData.topData.rightData.rearOperationTotal = res.rightData.rearOperationTotal;
+                        self.RomeData.topData.rightData.extractTotal = res.rightData.extractTotal;
+                        self.RomeData.topData.rightData.assertionsTotal = res.rightData.assertionsTotal;
                     
-                    self.CreateSocket(res.redisKey,res.leftData.failedTotal);
-
-                    self.loading=false;
+                        self.CreateSocket(res.redisKey,res.leftData.failedTotal);
+                        self.loading=false;
+                    }
                 }else{
                     // self.dialogClose();
                 }

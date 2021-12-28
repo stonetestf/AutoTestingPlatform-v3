@@ -344,8 +344,11 @@ class ApiReport(cls_Logging):
                     requestData.append({'key': item_body, 'value': ret_requestData[item_body]})
                 # endregion
                 # region 返回主体信息
-                ret_responseInfo = eval(obj_db_ApiReport[0].responseInfo)
-                responseInfo = json.dumps(ret_responseInfo, indent=4, separators=(',', ':'), ensure_ascii=False)
+                try:
+                    ret_responseInfo = eval(obj_db_ApiReport[0].responseInfo)
+                    responseInfo = json.dumps(ret_responseInfo, indent=4, separators=(',', ':'), ensure_ascii=False)
+                except BaseException as e:
+                    responseInfo = obj_db_ApiReport[0].responseInfo
                 # endregion
                 # region  提取
                 if obj_db_ApiReport[0].requestExtract:

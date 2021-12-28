@@ -2009,6 +2009,7 @@ export default {
             self.dialog.testReport.dialogPara={
                 dialogTitle:self.BasicRomeData.apiName,//初始化标题
                 isTest:true,
+                source:'API',
                 testSendData:{
                     'BasicInfo':{
                         'proId':self.$cookies.get('proId'),

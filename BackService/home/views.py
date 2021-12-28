@@ -8,7 +8,7 @@ from time import sleep
 
 import json
 import operator
-import psutil
+# import psutil
 
 # Create your db here.
 from django.db.models import Q

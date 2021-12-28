@@ -160,8 +160,8 @@ class RequstOperation(cls_Logging, cls_Common):
                 results['requestData'] = paramsData
 
             # 转换参数中带有引用的数据
-            conversionImportData = self.conversion_params_import_data(onlyCode,
-                                                                      proId, requestUrl, requestHeaders, requestData)
+            conversionImportData = self.conversion_params_import_data(
+                onlyCode,proId, requestUrl, requestHeaders, requestData)
             if conversionImportData['state']:
                 conversionRequestUrl = conversionImportData['requestUrl']
                 conversionHeadersData = conversionImportData['headersData']
@@ -178,7 +178,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 提取并推送给当前执行的用户提取失败的信息
-    def request_extract(self, userId, onlyCode, content, statuscode, extract):
+    def request_extract(self, userId, labelName,onlyCode, content, statuscode, extract):
         results = {
             'state': True,
             'errorInfoTable': []
@@ -221,17 +221,29 @@ class RequstOperation(cls_Logging, cls_Common):
                             # region 添加操作信息
                             operationInfo = cls_Logging.record_local_operation_info(
                                 self, 'API', 'System', 2, 'Warning',
-                                'ClassData', 'Request', 'request_extract', message,
+                                'ClassData', 'Request', 'request_extract', f'{labelName}{message}',
                             )
                             cls_Logging.push_to_user(self, operationInfo, userId)
                             # endregion
                     else:
                         message = f"提取失败:变量名称:{extractKey}," \
                                   f"的提取表达式:{extractValue},首参数不为$,请更改后在重试!"
-                        results['state'] = False
-                        results['errorMsg'] = message
-                        cls_Logging.print_log(self, 'error', 'requests_api', message)
-                        cls_Logging.record_error_info(self, 'API', 'ClassData', 'request_extract', message)
+                        # results['state'] = False
+                        # results['errorMsg'] = message
+                        results['errorInfoTable'].append({
+                            'createTime': cls_Common.get_date_time(self),
+                            'errorName': '提取失败',
+                            'errorInfo': message
+                        })
+                        cls_Logging.print_log(self, 'warning', 'requests_api', message)
+                        # region 添加操作信息
+                        operationInfo = cls_Logging.record_local_operation_info(
+                            self, 'API', 'System', 2, 'Warning',
+                            'ClassData', 'Request', 'request_extract', f'{labelName}{message}',
+                        )
+                        cls_Logging.push_to_user(self, operationInfo, userId)
+                        # endregion
+                        # cls_Logging.record_error_info(self, 'API', 'ClassData', 'request_extract', message)
                 if type(retValue) == str:
                     retValueType = 'str'
                 elif type(retValue) == list:
@@ -349,14 +361,14 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 执行提取和断言操作
-    def perform_extract_and_validate(self, onlyCode, extractData, validateData, requestsApi, userId):
+    def perform_extract_and_validate(self,labelName, onlyCode, extractData, validateData, requestsApi, userId):
         results = {
             'extractTable': [],
             'assertionTable': [],
             'errorInfoTable': []
         }
         if extractData:  # 如果有提取的数据才会执行断言
-            requestExtract = self.request_extract(userId, onlyCode,
+            requestExtract = self.request_extract(userId,labelName, onlyCode,
                                                   requestsApi['content'],
                                                   requestsApi['responseCode'],
                                                   extractData)
@@ -475,7 +487,9 @@ class RequstOperation(cls_Logging, cls_Common):
         """
         timeout = 10
         r = {}
-        results = {}
+        results = {
+            'state':True
+        }
         os.system('echo 3 > /proc/sys/vm/drop_caches')  # 执行前清理缓存
         cls_Logging.print_log(self, 'info', 'requests_api', f'RequestURl:{url}')
         cls_Logging.print_log(self, 'info', 'requests_api', f'requestType:{requestType}')
@@ -502,11 +516,12 @@ class RequstOperation(cls_Logging, cls_Common):
                 cls_Logging.print_log(self, 'error', 'requests_api', message)
                 cls_Logging.record_error_info(self, 'API', 'ClassData', 'requests_api', message)
         except BaseException as e:
-            message = f"请求失败:{e}"
             results['state'] = False
+            message = f"请求失败:{e}"
+            results['content'] = message
             results['errorMsg'] = message
             cls_Logging.print_log(self, 'error', 'requests_api', message)
-            cls_Logging.record_error_info(self, 'API', 'ClassData', 'requests_api', message)
+            # cls_Logging.record_error_info(self, 'API', 'ClassData', 'requests_api', message)
         else:
             text = r.text
             if '<!DOCTYPE html>' in text:
@@ -531,7 +546,6 @@ class RequstOperation(cls_Logging, cls_Common):
                     content = text
                     cls_Logging.print_log(self, 'error', 'requests_api', f'content:{e}')
             cls_Logging.print_log(self, 'info', 'requests_api', f'content:{content}')
-            results['state'] = True
             results['responseCode'] = r.status_code
             results['time'] = round(r.elapsed.total_seconds(), 2)
             responseHeaders = [{'key': item_resHeaders,
@@ -539,11 +553,22 @@ class RequstOperation(cls_Logging, cls_Common):
                                for item_resHeaders in r.headers]
             results['responseHeaders'] = responseHeaders
             results['content'] = content
-            return results
+        return results
 
     # 核心-执行api
     def execute_api(self, is_test, onlyCode, userId, apiId=None, environmentId=None, requestData=None,
-                    reportItemId=None):
+                    reportItemId=None,labelName=''):
+        """
+        :param is_test:
+        :param onlyCode:
+        :param userId:
+        :param apiId:
+        :param environmentId:
+        :param requestData:
+        :param reportItemId:
+        :param labelName: 是一种标识，用于推送提醒的时候标识是什么
+        :return:
+        """
         results = {
             'request': {
                 'requestType': '',
@@ -558,8 +583,8 @@ class RequstOperation(cls_Logging, cls_Common):
             'response': {
                 'content': "",  # 返回主体 格式化的数据
                 'text': "",  # 返回主体,未格式化
-                'responseCode': '',
-                'time': '',
+                'responseCode': 0,
+                'time': 0,
                 'reportState': '',
 
                 'headersList': [],  # 返回头部
@@ -595,7 +620,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 results['request']['requestDataDict'] = conversionRequestData
                 results['request']['requestDataList'] = conversionDataToRequestData['requestData']
 
-                resultOfExecution = self.request_operation_extract_validate(onlyCode, getRequestData,
+                resultOfExecution = self.request_operation_extract_validate(labelName,onlyCode, getRequestData,
                                                                             conversionRequestUrl,
                                                                             conversionHeadersData,
                                                                             conversionRequestData,
@@ -634,15 +659,15 @@ class RequstOperation(cls_Logging, cls_Common):
 
         return results
 
-    def request_operation_extract_validate(self, onlyCode, getRequestData,
+    def request_operation_extract_validate(self, labelName,onlyCode, getRequestData,
                                            conversionRequestUrl, conversionHeadersData, conversionRequestData, userId):
         results = {
-            'responseCode': '',
-            'time': '',
+            'responseCode': 0,
+            'time': 0,
             'content': '',
             'text': '',
             'reportState': '',
-            'responseHeaders': '',
+            'responseHeaders': [],
             'extractTable': [],
             'assertionTable': [],
             'preOperationTable': [],
@@ -709,7 +734,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
             # 断言及提取
             performExtractAndValidate = self.perform_extract_and_validate(
-                onlyCode, extractData, validateData, requestsApi, userId)
+                labelName,onlyCode, extractData, validateData, requestsApi, userId)
             if performExtractAndValidate['state']:
                 for i in performExtractAndValidate['errorInfoTable']:
                     errorInfoTable.append(i)
@@ -722,8 +747,13 @@ class RequstOperation(cls_Logging, cls_Common):
                     'errorInfo': performExtractAndValidate['errorMsg'],
                 })
             reportState.append(performExtractAndValidate['reportState'])
-            results['state'] = True
+            # results['state'] = True
         else:
+            # 解决中文乱码的问题
+            results['content'] = json.dumps(
+                requestsApi['content'], sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+            results['text'] = requestsApi['content']
+
             errorInfoTable.append({
                 'createTime': cls_Common.get_date_time(self),
                 'errorName': '访问接口',
@@ -954,7 +984,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-用例执行
-    def execute_case(self, redisKey, testReportId, caseId, environmentId, userId):
+    def execute_case(self,remindLabel, redisKey, testReportId, caseId, environmentId, userId):
         results = {
             'itemResults': []
         }
@@ -1010,7 +1040,7 @@ class RequstOperation(cls_Logging, cls_Common):
                         itemResults['request']['headersDict'] = conversionHeadersData
                         itemResults['request']['requestDataDict'] = conversionRequestData
                         itemResults['request']['requestDataList'] = conversionDataToRequestData['requestData']
-                        resultOfExecution = self.request_operation_extract_validate(redisKey, item_request,
+                        resultOfExecution = self.request_operation_extract_validate(remindLabel,redisKey, item_request,
                                                                                     conversionRequestUrl,
                                                                                     conversionHeadersData,
                                                                                     conversionRequestData,

@@ -25,7 +25,6 @@ from Api_IntMaintenance.models import ApiHistory as db_ApiHistory
 from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
 
-
 # Create reference here.
 from ClassData.Logger import Logging
 from ClassData.GlobalDecorator import GlobalDer
@@ -933,13 +932,13 @@ def edit_data(request):
                         cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
                     # endregion
                     # region 添加接口更变信息,用于用例中提醒使用
-                    obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0,apiId_id=basicInfo.apiId)
+                    obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, apiId_id=basicInfo.apiId)
                     product_list_to_insert = list()
                     for item_testSet in obj_db_CaseTestSet:
                         obj_db_ApiDynamic = db_ApiDynamic.objects.filter(
-                            is_del=0,apiId_id=basicInfo.apiId,case_id=item_testSet.caseId_id,is_read=0)
+                            is_del=0, apiId_id=basicInfo.apiId, case_id=item_testSet.caseId_id, is_read=0)
                         if obj_db_ApiDynamic.exists():
-                            obj_db_ApiDynamic.update(updateTime=cls_Common.get_date_time(),uid_id=userId)
+                            obj_db_ApiDynamic.update(updateTime=cls_Common.get_date_time(), uid_id=userId)
                         else:
                             product_list_to_insert.append(db_ApiDynamic(
                                 apiId_id=basicInfo.apiId,
@@ -948,7 +947,7 @@ def edit_data(request):
                                 cuid=userId,
                                 is_read=0,
                                 is_del=0,
-                                )
+                            )
                             )
                     db_ApiDynamic.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -1209,11 +1208,13 @@ def send_request(request):
         cls_Logging.print_log('info', 'send_request', '-----------------------------start-----------------------------')
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
         if obj_db_ApiBaseData.exists():
-            queueState = cls_FindTable.get_queue_state('API',apiId)
+            queueState = cls_FindTable.get_queue_state('API', apiId)
             if queueState:
                 response['errorMsg'] = '当前已有相同接口在运行,不可重复运行!您可在主页中项目里查看此接口的动态!' \
                                        '如遇错误可取消该项目队列后重新运行!'
             else:
+                remindLabel = f"【接口:{obj_db_ApiBaseData[0].apiName}】:"  # 推送的标识
+
                 # region 创建1级主报告
                 createTestReport = cls_ApiReport.create_test_report(
                     obj_db_ApiBaseData[0].pid_id,
@@ -1234,7 +1235,8 @@ def send_request(request):
                         cls_ApiReport.update_queue(queueId, 1, userId)
                         # 请求运行
                         response = cls_RequstOperation.execute_api(
-                            False,onlyCode, userId,apiId=apiId, environmentId=environmentId, reportItemId=reportItemId)
+                            False, onlyCode, userId,
+                            apiId=apiId, environmentId=environmentId, reportItemId=reportItemId, labelName=remindLabel)
                         if response['state']:
                             response['statusCode'] = 2000
                         else:
@@ -1295,8 +1297,8 @@ def send_test_request(request):
                 'proId': testSendData['BasicInfo']['proId'],
                 'requestType': testSendData['ApiInfo']['requestType'],
                 'requestUrl': f'{environmentUrl}{requestUrl}',
-                'environmentUrl':environmentUrl,
-                'apiUrl':requestUrl,
+                'environmentUrl': environmentUrl,
+                'apiUrl': requestUrl,
                 'requestParamsType': requestParamsType,
                 'bodyRequestType': bodyRequestType,
                 'headersData': testSendData['ApiInfo']['request']['headers'],
@@ -1307,7 +1309,7 @@ def send_test_request(request):
                 'PreOperation': testSendData['ApiInfo']['request']['preOperation'],
                 'RearOperation': testSendData['ApiInfo']['request']['rearOperation'],
             }
-            response = cls_RequstOperation.execute_api(True,onlyCode, userId, requestData=requestData)
+            response = cls_RequstOperation.execute_api(True, onlyCode, userId, requestData=requestData)
             if response['state']:
                 response['statusCode'] = 2000
         else:

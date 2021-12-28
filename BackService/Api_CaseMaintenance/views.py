@@ -1267,6 +1267,7 @@ def execute_case(request):
     else:
         obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, id=caseId)
         if obj_db_CaseBaseData.exists():
+            remindLabel = f"【用例:{obj_db_CaseBaseData[0].caseName}】:"  # 推送的标识
             queueState = cls_FindTable.get_queue_state('CASE', caseId)
             if queueState:
                 response['errorMsg'] = '当前已有相同用例在运行,不可重复运行!您可在主页中项目里查看此用例的动态!' \
@@ -1312,7 +1313,7 @@ def execute_case(request):
                         obj_db_CaseBaseData[0].pid_id, obj_db_CaseBaseData[0].page_id, obj_db_CaseBaseData[0].fun_id
                         , 'CASE', caseId, testReportId, userId)  # 创建队列
                     # endregion
-                    result = api_asynchronous_run_case.delay(redisKey, testReportId,queueId, caseId, environmentId, userId)
+                    result = api_asynchronous_run_case.delay(remindLabel,redisKey, testReportId,queueId, caseId, environmentId, userId)
                     if result.task_id:
                         response['statusCode'] = 2001
                         response['redisKey'] = redisKey
