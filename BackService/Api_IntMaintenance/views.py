@@ -684,9 +684,9 @@ def edit_data(request):
                     obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=basicInfo.apiId)
                     pushTo = [i.uid_id for i in obj_db_ApiAssociatedUser]
                     oldData = {
-                        'basicInfo': {
+                        'BasicInfo': {
                             'apiId': basicInfo.apiId,
-                            'proId': obj_db_ApiBaseData[0].pid_id,
+                            'proId': str(obj_db_ApiBaseData[0].pid_id),
                             'pageId': obj_db_ApiBaseData[0].page_id,
                             'funId': obj_db_ApiBaseData[0].fun_id,
                             'environmentId': obj_db_ApiBaseData[0].environment_id,
@@ -695,15 +695,17 @@ def edit_data(request):
                             'assignedUserId': obj_db_ApiBaseData[0].uid_id,
                             'pushTo': pushTo,
                         },
-                        'apiInfo': {
+                        'ApiInfo': {
                             'requestType': obj_db_ApiBaseData[0].requestType,
-                            'requestUrl': obj_db_ApiBaseData[0].requestUrl,
+                            'requestUrlRadio': obj_db_ApiBaseData[0].requestUrlRadio,
+                            'requestUrl': ast.literal_eval(obj_db_ApiBaseData[0].requestUrl),
                             'request': {
                                 'headers': headers,
                                 'params': params,
                                 'body': {
                                     'requestSaveType': obj_db_ApiBaseData[0].bodyRequestSaveType,
-                                    'bodyData': bodyData
+                                    'formData': bodyData,
+                                    'raw': bodyData if obj_db_ApiBaseData[0].bodyRequestSaveType == 'Raw' else ''
                                 },
                                 'extract': extract,
                                 'validate': validate,
@@ -711,7 +713,7 @@ def edit_data(request):
                                 'rearOperation': rearOperation,
                             }
                         },
-                        'cuid': obj_db_ApiBaseData[0].cuid
+                        # 'cuid': obj_db_ApiBaseData[0].cuid
                     }
                     # endregion
                     operationInfoId = cls_Logging.record_operation_info(
@@ -724,10 +726,14 @@ def edit_data(request):
                         CUFront=oldData, CURear=responseData
                     )
                     # region 创建系统级别的工单
+                    apiEditDfif = cls_RequstOperation.api_edit_dfif(oldData,responseData)
+
+
                     save_db_WorkorderManagement = db_WorkorderManagement.objects.create(
                         sysType='API', pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
-                        workSource=1, workType='Edit', workState=0, workName=basicInfo.apiName,
-                        message=f"{oldData}\n\n{responseData}",
+                        workSource=1, workType='Edit', workState=0, workName=f'【接口】:{basicInfo.apiName}',
+                        message=apiEditDfif,
+                        # message=f"{oldData}\n\n{responseData}",
                         uid_id=userId,
                         cuid=userId,
                         is_del=0,
@@ -789,7 +795,7 @@ def edit_data(request):
                         page_id=basicInfo.pageId,
                         fun_id=basicInfo.funId,
                         api_id=basicInfo.apiId,
-                        apiName=oldData['basicInfo']['apiName'],
+                        apiName=oldData['BasicInfo']['apiName'],
                         operationType='Edit',
                         restoreData=oldData,
                         onlyCode=historyCode,

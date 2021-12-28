@@ -161,7 +161,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
             # 转换参数中带有引用的数据
             conversionImportData = self.conversion_params_import_data(
-                onlyCode,proId, requestUrl, requestHeaders, requestData)
+                onlyCode, proId, requestUrl, requestHeaders, requestData)
             if conversionImportData['state']:
                 conversionRequestUrl = conversionImportData['requestUrl']
                 conversionHeadersData = conversionImportData['headersData']
@@ -178,7 +178,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 提取并推送给当前执行的用户提取失败的信息
-    def request_extract(self, userId, labelName,onlyCode, content, statuscode, extract):
+    def request_extract(self, userId, labelName, onlyCode, content, statuscode, extract):
         results = {
             'state': True,
             'errorInfoTable': []
@@ -361,14 +361,14 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 执行提取和断言操作
-    def perform_extract_and_validate(self,labelName, onlyCode, extractData, validateData, requestsApi, userId):
+    def perform_extract_and_validate(self, labelName, onlyCode, extractData, validateData, requestsApi, userId):
         results = {
             'extractTable': [],
             'assertionTable': [],
             'errorInfoTable': []
         }
         if extractData:  # 如果有提取的数据才会执行断言
-            requestExtract = self.request_extract(userId,labelName, onlyCode,
+            requestExtract = self.request_extract(userId, labelName, onlyCode,
                                                   requestsApi['content'],
                                                   requestsApi['responseCode'],
                                                   extractData)
@@ -488,7 +488,7 @@ class RequstOperation(cls_Logging, cls_Common):
         timeout = 10
         r = {}
         results = {
-            'state':True
+            'state': True
         }
         os.system('echo 3 > /proc/sys/vm/drop_caches')  # 执行前清理缓存
         cls_Logging.print_log(self, 'info', 'requests_api', f'RequestURl:{url}')
@@ -557,7 +557,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
     # 核心-执行api
     def execute_api(self, is_test, onlyCode, userId, apiId=None, environmentId=None, requestData=None,
-                    reportItemId=None,labelName=''):
+                    reportItemId=None, labelName=''):
         """
         :param is_test:
         :param onlyCode:
@@ -620,7 +620,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 results['request']['requestDataDict'] = conversionRequestData
                 results['request']['requestDataList'] = conversionDataToRequestData['requestData']
 
-                resultOfExecution = self.request_operation_extract_validate(labelName,onlyCode, getRequestData,
+                resultOfExecution = self.request_operation_extract_validate(labelName, onlyCode, getRequestData,
                                                                             conversionRequestUrl,
                                                                             conversionHeadersData,
                                                                             conversionRequestData,
@@ -659,7 +659,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
         return results
 
-    def request_operation_extract_validate(self, labelName,onlyCode, getRequestData,
+    def request_operation_extract_validate(self, labelName, onlyCode, getRequestData,
                                            conversionRequestUrl, conversionHeadersData, conversionRequestData, userId):
         results = {
             'responseCode': 0,
@@ -734,7 +734,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
             # 断言及提取
             performExtractAndValidate = self.perform_extract_and_validate(
-                labelName,onlyCode, extractData, validateData, requestsApi, userId)
+                labelName, onlyCode, extractData, validateData, requestsApi, userId)
             if performExtractAndValidate['state']:
                 for i in performExtractAndValidate['errorInfoTable']:
                     errorInfoTable.append(i)
@@ -984,7 +984,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-用例执行
-    def execute_case(self,remindLabel, redisKey, testReportId, caseId, environmentId, userId):
+    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId):
         results = {
             'itemResults': []
         }
@@ -1040,7 +1040,7 @@ class RequstOperation(cls_Logging, cls_Common):
                         itemResults['request']['headersDict'] = conversionHeadersData
                         itemResults['request']['requestDataDict'] = conversionRequestData
                         itemResults['request']['requestDataList'] = conversionDataToRequestData['requestData']
-                        resultOfExecution = self.request_operation_extract_validate(remindLabel,redisKey, item_request,
+                        resultOfExecution = self.request_operation_extract_validate(remindLabel, redisKey, item_request,
                                                                                     conversionRequestUrl,
                                                                                     conversionHeadersData,
                                                                                     conversionRequestData,
@@ -1152,3 +1152,66 @@ class RequstOperation(cls_Logging, cls_Common):
             results['errorMsg'] = getCaseData['errorMsg']
             results['state'] = False
         return results
+
+    # 接口差异的对比 专属
+    def conversion_api_dict(self, dictData):
+        # 排除列表
+        passKeyName = ['assignedUserId', 'pushTo']
+
+        dicts = {}
+        for item in dictData['BasicInfo']:
+            if item not in passKeyName:
+                dicts[item] = dictData['BasicInfo'][item]
+
+        for item in dictData['ApiInfo']:
+            if item not in passKeyName:
+                if item == 'request':
+                    for item_quest in dictData['ApiInfo']['request']:
+                        if item_quest == 'body':
+                            for item_body in dictData['ApiInfo']['request']['body']:
+                                dicts[item_body] = dictData['ApiInfo']['request']['body'][item_body]
+                        else:
+                            dicts[item_quest] = dictData['ApiInfo']['request'][item_quest]
+                else:
+                    dicts[item] = dictData['ApiInfo'][item]
+        return dicts
+
+    def api_edit_dfif(self, oldData, newData):
+        strData = ""
+        keyNameDict = {
+            'pageId': '所属页面',
+            'funId': '所属功能',
+            'apiName': '接口名称',
+            'environmentId': '页面环境',
+            'apiState': '接口状态',
+            'requestType': '请求类型',
+            'requestUrlRadio': '备选URL',
+            'requestUrl': '请求地址',
+            'headers': 'headers参数',
+            'params': 'params参数',
+            'requestSaveType': 'body请求类型',
+            'formData': 'bodyFormData请求参数',
+            'raw': 'bodyRaw请求参数',
+            'extract': '提取参数',
+            'validate': '断言参数',
+            'preOperation': '前置操作参数',
+            'rearOperation': '后置操作参数',
+        }
+        conversionOld = self.conversion_api_dict(oldData)
+        conversionNew = self.conversion_api_dict(newData)
+        diffList = [{'new':{i: conversionNew[i]},'old':{i:conversionOld[i]}}
+                    for i in conversionNew.keys() if conversionOld[i] != conversionNew[i]]
+        # diffList = []
+        # for i in conversionNew.keys():
+        #     if conversionOld[i] != conversionNew[i]:
+        #         diffList.append({'new':{i: conversionNew[i]},'old':{i:conversionOld[i]}})
+        if diffList:
+            for item in diffList:
+                newData = item['new']
+                oldData = item['old']
+                key = list(newData.keys())[0]
+                newValue = newData[key]
+                oldValue = oldData[key]
+                strData += f'【变动修改前】: {keyNameDict[key]}:{oldValue}\n'
+                strData += f'【变动修改为】: {keyNameDict[key]}:{newValue}\n\n'
+        return strData
