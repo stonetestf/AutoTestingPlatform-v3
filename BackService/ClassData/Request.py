@@ -1212,6 +1212,6 @@ class RequstOperation(cls_Logging, cls_Common):
                 key = list(newData.keys())[0]
                 newValue = newData[key]
                 oldValue = oldData[key]
-                strData += f'【变动修改前】: {keyNameDict[key]}:{oldValue}\n'
-                strData += f'【变动修改为】: {keyNameDict[key]}:{newValue}\n\n'
+                strData += f'【{keyNameDict[key]}修改前】:{oldValue}\n'
+                strData += f'【{keyNameDict[key]}修改为】:{newValue}\n\n'
         return strData
