@@ -1199,7 +1199,7 @@ class RequstOperation(cls_Logging, cls_Common):
         }
         conversionOld = self.conversion_api_dict(oldData)
         conversionNew = self.conversion_api_dict(newData)
-        diffList = [{'new':{i: conversionNew[i]},'old':{i:conversionOld[i]}}
+        diffList = [{'new': {i: conversionNew[i]}, 'old': {i: conversionOld[i]}}
                     for i in conversionNew.keys() if conversionOld[i] != conversionNew[i]]
         # diffList = []
         # for i in conversionNew.keys():
@@ -1212,6 +1212,19 @@ class RequstOperation(cls_Logging, cls_Common):
                 key = list(newData.keys())[0]
                 newValue = newData[key]
                 oldValue = oldData[key]
-                strData += f'【{keyNameDict[key]}修改前】:{oldValue}\n'
-                strData += f'【{keyNameDict[key]}修改为】:{newValue}\n\n'
+                if type(oldValue) == list:
+                    strData += f'<b>\n【{keyNameDict[key]}修改前】</b>:\n'
+                    for i in oldValue:
+                        strData += f'{i}\n'
+                else:
+                    strData += f'<b>【{keyNameDict[key]}修改前】</b>:{oldValue}\n'
+
+                if type(newValue) == list:
+                    strData += f'<b>\n【{keyNameDict[key]}修改为】</b>:\n'
+                    for i in newValue:
+                        strData += f'{i}\n'
+                else:
+                    strData += f'<b>【{keyNameDict[key]}修改为】</b>:{newValue}\n'
+                strData += '\n---------------------------------------------------------------------------------------\n'
+                # strData += f'【{keyNameDict[key]}修改为】:{newValue}\n\n'
         return strData

@@ -57,7 +57,6 @@ def select_operational_info(request):
             obj_db_OperateInfo = db_OperateInfo.objects.filter().order_by('-createTime')
             select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
 
-
             if sysType:
                 obj_db_OperateInfo = obj_db_OperateInfo.filter(sysType=sysType)
                 select_db_OperateInfo = obj_db_OperateInfo[minSize: maxSize]
@@ -72,17 +71,17 @@ def select_operational_info(request):
             for i in select_db_OperateInfo:
                 dataList.append({
                     'id': i.id,
-                    'triggerType':i.triggerType,
+                    'triggerType': i.triggerType,
                     'level': i.level,
                     'remindType': i.remindType,
                     'sysType': i.sysType,
-                    'toPro':i.toPro,
+                    'toPro': i.toPro,
                     'toPage': i.toPage,
                     'toFun': i.toFun,
                     'info': i.info,
                     # 'editInfo':editInfo,
-                    'tableItem':[{
-                        'CUFront':i.CUFront,
+                    'tableItem': [{
+                        'CUFront': i.CUFront,
                         'CURear': i.CURear,
                     }],
                     'is_read': i.is_read,
@@ -147,22 +146,30 @@ def user_operational_info(request):
         cls_Logging.record_error_info('HOME', 'info', 'select_operational_info', errorMsg)
     else:
         # 加载推送信息
-        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId,is_read=0).order_by('-updateTime')
+        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId, is_read=0).order_by('-updateTime')
         select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
         if obj_db_UserTable.exists():
             for i in select_db_PushInfo:
+                sourcePath = ""
                 # 排除创建者看到自己推给别人的信息
                 if i.oinfo.uid_id != userId:
+                    if i.oinfo.toPro:
+                        sourcePath += f'{i.oinfo.toPro} | '
+                    if i.oinfo.toPage:
+                        sourcePath += f'{i.oinfo.toPage} | '
+                    if i.oinfo.toFun:
+                        sourcePath += f'{i.oinfo.toFun}'
                     dataList.append({
                         'id': i.id,
-                        'triggerType':i.oinfo.triggerType,
+                        'triggerType': i.oinfo.triggerType,
                         'level': i.oinfo.level,
                         'remindType': i.oinfo.remindType,
                         'sysType': i.oinfo.sysType,
-                        'toPro':i.oinfo.toPro,
-                        'toPage': i.oinfo.toPage,
-                        'toFun': i.oinfo.toFun,
+                        'sourcePath':sourcePath,
+                        # 'toPro':i.oinfo.toPro,
+                        # 'toPage': i.oinfo.toPage,
+                        # 'toFun': i.oinfo.toFun,
                         'info': i.oinfo.info,
                         # 'CUFront': i.CUFront,
                         # 'CURear': i.CURear,
@@ -223,13 +230,13 @@ def edit_operational_info_state(request):
         try:
             with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                 if isAdminGroup:
-                    db_OperateInfo.objects.filter(id=oId).update(is_read=1,updateTime=cls_Common.get_date_time())
+                    db_OperateInfo.objects.filter(id=oId).update(is_read=1, updateTime=cls_Common.get_date_time())
                 else:
                     obj_db_PushInfo = db_PushInfo.objects.filter(id=oId)
                     if obj_db_PushInfo.exists():
                         db_OperateInfo.objects.filter(id=obj_db_PushInfo[0].oinfo_id).update(
                             is_read=1, updateTime=cls_Common.get_date_time())
-                        obj_db_PushInfo.update(is_read=1,updateTime=cls_Common.get_date_time())
+                        obj_db_PushInfo.update(is_read=1, updateTime=cls_Common.get_date_time())
 
         except BaseException as e:  # 自动回滚，不需要任何操作
             response['errorMsg'] = f"已读操作失败:{e}"

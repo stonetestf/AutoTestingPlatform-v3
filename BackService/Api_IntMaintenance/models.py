@@ -15,8 +15,9 @@ class ApiBaseData(models.Model):
     requestParamsType = models.CharField('请求参数类型(Params、Body)', max_length=10, null=True)  # 此参数必定有
     bodyRequestSaveType = models.CharField('body数据保存类型(none,form-data,json,raw)', max_length=10, null=True)
     apiState = models.CharField("接口状态(InDev,Completed,Discard)", max_length=10, null=False)
-    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 最后更新者
     cuid = models.IntegerField("创建者用户", null=False)
+    assignedToUser = models.IntegerField("指派给用户", null=False)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
@@ -119,6 +120,7 @@ class ApiHistory(models.Model):  # 历史记录，恢复使用
     # 如果是删除的话，在恢复数据时取上一个操作的数据
     operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)
     restoreData = models.TextField('恢复数据', null=True)
+    textInfo = models.TextField('保存变动的文本信息', null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
 
 

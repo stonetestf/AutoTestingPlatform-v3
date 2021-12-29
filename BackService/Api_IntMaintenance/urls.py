@@ -13,5 +13,6 @@ urlpatterns = [
     url(r'CopyApi', views.copy_api, name='CopyApi'),
     url(r'SelectHistory', views.select_history, name='SelectHistory'),
     url(r'RestorData', views.restor_data, name='RestorData'),
+    url(r'SelectLifeCycle', views.select_life_cycle, name='SelectLifeCycle'),
 
 ]

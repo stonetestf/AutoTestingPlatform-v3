@@ -387,7 +387,7 @@ def save_data(request):
                         requestUrlRadio=apiInfo.requestUrlRadio,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
-                        uid_id=assignedUserId, cuid=userId, is_del=0,
+                        uid_id=userId, cuid=userId,assignedToUser=assignedUserId, is_del=0,
                     )
                     product_list_to_insert = list()
                     for item_userId in basicInfo.pushTo:
@@ -408,6 +408,7 @@ def save_data(request):
                         apiName=basicInfo.apiName,
                         operationType='Add',
                         restoreData=None,
+                        textInfo=None,
                         onlyCode=historyCode,
                     )
                     # endregion
@@ -725,24 +726,22 @@ def edit_data(request):
                         f'【修改接口】 ID{obj_db_ApiBaseData[0].id}:{obj_db_ApiBaseData[0].apiName}',
                         CUFront=oldData, CURear=responseData
                     )
-                    # region 创建系统级别的工单
-                    apiEditDfif = cls_RequstOperation.api_edit_dfif(oldData,responseData)
+                    # region 创建系统级别的工单 -已作废
 
-
-                    save_db_WorkorderManagement = db_WorkorderManagement.objects.create(
-                        sysType='API', pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
-                        workSource=1, workType='Edit', workState=0, workName=f'【接口】:{basicInfo.apiName}',
-                        message=apiEditDfif,
-                        # message=f"{oldData}\n\n{responseData}",
-                        uid_id=userId,
-                        cuid=userId,
-                        is_del=0,
-                    )
+                    # save_db_WorkorderManagement = db_WorkorderManagement.objects.create(
+                    #     sysType='API', pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
+                    #     workSource=1, workType='Edit', workState=0, workName=f'【接口】:{basicInfo.apiName}',
+                    #     message=apiEditDfif,
+                    #     # message=f"{oldData}\n\n{responseData}",
+                    #     uid_id=userId,
+                    #     cuid=userId,
+                    #     is_del=0,
+                    # )
                     # 创建工单生命周期
-                    db_WorkLifeCycle.objects.create(
-                        work_id=save_db_WorkorderManagement.id, workState=1, operationType='Add',
-                        operationInfo=None, uid_id=userId, is_del=0,
-                    )
+                    # db_WorkLifeCycle.objects.create(
+                    #     work_id=save_db_WorkorderManagement.id, workState=1, operationType='Add',
+                    #     operationInfo=None, uid_id=userId, is_del=0,
+                    # )
                     # endregion
                     # endregion
                     # region 删除 各类原数据
@@ -776,7 +775,8 @@ def edit_data(request):
                         requestUrlRadio=requestUrlRadio,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
-                        uid_id=assignedUserId, cuid=userId, is_del=0, updateTime=cls_Common.get_date_time()
+                        uid_id=userId, assignedToUser=assignedUserId,
+                        is_del=0, updateTime=cls_Common.get_date_time()
                     )
                     product_list_to_insert = list()
                     for item_userId in basicInfo.pushTo:
@@ -790,6 +790,7 @@ def edit_data(request):
                     db_ApiAssociatedUser.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region 添加历史恢复
+                    apiEditDfif = cls_RequstOperation.api_edit_dfif(oldData, responseData)
                     db_ApiHistory.objects.create(
                         pid_id=basicInfo.proId,
                         page_id=basicInfo.pageId,
@@ -798,6 +799,7 @@ def edit_data(request):
                         apiName=oldData['BasicInfo']['apiName'],
                         operationType='Edit',
                         restoreData=oldData,
+                        textInfo=apiEditDfif,
                         onlyCode=historyCode,
                     )
                     # endregion
@@ -930,11 +932,11 @@ def edit_data(request):
                     obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
                         is_del=0, apiId_id=basicInfo.apiId)
                     for item_associatedUser in obj_db_ApiAssociatedUser:
-                        db_WorkBindPushToUsers.objects.create(
-                            work_id=save_db_WorkorderManagement.id,
-                            uid_id=item_associatedUser.uid_id,
-                            is_del=0
-                        )
+                        # db_WorkBindPushToUsers.objects.create(
+                        #     work_id=save_db_WorkorderManagement.id,
+                        #     uid_id=item_associatedUser.uid_id,
+                        #     is_del=0
+                        # )
                         cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
                     # endregion
                     # region 添加接口更变信息,用于用例中提醒使用
@@ -1057,7 +1059,7 @@ def load_data(request):
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, id=apiId)
         if obj_db_ApiBaseData.exists():
             # region 基本信息
-            roleId = cls_FindTable.get_roleId(obj_db_ApiBaseData[0].uid_id)
+            roleId = cls_FindTable.get_roleId(obj_db_ApiBaseData[0].assignedToUser)
             pushTo = []
             obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=apiId)
             for item_associateUser in obj_db_ApiAssociatedUser:
@@ -1068,7 +1070,7 @@ def load_data(request):
                 'environmentId': obj_db_ApiBaseData[0].environment_id,
                 'apiName': obj_db_ApiBaseData[0].apiName,
                 'apiState': obj_db_ApiBaseData[0].apiState,
-                'assignedUserId': [roleId, obj_db_ApiBaseData[0].uid_id],
+                'assignedUserId': [roleId, obj_db_ApiBaseData[0].assignedToUser],
                 'pushTo': pushTo,
             }
             # endregion
@@ -1820,4 +1822,41 @@ def restor_data(request):
                 response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
         else:
             response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询接口的生命周期
+def select_life_cycle(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        apiId = objData.apiId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'select_life_cycle', errorMsg)
+    else:
+        obj_db_ApiHistory = db_ApiHistory.objects.filter(api_id=apiId).order_by('-createTime')
+        for i in obj_db_ApiHistory:
+            content = ""
+            operationType = i.operationType
+            if operationType == "Add":
+                title = f'【创建接口】 {i.api.uid.userName}({i.api.uid.nickName})'
+            elif operationType == "Edit":
+                title = f'【修改接口】 {i.api.uid.userName}({i.api.uid.nickName})'
+                content = i.textInfo
+            else:
+                title = f'【删除接口】 {i.api.uid.userName}({i.api.uid.nickName})'
+            dataList.append({
+                'title': title,
+                'content': content,
+                'timestamp': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+            })
+
+        response['TableData'] = dataList
+        response['statusCode'] = 2000
     return JsonResponse(response)

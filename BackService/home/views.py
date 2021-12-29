@@ -304,57 +304,57 @@ def get_server_indicators(request):
                         cls_Logging.print_log('info', 'get_server_indicators', f'前端已关闭,断开连接:{e}')
                         break
                     else:
+                        userId = cls_FindTable.get_userId(token)
+                        obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId, is_read=0)
+                        pushCount = obj_db_PushInfo.count()
+                        # region CPU和内存
+                        cpu = psutil.cpu_percent(interval=2)
+                        mem = psutil.virtual_memory()[2]
+                        # endregion
+                        # region Celery
+                        celery = False
+                        celeryBeat = False
+                        perform_Celery = cls_Common.run_command("ps -ef |grep worker", False)
+                        debug_worker = []  # 在Debug模式下有点奇葩所以要计数下
+                        for i in perform_Celery:
+                            if "celery -A BackService worker -l info" in i:
+                                celery = True
+                                break
+                            elif "celery worker -A BackService -E --loglevel=INFO" in i:  # Debug模式
+                                debug_worker.append(i)
+                                if len(debug_worker) >= 3:
+                                    celery = True
+                                    break
+                        perform_CeleryBeat = cls_Common.run_command("ps -ef |grep beat", False)
+                        for i in perform_CeleryBeat:
+                            if "celery -A BackService beat -l info" in i:
+                                celeryBeat = True
+                                break
+                            elif "celery beat -A BackService --loglevel=INFO" in i:  # Debug模式
+                                celeryBeat = True
+                                break
+
+                        # endregion
+                        sendText = {
+                            'pushCount': pushCount,
+                            'cpu': cpu,
+                            'mem': mem,
+                            'celery': celery,
+                            'celeryBeat': celeryBeat,
+                        }
+
+                        request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
                         if retMessage:
                             objData = object_maker(json.loads(retMessage))
                             if objData.Message == 'Heartbeat':
                                 counter = 0
-                            else:
-                                counter += 1
-                                if counter >= 10:
-                                    request.websocket.close()
-                                    cls_Logging.print_log('info', 'get_server_indicators',
-                                                          f'心跳包:{counter}秒内无响应,断开连接')
-                                    break
-                            userId = cls_FindTable.get_userId(token)
-                            obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId, is_read=0)
-                            pushCount = obj_db_PushInfo.count()
-                            # region CPU和内存
-                            cpu = psutil.cpu_percent(interval=2)
-                            mem = psutil.virtual_memory()[2]
-                            # endregion
-                            # region Celery
-                            celery = False
-                            celeryBeat = False
-                            perform_Celery = cls_Common.run_command("ps -ef |grep worker", False)
-                            debug_worker = []  # 在Debug模式下有点奇葩所以要计数下
-                            for i in perform_Celery:
-                                if "celery -A BackGround worker -l info" in i:
-                                    celery = True
-                                    break
-                                elif "celery worker -A BackGround -E --loglevel=INFO" in i:  # Debug模式
-                                    debug_worker.append(i)
-                                    if len(debug_worker) >= 3:
-                                        celery = True
-                                        break
-                            perform_CeleryBeat = cls_Common.run_command("ps -ef |grep beat", False)
-                            for i in perform_CeleryBeat:
-                                if "celery -A BackGround beat -l info" in i:
-                                    celeryBeat = True
-                                    break
-                                elif "celery beat -A BackGround --loglevel=INFO" in i:  # Debug模式
-                                    celeryBeat = True
-                                    break
-
-                            # endregion
-                            sendText = {
-                                'pushCount': pushCount,
-                                'cpu': cpu,
-                                'mem': mem,
-                                'celery': celery,
-                                'celeryBeat': celeryBeat,
-                            }
-
-                        request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
+                        else:
+                            counter += 1
+                            if counter >= 10:
+                                request.websocket.close()
+                                cls_Logging.print_log('error', 'get_server_indicators',
+                                                      f'心跳包:{counter}秒内无响应,断开连接')
+                                break
                         sleep(1)
 
 
