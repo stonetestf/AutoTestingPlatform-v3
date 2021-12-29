@@ -1205,26 +1205,26 @@ class RequstOperation(cls_Logging, cls_Common):
         # for i in conversionNew.keys():
         #     if conversionOld[i] != conversionNew[i]:
         #         diffList.append({'new':{i: conversionNew[i]},'old':{i:conversionOld[i]}})
-        if diffList:
-            for item in diffList:
-                newData = item['new']
-                oldData = item['old']
-                key = list(newData.keys())[0]
-                newValue = newData[key]
-                oldValue = oldData[key]
-                if type(oldValue) == list:
-                    strData += f'<b>\n【{keyNameDict[key]}修改前】</b>:\n'
-                    for i in oldValue:
-                        strData += f'{i}\n'
-                else:
-                    strData += f'<b>【{keyNameDict[key]}修改前】</b>:{oldValue}\n'
+        # if diffList:
+        for item in diffList:
+            newData = item['new']
+            oldData = item['old']
+            key = list(newData.keys())[0]
+            newValue = newData[key]
+            oldValue = oldData[key]
+            if type(oldValue) == list:
+                strData += f'<b>【{keyNameDict[key]}修改前】</b>:\n'
+                for i in oldValue:
+                    strData += f'{i}\n'
+            else:
+                strData += f'<b>【{keyNameDict[key]}修改前】</b>:{oldValue}\n'
 
-                if type(newValue) == list:
-                    strData += f'<b>\n【{keyNameDict[key]}修改为】</b>:\n'
-                    for i in newValue:
-                        strData += f'{i}\n'
-                else:
-                    strData += f'<b>【{keyNameDict[key]}修改为】</b>:{newValue}\n'
-                strData += '\n---------------------------------------------------------------------------------------\n'
-                # strData += f'【{keyNameDict[key]}修改为】:{newValue}\n\n'
+            if type(newValue) == list:
+                strData += f'<b>\n【{keyNameDict[key]}修改为】</b>:\n'
+                for i in newValue:
+                    strData += f'{i}\n'
+            else:
+                strData += f'<b>【{keyNameDict[key]}修改为】</b>:{newValue}\n'
+            strData += '\n---------------------------------------------------------------------------------------\n'
+            # strData += f'【{keyNameDict[key]}修改为】:{newValue}\n\n'
         return strData
