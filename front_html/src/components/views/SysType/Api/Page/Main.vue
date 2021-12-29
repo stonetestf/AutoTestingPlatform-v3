@@ -119,7 +119,7 @@
                           width="100px"
                           label="任务类型">
                           <template slot-scope="scope">
-                              <el-tag v-if="scope.row.taskType=='API'" >接口</el-tag>
+                              <el-tag v-if="scope.row.taskType=='API'" > 独立接口</el-tag>
                               <el-tag type="success" v-else-if="scope.row.taskType=='CASE'" >测试用例</el-tag>
                               <el-tag type="warning" v-else-if="scope.row.taskType=='TASK'" >定时任务</el-tag>
                               <el-tag type="danger" v-else-if="scope.row.taskType=='BATCH'" >批量任务</el-tag>
@@ -215,6 +215,9 @@
 <script>
 import Qs from 'qs';
 import * as echarts from 'echarts';
+import store from '../../../../../store/index';
+import {PrintConsole} from "../../../../js/Logger.js";
+
 export default {
   components: {
 
@@ -223,18 +226,17 @@ export default {
     return {
         myChart_line:'',
         RomeData:{
+          socket:'',
           topLine:{
             timeData:[],
             passData:[],
             failData:[],
             errorData:[],
           },
-
           //项目统计
           proTableData:[
             // {'itsName':'测试页面/测试功能','apiTotal':'1000000','unitTotal':'20','caseTotal':'13','taskTotal':'30','batchTotal':'20','weekTotal':"12",'performWeek':'11','perforHistory':'30'}
           ],
-
           //过去7天失败错误列表
           formerlyTableData:[
             // {'index':'1','itsName':'测试页面/测试功能','taskType':'API','taskName':'查询项目','number':'999'},
@@ -259,13 +261,14 @@ export default {
     this.SelectProStatistical();//项目统计
     this.SelectFormerlyData();//过去7天内Top10
     this.SelectProQueue();//项目队列
+
+    this.PageMainDataRefresh();//当前页面的4块数据无感刷新
   },
   beforeDestroy(){//生命周期-离开时
-
+    this.RomeData.socket.close(); //关闭TCP连接
   },
   methods: {
-    //测试结果总览
-    SelectTestResults(){
+    SelectTestResults(){//测试结果总览
       let self = this;
       self.$axios.get('/api/home/ApiPageHomeSelectTestResults',{
         params:{
@@ -371,8 +374,7 @@ export default {
       };
       this.myChart_line.setOption(option_line,true);//加载属性后显示 true自动每次清除数据
     },
-    //项目总览
-    SelectProStatistical(){
+    SelectProStatistical(){//项目总览
       let self = this;
       self.$axios.get('/api/home/ApiPageHomeSelectProStatistical',{
         params:{
@@ -382,14 +384,13 @@ export default {
         if(res.data.statusCode==2000){
           self.RomeData.proTableData = res.data.dataTable;
         }else{
-            self.$message.error('获取数据失败:'+res.data.errorMsg);
+          self.$message.error('获取数据失败:'+res.data.errorMsg);
         }
       }).catch(function (error) {
           console.log(error);
       })
     },
-    //过去7天内Top10
-    SelectFormerlyData(){
+    SelectFormerlyData(){//过去7天内Top10
       let self = this;
       self.$axios.get('/api/home/ApiPageHomeSelectFormerlyData',{
         params:{
@@ -405,8 +406,7 @@ export default {
           console.log(error);
       })
     },
-    //项目队列
-    SelectProQueue(){
+    SelectProQueue(){//项目队列
       let self = this;
       self.$axios.get('/api/home/ApiPageHomeSelectProQueue',{
         params:{
@@ -436,7 +436,177 @@ export default {
       }).catch(function (error) {
           console.log(error);
       })
-    }
+    },
+    PageMainDataRefresh(){//当前页面的4块数据无感刷新
+      let self = this;
+      var socket = new WebSocket(store.state.WebSock+'/api/home/ApiPageMainDataRefresh');
+      self.RomeData.socket = socket;
+      socket.onopen = function () {
+        PrintConsole('WebSocket open');//成功连接上Websocket
+        var data ={};
+        data.Message = 'Start';
+        data.Params = {
+          'proId':self.$cookies.get('proId')
+        }
+        socket.send(JSON.stringify(data));//发送数据到服务端
+      };
+      socket.onmessage = function (e) {
+        PrintConsole('message: ' + e.data);//打印服务端返回的数据
+        let retData = JSON.parse(e.data)
+        //测试结果总览
+        self.RomeData.topLine.timeData = retData.testResults.timeData;
+        self.RomeData.topLine.passData = retData.testResults.passData;
+        self.RomeData.topLine.failData = retData.testResults.failData;
+        self.RomeData.topLine.errorData = retData.testResults.errorData;
+        self.topline();
+
+        //项目下统计数据
+        retData.proStatistical.dataTable.forEach(d=>{
+          let tempTable = self.RomeData.proTableData.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+            //查看是不是有差异
+            if(d.pageName!=tempTable.pageName){
+              tempTable.pageName = d.pageName
+            }
+            if(d.apiTotal!=tempTable.apiTotal){
+              tempTable.apiTotal = d.apiTotal
+            }
+            if(d.unitAndCaseTotal!=tempTable.unitAndCaseTotal){
+              tempTable.unitAndCaseTotal = d.unitAndCaseTotal
+            }
+            if(d.caseTotal!=tempTable.caseTotal){
+              tempTable.caseTotal = d.caseTotal
+            }
+            if(d.taskTotal!=tempTable.taskTotal){
+              tempTable.taskTotal = d.taskTotal
+            }
+            if(d.batchTotal!=tempTable.batchTotal){
+              tempTable.batchTotal = d.batchTotal
+            }
+            if(d.weekTotal!=tempTable.weekTotal){
+              tempTable.weekTotal = d.weekTotal
+            }
+            if(d.performWeekTotal!=tempTable.performWeekTotal){
+              tempTable.performWeekTotal = d.performWeekTotal
+            }
+            if(d.perforHistoryTotal!=tempTable.perforHistoryTotal){
+              tempTable.perforHistoryTotal = d.perforHistoryTotal
+            }
+
+          }else{
+            self.RomeData.proTableData.push(d);//新增数据
+          }
+        });
+        //删除数据
+        self.RomeData.proTableData.forEach((d,index)=>{
+          let tempTable = retData.proStatistical.dataTable.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+
+          }else{
+            self.RomeData.proTableData.splice(index, 1)
+          }
+        });
+
+        //过去7天内Top10
+        retData.pastSevenDaysTop.dataTable.forEach(d=>{
+          let tempTable = self.RomeData.formerlyTableData.find(item=>
+            item.taskName == d.taskName
+          );
+          if(tempTable){
+            //查看是不是有差异
+            if(d.index!=tempTable.index){
+              tempTable.index = d.index
+            }
+            if(d.taskName!=tempTable.taskName){
+              tempTable.taskName = d.taskName
+            }
+            if(d.itsName!=tempTable.itsName){
+              tempTable.itsName = d.itsName
+            }
+            if(d.taskType!=tempTable.taskType){
+              tempTable.taskType = d.taskType
+            }
+            if(d.number!=tempTable.number){
+              tempTable.number = d.number
+            }
+         
+
+          }else{
+            self.RomeData.formerlyTableData.push(d);//新增数据
+          }
+        });
+        //删除数据
+        self.RomeData.formerlyTableData.forEach((d,index)=>{
+          let tempTable = retData.pastSevenDaysTop.dataTable.find(item=>
+            item.taskName == d.taskName
+          );
+          if(tempTable){
+
+          }else{
+            self.RomeData.formerlyTableData.splice(index, 1)
+          }
+        });
+
+        //项目队列
+        retData.proQueue.dataTable.forEach(d=>{
+          let tempTable = self.RomeData.queueTableData.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+            //查看是不是有差异
+            if(d.taskName!=tempTable.taskName){
+              tempTable.taskName=d.taskName
+            }
+            if(d.itsName!=tempTable.itsName){
+              tempTable.itsName=d.itsName
+            }
+            if(d.taskType!=tempTable.taskType){
+              tempTable.taskType=d.taskType
+            }
+            if(d.taskState!=tempTable.taskState){
+              tempTable.taskState=d.taskState
+            }
+            if(d.performProgress!=tempTable.performProgress){
+              tempTable.performProgress=d.performProgress
+            }
+            if(d.updateTime!=tempTable.updateTime){
+              tempTable.updateTime=d.updateTime
+            }
+
+          }else{
+            self.RomeData.queueTableData.push(d);//新增数据
+          }
+        });
+        //删除数据
+        self.RomeData.queueTableData.forEach((d,index)=>{
+          let tempTable = retData.proQueue.dataTable.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+
+          }else{
+            self.RomeData.queueTableData.splice(index, 1)
+          }
+        });
+
+
+        var data ={};
+        data.Message = 'Heartbeat';
+        data.Params = {
+          'time':'Date()'
+        }
+        socket.send(JSON.stringify(data));//发送数据到服务端
+          
+      };
+      socket.onclose=function(e){
+        PrintConsole("关闭TCP连接onclose",e);
+      };
+      if (socket.readyState == WebSocket.OPEN) socket.onopen();       
+    },
   }
 };
 </script>

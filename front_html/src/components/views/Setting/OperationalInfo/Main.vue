@@ -146,9 +146,11 @@
                             prop="userName">
                         </el-table-column>
                         <el-table-column
-                            label="操作"
                             align="center"
                             width="100px">
+                            <template slot="header">
+                                <el-button type="primary" @click="ReadAll()">全读</el-button>
+                            </template>
                             <template slot-scope="scope" style="width:100px">
                                 <el-button
                                     v-if="scope.row.is_read==0"
@@ -190,6 +192,7 @@ export default {
                 sysType:'',
                 sysTypeOption:[
                     {'label':'登录','value':'LOGIN'},
+                    {'label':'内置系统','value':'ALL'},
                     {'label':'Home','value':'HOME'},
                     {'label':'UI','value':'UI'},
                     {'label':'API','value':'API'},
@@ -279,6 +282,27 @@ export default {
             }).catch(function (error) {
                 console.log(error);
             })
+        },
+        ReadAll(){
+            let self = this;
+            if(self.SelectRomeData.sysType &&self.SelectRomeData.remindType){
+                self.$axios.post('/api/info/SettingOperationalReadAll',Qs.stringify({
+                    'sysType':self.SelectRomeData.sysType,
+                    'remindType':self.SelectRomeData.remindType,
+                })).then(res => {
+                if(res.data.statusCode==2002){
+                    self.$message.success('已全部读取!');
+                    this.SelectData()
+                }
+                else{
+                    self.$message.error('操作失败:'+res.data.errorMsg);
+                }
+                }).catch(function (error) {
+                    console.log(error);
+                })
+            }else{
+                self.$message.warning('必须选择所属系统和提醒类别!');
+            }
         },
         ClearSelectRomeData(){
             let self = this;
