@@ -100,25 +100,25 @@ def select_operational_info(request):
             total = obj_db_PushInfo.count()
             for i in select_db_PushInfo:
                 # 排除创建者看到自己推给别人的信息
-                if i.oinfo.uid_id != userId:
-                    dataList.append({
-                        'id': i.id,
-                        'triggerType': i.oinfo.triggerType,
-                        'level': i.oinfo.level,
-                        'remindType': i.oinfo.remindType,
-                        'sysType': i.oinfo.sysType,
-                        'toPro': i.oinfo.toPro,
-                        'toPage': i.oinfo.toPage,
-                        'toFun': i.oinfo.toFun,
-                        'info': i.oinfo.info,
-                        'tableItem': [{
-                            'CUFront': i.oinfo.CUFront,
-                            'CURear': i.oinfo.CURear,
-                        }],
-                        'is_read': i.is_read,
-                        'userName': i.oinfo.uid.userName,
-                        'createTime': str(i.oinfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-                    })
+                # if i.oinfo.uid_id != userId:
+                dataList.append({
+                    'id': i.id,
+                    'triggerType': i.oinfo.triggerType,
+                    'level': i.oinfo.level,
+                    'remindType': i.oinfo.remindType,
+                    'sysType': i.oinfo.sysType,
+                    'toPro': i.oinfo.toPro,
+                    'toPage': i.oinfo.toPage,
+                    'toFun': i.oinfo.toFun,
+                    'info': i.oinfo.info,
+                    'tableItem': [{
+                        'CUFront': i.oinfo.CUFront,
+                        'CURear': i.oinfo.CURear,
+                    }],
+                    'is_read': i.is_read,
+                    'userName': i.oinfo.uid.userName,
+                    'createTime': str(i.oinfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                })
         response['TableData'] = dataList
         response['Total'] = total
         response['statusCode'] = 2000
@@ -153,30 +153,30 @@ def user_operational_info(request):
             for i in select_db_PushInfo:
                 sourcePath = ""
                 # 排除创建者看到自己推给别人的信息
-                if i.oinfo.uid_id != userId:
-                    if i.oinfo.toPro:
-                        sourcePath += f'{i.oinfo.toPro} | '
-                    if i.oinfo.toPage:
-                        sourcePath += f'{i.oinfo.toPage} | '
-                    if i.oinfo.toFun:
-                        sourcePath += f'{i.oinfo.toFun}'
-                    dataList.append({
-                        'id': i.id,
-                        'triggerType': i.oinfo.triggerType,
-                        'level': i.oinfo.level,
-                        'remindType': i.oinfo.remindType,
-                        'sysType': i.oinfo.sysType,
-                        'sourcePath':sourcePath,
-                        # 'toPro':i.oinfo.toPro,
-                        # 'toPage': i.oinfo.toPage,
-                        # 'toFun': i.oinfo.toFun,
-                        'info': i.oinfo.info,
-                        # 'CUFront': i.CUFront,
-                        # 'CURear': i.CURear,
-                        'is_read': i.is_read,
-                        'userName': i.oinfo.uid.userName,
-                        'createTime': str(i.oinfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-                    })
+                # if i.oinfo.uid_id != userId:
+                if i.oinfo.toPro:
+                    sourcePath += f'{i.oinfo.toPro} | '
+                if i.oinfo.toPage:
+                    sourcePath += f'{i.oinfo.toPage} | '
+                if i.oinfo.toFun:
+                    sourcePath += f'{i.oinfo.toFun}'
+                dataList.append({
+                    'id': i.id,
+                    'triggerType': i.oinfo.triggerType,
+                    'level': i.oinfo.level,
+                    'remindType': i.oinfo.remindType,
+                    'sysType': i.oinfo.sysType,
+                    'sourcePath':sourcePath,
+                    # 'toPro':i.oinfo.toPro,
+                    # 'toPage': i.oinfo.toPage,
+                    # 'toFun': i.oinfo.toFun,
+                    'info': i.oinfo.info,
+                    # 'CUFront': i.CUFront,
+                    # 'CURear': i.CURear,
+                    'is_read': i.is_read,
+                    'userName': i.oinfo.uid.userName,
+                    'createTime': str(i.oinfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                })
 
         response['TableData'] = dataList
         response['Total'] = obj_db_PushInfo.count()
@@ -237,7 +237,40 @@ def edit_operational_info_state(request):
                         db_OperateInfo.objects.filter(id=obj_db_PushInfo[0].oinfo_id).update(
                             is_read=1, updateTime=cls_Common.get_date_time())
                         obj_db_PushInfo.update(is_read=1, updateTime=cls_Common.get_date_time())
+        except BaseException as e:  # 自动回滚，不需要任何操作
+            response['errorMsg'] = f"已读操作失败:{e}"
+        else:
+            response['statusCode'] = 2002
+    return JsonResponse(response)
 
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 根据条件来全读取
+def setting_operational_read_all(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        isAdminGroup = cls_FindTable.get_role_is_admin(roleId)
+        sysType = request.POST['sysType']
+        remindType = request.POST['remindType']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'info', 'setting_operational_read_all', errorMsg)
+    else:
+        try:
+            with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                if isAdminGroup:
+                    db_OperateInfo.objects.filter(sysType=sysType,remindType=remindType).update(
+                        is_read=1, updateTime=cls_Common.get_date_time())
+                else:
+                    obj_db_PushInfo = db_PushInfo.objects.filter(sysType=sysType,remindType=remindType)
+                    if obj_db_PushInfo.exists():
+                        db_OperateInfo.objects.filter(id=obj_db_PushInfo[0].oinfo_id).update(
+                            is_read=1, updateTime=cls_Common.get_date_time())
+                        obj_db_PushInfo.update(is_read=1, updateTime=cls_Common.get_date_time())
         except BaseException as e:  # 自动回滚，不需要任何操作
             response['errorMsg'] = f"已读操作失败:{e}"
         else:

@@ -107,9 +107,9 @@ def delete_data(request):
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId)
                     for i in obj_db_ApiReportItem:
-                        db_ApiReport.objects.filter(is_del=0, reportItem_id=i.id).update(is_del=1)
-                    obj_db_ApiReportItem.update(is_del=1)
-                    obj_db_ApiTestReport.update(is_del=1, uid_id=userId)
+                        db_ApiReport.objects.filter(is_del=0, reportItem_id=i.id).update(is_del=1)  # API报告
+                    obj_db_ApiReportItem.update(is_del=1)  # 测试集报告
+                    obj_db_ApiTestReport.update(is_del=1, uid_id=userId)  # 主报告
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'删除失败:{e}'
             else:

@@ -130,6 +130,7 @@ class Common(object):
             dicts[item['key']] = item['value']
         return dicts
 
+    # 转换字典类型为 key value类型
     def conversion_dict_to_kv(self,dicts):
         dictList = []
         for item in dicts:

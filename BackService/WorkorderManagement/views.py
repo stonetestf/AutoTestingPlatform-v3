@@ -155,7 +155,7 @@ def save_data(request):
                     cls_FindTable.get_page_name(pageId),
                     cls_FindTable.get_fun_name(funId),
                     userId,
-                    f'编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{workMessage}',
+                    f'工单编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{workMessage}',
                     CUFront=json.dumps(request.POST)
                 )
                 # 添加工单的生命周期

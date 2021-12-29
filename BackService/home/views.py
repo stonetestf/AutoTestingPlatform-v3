@@ -8,7 +8,6 @@ from time import sleep
 
 import json
 import operator
-import psutil
 
 # Create your db here.
 from django.db.models import Q
@@ -19,9 +18,7 @@ from login.models import UserBindRole as db_UserBindRole
 from role.models import RoleBindMenu as db_RoleBindMenu
 from info.models import OperateInfo as db_OperateInfo
 from info.models import PushInfo as db_PushInfo
-from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
-from PageManagement.models import PageManagement as db_PageManagement
 from Api_TestReport.models import ApiQueue as db_ApiQueue
 from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
@@ -33,6 +30,7 @@ from ClassData.FindCommonTable import FindTable
 from ClassData.Common import Common
 from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker
+from ClassData.FindServer import FindLocalServer
 
 # Create info here.
 cls_Logging = Logging()
@@ -40,6 +38,7 @@ cls_GlobalDer = GlobalDer()
 cls_FindTable = FindTable()
 cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
+cls_FindLocalServer = FindLocalServer()
 
 
 # Create your views here.
@@ -307,40 +306,13 @@ def get_server_indicators(request):
                         userId = cls_FindTable.get_userId(token)
                         obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId, is_read=0)
                         pushCount = obj_db_PushInfo.count()
-                        # region CPU和内存
-                        cpu = psutil.cpu_percent(interval=2)
-                        mem = psutil.virtual_memory()[2]
-                        # endregion
-                        # region Celery
-                        celery = False
-                        celeryBeat = False
-                        perform_Celery = cls_Common.run_command("ps -ef |grep worker", False)
-                        debug_worker = []  # 在Debug模式下有点奇葩所以要计数下
-                        for i in perform_Celery:
-                            if "celery -A BackService worker -l info" in i:
-                                celery = True
-                                break
-                            elif "celery worker -A BackService -E --loglevel=INFO" in i:  # Debug模式
-                                debug_worker.append(i)
-                                if len(debug_worker) >= 3:
-                                    celery = True
-                                    break
-                        perform_CeleryBeat = cls_Common.run_command("ps -ef |grep beat", False)
-                        for i in perform_CeleryBeat:
-                            if "celery -A BackService beat -l info" in i:
-                                celeryBeat = True
-                                break
-                            elif "celery beat -A BackService --loglevel=INFO" in i:  # Debug模式
-                                celeryBeat = True
-                                break
 
-                        # endregion
                         sendText = {
                             'pushCount': pushCount,
-                            'cpu': cpu,
-                            'mem': mem,
-                            'celery': celery,
-                            'celeryBeat': celeryBeat,
+                            'cpu': cls_FindLocalServer.get_cpu_state(),
+                            'mem': cls_FindLocalServer.get_mem_state(),
+                            'celery': cls_FindLocalServer.get_celery_state(),
+                            'celeryBeat': cls_FindLocalServer.get_celery_beat_state(),
                         }
 
                         request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
@@ -358,15 +330,50 @@ def get_server_indicators(request):
                         sleep(1)
 
 
+@accept_websocket  # 当前页面的 测试结果总览,项目统计,过去7天内Top10,项目队列,数据返回
+def api_page_get_main_data(request):
+    counter = 0  # 计数器 到10就会断开通信
+    if request.is_websocket():
+        retMessage = str(request.websocket.wait(), 'utf-8')  # 接受前段发送来的数据
+        if retMessage:
+            objData = object_maker(json.loads(retMessage))
+            proId = objData.Params.proId
+            if objData.Message == "Start":  # 开始执行
+                while True:
+                    try:
+                        retMessage = request.websocket.read()
+                    except BaseException as e:
+                        cls_Logging.print_log('info', 'get_server_indicators', f'前端已关闭,断开连接:{e}')
+                        break
+                    else:
+                        sendText = {
+                            'testResults': cls_FindTable.get_overview_of_test_results(proId),  # 测试结果概述
+                            # 项目下所有数据的统计
+                            'proStatistical': cls_FindTable.get_project_under_statistical_data(proId),
+                            'pastSevenDaysTop': cls_FindTable.get_past_seven_days_top_ten_data(proId),  # 过去7天内Top10
+                            'proQueue': cls_FindTable.get_pro_queue(proId)  # 获取项目队列
+                        }
+
+                        request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
+                        if retMessage:
+                            objData = object_maker(json.loads(retMessage))
+                            if objData.Message == 'Heartbeat':
+                                counter = 0
+                        else:
+                            counter += 1
+                            if counter >= 10:
+                                request.websocket.close()
+                                cls_Logging.print_log('error', 'api_page_main_data_refresh',
+                                                      f'心跳包:{counter}秒内无响应,断开连接')
+                                break
+                        sleep(1)
+
+
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
 @require_http_methods(["GET"])  # 测试结果总览
 def api_pagehome_select_test_results(request):
     response = {}
-    passData = []
-    failData = []
-    errorData = []
-    reportTime = []
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = object_maker(responseData)
@@ -376,37 +383,14 @@ def api_pagehome_select_test_results(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_test_results', errorMsg)
     else:
-        # 这里因该把删除的也显示出来
-        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(pid_id=proId).order_by('updateTime')
-        for i in obj_db_ApiTestReport:
-            reportTime.append(str(i.updateTime.strftime('%Y-%m-%d')))
-        reportTime = list(set(reportTime))  # 去重复时间
-        reportTime.sort()  # 排序
-        for i in reportTime:
-            passTotal = 0
-            failTotal = 0
-            errorTotal = 0
-            staTime = i + " 00:00:00"
-            endTime = i + " 23:59:59"
-            select_db_ApiTestReport = obj_db_ApiTestReport.filter(updateTime__gte=staTime, updateTime__lte=endTime)
-            for item in select_db_ApiTestReport:
-                if item.reportStatus == 'Pass':
-                    passTotal += 1
-                elif item.reportStatus == 'Fail':
-                    failTotal += 1
-                elif item.reportStatus == 'Error':
-                    errorTotal += 1
-                else:
-                    errorTotal += 1
-            if passTotal != 0:
-                passData.append({'name': i, 'value': [i, passTotal]})
-            if failTotal != 0:
-                failData.append({'name': i, 'value': [i, failTotal]})
-            if errorTotal != 0:
-                errorData.append({'name': i, 'value': [i, errorTotal]})
+        overviewOfTestResults = cls_FindTable.get_overview_of_test_results(proId)
+        timeData = overviewOfTestResults['timeData']
+        passData = overviewOfTestResults['passData']
+        failData = overviewOfTestResults['failData']
+        errorData = overviewOfTestResults['errorData']
 
         response['statusCode'] = 2000
-        response['timeData'] = reportTime
+        response['timeData'] = timeData
         response['passData'] = passData
         response['failData'] = failData
         response['errorData'] = errorData
@@ -418,7 +402,6 @@ def api_pagehome_select_test_results(request):
 @require_http_methods(["GET"])  # 项目下的所有数据总统计
 def api_pagehome_select_pro_statistical(request):
     response = {}
-    dataTable = []
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = object_maker(responseData)
@@ -428,35 +411,8 @@ def api_pagehome_select_pro_statistical(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_statistical', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, pid_id=proId)
-        for item_page in obj_db_PageManagement:
-            # region 获取本周时间
-            weekData = cls_Common.get_this_weeks_interval_data()
-            staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
-            endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
-            # endregion
-            obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId, page_id=item_page.id)
-            apiTotal = obj_db_ApiBaseData.count()  # 接口数量
-            # region 本周新增
-            weekTotal = obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
-            # endregion
-            # region 本周执行
-            performWeekTotal = db_ApiQueue.objects.filter(
-                pid_id=proId, page_id=item_page.id, updateTime__gte=staTime, updateTime__lte=endTime).count()
-            # endregion
-            perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
-            obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0,page_id=item_page.id)
-            dataTable.append({
-                'pageName': item_page.pageName,
-                'apiTotal': apiTotal,
-                'unitAndCaseTotal':f'{obj_db_CaseBaseData.filter(testType="UnitTest").count()}/'
-                                   f'{obj_db_CaseBaseData.filter(testType="HybridTest").count()}',
-                'caseTotal':obj_db_CaseBaseData.count(),
-                'weekTotal': weekTotal,
-                'performWeekTotal': performWeekTotal,
-                'perforHistoryTotal': perforHistoryTotal
-
-            })
+        projectUnderStatisticalData = cls_FindTable.get_project_under_statistical_data(proId)
+        dataTable = projectUnderStatisticalData['dataTable']
         response['dataTable'] = dataTable
         response['statusCode'] = 2000
     return JsonResponse(response)
@@ -467,7 +423,6 @@ def api_pagehome_select_pro_statistical(request):
 @require_http_methods(["GET"])  # 过去7天内Top10
 def api_pagehome_select_Formerly_data(request):
     response = {}
-    dataTable = []
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = object_maker(responseData)
@@ -477,55 +432,8 @@ def api_pagehome_select_Formerly_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select__Formerly_data', errorMsg)
     else:
-        # region 获取本周时间
-        weekData = cls_Common.get_this_weeks_interval_data()
-        staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
-        endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
-        # endregion
-        # 这里把删除的也显示出来,觉得被删除的一般都是引起系统错误的也算统计内
-        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
-            ~Q(reportStatus='Pass'), pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime)
-        reportNameList = [i.reportName for i in obj_db_ApiTestReport]
-        reportNameList = list(set(reportNameList))
-        for item_reportName in reportNameList:
-            failTotal = 0
-            errorTotal = 0
-            select_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName=item_reportName)
-            for i in select_db_ApiTestReport:
-                if i.reportStatus == 'Fail':
-                    failTotal += 1
-                elif i.reportStatus == 'Error':
-                    errorTotal += 1
-                elif i.reportStatus == '':
-                    errorTotal += 1
-
-            if select_db_ApiTestReport[0].reportType == 'API':
-                obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)
-                if obj_db_ApiBaseData.exists():
-                    itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
-                else:
-                    itsName = ""
-            elif select_db_ApiTestReport[0].reportType == 'CASE':
-                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)
-                if obj_db_CaseBaseData.exists():
-                    itsName = f"{obj_db_CaseBaseData[0].page.pageName}/{obj_db_CaseBaseData[0].fun.funName}"
-                else:
-                    itsName = ""
-            else:
-                itsName = ""
-            dataTable.append({
-                'index': '',
-                'itsName': itsName,
-                'taskType': select_db_ApiTestReport[0].reportType,
-                'taskName': item_reportName,
-                'number': failTotal + errorTotal
-            })
-        dataTable = sorted(dataTable, key=operator.itemgetter('number'), reverse=True)  # 利用number来倒序排列
-        # 给index 来赋值
-        for index, i in enumerate(dataTable[:10], 1):
-            dataTable[index - 1]['index'] = str(index)
-
-        response['dataTable'] = dataTable
+        pastSevenDaysTopTenData = cls_FindTable.get_past_seven_days_top_ten_data(proId)
+        response['dataTable'] = pastSevenDaysTopTenData['dataTable']
         response['statusCode'] = 2000
     return JsonResponse(response)
 
@@ -535,7 +443,6 @@ def api_pagehome_select_Formerly_data(request):
 @require_http_methods(["GET"])  # 项目队列
 def api_pagehome_select_pro_queue(request):
     response = {}
-    dataTable = []
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = object_maker(responseData)
@@ -545,33 +452,8 @@ def api_pagehome_select_pro_queue(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_queue', errorMsg)
     else:
-        obj_db_ApiQueue = db_ApiQueue.objects.filter(~Q(queueStatus='2'), pid_id=proId).order_by('-updateTime')
-        for i in obj_db_ApiQueue:
-            if i.taskType == 'API':
-                obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=i.taskId)
-                if obj_db_ApiBaseData.exists():
-                    itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
-                else:
-                    itsName = ""
-            elif i.taskType == 'CASE':
-                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=i.taskId)
-                if obj_db_CaseBaseData.exists():
-                    itsName = f"{obj_db_CaseBaseData[0].page.pageName}/{obj_db_CaseBaseData[0].fun.funName}"
-                else:
-                    itsName = ""
-            else:
-                itsName = ""
-            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.testReport_id)
-            dataTable.append({
-                'id': i.id,
-                'itsName': itsName,
-                'taskType': i.taskType,
-                'taskName': i.testReport.reportName,
-                'taskState': i.queueStatus,
-                'performProgress': f"{obj_db_ApiReportItem.count()}/{i.testReport.apiTotal}",
-                'updateTime': str(i.updateTime.strftime('%H:%M:%S')),
-            })
-        response['dataTable'] = dataTable
+        proQueue = cls_FindTable.get_pro_queue(proId)
+        response['dataTable'] = proQueue['dataTable']
         response['statusCode'] = 2000
     return JsonResponse(response)
 

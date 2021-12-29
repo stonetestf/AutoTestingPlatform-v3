@@ -8,9 +8,18 @@ from PageManagement.models import PageManagement as db_PageManagement
 from FunManagement.models import FunManagement as db_FunManagement
 from role.models import BasicRole as db_BasicRole
 from Api_TestReport.models import ApiQueue as db_ApiQueue
+from Api_TestReport.models import ApiTestReport as db_ApiTestReport
+from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
+from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
+from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
+from ClassData.Common import Common
+
+import operator
+
+cls_Common = Common()
 
 
 # Create info here.
@@ -19,6 +28,7 @@ from ClassData.Logger import Logging as cls_Logging
 
 # Create your views here.
 class FindTable(cls_Logging):
+    # 根据TOKEN返回用户ID
     def get_userId(self, token):  # 从Hearder中获取用户ID
         token = db_Token.objects.filter(key=token)  # 内置查询方法
         if token.exists():
@@ -30,6 +40,7 @@ class FindTable(cls_Logging):
         else:
             return None
 
+    # 根据用户ID，返回角色ID
     def get_roleId(self, userId):  # 返回角色ID
         obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
         if obj_db_UserBindRole.exists():
@@ -38,6 +49,7 @@ class FindTable(cls_Logging):
         else:
             return None
 
+    # 根据角色ID，返回角色是不是管理员
     def get_role_is_admin(self, roleId):
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0, id=roleId)
         if obj_db_BasicRole.exists():
@@ -49,6 +61,7 @@ class FindTable(cls_Logging):
         else:
             return False
 
+    # 返回 所属项目
     def get_pro_name(self, proId):
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId)
         if obj_db_ProManagement.exists():
@@ -56,6 +69,7 @@ class FindTable(cls_Logging):
         else:
             return None
 
+    # 返回 所属页面
     def get_page_name(self, pageId):
         obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId)
         if obj_db_PageManagement.exists():
@@ -63,6 +77,7 @@ class FindTable(cls_Logging):
         else:
             return None
 
+    # 返回 所属功能
     def get_fun_name(self, funId):
         obj_db_FunManagement = db_FunManagement.objects.filter(id=funId)
         if obj_db_FunManagement.exists():
@@ -70,9 +85,181 @@ class FindTable(cls_Logging):
         else:
             return None
 
-    def get_queue_state(self,taskType,taskId):
-        obj_db_ApiQueue = db_ApiQueue.objects.filter(~Q(queueStatus=2),taskType=taskType,taskId=taskId)
+    # 判断队列是不是已结束
+    def get_queue_state(self, taskType, taskId):
+        obj_db_ApiQueue = db_ApiQueue.objects.filter(~Q(queueStatus=2), taskType=taskType, taskId=taskId)
         if obj_db_ApiQueue.exists():
             return True
         else:
             return False
+
+    # 测试结果概述
+    def get_overview_of_test_results(self, proId):
+        results = {}
+        passData = []
+        failData = []
+        errorData = []
+        reportTime = []
+
+        # 这里因该把删除的也显示出来
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(pid_id=proId).order_by('updateTime')
+        for i in obj_db_ApiTestReport:
+            reportTime.append(str(i.updateTime.strftime('%Y-%m-%d')))
+        reportTime = list(set(reportTime))  # 去重复时间
+        reportTime.sort()  # 排序
+        for i in reportTime:
+            passTotal = 0
+            failTotal = 0
+            errorTotal = 0
+            staTime = i + " 00:00:00"
+            endTime = i + " 23:59:59"
+            select_db_ApiTestReport = obj_db_ApiTestReport.filter(updateTime__gte=staTime, updateTime__lte=endTime)
+            for item in select_db_ApiTestReport:
+                if item.reportStatus == 'Pass':
+                    passTotal += 1
+                elif item.reportStatus == 'Fail':
+                    failTotal += 1
+                elif item.reportStatus == 'Error':
+                    errorTotal += 1
+                else:
+                    errorTotal += 1
+            if passTotal != 0:
+                passData.append({'name': i, 'value': [i, passTotal]})
+            if failTotal != 0:
+                failData.append({'name': i, 'value': [i, failTotal]})
+            if errorTotal != 0:
+                errorData.append({'name': i, 'value': [i, errorTotal]})
+
+            results['timeData'] = reportTime
+            results['passData'] = passData
+            results['failData'] = failData
+            results['errorData'] = errorData
+        return results
+
+    # 项目下所有数据的统计
+    def get_project_under_statistical_data(self, proId):
+        results = {
+            'dataTable': []
+        }
+
+        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, pid_id=proId)
+        for item_page in obj_db_PageManagement:
+            # region 获取本周时间
+            weekData = cls_Common.get_this_weeks_interval_data()
+            staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
+            endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
+            # endregion
+            obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId, page_id=item_page.id)
+            apiTotal = obj_db_ApiBaseData.count()  # 接口数量
+            # region 本周新增
+            weekTotal = obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
+            # endregion
+            # region 本周执行
+            performWeekTotal = db_ApiQueue.objects.filter(
+                pid_id=proId, page_id=item_page.id, updateTime__gte=staTime, updateTime__lte=endTime).count()
+            # endregion
+            perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
+            obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, page_id=item_page.id)
+            results['dataTable'].append({
+                'id':item_page.id,
+                'pageName': item_page.pageName,
+                'apiTotal': apiTotal,
+                'unitAndCaseTotal': f'{obj_db_CaseBaseData.filter(testType="UnitTest").count()}/'
+                                    f'{obj_db_CaseBaseData.filter(testType="HybridTest").count()}',
+                'caseTotal': obj_db_CaseBaseData.count(),
+                'weekTotal': weekTotal,
+                'performWeekTotal': performWeekTotal,
+                'perforHistoryTotal': perforHistoryTotal
+
+            })
+        return results
+
+    # 过去7天内Top10
+    def get_past_seven_days_top_ten_data(self, proId):
+        results = {}
+        dataTable = []
+
+        # region 获取本周时间
+        weekData = cls_Common.get_this_weeks_interval_data()
+        staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
+        endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
+        # endregion
+        # 这里把删除的也显示出来,觉得被删除的一般都是引起系统错误的也算统计内
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
+            ~Q(reportStatus='Pass'), pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime)
+        reportNameList = [i.reportName for i in obj_db_ApiTestReport]
+        reportNameList = list(set(reportNameList))
+        for item_reportName in reportNameList:
+            failTotal = 0
+            errorTotal = 0
+            select_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName=item_reportName)
+            for i in select_db_ApiTestReport:
+                if i.reportStatus == 'Fail':
+                    failTotal += 1
+                elif i.reportStatus == 'Error':
+                    errorTotal += 1
+                elif i.reportStatus == '':
+                    errorTotal += 1
+
+            if select_db_ApiTestReport[0].reportType == 'API':
+                obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)
+                if obj_db_ApiBaseData.exists():
+                    itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
+            elif select_db_ApiTestReport[0].reportType == 'CASE':
+                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=select_db_ApiTestReport[0].taskId)
+                if obj_db_CaseBaseData.exists():
+                    itsName = f"{obj_db_CaseBaseData[0].page.pageName}/{obj_db_CaseBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
+            else:
+                itsName = ""
+            dataTable.append({
+                'index': '',
+                'itsName': itsName,
+                'taskType': select_db_ApiTestReport[0].reportType,
+                'taskName': item_reportName,
+                'number': failTotal + errorTotal
+            })
+        dataTable = sorted(dataTable, key=operator.itemgetter('number'), reverse=True)  # 利用number来倒序排列
+        # 给index 来赋值
+        for index, i in enumerate(dataTable[:10], 1):
+            dataTable[index - 1]['index'] = str(index)
+
+        results['dataTable'] = dataTable
+        return results
+
+    # 获取项目队列
+    def get_pro_queue(self, proId):
+        results = {}
+        dataTable = []
+
+        obj_db_ApiQueue = db_ApiQueue.objects.filter(~Q(queueStatus='2'), pid_id=proId).order_by('-updateTime')
+        for i in obj_db_ApiQueue:
+            if i.taskType == 'API':
+                obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=i.taskId)
+                if obj_db_ApiBaseData.exists():
+                    itsName = f"{obj_db_ApiBaseData[0].page.pageName}/{obj_db_ApiBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
+            elif i.taskType == 'CASE':
+                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=i.taskId)
+                if obj_db_CaseBaseData.exists():
+                    itsName = f"{obj_db_CaseBaseData[0].page.pageName}/{obj_db_CaseBaseData[0].fun.funName}"
+                else:
+                    itsName = ""
+            else:
+                itsName = ""
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.testReport_id)
+            dataTable.append({
+                'id': i.id,
+                'itsName': itsName,
+                'taskType': i.taskType,
+                'taskName': i.testReport.reportName,
+                'taskState': i.queueStatus,
+                'performProgress': f"{obj_db_ApiReportItem.count()}/{i.testReport.apiTotal}",
+                'updateTime': str(i.updateTime.strftime('%H:%M:%S')),
+            })
+        results['dataTable'] = dataTable
+        return results
