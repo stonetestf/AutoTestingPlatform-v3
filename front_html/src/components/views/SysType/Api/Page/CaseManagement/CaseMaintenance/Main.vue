@@ -66,7 +66,7 @@
                         <el-table
                             v-loading="loading"
                             :data="tableData"
-                            height="596px"
+                            height="630px"
                             border>
                             <!-- <el-table-column
                                 type="selection"
@@ -243,14 +243,16 @@
                     </div>
                 </template>
                 <template>
-                    <el-pagination background layout="total, sizes, prev, pager, next, jumper"
-                        @size-change="pageSizeChange"
-                        @current-change="handleCurrentChange"
-                        :current-page="page.current" 
-                        :total="page.total"
-                        :page-sizes = [10,30,50,100]
-                        style="margin: 20px auto auto auto;">
-                    </el-pagination>
+                    <div style="margin-top:-10px">
+                        <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                            @size-change="pageSizeChange"
+                            @current-change="handleCurrentChange"
+                            :current-page="page.current" 
+                            :total="page.total"
+                            :page-sizes = [10,30,50,100]
+                            style="margin: 20px auto auto auto;">
+                        </el-pagination>
+                    </div>
                 </template>
             </el-card>
         </template>

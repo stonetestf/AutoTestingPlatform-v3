@@ -31,133 +31,137 @@
             </el-form>
         </template>
         <template>
-            <el-table
-                :data="tableData"
-                height="596px"
-                border>
-                <el-table-column
-                    label="ID"
-                    align= "center"
-                    width="80px"
-                    prop="id">
-                </el-table-column>
-                <el-table-column 
-                    label="详情" 
-                    width="50px"
-                    type="expand">
-                    <template slot-scope="props">
-                        <el-form label-position="left" >
-                            <el-table
-                                :data="props.row.tableItem"
-                                border>
-                                <el-table-column
-                                    prop="CUFront"
-                                    label="修改前"
-                                    align= "center">
-                                </el-table-column>
-                                <el-table-column
-                                    prop="CURear"
-                                    align= "center"
-                                    label="修改后">
-                                </el-table-column>
-                            </el-table>
-                        </el-form>
-                    </template>
-                </el-table-column>
-                <el-table-column
-                    label="所属系统"
-                    width="80px"
-                    align= "center"
-                    prop="sysType">
-                </el-table-column>  
-                <el-table-column
-                    label="触发类型"
-                    align= "center"
-                    width="80px">
-                    <template slot-scope="scope">
-                        <el-tag type="success" v-if="scope.row.triggerType=='push'">推送</el-tag>
-                        <el-tag type="info" v-else>系统</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column
-                    label="提醒类别"
-                    width="100px"
-                    align= "center">
-                    <template slot-scope="scope">
-                        <el-tag type="danger" v-if="scope.row.level==1">{{scope.row.remindType}}</el-tag>
-                        <el-tag type="warning" v-else-if="scope.row.level==2">{{scope.row.remindType}}</el-tag>
-                        <el-tag type="success" v-else-if="scope.row.level==3">{{scope.row.remindType}}</el-tag>
-                        <el-tag v-else>{{scope.row.remindType}}</el-tag>
-                    </template>
-                </el-table-column>  
-                <el-table-column
-                    label="所属项目"
-                    width="150px"
-                    align= "center"
-                    prop="toPro">
-                </el-table-column>  
-                <el-table-column
-                    label="所属页面"
-                    width="150px"
-                    align= "center"
-                    prop="toPage">
-                </el-table-column>  
-                <el-table-column
-                    label="所属功能"
-                    width="200px"
-                    align= "center"
-                    prop="toFun">
-                </el-table-column>
-                <el-table-column
-                    show-overflow-tooltip
-                    label="系统:(信息)/推送:(编号:工单名称)"
-                    align= "center"
-                    prop="info">
-                </el-table-column>
-                <!-- <el-table-column
-                    label="修改信息"
-                    show-overflow-tooltip
-                    align= "left">
-                    <template slot-scope="scope">
-                        <div v-html="scope.row.editInfo"></div>
-                    </template>
-                </el-table-column> -->
-                <el-table-column
-                    label="操作时间"
-                    width="160px"
-                    align= "center"
-                    prop="createTime">
-                </el-table-column>
-                <el-table-column
-                    label="创建者"
-                    align= "center"
-                    width="150px"
-                    prop="userName">
-                </el-table-column>
-                <el-table-column
-                    label="操作"
-                    align="center"
-                    width="100px">
-                    <template slot-scope="scope" style="width:100px">
-                        <el-button
-                            v-if="scope.row.is_read==0"
-                            size="mini"
-                            type="warning"
-                            @click="handleIsRead(scope.$index, scope.row)">已读
-                        </el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
+            <div style="margin-top:-15px;">
+                <el-table
+                    :data="tableData"
+                    height="630px"
+                    border>
+                    <el-table-column
+                        label="ID"
+                        align= "center"
+                        width="80px"
+                        prop="id">
+                    </el-table-column>
+                    <el-table-column 
+                        label="详情" 
+                        width="50px"
+                        type="expand">
+                        <template slot-scope="props">
+                            <el-form label-position="left" >
+                                <el-table
+                                    :data="props.row.tableItem"
+                                    border>
+                                    <el-table-column
+                                        prop="CUFront"
+                                        label="修改前"
+                                        align= "center">
+                                    </el-table-column>
+                                    <el-table-column
+                                        prop="CURear"
+                                        align= "center"
+                                        label="修改后">
+                                    </el-table-column>
+                                </el-table>
+                            </el-form>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="所属系统"
+                        width="80px"
+                        align= "center"
+                        prop="sysType">
+                    </el-table-column>  
+                    <el-table-column
+                        label="触发类型"
+                        align= "center"
+                        width="80px">
+                        <template slot-scope="scope">
+                            <el-tag type="success" v-if="scope.row.triggerType=='push'">推送</el-tag>
+                            <el-tag type="info" v-else>系统</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="提醒类别"
+                        width="100px"
+                        align= "center">
+                        <template slot-scope="scope">
+                            <el-tag type="danger" v-if="scope.row.level==1">{{scope.row.remindType}}</el-tag>
+                            <el-tag type="warning" v-else-if="scope.row.level==2">{{scope.row.remindType}}</el-tag>
+                            <el-tag type="success" v-else-if="scope.row.level==3">{{scope.row.remindType}}</el-tag>
+                            <el-tag v-else>{{scope.row.remindType}}</el-tag>
+                        </template>
+                    </el-table-column>  
+                    <el-table-column
+                        label="所属项目"
+                        width="150px"
+                        align= "center"
+                        prop="toPro">
+                    </el-table-column>  
+                    <el-table-column
+                        label="所属页面"
+                        width="150px"
+                        align= "center"
+                        prop="toPage">
+                    </el-table-column>  
+                    <el-table-column
+                        label="所属功能"
+                        width="200px"
+                        align= "center"
+                        prop="toFun">
+                    </el-table-column>
+                    <el-table-column
+                        show-overflow-tooltip
+                        label="系统:(信息)/推送:(编号:工单名称)"
+                        align= "center"
+                        prop="info">
+                    </el-table-column>
+                    <!-- <el-table-column
+                        label="修改信息"
+                        show-overflow-tooltip
+                        align= "left">
+                        <template slot-scope="scope">
+                            <div v-html="scope.row.editInfo"></div>
+                        </template>
+                    </el-table-column> -->
+                    <el-table-column
+                        label="操作时间"
+                        width="160px"
+                        align= "center"
+                        prop="createTime">
+                    </el-table-column>
+                    <el-table-column
+                        label="创建者"
+                        align= "center"
+                        width="150px"
+                        prop="userName">
+                    </el-table-column>
+                    <el-table-column
+                        label="操作"
+                        align="center"
+                        width="100px">
+                        <template slot-scope="scope" style="width:100px">
+                            <el-button
+                                v-if="scope.row.is_read==0"
+                                size="mini"
+                                type="warning"
+                                @click="handleIsRead(scope.$index, scope.row)">已读
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
         </template>
         <template>
-            <el-pagination background layout="total, sizes, prev, pager, next, jumper"
-                @size-change="pageSizeChange"
-                @current-change="handleCurrentChange"
-                :current-page="page.current" 
-                :total="page.total"
-                :page-sizes = [10,30,50,100]
-                style="margin: 20px auto auto auto;">
-            </el-pagination>
+            <div style="margin-top:-10px">
+                <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="pageSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="page.current" 
+                    :total="page.total"
+                    :page-sizes = [10,30,50,100]
+                    style="margin: 20px auto auto auto;">
+                </el-pagination>
+            </div>
         </template>
         </el-card>
     </div>

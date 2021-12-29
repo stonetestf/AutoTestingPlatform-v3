@@ -66,7 +66,7 @@
                                     <el-form-item label="工单信息:">
                                         <el-input type="textarea" 
                                         :autosize="{ minRows: 10, maxRows: 10}"
-                                        v-model="RomeData.workMessage"
+                                        v-model="RomeData.message"
                                         style="width:515px"></el-input>
                                     </el-form-item>
                                 </div>
@@ -166,7 +166,7 @@ export default {
                 funId:'',
                 funNameOption:[],
                 workName:'',
-                workMessage:'',
+                message:'',
                 props: { multiple: true },
                 pushTo:[],
                 userNameOptions:[],
@@ -242,7 +242,7 @@ export default {
                                         self.RomeData.funNameOption = dd;
                                         self.RomeData.funId = d.dataTabel.funId;
                                         self.RomeData.workName = d.dataTabel.workName;
-                                        self.RomeData.workMessage = d.dataTabel.workMessage;
+                                        self.RomeData.message = d.dataTabel.message;
                                         GetUserNameItems().then(dd=>{
                                             self.RomeData.userNameOptions = dd;
                                             self.RomeData.pushTo = d.dataTabel.pushTo;
@@ -307,7 +307,7 @@ export default {
             self.RomeData.pageId='';
             self.RomeData.funId='';
             self.RomeData.workName='';
-            self.RomeData.workMessage='';
+            self.RomeData.message='';
             self.RomeData.pushTo=[];
         },
         GetPageNameOption(){
@@ -345,7 +345,7 @@ export default {
                     'workType':self.RomeData.workType,
                     'workState':self.RomeData.workState,
                     'workName':self.RomeData.workName,
-                    'workMessage':self.RomeData.workMessage,
+                    'message':self.RomeData.message,
                     'pushTo':self.RomeData.pushTo.toString(),
                 })).then(res => {
                 if(res.data.statusCode==2001){
@@ -370,7 +370,7 @@ export default {
                     'workType':self.RomeData.workType,
                     'workState':self.RomeData.workState,
                     'workName':self.RomeData.workName,
-                    'workMessage':self.RomeData.workMessage,
+                    'message':self.RomeData.message,
                     'pushTo':self.RomeData.pushTo.toString(),
                 })).then(res => {
                 if(res.data.statusCode==2002){

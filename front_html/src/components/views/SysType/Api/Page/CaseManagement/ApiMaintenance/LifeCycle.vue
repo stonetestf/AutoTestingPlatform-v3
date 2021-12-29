@@ -8,7 +8,7 @@
             :visible.sync="dialogVisible"
             direction='rtl'
             :before-close="dialogClose">
-                <el-card style="height:870px">
+                <el-card style="height:870px" v-loading="loading">
                     <div style=" height:830px;overflow:auto">
                         <el-timeline style="text-align: left;">
                             <el-timeline-item 
@@ -85,6 +85,7 @@ export default {
         },
         SelectData(apiId){
             let self = this;
+            self.loading=true;
             self.$axios.get('/api/ApiIntMaintenance/SelectLifeCycle',{
                 params:{
                     "apiId":apiId,
@@ -92,11 +93,16 @@ export default {
             }).then(res => {
                 if(res.data.statusCode==2000){
                     self.RomeData.activities=res.data.TableData;
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
                 }
             }).catch(function (error) {
                 console.log(error);
+                self.loading=false;
+                self.dialogClose();
             })
         },
 

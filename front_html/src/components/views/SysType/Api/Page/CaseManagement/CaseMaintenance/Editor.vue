@@ -855,12 +855,10 @@ export default {
                                 self.BasicRomeData.caseState = res.data.dataTable.basicInfo.caseState;
 
                                 self.TestSetRomeData.tableData = res.data.dataTable.testSet;
-
-
+                                self.loading=false;
                             });
                         });
                     });
-                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
                     self.loading=false;
