@@ -4,7 +4,7 @@
         :visible.sync="dialogVisible"
         :close-on-click-modal=false
         :before-close="dialogClose"
-        width="1800px">
+        width="1600px">
         <!-- <div style="margin-top:-20px;margin-left:1600px;">
           <el-button type="info" @click="ReadErrorMsg(0)">已读</el-button>
         </div>
@@ -28,7 +28,7 @@
                     align= "center"
                     width="100px">
                     <template slot-scope="scope">
-                        <el-tag type="success" v-if="scope.row.triggerType=='push'">推送</el-tag>
+                        <el-tag type="success" v-if="scope.row.triggerType=='Manual'">手动</el-tag>
                         <el-tag type="info" v-else>系统</el-tag>
                     </template>
                 </el-table-column>
@@ -43,6 +43,11 @@
                     </template>
                 </el-table-column>  
                 <el-table-column
+                    label="所属来源"
+                    align= "center"
+                    prop="sourcePath">
+                </el-table-column>
+                <!-- <el-table-column
                     label="所属项目"
                     width="150px"
                     align= "center"
@@ -59,7 +64,7 @@
                     width="200px"
                     align= "center"
                     prop="toFun">
-                </el-table-column>
+                </el-table-column> -->
                 <el-table-column
                     label="系统:(信息)/推送:(编号:工单名称)"
                     align= "center"
@@ -179,9 +184,10 @@ export default {
                         obj.level=d.level;
                         obj.remindType=d.remindType;
                         obj.sysType = d.sysType;
-                        obj.toPro=d.toPro;
-                        obj.toPage = d.toPage;
-                        obj.toFun = d.toFun;
+                        obj.sourcePath =d.sourcePath;
+                        // obj.toPro=d.toPro;
+                        // obj.toPage = d.toPage;
+                        // obj.toFun = d.toFun;
                         obj.info=d.info;
                         // obj.CUFront = d.CUFront;
                         // obj.CURear = d.CURear;

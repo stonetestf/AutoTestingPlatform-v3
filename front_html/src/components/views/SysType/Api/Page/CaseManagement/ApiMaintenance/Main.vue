@@ -122,7 +122,7 @@
                                 <el-tag type="info" v-else>弃用</el-tag>
                             </template>
                         </el-table-column>   
-                        <el-table-column
+                        <!-- <el-table-column
                             label="与我关联"
                             width="80px"
                             align= "center"
@@ -130,7 +130,7 @@
                             <template slot-scope="scope">
                                 <el-tag type="info" v-if="scope.row.associationMy">True</el-tag>
                             </template>
-                        </el-table-column> 
+                        </el-table-column>  -->
                         <el-table-column
                             label="更新时间"
                             align= "center"
@@ -140,12 +140,12 @@
                         <el-table-column
                             label="修改者"
                             align= "center"
-                            width="100px"
+                            width="120px"
                             prop="userName">
                         </el-table-column>
                         <el-table-column
                             align="center"
-                            width="275px">
+                            width="330px">
                         <template slot="header">
                             <el-button-group>  
                                 <el-button type="primary" @click="OpenEditDialog()">新增</el-button>        
@@ -168,9 +168,13 @@
                                 type="success"
                                 @click="OpenRunTypeDialog(scope.$index, scope.row)">Request</el-button>
                             <el-button
-                                type="warning"
+                                type="info"
                                 size="mini"
                                 @click="OpenWorkOrderDialog(scope.$index, scope.row)">工单</el-button>
+                            <el-button
+                                type="warning"
+                                size="mini"
+                                @click="OpenLifeCycleDialog(scope.$index, scope.row)">生命</el-button>
                             <el-button
                                 size="mini"
                                 @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
@@ -230,6 +234,14 @@
             @Succeed="SelectData">
         </dialog-history-info>
         </template>
+        <template>
+            <dialog-life-cycle
+                @closeDialog="closeLifeCycleDialog" 
+                :isVisible="dialog.lifeCycle.dialogVisible" 
+                :dialogPara="dialog.lifeCycle.dialogPara"
+                @Succeed="SelectData">
+            </dialog-life-cycle>
+        </template>
     </div>
 </template>
 
@@ -242,10 +254,12 @@ import DialogEditor from "./Editor.vue";
 import DialogRunType from "./RunType.vue";
 import DialogWorkOrder from "../../../../../WorkorderManagement/WorkorderMaintenance/Editor.vue";
 import DialogHistoryInfo from "./HistoryInfo.vue";
+import DialogLifeCycle from "./LifeCycle.vue";
+
 
 export default {
     components: {
-        DialogEditor,DialogRunType,DialogWorkOrder,DialogHistoryInfo
+        DialogEditor,DialogRunType,DialogWorkOrder,DialogHistoryInfo,DialogLifeCycle
     },
     data() {
         return {
@@ -303,11 +317,18 @@ export default {
                     },
                 },
                 historyInfo:{
-                dialogVisible:false,
-                dialogPara:{
-                    dialogTitle:"",//初始化标题
-                    isAddNew:true,//初始化是否新增\修改
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
                 },
+                lifeCycle:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
                 }
             },
            
@@ -377,70 +398,6 @@ export default {
                 self.loading=false;
             })
         },
-        handleCommand(command){//更多菜单
-            PrintConsole(command);
-            if(command=='CopyApi'){
-                this.CopyApi();
-            }else if(command=='HistoryBack'){
-                this.OpenHistoryInfoDialog();
-            }
-        },
-        closeEditDialog(){
-            this.dialog.editor.dialogVisible =false;
-        },
-        OpenEditDialog(){
-            let self = this;
-            self.dialog.editor.dialogPara={
-                dialogTitle:"新增接口",//初始化标题
-                isAddNew:true,//初始化是否新增\修改
-            }
-            self.dialog.editor.dialogVisible=true;
-        },
-        closeRunTypeDialog(){
-            this.dialog.runType.dialogVisible =false;
-        },
-        OpenRunTypeDialog(index,row){
-            let self = this;
-            self.dialog.runType.dialogPara={
-                dialogTitle:'选择运行',//初始化标题
-                apiId:row.id,
-                apiName:row.apiName,
-            }
-            self.dialog.runType.dialogVisible=true;
-        },
-        closeWorkOrderDialog(){
-            this.dialog.workOrder.dialogVisible =false;
-        },
-        OpenWorkOrderDialog(index,row){
-            let self = this;
-            self.dialog.workOrder.dialogPara={
-                dialogTitle:'新增工单',//初始化标题
-                isAddNew:true,
-                triggerPage:'ApiMaintenance',//触发页面
-                workType:'Other',
-                workState:0,
-                pageId:row.pageId,
-                funId:row.funId,
-                workName:row.apiName,
-                createUserId:row.createUserId
-            }
-            self.dialog.workOrder.dialogVisible=true;
-        },
-        closeHistoryInfoDialog(){
-        this.dialog.historyInfo.dialogVisible =false;
-        },
-        OpenHistoryInfoDialog(){
-            let self = this;
-            if(self.multipleSelection.length>1){
-                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
-            }else{
-                self.dialog.historyInfo.dialogPara={
-                    dialogTitle:"历史恢复",//初始化标题
-                    apiId:self.multipleSelection[0],
-                }
-                self.dialog.historyInfo.dialogVisible=true;
-            }
-        },
         GetPageNameOption(){
             GetPageNameItems(this.$cookies.get('proId')).then(d=>{
                 this.SelectRomeData.pageNameOption = d;
@@ -464,7 +421,7 @@ export default {
             self.SelectRomeData.apiState='';
             self.SelectRomeData.associations='';
             self.SelectData();
-        },
+        }, 
         pageSizeChange(pageSize) {
             let self = this;
             self.page.current = 1;
@@ -522,6 +479,16 @@ export default {
                 this.multipleSelection.push(d.id);
             }); 
         },
+
+        //更多操作
+        handleCommand(command){//更多菜单
+            PrintConsole(command);
+            if(command=='CopyApi'){
+                this.CopyApi();
+            }else if(command=='HistoryBack'){
+                this.OpenHistoryInfoDialog();
+            }
+        },
         CopyApi(){
             let self = this;
             if(self.multipleSelection.length==0){
@@ -546,6 +513,84 @@ export default {
                     self.loading=false;
                 })
             }
+        },
+        //历史恢复
+        closeHistoryInfoDialog(){
+            this.dialog.historyInfo.dialogVisible =false;
+        },
+        OpenHistoryInfoDialog(){
+            let self = this;
+            if(self.multipleSelection.length>1){
+                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
+            }else{
+                self.dialog.historyInfo.dialogPara={
+                    dialogTitle:"历史恢复",//初始化标题
+                    apiId:self.multipleSelection[0],
+                }
+                self.dialog.historyInfo.dialogVisible=true;
+            }
+        },
+
+
+        //编辑、新增
+        closeEditDialog(){
+            this.dialog.editor.dialogVisible =false;
+        },
+        OpenEditDialog(){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"新增接口",//初始化标题
+                isAddNew:true,//初始化是否新增\修改
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+
+        //运行类型
+        closeRunTypeDialog(){
+            this.dialog.runType.dialogVisible =false;
+        },
+        OpenRunTypeDialog(index,row){
+            let self = this;
+            self.dialog.runType.dialogPara={
+                dialogTitle:'选择运行',//初始化标题
+                apiId:row.id,
+                apiName:row.apiName,
+            }
+            self.dialog.runType.dialogVisible=true;
+        },
+
+        //工单
+        closeWorkOrderDialog(){
+            this.dialog.workOrder.dialogVisible =false;
+        },
+        OpenWorkOrderDialog(index,row){
+            let self = this;
+            self.dialog.workOrder.dialogPara={
+                dialogTitle:'新增工单',//初始化标题
+                isAddNew:true,
+                triggerPage:'ApiMaintenance',//触发页面
+                workType:'Other',
+                workState:0,
+                pageId:row.pageId,
+                funId:row.funId,
+                workName:row.apiName,
+                createUserId:row.createUserId
+            }
+            self.dialog.workOrder.dialogVisible=true;
+        },
+
+
+        //生命周期
+        closeLifeCycleDialog(){
+            this.dialog.lifeCycle.dialogVisible =false;
+        },
+        OpenLifeCycleDialog(index,row){//生命
+            let self = this;
+            self.dialog.lifeCycle.dialogPara={
+                dialogTitle:row.apiName+'(生命周期)',//初始化标题
+                apiId:row.id,
+            }
+            self.dialog.lifeCycle.dialogVisible=true;
         },
     }
 };

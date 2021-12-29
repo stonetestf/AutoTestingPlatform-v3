@@ -34,7 +34,7 @@
         </el-form>
         <el-table
             :data="tableData"
-            height="550px"
+            height="640px"
             border>
             <el-table-column 
                 label="ID"  
@@ -47,14 +47,27 @@
                 width="50px"
                 type="expand">
                 <template slot-scope="props">
-                    <el-form label-position="left" >
+                    <el-form v-if="props.row.tableItem.restoreData">
                         <el-table
                             :data="props.row.tableItem"
                             border>
                             <el-table-column
-                                label="原始信息">
+                                label="Json">
                                 <template slot-scope="scope">
-                                    <div style="white-space: pre-line;" v-html="scope.row.restoreData"></div>
+                                    <el-input type="textarea" 
+                                        readonly
+                                        resize="none"
+                                        v-model="scope.row.restoreData"
+                                        :autosize="{ minRows: 20, maxRows: 20}">
+                                    </el-input>
+                                    <!-- <div style="white-space: pre-line;" v-html="scope.row.restoreData"></div> -->
+                                </template>
+                            </el-table-column>
+                            <el-table-column 
+                                label="文本信息"   
+                                align="center">
+                                <template slot-scope="scope">
+                                    <div v-html="scope.row.textInfo"></div>
                                 </template>
                             </el-table-column>
                         </el-table>
