@@ -984,52 +984,59 @@ def delete_data(request):
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
         if obj_db_ApiBaseData.exists():
-            try:
-                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    # region 添加历史恢复
-                    db_ApiHistory.objects.create(
-                        pid_id=obj_db_ApiBaseData[0].pid_id,
-                        page_id=obj_db_ApiBaseData[0].page_id,
-                        fun_id=obj_db_ApiBaseData[0].fun_id,
-                        api_id=apiId,
-                        apiName=obj_db_ApiBaseData[0].apiName,
-                        operationType='Delete',
-                        restoreData=None,
-                        onlyCode=historyCode,
-                    )
-                    # endregion
-                    # region 删除关联信息
-                    obj_db_ApiBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
-                    db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=apiId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    db_ApiParams.objects.filter(is_del=0, apiId_id=apiId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    db_ApiOperation.objects.filter(is_del=0, apiId_id=apiId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    # endregion
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Delete',
-                        cls_FindTable.get_pro_name(obj_db_ApiBaseData[0].pid_id),
-                        cls_FindTable.get_page_name(obj_db_ApiBaseData[0].page_id),
-                        cls_FindTable.get_fun_name(obj_db_ApiBaseData[0].fun_id),
-                        userId,
-                        f'【删除接口】 ID:{apiId}:{obj_db_ApiBaseData[0].apiName}',
-                        CUFront=json.dumps(request.POST)
-                    )
-                    # endregion
-            except BaseException as e:  # 自动回滚，不需要任何操作
-                response['errorMsg'] = f'数据删除失败:{e}'
+            obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0,apiId_id=apiId)
+            if obj_db_CaseTestSet.exists():
+                caseTable = [i.caseId.caseName for i in obj_db_CaseTestSet]
+                caseTable = set(caseTable)
+                response['errorMsg'] = '当前接口已绑定用例,请解除绑定后在进行删除操作!' \
+                                       f'用例列表:{caseTable}'
             else:
-                response['statusCode'] = 2003
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region 添加历史恢复
+                        db_ApiHistory.objects.create(
+                            pid_id=obj_db_ApiBaseData[0].pid_id,
+                            page_id=obj_db_ApiBaseData[0].page_id,
+                            fun_id=obj_db_ApiBaseData[0].fun_id,
+                            api_id=apiId,
+                            apiName=obj_db_ApiBaseData[0].apiName,
+                            operationType='Delete',
+                            restoreData=None,
+                            onlyCode=historyCode,
+                        )
+                        # endregion
+                        # region 删除关联信息
+                        obj_db_ApiBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                        db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=apiId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        db_ApiParams.objects.filter(is_del=0, apiId_id=apiId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        db_ApiOperation.objects.filter(is_del=0, apiId_id=apiId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        # endregion
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Delete',
+                            cls_FindTable.get_pro_name(obj_db_ApiBaseData[0].pid_id),
+                            cls_FindTable.get_page_name(obj_db_ApiBaseData[0].page_id),
+                            cls_FindTable.get_fun_name(obj_db_ApiBaseData[0].fun_id),
+                            userId,
+                            f'【删除接口】 ID:{apiId}:{obj_db_ApiBaseData[0].apiName}',
+                            CUFront=json.dumps(request.POST)
+                        )
+                        # endregion
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'数据删除失败:{e}'
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前接口数据,请刷新后重新尝试!'
     return JsonResponse(response)

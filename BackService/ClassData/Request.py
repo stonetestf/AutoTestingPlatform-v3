@@ -92,12 +92,17 @@ class RequstOperation(cls_Logging, cls_Common):
             if '{{' in item_dataValue:
                 splitData = item_dataValue.split('{{')
                 globalName = splitData[1].replace('}}', '')
-                obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
-                    sysType='API', is_del=0, pid_id=proId, globalName=globalName)
-                if obj_db_GlobalVariable.exists():
-                    conversionRequestData[item_dataKey] = obj_db_GlobalVariable[0].globalValue
+                # 1.先查找临时存储库
+                obj_db_TempExtractData = db_TempExtractData.objects.filter(onlyCode=onlyCode, keys=globalName)
+                if obj_db_TempExtractData.exists():
+                    conversionRequestData[item_dataKey] = obj_db_TempExtractData[0].values
                 else:
-                    conversionRequestData[item_dataKey] = item_dataValue
+                    obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
+                        sysType='API', is_del=0, pid_id=proId, globalName=globalName)
+                    if obj_db_GlobalVariable.exists():
+                        conversionRequestData[item_dataKey] = obj_db_GlobalVariable[0].globalValue
+                    else:
+                        conversionRequestData[item_dataKey] = item_dataValue
             else:
                 conversionRequestData[item_dataKey] = item_dataValue
 
@@ -605,7 +610,7 @@ class RequstOperation(cls_Logging, cls_Common):
         if getRequestData['state']:
             results['request']['environmentUrl'] = getRequestData['environmentUrl']
             results['request']['apiUrl'] = getRequestData['apiUrl']
-            results['request']['headersList'] = getRequestData['headersData']
+            # results['request']['headersList'] = getRequestData['headersData']
             results['request']['requestType'] = getRequestData['requestType']
 
             # 转换参数为最后请求的数据
@@ -616,9 +621,11 @@ class RequstOperation(cls_Logging, cls_Common):
                 conversionRequestData = conversionDataToRequestData['conversionRequestData']
 
                 results['request']['requestUrl'] = conversionRequestUrl
+                results['request']['headersList'] = cls_Common.conversion_dict_to_kv(self, conversionHeadersData)
                 results['request']['headersDict'] = conversionHeadersData
                 results['request']['requestDataDict'] = conversionRequestData
-                results['request']['requestDataList'] = conversionDataToRequestData['requestData']
+                results['request']['requestDataList'] = cls_Common.conversion_dict_to_kv(self, conversionRequestData)
+                # results['request']['requestDataList'] = conversionDataToRequestData['requestData']
 
                 resultOfExecution = self.request_operation_extract_validate(labelName, onlyCode, getRequestData,
                                                                             conversionRequestUrl,
@@ -1120,9 +1127,11 @@ class RequstOperation(cls_Logging, cls_Common):
                                         'time': resultOfExecution['time'],
                                         'reportState': resultOfExecution['reportState'],
                                         'originalUrl': item_request['apiUrl'],
-                                        'headersTableData': cls_Common.conversion_dict_to_kv(self,
-                                                                                             conversionHeadersData),
-                                        'requestDataTableData': conversionDataToRequestData['requestData'],
+                                        'headersTableData': cls_Common.conversion_dict_to_kv(
+                                            self, conversionHeadersData),
+                                        'requestDataTableData': cls_Common.conversion_dict_to_kv(
+                                            self, conversionRequestData),
+                                        # 'requestDataTableData': conversionDataToRequestData['requestData'],
                                         'responseText': resultOfExecution['content'],
                                         'responseHeadersTableData': resultOfExecution['responseHeaders'],
                                         'extractTableData': resultOfExecution['extractTable'],
@@ -1153,7 +1162,7 @@ class RequstOperation(cls_Logging, cls_Common):
             results['state'] = False
         return results
 
-    # 接口差异的对比 专属
+    #  region 接口差异的对比 专属
     def conversion_api_dict(self, dictData):
         # 排除列表
         passKeyName = ['assignedUserId', 'pushTo']
@@ -1228,3 +1237,4 @@ class RequstOperation(cls_Logging, cls_Common):
             strData += '\n---------------------------------------------------------------------------------------\n'
             # strData += f'【{keyNameDict[key]}修改为】:{newValue}\n\n'
         return strData
+    # endregion

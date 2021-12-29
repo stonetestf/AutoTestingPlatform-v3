@@ -119,7 +119,7 @@ def save_data(request):
         workType = request.POST['workType']
         workState = request.POST['workState']
         workName = request.POST['workName']
-        workMessage = request.POST['workMessage']
+        message = request.POST['message']
         pushTo = ast.literal_eval(request.POST['pushTo']) if request.POST['pushTo'] else []
         pushToList = [i for index, i in enumerate(pushTo, 1) if index % 2 == 0]
     except BaseException as e:
@@ -143,7 +143,7 @@ def save_data(request):
                     workType=workType,
                     workState=workState,
                     workName=workName,
-                    message=workMessage,
+                    message=message,
                     is_del=0,
                     uid_id=userId,
                     cuid=userId
@@ -155,7 +155,7 @@ def save_data(request):
                     cls_FindTable.get_page_name(pageId),
                     cls_FindTable.get_fun_name(funId),
                     userId,
-                    f'工单编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{workMessage}',
+                    f'工单编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{message}',
                     CUFront=json.dumps(request.POST)
                 )
                 # 添加工单的生命周期
@@ -218,7 +218,7 @@ def load_data(request):
                 'pageId': data.page_id,
                 'funId': data.fun_id,
                 'workName': data.workName,
-                'workMessage': data.message,
+                'message': data.message,
                 'pushTo': pushTo,
             }
 
@@ -245,7 +245,7 @@ def edit_data(request):
         workType = request.POST['workType']
         workState = int(request.POST['workState'])
         workName = request.POST['workName']
-        workMessage = request.POST['workMessage']
+        workMessage = request.POST['message']
         pushTo = ast.literal_eval(request.POST['pushTo']) if request.POST['pushTo'] else []
         pushToList = [i for index, i in enumerate(pushTo, 1) if index % 2 == 0]
     except BaseException as e:
@@ -255,21 +255,11 @@ def edit_data(request):
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(id=workId, is_del=0)
         if obj_db_WorkorderManagement.exists():
-            # select_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
-            #     sysType=sysType, pid_id=proId, page_id=pageId, fun_id=funId, workName=workName, is_del=0)
-            # if select_db_WorkorderManagement.exists():
-            #     if workId == select_db_WorkorderManagement[0].id:  # 自己修改自己
-            #         is_edit = True
-            #     else:
-            #         response['errorMsg'] = '已有重复工单,请更改!'
-            # else:
-            #     is_edit = True
-            # if is_edit:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     # region添加操作信息
                     oldData = list(obj_db_WorkorderManagement.values())
-                    newData = json.dumps(request.POST)
+                    newData = ast.literal_eval(json.dumps(request.POST))
                     if workState != obj_db_WorkorderManagement[0].workState and workMessage == \
                             obj_db_WorkorderManagement[0].message:
                         # 0: 待受理, 1: 受理中, 2: 已解决, 3: 已关闭
@@ -310,17 +300,59 @@ def edit_data(request):
                     )
                     # endregion
                     # region 添加工单的生命周期
+                    # region 把工单的修改差异显示出来
+                    passKeyName = ['workId', 'pushTo', 'proId', 'pageId', 'funId']
+                    conversionNew = [i for i in newData.keys() if i not in passKeyName]
+                    newData['workState'] = int(newData['workState'])
+                    diffList = [{'new': {i: newData[i]}, 'old': {i: oldData[0][i]}}
+                                for i in conversionNew if oldData[0][i] != newData[i]]
+                    keyNameDict = {
+                        'workType': '工单类型',
+                        'workState': '工单状态',
+                        'workName': '工单名称',
+                        'message': '工单信息',
+                    }
+                    strData = ""
+                    for item in diffList:
+                        newData = item['new']
+                        oldData = item['old']
+                        key = list(newData.keys())[0]
+                        newValue = newData[key]
+                        oldValue = oldData[key]
+
+                        if key == "workState":
+                            if oldValue == 0:
+                                oldValue = '待受理'
+                            elif oldValue == 1:
+                                oldValue = '受理中'
+                            elif oldValue == 2:
+                                oldValue = '已解决'
+                            else:
+                                oldValue = '已关闭'
+                        strData += f'<b>【{keyNameDict[key]}修改前】</b>:{oldValue}\n'
+
+                        if key == "workState":
+                            if newValue == 0:
+                                newValue = '待受理'
+                            elif newValue == 1:
+                                newValue = '受理中'
+                            elif newValue == 2:
+                                newValue = '已解决'
+                            else:
+                                newValue = '已关闭'
+                        strData += f'<b>【{keyNameDict[key]}修改为】</b>:{newValue}\n'
+                        strData += '\n---------------------------------------------------------------------------------------\n'
+                    # endregion
                     db_WorkLifeCycle.objects.create(
                         work_id=workId,
                         operationType='Edit',
                         workState=workState,
-                        operationInfo=newData,
+                        # operationInfo=newData,
+                        operationInfo=strData,
                         uid_id=userId,
                         is_del=0,
                     )
                     # endregion
-                    # # 在修改时如果正在修改的人是创建人才会重新推送信息
-                    # if userId == obj_db_WorkorderManagement[0].cuid:
                     if pushTo:  # 如果有推送To信息,就保存
                         db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
                             is_del=1, updateTime=cls_Common.get_date_time())
@@ -404,7 +436,7 @@ def select_life_cycle(request):  # 获取当前工单的生命周期
         obj_db_WorkLifeCycle = db_WorkLifeCycle.objects.filter(work_id=workId).order_by('-updateTime')
         for i in obj_db_WorkLifeCycle:
             title = None
-            content = None
+            content = ''
             operationType = i.operationType
             if i.workState == 0:
                 workState = '待受理'
@@ -418,9 +450,7 @@ def select_life_cycle(request):  # 获取当前工单的生命周期
                 title = f'创建工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
             elif operationType == "Edit":
                 title = f'修改工单【{workState}】 {i.uid.userName}({i.uid.nickName})'
-                content = json.dumps(
-                    ast.literal_eval(i.operationInfo),
-                    sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+                content = i.operationInfo
             dataList.append({
                 'title': title,
                 'content': content,

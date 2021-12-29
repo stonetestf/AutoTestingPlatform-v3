@@ -1351,8 +1351,8 @@ def read_case_result(request):
                         else:
                             counter += 1
                             # 这里的时间 需要在调试的时候改！
-                            if counter >= 180:
+                            if counter >= 324:
                                 request.websocket.close()
                                 cls_Logging.print_log('error', 'read_case_result', f'心跳包:{counter}秒内无响应,断开连接')
                                 break
-                        sleep(0.5)
+                        sleep(0.1)

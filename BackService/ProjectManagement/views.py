@@ -197,6 +197,8 @@ def save_data(request):
                     response['errorMsg'] = f'保存失败:{e}'
                 else:
                     response['statusCode'] = 2001
+                    response['proId'] = save_db_ProManagement.id
+                    response['proName'] = proName
         else:
             response['errorMsg'] = "当前用户无角色,请联系管理员"
     return JsonResponse(response)
