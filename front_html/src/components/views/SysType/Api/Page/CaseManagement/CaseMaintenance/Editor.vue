@@ -161,9 +161,10 @@
                                     align= "center">
                                     <template slot-scope="scope">
                                         <el-tag type="success" v-if="scope.row.apidynamic==0">无更变</el-tag>
-                                        <el-tag type="danger" v-else-if="scope.row.apidynamic==1">已更变</el-tag>
+                                        <el-link type="danger" v-else-if="scope.row.apidynamic==1" @click="OpenLifeCycleDialog(scope.row)">已更变</el-link>
+                                        <!-- <el-tag type="danger" v-else-if="scope.row.apidynamic==1">已更变</el-tag> -->
                                         <el-tag type="warning" v-else>已知晓</el-tag>
-                                        <el-tooltip placement="right">
+                                        <el-tooltip placement="right" v-if="scope.row.is_synchronous">
                                             <div slot="content">是否同步开启时:当接口维护中此接口修改时,此处会显示提示!</div>
                                             <i class='el-icon-info'></i>
                                         </el-tooltip>
@@ -265,6 +266,13 @@
                 @getData="AddRequestParamsToTable($event)">
             </dialog-request-params>
         </template>
+        <template> 
+            <dialog-life-cycle
+                @closeDialog="closeLifeCycleDialog" 
+                :isVisible="dialog.lifeCycle.dialogVisible" 
+                :dialogPara="dialog.lifeCycle.dialogPara">
+            </dialog-life-cycle>
+        </template>
     </div>
 </template>
 
@@ -278,11 +286,12 @@ import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.j
 
 import DialogApiMain from "./ApiMain.vue";
 import DialogRequestParams from "./RequestParams.vue";
+import DialogLifeCycle from "../ApiMaintenance/LifeCycle.vue";
 
 
 export default {
     components: {
-        DialogApiMain,DialogRequestParams
+        DialogApiMain,DialogRequestParams,DialogLifeCycle
     },
     data() {
         return {
@@ -366,6 +375,13 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
+                lifeCycle:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                }
             }
 
         };
@@ -701,6 +717,17 @@ export default {
             }else{
                 return false
             }
+        },
+        OpenLifeCycleDialog(row){//打开接口生命周期
+            let self = this;
+            self.dialog.lifeCycle.dialogPara={
+                dialogTitle:row.apiName+'(生命周期)',//初始化标题
+                apiId:row.apiId,
+            }
+            self.dialog.lifeCycle.dialogVisible=true;
+        },
+        closeLifeCycleDialog(){
+            this.dialog.lifeCycle.dialogVisible =false;
         },
 
         //效验
