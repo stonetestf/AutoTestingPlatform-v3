@@ -19,3 +19,16 @@ class FileOperations(object):
             return {'state': True, 'filePath': FilePath, 'fileName': fileObj.name}
         except BaseException as e:
             return {'state': False, 'errorMsg': e}
+
+    def read_file(self, filePath):
+        results = {}
+        try:
+            with open(filePath, 'r') as f:
+                data = f.read()
+        except BaseException as e:
+            results['state'] = False
+            results['errorMsg'] = f'文件读取失败:{e}'
+        else:
+            results['state'] = True
+            results['data'] = data
+        return results

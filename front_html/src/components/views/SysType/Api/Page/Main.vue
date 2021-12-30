@@ -451,7 +451,7 @@ export default {
         socket.send(JSON.stringify(data));//发送数据到服务端
       };
       socket.onmessage = function (e) {
-        PrintConsole('message: ' + e.data);//打印服务端返回的数据
+        // PrintConsole('message: ' + e.data);//打印服务端返回的数据
         let retData = JSON.parse(e.data)
         //测试结果总览
         self.RomeData.topLine.timeData = retData.testResults.timeData;

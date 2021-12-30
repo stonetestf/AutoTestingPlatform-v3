@@ -129,6 +129,7 @@ export default {
   data() {
     return {
       RomeData:{
+        socket:'',
         nickName:'',
         userImage:'',
         menuTable:[],
@@ -313,7 +314,7 @@ export default {
       }).catch(function (error) {
           console.log(error);
       })
-    }
+    },
   }
 }
 

@@ -148,15 +148,16 @@
                             width="330px">
                         <template slot="header">
                             <el-button-group>  
-                                <el-button type="primary" @click="OpenEditDialog()">新增</el-button>        
+                                <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                                 <el-dropdown @command="handleCommand">
                                     <el-button type="warning">
                                         更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                     </el-button>
                                     <el-dropdown-menu slot="dropdown">
+                                        <el-dropdown-item command="SwaggerImport">导入(Swagger)</el-dropdown-item>
+                                        <el-dropdown-item command="SwaggerImport">导出(Swagger)</el-dropdown-item>
                                         <el-dropdown-item command="CopyApi">复制接口</el-dropdown-item>
-                                        <el-dropdown-item command="SwaggerImport">Swagger导入</el-dropdown-item>
-                                        <el-dropdown-item command="HistoryBack">历史恢复</el-dropdown-item>
+                                        <el-dropdown-item command="HistoryBack">历史恢复(勾选/不选)</el-dropdown-item>
                                     </el-dropdown-menu>
                                 </el-dropdown>
                             </el-button-group>
@@ -242,6 +243,14 @@
                 @Succeed="SelectData">
             </dialog-life-cycle>
         </template>
+        <template>
+            <dialog-swagger-import
+                @closeDialog="closeSwaggerImportDialog" 
+                :isVisible="dialog.swaggerImport .dialogVisible" 
+                :dialogPara="dialog.swaggerImport.dialogPara"
+                @Succeed="SelectData">
+            </dialog-swagger-import>
+        </template>
     </div>
 </template>
 
@@ -255,11 +264,12 @@ import DialogRunType from "./RunType.vue";
 import DialogWorkOrder from "../../../../../WorkorderManagement/WorkorderMaintenance/Editor.vue";
 import DialogHistoryInfo from "./HistoryInfo.vue";
 import DialogLifeCycle from "./LifeCycle.vue";
+import DialogSwaggerImport from "./SwaggerImport.vue";
 
 
 export default {
     components: {
-        DialogEditor,DialogRunType,DialogWorkOrder,DialogHistoryInfo,DialogLifeCycle
+        DialogEditor,DialogRunType,DialogWorkOrder,DialogHistoryInfo,DialogLifeCycle,DialogSwaggerImport
     },
     data() {
         return {
@@ -324,6 +334,13 @@ export default {
                     },
                 },
                 lifeCycle:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                swaggerImport:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -487,6 +504,8 @@ export default {
                 this.CopyApi();
             }else if(command=='HistoryBack'){
                 this.OpenHistoryInfoDialog();
+            }else if(command=='SwaggerImport'){
+                this.OpenSwaggerImportDialog();
             }
         },
         CopyApi(){
@@ -530,7 +549,17 @@ export default {
                 self.dialog.historyInfo.dialogVisible=true;
             }
         },
-
+        //导入
+        closeSwaggerImportDialog(){
+            this.dialog.swaggerImport.dialogVisible =false;
+        },
+        OpenSwaggerImportDialog(){
+            let self = this;
+            self.dialog.swaggerImport.dialogPara={
+                dialogTitle:"导入(Swagger)",//初始化标题
+            }
+            self.dialog.swaggerImport.dialogVisible=true;
+        },
 
         //编辑、新增
         closeEditDialog(){

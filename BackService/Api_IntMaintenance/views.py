@@ -1,6 +1,7 @@
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db import transaction
+from django.conf import settings
 
 import json
 import ast
@@ -34,6 +35,7 @@ from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.Request import RequstOperation
 from ClassData.TestReport import ApiReport
+from ClassData.Swagger import Swagger
 
 # Create info here.
 cls_Logging = Logging()
@@ -43,6 +45,7 @@ cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
 cls_RequstOperation = RequstOperation()
 cls_ApiReport = ApiReport()
+cls_Swagger = Swagger()
 
 
 # Create your views here.
@@ -1866,4 +1869,28 @@ def select_life_cycle(request):
 
         response['TableData'] = dataList
         response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])# 解析JSON文件 导入功能
+def analysis_json_data(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+        file = objData.file
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'delete_data', errorMsg)
+    else:
+        fileName = file[0].name
+        JsonData = cls_Swagger.analysisJsonData(f'{settings.TEMP_PATH}{fileName}')
+        if JsonData['state']:
+            response['statusCode'] = 2000
+            response['dataTable'] = JsonData['dataTable']
+        else:
+            response['errorMsg'] = JsonData['errorMsg']
     return JsonResponse(response)
