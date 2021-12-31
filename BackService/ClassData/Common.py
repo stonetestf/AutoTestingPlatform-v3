@@ -41,14 +41,6 @@ class Common(object):
 
         return new_password
 
-    # 删除文件
-    def delete_file(self, filePath):
-        if os.path.exists(filePath):
-            os.remove(filePath)  # 删除
-            return True
-        else:
-            return False
-
     # 返回文件MD5值
     def get_file_md5(self,filePath):
         with open(filePath, 'rb') as fp:

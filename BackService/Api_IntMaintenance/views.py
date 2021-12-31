@@ -19,9 +19,9 @@ from Api_IntMaintenance.models import ApiValidate as db_ApiValidate
 from Api_IntMaintenance.models import ApiOperation as db_ApiOperation
 from Api_IntMaintenance.models import ApiAssociatedUser as db_ApiAssociatedUser
 from Api_IntMaintenance.models import ApiDynamic as db_ApiDynamic
-from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
-from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
-from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
+# from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
+# from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
+# from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
 from Api_IntMaintenance.models import ApiHistory as db_ApiHistory
 from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
@@ -36,6 +36,7 @@ from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.Request import RequstOperation
 from ClassData.TestReport import ApiReport
 from ClassData.OpenApi import Swagger
+from ClassData.FileOperations import FileOperations
 
 # Create info here.
 cls_Logging = Logging()
@@ -46,6 +47,7 @@ cls_ImageProcessing = ImageProcessing()
 cls_RequstOperation = RequstOperation()
 cls_ApiReport = ApiReport()
 cls_Swagger = Swagger()
+cls_FileOperations = FileOperations()
 
 
 # Create your views here.
@@ -230,11 +232,24 @@ def charm_api_data(request):
         if apiInfo.request.body.requestSaveType == 'form-data':
             for index, item_body in enumerate(apiInfo.request.body.formData, 1):
                 if item_body.state:
-                    if not item_body.key:
-                        dataList.append({
-                            'stepsName': '接口信息-Body',
-                            'errorMsg': f'第{index}行:参数名称不可为空!',
-                            'updateTime': cls_Common.get_date_time()})
+                    if item_body.paramsType == 'Text':
+                        if not item_body.key:
+                            dataList.append({
+                                'stepsName': '接口信息-Body',
+                                'errorMsg': f'第{index}行:参数名称不可为空!',
+                                'updateTime': cls_Common.get_date_time()})
+                    else:  # 文件类型
+                        if not item_body.key:
+                            dataList.append({
+                                'stepsName': '接口信息-Body',
+                                'errorMsg': f'第{index}行:参数名称不可为空!',
+                                'updateTime': cls_Common.get_date_time()})
+                        if not item_body.fileList:
+                            dataList.append({
+                                'stepsName': '接口信息-Body',
+                                'errorMsg': f'第{index}行:上传文件不可为空!',
+                                'updateTime': cls_Common.get_date_time()})
+
         elif apiInfo.request.body.requestSaveType == 'raw':
             if not apiInfo.request.body.raw:
                 dataList.append({
@@ -464,14 +479,54 @@ def save_data(request):
                     db_ApiParams.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region Body
+                    # region 删除多次上传的一些不需要的文件
+                    deleteFileList = apiInfo.request.body.deleteFileList
+                    for item_delFile in deleteFileList:
+                        if item_delFile.dirName == 'Temp':
+                            filePath = settings.TEMP_PATH
+                        else:
+                            filePath = f"{settings.APIFILE_PATH}{item_delFile.dirName}"
+                        cls_FileOperations.delete_file(f"{filePath}{item_delFile.fileName}")
+                    # endregion
                     if apiInfo.request.body.requestSaveType == 'form-data':
                         product_list_to_insert = list()
                         for item_body in apiInfo.request.body.formData:
+                            paramsType = item_body.paramsType
+                            if paramsType == 'Text':
+                                pass
+                            else:  # file
+                                # region file文件处理
+                                filePath = None
+                                fileMD5 = None
+                                fileData = item_body.fileList[0]._object_maker__data
+                                fileName = fileData['name']
+                                # 创建文件夹
+                                newFolder = cls_FileOperations.new_folder(
+                                    f'{settings.APIFILE_PATH}{save_db_ApiBaseData.id}')
+                                if newFolder['state']:
+                                    # 复制文件从临时目录到接口目录
+                                    copyFile = cls_FileOperations.copy_file_to_dir(
+                                        f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
+                                    if copyFile['state']:
+                                        filePath = copyFile['newFilePath']
+                                        fileMD5 = cls_Common.get_file_md5(filePath)
+                                    else:
+                                        response['errorMsg'] = copyFile['errorMsg']
+                                        # 删除新增的文件夹
+                                        cls_FileOperations.delete_folder(newFolder['path'])
+                                        return response
+                                else:
+                                    response['errorMsg'] = newFolder['errorMsg']
+                                    return response
+                                # endregion
                             product_list_to_insert.append(db_ApiBody(
                                 apiId_id=save_db_ApiBaseData.id,
                                 index=item_body.index,
                                 key=item_body.key,
+                                paramsType=item_body.paramsType,
                                 value=item_body.value,
+                                filePath=filePath,
+                                fileMD5=fileMD5,
                                 remarks=item_body.remarks,
                                 state=1 if item_body.state else 0,
                                 is_del=0,
@@ -654,7 +709,7 @@ def edit_data(request):
                                 'state': True if item_body.state else False,
                             })
                         bodyData = body
-                    elif obj_db_ApiBaseData[0].bodyRequestSaveType in ['raw','json']:
+                    elif obj_db_ApiBaseData[0].bodyRequestSaveType in ['raw', 'json']:
                         bodyData = obj_db_ApiBody[0].value
                     # endregion
                     # region extract
@@ -865,14 +920,54 @@ def edit_data(request):
                     db_ApiParams.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region Body
+                    # region 删除多次上传的一些不需要的文件
+                    deleteFileList = apiInfo.request.body.deleteFileList
+                    for item_delFile in deleteFileList:
+                        if item_delFile.dirName == 'Temp':
+                            filePath = settings.TEMP_PATH
+                        else:
+                            filePath = f"{settings.APIFILE_PATH}{item_delFile.dirName}/"
+                        cls_FileOperations.delete_file(f"{filePath}{item_delFile.fileName}")
+                    # endregion
                     if apiInfo.request.body.requestSaveType == 'form-data':
                         product_list_to_insert = list()
                         for item_body in apiInfo.request.body.formData:
+                            paramsType = item_body.paramsType
+                            if paramsType == 'Text':
+                                pass
+                            else:  # file
+                                # region file文件处理
+                                filePath = None
+                                fileMD5 = None
+                                fileData = item_body.fileList[0]._object_maker__data
+                                fileName = fileData['name']
+                                # 创建文件夹
+                                newFolder = cls_FileOperations.new_folder(
+                                    f'{settings.APIFILE_PATH}{basicInfo.apiId}')
+                                if newFolder['state']:
+                                    # 复制文件从临时目录到接口目录
+                                    copyFile = cls_FileOperations.copy_file_to_dir(
+                                        f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
+                                    if copyFile['state']:
+                                        filePath = copyFile['newFilePath']
+                                        fileMD5 = cls_Common.get_file_md5(filePath)
+                                    else:
+                                        response['errorMsg'] = copyFile['errorMsg']
+                                        # 删除新增的文件夹
+                                        cls_FileOperations.delete_folder(newFolder['path'])
+                                        return response
+                                else:
+                                    response['errorMsg'] = newFolder['errorMsg']
+                                    return response
+                                # endregion
                             product_list_to_insert.append(db_ApiBody(
                                 apiId_id=basicInfo.apiId,
                                 index=item_body.index,
                                 key=item_body.key,
+                                paramsType=item_body.paramsType,
                                 value=item_body.value,
+                                filePath=filePath,
+                                fileMD5=fileMD5,
                                 remarks=item_body.remarks,
                                 state=1 if item_body.state else 0,
                                 is_del=0,
@@ -1145,10 +1240,21 @@ def load_data(request):
             obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
             if obj_db_ApiBaseData[0].bodyRequestSaveType == 'form-data':
                 for item_body in obj_db_ApiBody:
+                    if item_body.paramsType == 'Text':
+                        fileList = []
+                    else:
+                        splitStr = item_body.filePath.split('/')
+                        name = splitStr[-1]
+                        url = f"{settings.NGINX_SERVER}ApiFile/{apiId}/{name}"
+                        fileList = [
+                            {'name': name, 'url': url}
+                        ]
                     body.append({
                         'index': item_body.index,
                         'key': item_body.key,
+                        'paramsType': item_body.paramsType,
                         'value': item_body.value,
+                        'fileList': fileList,
                         'remarks': item_body.remarks,
                         'state': True if item_body.state else False,
                     })

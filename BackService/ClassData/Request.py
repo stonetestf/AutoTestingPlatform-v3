@@ -37,7 +37,7 @@ cls_RedisHandle = RedisHandle()
 
 class RequstOperation(cls_Logging, cls_Common):
     # 循环请求的数据查询出当前请求的最终是从params，body，中哪种发出
-    def for_data_get_requset_params_type(self, paramsTable, bodyTable, raw,jsons):
+    def for_data_get_requset_params_type(self, paramsTable, bodyTable, raw, jsons):
         requestParamsType = None
         for item_params in paramsTable:
             if item_params.state:
@@ -1187,6 +1187,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
     def api_edit_dfif(self, oldData, newData):
         strData = ""
+        passKeyName = ['deleteFileList']  # 忽略不处理的
         keyNameDict = {
             'pageId': '所属页面',
             'funId': '所属功能',
@@ -1209,12 +1210,13 @@ class RequstOperation(cls_Logging, cls_Common):
         }
         conversionOld = self.conversion_api_dict(oldData)
         conversionNew = self.conversion_api_dict(newData)
-        diffList = [{'new': {i: conversionNew[i]}, 'old': {i: conversionOld[i]}}
-                    for i in conversionNew.keys() if conversionOld[i] != conversionNew[i]]
-        # diffList = []
-        # for i in conversionNew.keys():
-        #     if conversionOld[i] != conversionNew[i]:
-        #         diffList.append({'new':{i: conversionNew[i]},'old':{i:conversionOld[i]}})
+        # diffList = [{'new': {i: conversionNew[i]}, 'old': {i: conversionOld[i]}}
+        #             for i in conversionNew.keys() if conversionOld[i] != conversionNew[i]]
+        diffList = []
+        for i in conversionNew.keys():
+            if i not in passKeyName:
+                if conversionOld[i] != conversionNew[i]:
+                    diffList.append({'new':{i: conversionNew[i]},'old':{i:conversionOld[i]}})
         # if diffList:
         for item in diffList:
             newData = item['new']

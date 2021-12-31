@@ -20,6 +20,7 @@ DEBUG = True
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
+APIFILE_PATH = f"{BASE_DIR}/_DataFiles/ApiFile/"
 
 # NginxServer
 NGINX_SERVER = 'http://192.168.2.12:9092/'
