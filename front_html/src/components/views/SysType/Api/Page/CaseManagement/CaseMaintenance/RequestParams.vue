@@ -208,8 +208,8 @@
                                     <el-radio-group v-model="RomeData.bodyRomeData.requestSaveType" @change="changeBodyRequestType">
                                         <el-radio label="none">none</el-radio>
                                         <el-radio label='form-data'>form-data</el-radio>
+                                        <el-radio label="json">json</el-radio>
                                         <el-radio label="raw">raw</el-radio>
-                                        <el-radio label="file">file</el-radio>
                                     </el-radio-group>
                                 </div>
                                 <div v-if="RomeData.bodyRomeData.requestSaveType=='none'">
@@ -298,6 +298,14 @@
                                             </div>
                                         </el-card>
                                     </div>
+                                </div>
+                                <div v-else-if="RomeData.bodyRomeData.requestSaveType=='json'">
+                                    <el-input
+                                        class="bodyRome"
+                                        type="textarea"
+                                        :autosize="{ minRows: 29, maxRows: 29}"
+                                        v-model="RomeData.bodyRomeData.jsonValue">
+                                    </el-input>
                                 </div>
                                 <div v-else-if="RomeData.bodyRomeData.requestSaveType=='raw'">
                                     <el-input
@@ -688,6 +696,7 @@ export default {
                     bulkEdit:'',
                     requestSaveType:'form-data',//请求保存类型，none,form-data,json,raw
                     rawValue:'',
+                    jsonValue:'',
                 },
 
                 extractName:'Extract/提取',
@@ -904,6 +913,7 @@ export default {
             self.RomeData.bodyRomeData.editModel='From';
             self.RomeData.bodyRomeData.requestSaveType='form-data';
             self.RomeData.bodyRomeData.rawValue = '';
+            self.RomeData.bodyRomeData.jsonValue = '';
 
             //extractRomeData
             self.RomeData.extractRomeData.tableData=[];
@@ -967,6 +977,8 @@ export default {
                 });
             }else if(self.RomeData.bodyRomeData.requestSaveType=='raw'){
                 self.RomeData.bodyRomeData.rawValue = request.body.rawValue;
+            }else if(self.RomeData.bodyRomeData.requestSaveType=='json'){
+                self.RomeData.bodyRomeData.jsonValue = request.body.jsonValue;
             }
             
             //extract
@@ -1103,7 +1115,9 @@ export default {
                         });
                     }else if(res.data.apiInfo.request.body.requestSaveType=='raw'){
                         self.RomeData.bodyRomeData.rawValue = res.data.apiInfo.request.body.bodyData;
-                    }               
+                    }else if(res.data.apiInfo.request.body.requestSaveType=='json'){
+                        self.RomeData.bodyRomeData.jsonValue = res.data.apiInfo.request.body.bodyData;
+                    }            
                }else{
                    self.$message.error('数据获取失败:',res.data.errorMsg);
                }
@@ -1171,6 +1185,8 @@ export default {
                             });
                         }else if(res.data.apiInfo.request.body.requestSaveType=='raw'){
                             self.RomeData.bodyRomeData.rawValue = res.data.apiInfo.request.body.bodyData;
+                        }else if(res.data.apiInfo.request.body.requestSaveType=='json'){
+                            self.RomeData.bodyRomeData.jsonValue = res.data.apiInfo.request.body.bodyData;
                         }
                 
                         //extract
@@ -1273,6 +1289,7 @@ export default {
                                 'requestSaveType':self.RomeData.bodyRomeData.requestSaveType,
                                 'formData':self.RomeData.bodyRomeData.tableData,
                                 'raw':self.RomeData.bodyRomeData.rawValue,
+                                'json':self.RomeData.bodyRomeData.jsonValue,
                             },
                             'extract':self.RomeData.extractRomeData.tableData,
                             'validate':self.RomeData.validateRomeData.tableData,
@@ -1747,7 +1764,8 @@ export default {
                 obj.body = {
                     'requestSaveType':self.RomeData.bodyRomeData.requestSaveType,
                     'formData':self.RomeData.bodyRomeData.tableData,
-                    'rawValue':self.RomeData.bodyRomeData.rawValue
+                    'rawValue':self.RomeData.bodyRomeData.rawValue,
+                    'jsonValue':self.RomeData.bodyRomeData.jsonValue,
                 };
                 obj.extract = self.RomeData.extractRomeData.tableData;
                 obj.validate = self.RomeData.validateRomeData.tableData;

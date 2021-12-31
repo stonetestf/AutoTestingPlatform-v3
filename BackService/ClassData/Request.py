@@ -37,7 +37,7 @@ cls_RedisHandle = RedisHandle()
 
 class RequstOperation(cls_Logging, cls_Common):
     # 循环请求的数据查询出当前请求的最终是从params，body，中哪种发出
-    def for_data_get_requset_params_type(self, paramsTable, bodyTable, raw):
+    def for_data_get_requset_params_type(self, paramsTable, bodyTable, raw,jsons):
         requestParamsType = None
         for item_params in paramsTable:
             if item_params.state:
@@ -47,7 +47,7 @@ class RequstOperation(cls_Logging, cls_Common):
             if item_body.state:
                 requestParamsType = 'Body'
                 return requestParamsType
-        if raw:
+        if raw or jsons:
             requestParamsType = 'Body'
             return requestParamsType
         return requestParamsType
@@ -1201,6 +1201,7 @@ class RequstOperation(cls_Logging, cls_Common):
             'requestSaveType': 'body请求类型',
             'formData': 'bodyFormData请求参数',
             'raw': 'bodyRaw请求参数',
+            'json': 'bodyJson请求参数',
             'extract': '提取参数',
             'validate': '断言参数',
             'preOperation': '前置操作参数',

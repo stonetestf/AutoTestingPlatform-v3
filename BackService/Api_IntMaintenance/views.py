@@ -235,6 +235,18 @@ def charm_api_data(request):
                             'stepsName': '接口信息-Body',
                             'errorMsg': f'第{index}行:参数名称不可为空!',
                             'updateTime': cls_Common.get_date_time()})
+        elif apiInfo.request.body.requestSaveType == 'raw':
+            if not apiInfo.request.body.raw:
+                dataList.append({
+                    'stepsName': '接口信息-Body',
+                    'errorMsg': f'Raw参数不可为空!',
+                    'updateTime': cls_Common.get_date_time()})
+        elif apiInfo.request.body.requestSaveType == 'json':
+            if not apiInfo.request.body.json:
+                dataList.append({
+                    'stepsName': '接口信息-Body',
+                    'errorMsg': f'Json参数不可为空!',
+                    'updateTime': cls_Common.get_date_time()})
         # endregion
         # region 验证 提取
         if apiInfo.request.extract:
@@ -329,7 +341,9 @@ def charm_api_data(request):
         # region 验证params 和body 至少有1个有参数
         if not apiInfo.request.params and \
                 not apiInfo.request.body.formData and \
-                not apiInfo.request.body.raw and not apiInfo.request.body.requestSaveType == 'none':
+                not apiInfo.request.body.raw and \
+                not apiInfo.request.body.json and \
+                not apiInfo.request.body.requestSaveType == 'none':
             dataList.append({
                 'stepsName': '接口信息-参数请求',
                 'errorMsg': f'不可创建空参数请求,Params或Body请求中至少有1个不可为空!',
@@ -356,7 +370,10 @@ def save_data(request):
         else:
             assignedUserId = userId
         requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-            apiInfo.request.params, apiInfo.request.body.formData, apiInfo.request.body.raw)
+            apiInfo.request.params,
+            apiInfo.request.body.formData,
+            apiInfo.request.body.raw,
+            apiInfo.request.body.json)
         historyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -461,12 +478,18 @@ def save_data(request):
                                 historyCode=historyCode)
                             )
                         db_ApiBody.objects.bulk_create(product_list_to_insert)
-                    elif apiInfo.request.body.requestSaveType == 'raw':
+                    elif apiInfo.request.body.requestSaveType in ['raw', 'json']:
+                        if apiInfo.request.body.requestSaveType == 'raw':
+                            value = apiInfo.request.body.raw
+                        elif apiInfo.request.body.requestSaveType == 'json':
+                            value = apiInfo.request.body.json
+                        else:
+                            value = None
                         db_ApiBody.objects.create(
                             apiId_id=save_db_ApiBaseData.id,
                             index=0,
                             key=None,
-                            value=apiInfo.request.body.raw,
+                            value=value,
                             state=1,
                             is_del=0,
                             historyCode=historyCode
@@ -571,7 +594,10 @@ def edit_data(request):
         else:
             assignedUserId = userId
         requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-            apiInfo.request.params, apiInfo.request.body.formData, apiInfo.request.body.raw)
+            apiInfo.request.params,
+            apiInfo.request.body.formData,
+            apiInfo.request.body.raw,
+            apiInfo.request.body.json)
         historyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -628,7 +654,7 @@ def edit_data(request):
                                 'state': True if item_body.state else False,
                             })
                         bodyData = body
-                    elif obj_db_ApiBaseData[0].bodyRequestSaveType == 'raw':
+                    elif obj_db_ApiBaseData[0].bodyRequestSaveType in ['raw','json']:
                         bodyData = obj_db_ApiBody[0].value
                     # endregion
                     # region extract
@@ -710,7 +736,8 @@ def edit_data(request):
                                 'body': {
                                     'requestSaveType': obj_db_ApiBaseData[0].bodyRequestSaveType,
                                     'formData': bodyData,
-                                    'raw': bodyData if obj_db_ApiBaseData[0].bodyRequestSaveType == 'Raw' else ''
+                                    'raw': bodyData if obj_db_ApiBaseData[0].bodyRequestSaveType == 'raw' else '',
+                                    'json': bodyData if obj_db_ApiBaseData[0].bodyRequestSaveType == 'json' else '',
                                 },
                                 'extract': extract,
                                 'validate': validate,
@@ -852,12 +879,18 @@ def edit_data(request):
                                 historyCode=historyCode)
                             )
                         db_ApiBody.objects.bulk_create(product_list_to_insert)
-                    elif apiInfo.request.body.requestSaveType == 'raw':
+                    elif apiInfo.request.body.requestSaveType in ['raw', 'json']:
+                        if apiInfo.request.body.requestSaveType == 'raw':
+                            value = apiInfo.request.body.raw
+                        elif apiInfo.request.body.requestSaveType == 'json':
+                            value = apiInfo.request.body.json
+                        else:
+                            value = None
                         db_ApiBody.objects.create(
                             apiId_id=basicInfo.apiId,
                             index=0,
                             key=None,
-                            value=apiInfo.request.body.raw,
+                            value=value,
                             state=1,
                             is_del=0,
                             historyCode=historyCode

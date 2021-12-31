@@ -298,6 +298,18 @@ def charm_case_data(request):
                                 'stepsName': '接口信息-Body',
                                 'errorMsg': f'测试集(顺序:{index_testSet}):第{index}行:参数名称不可为空!',
                                 'updateTime': cls_Common.get_date_time()})
+            elif item_testSet.request.body.requestSaveType == 'raw':
+                if not item_testSet.request.body.rawValue:
+                    dataList.append({
+                        'stepsName': '接口信息-Body',
+                        'errorMsg': f'Raw参数不可为空!',
+                        'updateTime': cls_Common.get_date_time()})
+            elif item_testSet.request.body.requestSaveType == 'json':
+                if not item_testSet.request.body.jsonValue:
+                    dataList.append({
+                        'stepsName': '接口信息-Body',
+                        'errorMsg': f'Json参数不可为空!',
+                        'updateTime': cls_Common.get_date_time()})
             # endregion
             # region 验证 提取
             if item_testSet.request.extract:
@@ -392,7 +404,9 @@ def charm_case_data(request):
             # region 验证params 和body 至少有1个有参数
             if not item_testSet.request.params and \
                     not item_testSet.request.body.formData and \
-                    not item_testSet.request.body.rawValue and not item_testSet.request.body.requestSaveType == 'none':
+                    not item_testSet.request.body.rawValue and \
+                    not item_testSet.request.body.jsonValue and \
+                    not item_testSet.request.body.requestSaveType == 'none':
                 dataList.append({
                     'stepsName': '接口信息-参数请求',
                     'errorMsg': f'测试集(顺序:{index_testSet}):不可创建空参数请求,Params或Body请求中至少有1个不可为空!',
@@ -468,13 +482,14 @@ def save_data(request):
                         bodyRequestSaveType = item_testSet.request.body.requestSaveType
                         bodyFormData = item_testSet.request.body.formData
                         bodyRawValue = item_testSet.request.body.rawValue
+                        bodyJsonValue = item_testSet.request.body.jsonValue
                         extract = item_testSet.request.extract
                         validate = item_testSet.request.validate
                         preOperation = item_testSet.request.preOperation
                         rearOperation = item_testSet.request.rearOperation
 
                         requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-                            params, bodyFormData, bodyRawValue
+                            params, bodyFormData, bodyRawValue,bodyJsonValue
                         )
                         db_CaseApiBase.objects.create(
                             testSet_id=save_db_CaseTestSet.id,
@@ -527,12 +542,18 @@ def save_data(request):
                                     is_del=0)
                                 )
                             db_CaseApiBody.objects.bulk_create(product_list_to_insert)
-                        elif bodyRequestSaveType == 'raw':
+                        elif bodyRequestSaveType in ['raw','json']:
+                            if bodyRequestSaveType=='raw':
+                                value = bodyRawValue
+                            elif bodyRequestSaveType=='json':
+                                value = bodyJsonValue
+                            else:
+                                value = None
                             db_CaseApiBody.objects.create(
                                 testSet_id=save_db_CaseTestSet.id,
                                 index=0,
                                 key=None,
-                                value=bodyRawValue,
+                                value=value,
                                 state=1,
                                 is_del=0
                             )
@@ -646,6 +667,7 @@ def edit_data(request):
                                 'requestSaveType': 'form-data',
                                 'formData': [],
                                 'rawValue': '',
+                                'jsonValue': '',
                             },
                             'extract': [],
                             'validate': [],
@@ -696,7 +718,9 @@ def edit_data(request):
                                             'remarks': item_body.remarks,
                                         })
                                 elif obj_db_CaseApiBase[0].bodyRequestSaveType == 'raw':
-                                    oldRequestData['body']['rawValue'] = obj_db_CaseApiParams[0].value
+                                    oldRequestData['body']['rawValue'] = obj_db_CaseApiBody[0].value
+                                elif obj_db_CaseApiBase[0].bodyRequestSaveType == 'json':
+                                    oldRequestData['body']['jsonValue'] = obj_db_CaseApiBody[0].value
                                 # endregion
                                 # region Extract
                                 obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(
@@ -823,7 +847,7 @@ def edit_data(request):
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                         environmentId_id=basicInfo.environmentId, testType=basicInfo.testType,
                         label=basicInfo.labelId, priority=basicInfo.priorityId, caseName=basicInfo.caseName,
-                        caseState=basicInfo.caseState, uid_id=userId,updateTime=cls_Common.get_date_time()
+                        caseState=basicInfo.caseState, uid_id=userId, updateTime=cls_Common.get_date_time()
                     )
                     # endregion
                     # region 测试集
@@ -847,13 +871,15 @@ def edit_data(request):
                         bodyRequestSaveType = item_testSet.request.body.requestSaveType
                         bodyFormData = item_testSet.request.body.formData
                         bodyRawValue = item_testSet.request.body.rawValue
+                        bodyJsonValue = item_testSet.request.body.jsonValue
+
                         extract = item_testSet.request.extract
                         validate = item_testSet.request.validate
                         preOperation = item_testSet.request.preOperation
                         rearOperation = item_testSet.request.rearOperation
 
                         requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-                            params, bodyFormData, bodyRawValue
+                            params, bodyFormData, bodyRawValue, bodyJsonValue
                         )
                         db_CaseApiBase.objects.create(
                             testSet_id=save_db_CaseTestSet.id,
@@ -906,12 +932,18 @@ def edit_data(request):
                                     is_del=0)
                                 )
                             db_CaseApiBody.objects.bulk_create(product_list_to_insert)
-                        elif bodyRequestSaveType == 'raw':
+                        elif bodyRequestSaveType in ['raw', 'json']:
+                            if bodyRequestSaveType == 'raw':
+                                value = item_testSet.request.body.rawValue
+                            elif bodyRequestSaveType == 'json':
+                                value = item_testSet.request.body.jsonValue
+                            else:
+                                value = None
                             db_CaseApiBody.objects.create(
                                 testSet_id=save_db_CaseTestSet.id,
                                 index=0,
                                 key=None,
-                                value=bodyRawValue,
+                                value=value,
                                 state=1,
                                 is_del=0
                             )
@@ -1105,6 +1137,7 @@ def load_case_data(request):
                         'requestSaveType': 'form-data',
                         'formData': [],
                         'rawValue': '',
+                        'jsonValue':'',
                     },
                     'extract': [],
                     'validate': [],
@@ -1155,7 +1188,9 @@ def load_case_data(request):
                                 'remarks': item_body.remarks,
                             })
                     elif obj_db_CaseApiBase[0].bodyRequestSaveType == 'raw':
-                        requestData['body']['rawValue'] = obj_db_CaseApiParams[0].value
+                        requestData['body']['rawValue'] = obj_db_CaseApiBody[0].value
+                    elif obj_db_CaseApiBase[0].bodyRequestSaveType == 'json':
+                        requestData['body']['jsonValue'] = obj_db_CaseApiBody[0].value
                     # endregion
                     # region Extract
                     obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(
@@ -1285,7 +1320,8 @@ def execute_case(request):
                 for item_testSet in obj_db_CaseTestSet:
                     state = True if item_testSet.state == 1 else False
                     if state:
-                        obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(is_del=0,
+                                                                                     testSet_id=item_testSet.id)
                         preOperationTotal += obj_db_CaseApiOperation.filter(location='Pre').count()
                         rearOperationTotal += obj_db_CaseApiOperation.filter(location='Rear').count()
 
@@ -1313,7 +1349,8 @@ def execute_case(request):
                         obj_db_CaseBaseData[0].pid_id, obj_db_CaseBaseData[0].page_id, obj_db_CaseBaseData[0].fun_id
                         , 'CASE', caseId, testReportId, userId)  # 创建队列
                     # endregion
-                    result = api_asynchronous_run_case.delay(remindLabel,redisKey, testReportId,queueId, caseId, environmentId, userId)
+                    result = api_asynchronous_run_case.delay(remindLabel, redisKey, testReportId, queueId, caseId,
+                                                             environmentId, userId)
                     if result.task_id:
                         response['statusCode'] = 2001
                         response['redisKey'] = redisKey
