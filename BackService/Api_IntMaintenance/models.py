@@ -115,7 +115,7 @@ class ApiHistory(models.Model):  # 历史记录，恢复使用
     page = models.ForeignKey("PageManagement.PageManagement", to_field='id', on_delete=models.CASCADE)
     fun = models.ForeignKey("FunManagement.FunManagement", to_field='id', on_delete=models.CASCADE)
     api = models.ForeignKey("ApiBaseData", to_field='id', on_delete=models.CASCADE)
-    apiName = models.CharField("页面名称", max_length=20, null=False)
+    apiName = models.CharField("页面名称", max_length=100, null=False)
     onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
     # 如果是删除的话，在恢复数据时取上一个操作的数据
     operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)

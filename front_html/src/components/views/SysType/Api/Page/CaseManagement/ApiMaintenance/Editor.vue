@@ -332,8 +332,8 @@
                                         <el-radio-group v-model="EditApiRomeData.bodyRomeData.requestSaveType" @change="changeBodyRequestType">
                                             <el-radio label="none">none</el-radio>
                                             <el-radio label='form-data'>form-data</el-radio>
+                                            <el-radio label='json'>json</el-radio>
                                             <el-radio label="raw">raw</el-radio>
-                                            <el-radio label="file">file</el-radio>
                                         </el-radio-group>
                                     </div>
                                     <div v-if="EditApiRomeData.bodyRomeData.requestSaveType=='none'">
@@ -422,6 +422,14 @@
                                                 </div>
                                             </el-card>
                                         </div>
+                                    </div>
+                                    <div v-else-if="EditApiRomeData.bodyRomeData.requestSaveType=='json'">
+                                        <el-input
+                                            class="bodyRome"
+                                            type="textarea"
+                                            :autosize="{ minRows: 27, maxRows: 27}"
+                                            v-model="EditApiRomeData.bodyRomeData.jsonValue">
+                                        </el-input>
                                     </div>
                                     <div v-else-if="EditApiRomeData.bodyRomeData.requestSaveType=='raw'">
                                         <el-input
@@ -747,7 +755,7 @@
                         </div>
                     </template>
                     <template v-else>
-                         <div slot="header">
+                        <div slot="header">
                             {{CharmRomeData.title}}
                         </div>
                         <div>
@@ -852,7 +860,7 @@ export default {
                     environmentId:[{ required: true, message: '请选择环境地址', trigger: 'change' }],
                     apiName:[
                         { required: true, message: '请输入接口名称', trigger: 'blur' },
-                        { min: 1, max: 15, message: '长度在 1 到 15 个字符', trigger: 'blur' }
+                        { min: 1, max: 30, message: '长度在 1 到 30 个字符', trigger: 'blur' }
                     ],
                     apiState:[{ required: true, message: '请选择状态', trigger: 'change' }],
                 },
@@ -894,6 +902,7 @@ export default {
                     bulkEdit:'',
                     requestSaveType:'form-data',//请求保存类型，none,form-data,json,raw
                     rawValue:'',
+                    jsonValue:'',
                 },
                 extractRomeData:{
                     index:0,
@@ -1036,6 +1045,8 @@ export default {
                                                     self.EditApiRomeData.bodyRomeData.index=d.apiInfo.request.body.bodyData.length+1;
                                                 }else if(d.apiInfo.request.body.requestSaveType=='raw'){
                                                     self.EditApiRomeData.bodyRomeData.rawValue = d.apiInfo.request.body.bodyData;
+                                                }else if(d.apiInfo.request.body.requestSaveType=='json'){
+                                                    self.EditApiRomeData.bodyRomeData.jsonValue = d.apiInfo.request.body.bodyData;
                                                 }
 
                                                 //extract
@@ -1350,6 +1361,7 @@ export default {
             self.EditApiRomeData.bodyRomeData.editModel='From';
             self.EditApiRomeData.bodyRomeData.requestSaveType='form-data';
             self.EditApiRomeData.bodyRomeData.rawValue = '';
+            self.EditApiRomeData.bodyRomeData.jsonValue = '';
 
             //extractRomeData
             self.EditApiRomeData.extractRomeData.tableData=[];

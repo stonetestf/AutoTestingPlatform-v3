@@ -35,7 +35,7 @@ from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.Request import RequstOperation
 from ClassData.TestReport import ApiReport
-from ClassData.Swagger import Swagger
+from ClassData.OpenApi import Swagger
 
 # Create info here.
 cls_Logging = Logging()
@@ -390,8 +390,9 @@ def save_data(request):
                         requestUrlRadio=apiInfo.requestUrlRadio,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
-                        uid_id=userId, cuid=userId,assignedToUser=assignedUserId, is_del=0,
+                        uid_id=userId, cuid=userId, assignedToUser=assignedUserId, is_del=0,
                     )
+                    # 接口关联用户
                     product_list_to_insert = list()
                     for item_userId in basicInfo.pushTo:
                         product_list_to_insert.append(db_ApiAssociatedUser(
@@ -987,7 +988,7 @@ def delete_data(request):
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
         if obj_db_ApiBaseData.exists():
-            obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0,apiId_id=apiId)
+            obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, apiId_id=apiId)
             if obj_db_CaseTestSet.exists():
                 caseTable = [i.caseId.caseName for i in obj_db_CaseTestSet]
                 caseTable = set(caseTable)
@@ -1119,7 +1120,7 @@ def load_data(request):
                         'state': True if item_body.state else False,
                     })
                 bodyData = body
-            elif obj_db_ApiBaseData[0].bodyRequestSaveType == 'raw':
+            elif obj_db_ApiBaseData[0].bodyRequestSaveType in ['raw', 'json']:
                 bodyData = obj_db_ApiBody[0].value
             # endregion
             # region extract
@@ -1874,12 +1875,16 @@ def select_life_cycle(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["POST"])# 解析JSON文件 导入功能
+@require_http_methods(["POST"])  # 解析JSON文件 导入功能
 def analysis_json_data(request):
     response = {}
+    dataTable = []
     try:
         responseData = json.loads(request.body)
         objData = cls_object_maker(responseData)
+        proId = objData.proId
+        pageId = objData.pageId
+        funId = objData.funId
         file = objData.file
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -1889,8 +1894,179 @@ def analysis_json_data(request):
         fileName = file[0].name
         JsonData = cls_Swagger.analysisJsonData(f'{settings.TEMP_PATH}{fileName}')
         if JsonData['state']:
+            for item in JsonData['dataTable']:
+                apiName = item['apiName']
+                requestType = item['requestType']
+                jsonUrl = {
+                    'url1': item['requestUrl'],
+                    'url2': '',
+                    'url3': '',
+                }
+                obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
+                    pid_id=proId, page_id=pageId, fun_id=funId,
+                    apiName=apiName, requestType=requestType, requestUrl=jsonUrl, is_del=0)
+                if obj_db_ApiBaseData.exists():
+                    isImport = True
+                else:
+                    isImport = False
+                item['isImport'] = isImport
+                dataTable.append(item)
             response['statusCode'] = 2000
             response['dataTable'] = JsonData['dataTable']
         else:
             response['errorMsg'] = JsonData['errorMsg']
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 解析JSON文件 导入功能
+def import_api_data(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        proId = objData.proId
+        pageId = objData.pageId
+        funId = objData.funId
+        environmentId = objData.environmentId
+        tableData = objData.tableData
+        historyCode = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'import_api_data', errorMsg)
+        cls_Logging.print_log('error', 'import_api_data', errorMsg)
+    else:
+        # 将数据转换成标准的api保存样式
+        apiTable = cls_Swagger.conversion_swagger_table_to_api_table(
+            proId, pageId, funId, environmentId, roleId, userId, tableData)
+        if apiTable['state']:
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    for item_api in apiTable['tableData']:
+                        apiName = item_api['BasicInfo']['apiName']
+                        requestType = item_api['ApiInfo']['requestType']
+                        requestUrl = item_api['ApiInfo']['requestUrl']
+                        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
+                            pid_id=proId, page_id=pageId, fun_id=funId,
+                            apiName=apiName, requestType=requestType, requestUrl=requestUrl, is_del=0)
+                        if obj_db_ApiBaseData.exists():
+                            pass
+                        else:
+                            # region 添加操作信息
+                            operationInfoId = cls_Logging.record_operation_info(
+                                'API', 'Manual', 3, 'Add',
+                                cls_FindTable.get_pro_name(proId),
+                                cls_FindTable.get_page_name(pageId),
+                                cls_FindTable.get_fun_name(funId),
+                                userId,
+                                '【新增接口】', CUFront=item_api
+                            )
+                            # endregion
+                            # region 保存基本信息
+                            save_db_ApiBaseData = db_ApiBaseData.objects.create(
+                                pid_id=proId, page_id=pageId, fun_id=funId,
+                                apiName=apiName,
+                                environment_id=item_api['BasicInfo']['environmentId'],
+                                apiState=item_api['BasicInfo']['apiState'],
+                                requestType=requestType,
+                                requestUrl=requestUrl,
+                                requestUrlRadio=item_api['ApiInfo']['requestUrlRadio'],
+                                requestParamsType=item_api['ApiInfo']['requestParamsType'],
+                                bodyRequestSaveType=item_api['ApiInfo']['request']['body']['requestSaveType'],
+                                uid_id=userId, cuid=userId,
+                                assignedToUser=item_api['BasicInfo']['assignedUserId'],
+                                is_del=0,
+                            )
+                            # endregion
+                            # region 添加历史恢复
+                            db_ApiHistory.objects.create(
+                                pid_id=proId,
+                                page_id=pageId,
+                                fun_id=funId,
+                                api_id=save_db_ApiBaseData.id,
+                                apiName=apiName,
+                                operationType='Add',
+                                restoreData=None,
+                                textInfo=None,
+                                onlyCode=historyCode,
+                            )
+                            # endregion
+                            # region Headers
+                            product_list_to_insert = list()
+                            for item_headers in item_api['ApiInfo']['request']['headers']:
+                                product_list_to_insert.append(db_ApiHeaders(
+                                    apiId_id=save_db_ApiBaseData.id,
+                                    index=item_headers['index'],
+                                    key=item_headers['key'],
+                                    value=item_headers['value'],
+                                    remarks=item_headers['remarks'],
+                                    state=1 if item_headers['state'] else 0,
+                                    is_del=0,
+                                    historyCode=historyCode)
+                                )
+                            db_ApiHeaders.objects.bulk_create(product_list_to_insert)
+                            # endregion
+                            # region Params
+                            product_list_to_insert = list()
+                            for item_params in item_api['ApiInfo']['request']['params']:
+                                product_list_to_insert.append(db_ApiParams(
+                                    apiId_id=save_db_ApiBaseData.id,
+                                    index=item_params['index'],
+                                    key=item_params['key'],
+                                    value=item_params['value'],
+                                    remarks=item_params['remarks'],
+                                    state=1 if item_params['state'] else 0,
+                                    is_del=0,
+                                    historyCode=historyCode)
+                                )
+                            db_ApiParams.objects.bulk_create(product_list_to_insert)
+                            # endregion
+                            # region Body
+                            requestSaveType = item_api['ApiInfo']['request']['body']['requestSaveType']
+                            if requestSaveType == 'form-data':
+                                product_list_to_insert = list()
+                                for item_body in item_api['ApiInfo']['request']['body']['formData']:
+                                    product_list_to_insert.append(db_ApiBody(
+                                        apiId_id=save_db_ApiBaseData.id,
+                                        index=item_body['index'],
+                                        key=item_body['key'],
+                                        value=item_body['value'],
+                                        remarks=item_body['remarks'],
+                                        state=1 if item_body['state'] else 0,
+                                        is_del=0,
+                                        historyCode=historyCode)
+                                    )
+                                db_ApiBody.objects.bulk_create(product_list_to_insert)
+                            elif requestSaveType in ['raw', 'json']:
+                                if requestSaveType == 'raw':
+                                    value = item_api['ApiInfo']['request']['body']['raw']['value']
+                                elif requestSaveType == 'json':
+                                    value = item_api['ApiInfo']['request']['body']['json']['value']
+                                else:
+                                    value = None
+                                db_ApiBody.objects.create(
+                                    apiId_id=save_db_ApiBaseData.id,
+                                    index=0,
+                                    key=None,
+                                    value=value,
+                                    state=1,
+                                    is_del=0,
+                                    historyCode=historyCode
+                                )
+                            # file 之后在做
+                            # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                errorMsg = f'保存失败:{e}'
+                response['errorMsg'] = errorMsg
+                cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'import_api_data', errorMsg)
+                cls_Logging.print_log('error', 'import_api_data', errorMsg)
+            else:
+                response['statusCode'] = 2001
+        else:
+            response['errorMsg'] = apiTable['errorMsg']
     return JsonResponse(response)

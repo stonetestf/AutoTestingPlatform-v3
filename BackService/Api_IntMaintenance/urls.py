@@ -15,5 +15,6 @@ urlpatterns = [
     url(r'RestorData', views.restor_data, name='RestorData'),
     url(r'SelectLifeCycle', views.select_life_cycle, name='SelectLifeCycle'),
     url(r'AnalysisJsonData', views.analysis_json_data, name='AnalysisJsonData'),
+    url(r'ImportApiData', views.import_api_data, name='ImportApiData'),
 
 ]

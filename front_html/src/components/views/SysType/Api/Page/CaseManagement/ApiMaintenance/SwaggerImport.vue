@@ -3,7 +3,7 @@
         <template>
             <el-drawer
             :title="dialogTitle"
-            size="1200px"
+            size="1400px"
             :wrapperClosable="false"
             :visible.sync="dialogVisible"
             direction='rtl'
@@ -15,7 +15,7 @@
                 <el-card style="height:755px">
                     <template v-if="StepsRomeData.active==0">
                         <div>
-                            <div style="margin:180px 0 0 330px">
+                            <div style="margin:180px 0 0 400px">
                                 <el-upload
                                     style="width:500px"
                                     drag
@@ -53,6 +53,16 @@
                                             </el-option>
                                         </el-select>
                                     </el-form-item>
+                                    <el-form-item label="页面环境:" prop="environmentId">
+                                        <el-select v-model="RomeData.environmentId" clearable placeholder="请选择" @click.native="GetPageEnvironmentNameOption()">
+                                            <el-option
+                                                v-for="item in RomeData.environmentNameOption"
+                                                :key="item.value"
+                                                :label="item.label"
+                                                :value="item.value">
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
                                 </el-form>
                             </div>
                         </div>
@@ -63,13 +73,21 @@
                         element-loading-text="拼命加载中"
                         element-loading-spinner="el-icon-loading">
                             <div slot="header">
-                                {{RomeData.title}}
+                                <el-card shadow="never">
+                                    {{RomeData.title}}
+                                </el-card>
                             </div>
-                            <div>
+                            <div style="margin-top:10px">
                                 <el-table
                                     :data=RomeData.tableData
-                                    height="720px"
+                                    height="650px"
                                     border>
+                                    <el-table-column
+                                        label="序号"
+                                        align= "center"
+                                        width="80px"
+                                        type="index">
+                                    </el-table-column>
                                     <el-table-column
                                         label="接口名称"
                                         align= "center"
@@ -77,6 +95,7 @@
                                         prop="apiName">
                                     </el-table-column>
                                     <el-table-column
+                                        show-overflow-tooltip
                                         label="接口地址"
                                         align= "center"
                                         prop="requestUrl">
@@ -100,10 +119,19 @@
                                         </template>
                                     </el-table-column>
                                     <el-table-column
-                                        label="参数样式"
+                                        label="请求样式"
                                         width="180px"
                                         align= "center"
-                                        prop="bodyRequestType">
+                                        prop="requestStyle">
+                                    </el-table-column>
+                                    <el-table-column
+                                        label="本地数据"
+                                        width="100px"
+                                        align= "center">
+                                        <template slot-scope="scope">
+                                            <el-tag type="danger" v-if="scope.row.isImport">已录入</el-tag>
+                                            <el-tag type="success" v-else>未录入</el-tag>
+                                        </template>
                                     </el-table-column>
                                     <el-table-column
                                         label="操作"
@@ -123,7 +151,7 @@
                 </el-card>
                 <el-button style="margin-top: 12px;" icon="el-icon-arrow-left" type="primary" v-if="StepsRomeData.disPlay_Previous" @click="previous">上一步</el-button>
                 <el-button style="margin-top: 12px;" type="primary" v-if="StepsRomeData.disPlay_Next" @click="next">下一步<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="DataSave()">保存</el-button>
+                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="SaveData()">保存</el-button>
             </el-drawer>
         </template>
     </div>
@@ -136,6 +164,7 @@ import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
 
 
 export default {
@@ -165,9 +194,12 @@ export default {
                 pageNameOption:[],
                 funId:'',
                 funNameOption:[],
+                environmentId:'',
+                environmentNameOption:[],
                 rules: {
                     pageId:[{required: true, message: '请选择所属页面', trigger: 'change' }],
                     funId:[{required: true, message: '请选择所属功能', trigger: 'change' }],
+                    environmentId:[{required: true, message: '请选择页面环境', trigger: 'change' }],
                 }
             },
         };
@@ -279,6 +311,7 @@ export default {
             self.RomeData.fileList=[];
             self.RomeData.pageId='';
             self.RomeData.funId='';
+            self.RomeData.environmentId='';
         },
         resetForm(formName) {//清除正则验证
             if (this.$refs[formName] !== undefined) {
@@ -287,12 +320,14 @@ export default {
         },
         upload_success(response, file, fileList){
             let self = this;
+            PrintConsole(response)
             //这里的url地址要是网络地址，不然页面上只会加载一个白的图片
-            self.RomeData.fileList.push({
-                'name':response['file']['fileName'],
-                'url':store.state.nginxUrl+'Temp/'+response['file']['fileName']}
-            );
-          
+            response['fileList'].forEach(d=>{
+                let obj = {}
+                obj.name = d.fileName;
+                obj.url = store.state.nginxUrl+'Temp/'+d.fileName;
+                self.RomeData.fileList.push(obj);
+            });
         },
         upload_remove(file, fileList){
             let self = this;
@@ -314,22 +349,32 @@ export default {
                 this.$message.warning('请先选择所属页面!');
             }
         },
+        GetPageEnvironmentNameOption(){
+            GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{
+                this.RomeData.environmentNameOption = d;
+            });
+        },
+
         //解析JSON
         analysisJsonData(){
             let self = this;
             self.RomeData.tableData = [];
             self.loading=true;
             self.$axios.post('/api/ApiIntMaintenance/AnalysisJsonData',{
+                'proId':self.$cookies.get('proId'),
+                'pageId':self.RomeData.pageId,
+                'funId':self.RomeData.funId,
                 'file':self.RomeData.fileList,
             }).then(res => {
                 if(res.data.statusCode==2000){
                     self.RomeData.tableData = res.data.dataTable;
+                    self.RomeData.title = '解析完成,当前成功解析接口数量:'+res.data.dataTable.length+'个';
                     self.loading=false;
                 }
                 else{
-                    self.$message.error('文件解析失败:'+res.data.errorMsg);
+                    self.RomeData.title = res.data.errorMsg;
+                    self.StepsRomeData.processStatus='error';
                     self.loading=false;
-                    self.StepsRomeData.active--;
                 }
             }).catch(function (error) {
                 console.log(error);
@@ -337,6 +382,40 @@ export default {
                 self.loading=false;
                 self.StepsRomeData.active--;
             })
+        },
+        handleDelete(index,row){
+            let self = this;
+            self.RomeData.tableData.splice(index, 1)//删除列表中的数据
+        },
+
+        SaveData(){
+            let self = this;
+            if(self.RomeData.tableData.length!=0){
+                self.loading=true;
+                self.$axios.post('/api/ApiIntMaintenance/ImportApiData',{
+                    'proId':self.$cookies.get('proId'),
+                    'pageId':self.RomeData.pageId,
+                    'funId':self.RomeData.funId,
+                    'environmentId':self.RomeData.environmentId,
+                    'tableData':self.RomeData.tableData,
+                }).then(res => {
+                    if(res.data.statusCode==2001){
+                        self.loading=false;
+                        self.$message.success('导入完成!');
+                        self.$emit('closeDialog');
+                        self.$emit('Succeed');//回调查询
+                    }
+                    else{
+                        self.RomeData.title ='导入失败:'+ res.data.errorMsg;
+                        self.loading=false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.loading=false;
+                })
+            }else{
+                self.$message.warning('当前文件解析失败,请在解析成功后在进行保存操作!');
+            }
         },
 
     }
