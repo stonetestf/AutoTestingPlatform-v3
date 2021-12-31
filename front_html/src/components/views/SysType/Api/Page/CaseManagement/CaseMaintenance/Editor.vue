@@ -666,6 +666,7 @@ export default {
                 tempTestSetTable.request.body.requestSaveType = data.body.requestSaveType;
                 tempTestSetTable.request.body.formData = data.body.formData;
                 tempTestSetTable.request.body.rawValue = data.body.rawValue;
+                tempTestSetTable.request.body.jsonValue = data.body.jsonValue;
 
                 tempTestSetTable.request.extract = data.extract;
                 tempTestSetTable.request.validate =data.validate;
