@@ -53,7 +53,7 @@ export default {
             rules: {
                 funName: [
                     { required: true, message: '请输入功能名称', trigger: 'blur' },
-                    { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
+                    { min: 1, max: 15, message: '长度在 1 到 15 个字符', trigger: 'blur' }
                 ],
                 pageId:[{required: true, message: '请选择所属页面', trigger: 'change' }]
             }
