@@ -54,7 +54,7 @@ class ApiBody(models.Model):
     paramsType = models.CharField('入参类型(Text,File)', max_length=10, null=False)
     value = models.TextField('value/Raw/json', null=True)
     filePath = models.TextField('文件保存地址', null=True)
-    fileMD5 = models.TextField('用于判断这个文件有没有被修改', null=True)
+    # fileMD5 = models.TextField('用于判断这个文件有没有被修改', null=True)
     remarks = models.TextField('备注', null=True)
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)

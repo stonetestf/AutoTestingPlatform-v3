@@ -497,7 +497,7 @@ def save_data(request):
                             else:  # file
                                 # region file文件处理
                                 filePath = None
-                                fileMD5 = None
+                                # fileMD5 = None
                                 fileData = item_body.fileList[0]._object_maker__data
                                 fileName = fileData['name']
                                 # 创建文件夹
@@ -509,7 +509,7 @@ def save_data(request):
                                         f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
                                     if copyFile['state']:
                                         filePath = copyFile['newFilePath']
-                                        fileMD5 = cls_Common.get_file_md5(filePath)
+                                        # fileMD5 = cls_Common.get_file_md5(filePath)
                                     else:
                                         response['errorMsg'] = copyFile['errorMsg']
                                         # 删除新增的文件夹
@@ -526,7 +526,7 @@ def save_data(request):
                                 paramsType=item_body.paramsType,
                                 value=item_body.value,
                                 filePath=filePath,
-                                fileMD5=fileMD5,
+                                # fileMD5=fileMD5,
                                 remarks=item_body.remarks,
                                 state=1 if item_body.state else 0,
                                 is_del=0,
@@ -938,7 +938,7 @@ def edit_data(request):
                             else:  # file
                                 # region file文件处理
                                 filePath = None
-                                fileMD5 = None
+                                # fileMD5 = None
                                 fileData = item_body.fileList[0]._object_maker__data
                                 fileName = fileData['name']
                                 obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId)
@@ -947,7 +947,7 @@ def edit_data(request):
                                                                       f"{settings.BASE_DIR._str}/_DataFiles/")
                                     if i.filePath == tempUrl:
                                         filePath = i.filePath
-                                        fileMD5 = cls_Common.get_file_md5(filePath)
+                                        # fileMD5 = cls_Common.get_file_md5(filePath)
                                     else:
                                         # 创建文件夹
                                         newFolder = cls_FileOperations.new_folder(
@@ -958,7 +958,7 @@ def edit_data(request):
                                                 f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
                                             if copyFile['state']:
                                                 filePath = copyFile['newFilePath']
-                                                fileMD5 = cls_Common.get_file_md5(filePath)
+                                                # fileMD5 = cls_Common.get_file_md5(filePath)
                                             else:
                                                 response['errorMsg'] = copyFile['errorMsg']
                                                 # 删除新增的文件夹
@@ -978,7 +978,7 @@ def edit_data(request):
                                 paramsType=item_body.paramsType,
                                 value=item_body.value,
                                 filePath=filePath,
-                                fileMD5=fileMD5,
+                                # fileMD5=fileMD5,
                                 remarks=item_body.remarks,
                                 state=1 if item_body.state else 0,
                                 is_del=0,

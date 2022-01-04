@@ -962,8 +962,10 @@ class RequstOperation(cls_Logging, cls_Common):
                             obj_db_CaseApiBody = db_CaseApiBody.objects.filter(
                                 is_del=0, testSet_id=item_testSet.id).order_by('index')
                             if itemApi['bodyRequestType'] == 'form-data':
-                                itemApi['bodyData'] = [{'key': i.key, 'value': i.value} for i in obj_db_CaseApiBody if
-                                                       i.state]
+                                fileList = [{'key': i.key, 'name': i.filePath.split('/')[-1], 'url': i.filePath}
+                                            for i in obj_db_CaseApiBody if i.state and i.filePath]
+                                itemApi['bodyData'] = [{'key': i.key, 'value': i.value,'fileList':fileList}
+                                                       for i in obj_db_CaseApiBody if i.state]
                             elif itemApi['bodyRequestType'] in ('json', 'raw'):
                                 itemApi['bodyData'] = obj_db_CaseApiBody[0].value
                             else:
@@ -1060,6 +1062,7 @@ class RequstOperation(cls_Logging, cls_Common):
                         conversionRequestUrl = conversionDataToRequestData['conversionRequestUrl']
                         conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
                         conversionRequestData = conversionDataToRequestData['conversionRequestData']
+                        requestFile = conversionDataToRequestData['requestFile']
 
                         itemResults['request']['requestUrl'] = conversionRequestUrl
                         itemResults['request']['headersDict'] = conversionHeadersData
@@ -1069,6 +1072,7 @@ class RequstOperation(cls_Logging, cls_Common):
                                                                                     conversionRequestUrl,
                                                                                     conversionHeadersData,
                                                                                     conversionRequestData,
+                                                                                    requestFile,
                                                                                     userId)
                         if resultOfExecution['state']:
                             itemResults['response']['responseCode'] = resultOfExecution['responseCode']

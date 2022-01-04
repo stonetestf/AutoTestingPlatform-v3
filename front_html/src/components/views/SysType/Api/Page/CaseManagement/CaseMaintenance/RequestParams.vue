@@ -240,10 +240,39 @@
                                                 </template>
                                             </el-table-column>
                                             <el-table-column
+                                                label="类型"
+                                                width="110px"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-select v-model="scope.row.paramsType">
+                                                        <el-option
+                                                            v-for="item in RomeData.bodyRomeData.paramsTypeOption"
+                                                            :key="item.value"
+                                                            :label="item.label"
+                                                            :value="item.value">
+                                                        </el-option>
+                                                    </el-select>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
                                                 label="参数值"
                                                 align= "center">
                                                 <template slot-scope="scope">
-                                                    <el-input v-model="scope.row.value" placeholder="参数值"></el-input>
+                                                    <div v-if="scope.row.paramsType=='Text'">
+                                                        <el-input v-model="scope.row.value" placeholder="参数值"></el-input>
+                                                    </div>
+                                                    <div v-else>
+                                                        <el-upload
+                                                            style="float:left;width:270px"
+                                                            :headers="headers"
+                                                            :action="uploadToTemp"
+                                                            :file-list="scope.row.fileList"
+                                                            :limit='1'
+                                                            :on-success="(value)=> upload_success(scope.row.fileList,value)"
+                                                            :on-remove="(value)=> upload_remove(scope.row.fileList,value)">
+                                                            <el-button size="small" type="primary">点击上传</el-button>
+                                                        </el-upload>
+                                                    </div>
                                                 </template>
                                             </el-table-column>
                                             <el-table-column
@@ -647,6 +676,7 @@
 </template>
 
 <script>
+import store from '../../../../../../../store/index';
 import Sortable from 'sortablejs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 import DialogTestReport from "../ApiMaintenance/TestReport.vue";
@@ -660,6 +690,7 @@ export default {
             dialogTitle:"",
             dialogVisible:false,
             loading:false,
+            uploadToTemp:store.state.BackService +'/api/upLoad/UpLoadToTempPath',
             RomeData:{
                 id:'',
                 environmentId:'',
@@ -692,11 +723,16 @@ export default {
                 bodyRomeData:{
                     index:0,
                     tableData:[],
+                    paramsTypeOption:[
+                        {'label':'Text','value':'Text'},
+                        {'label':'File','value':'File'},
+                    ],
                     editModel:'From',
                     bulkEdit:'',
                     requestSaveType:'form-data',//请求保存类型，none,form-data,json,raw
                     rawValue:'',
                     jsonValue:'',
+                    deleteFileList:[],
                 },
 
                 extractName:'Extract/提取',
@@ -755,7 +791,11 @@ export default {
 
     },
     computed:{//计算属性
-
+        headers(){//用来把token放到头部
+            return {
+                'Token': this.$cookies.get('token')
+            }
+        },
     },
     props:[//main页面在引用editor时 必须声明所需要调用的属性
         'isVisible','dialogPara'
@@ -969,7 +1009,9 @@ export default {
                     obj.index = item_body.index;
                     obj.state =item_body.state;
                     obj.key =item_body.key;
+                    obj.paramsType=item_body.paramsType;
                     obj.value=item_body.value;
+                    obj.fileList=item_body.fileList;
                     obj.remarks=item_body.remarks;
 
                     self.RomeData.bodyRomeData.tableData.push(obj);
@@ -1177,7 +1219,9 @@ export default {
                                 obj.index = item_body.index;
                                 obj.state =item_body.state;
                                 obj.key =item_body.key;
+                                obj.paramsType=item_body.paramsType;
                                 obj.value=item_body.value;
+                                obj.fileList=[];
                                 obj.remarks=item_body.remarks;
 
                                 self.RomeData.bodyRomeData.tableData.push(obj);
@@ -1486,7 +1530,9 @@ export default {
             obj.index = self.RomeData.bodyRomeData.index;
             obj.state = true;
             obj.key = '';
+            obj.paramsType = 'Text';
             obj.value='';
+            obj.fileList=[];
             obj.remarks='';
 
             self.RomeData.bodyRomeData.tableData.push(obj);
@@ -1564,6 +1610,29 @@ export default {
                 });
                 PrintConsole(self.RomeData.bodyRomeData.tableData);
             }
+        },
+        upload_success(fileList,value){
+            PrintConsole('fileList',fileList);
+            PrintConsole('value',value);
+            fileList.push({
+                'name':value['fileList'][0]['fileName'],
+                'url':store.state.nginxUrl+'Temp/'+value['fileList'][0]['fileName']}
+            )
+        },
+        upload_remove(fileList, value){//在保存和修改的时候传过去
+            PrintConsole('fileList',fileList);
+            PrintConsole('value',value);
+            let self = this;
+            fileList.splice(0, 1);
+
+            let splitStr = value.url.split('/');
+            let dirName = splitStr[splitStr.length-2]
+            let fileName = splitStr[splitStr.length-1]
+            self.RomeData.bodyRomeData.deleteFileList.push({
+                'dirName':dirName,
+                'fileName':fileName
+            });
+            PrintConsole('deleteFileList',self.RomeData.bodyRomeData.deleteFileList);
         },
 
         //extractRomeData
@@ -1766,6 +1835,7 @@ export default {
                     'formData':self.RomeData.bodyRomeData.tableData,
                     'rawValue':self.RomeData.bodyRomeData.rawValue,
                     'jsonValue':self.RomeData.bodyRomeData.jsonValue,
+                    'deleteFileList':self.RomeData.bodyRomeData.deleteFileList,
                 };
                 obj.extract = self.RomeData.extractRomeData.tableData;
                 obj.validate = self.RomeData.validateRomeData.tableData;
