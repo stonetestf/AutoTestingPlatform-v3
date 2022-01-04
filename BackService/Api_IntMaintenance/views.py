@@ -837,9 +837,9 @@ def edit_data(request):
                     db_ApiParams.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
                         updateTime=cls_Common.get_date_time(), is_del=1
                     )
-                    # db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
-                    #     updateTime=cls_Common.get_date_time(), is_del=1
-                    # )
+                    db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
+                        updateTime=cls_Common.get_date_time(), is_del=1
+                    )
                     db_ApiExtract.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
                         updateTime=cls_Common.get_date_time(), is_del=1
                     )
@@ -934,42 +934,35 @@ def edit_data(request):
                         for item_body in apiInfo.request.body.formData:
                             paramsType = item_body.paramsType
                             if paramsType == 'Text':
-                                pass
+                                filePath = None
                             else:  # file
                                 # region file文件处理
-                                filePath = None
-                                # fileMD5 = None
                                 fileData = item_body.fileList[0]._object_maker__data
                                 fileName = fileData['name']
-                                obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId)
-                                for i in obj_db_ApiBody:
-                                    tempUrl = fileData['url'].replace(settings.NGINX_SERVER,
-                                                                      f"{settings.BASE_DIR._str}/_DataFiles/")
-                                    if i.filePath == tempUrl:
-                                        filePath = i.filePath
-                                        # fileMD5 = cls_Common.get_file_md5(filePath)
-                                    else:
-                                        # 创建文件夹
-                                        newFolder = cls_FileOperations.new_folder(
-                                            f'{settings.APIFILE_PATH}{basicInfo.apiId}')
-                                        if newFolder['state']:
-                                            # 复制文件从临时目录到接口目录
-                                            copyFile = cls_FileOperations.copy_file_to_dir(
-                                                f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
-                                            if copyFile['state']:
-                                                filePath = copyFile['newFilePath']
-                                                # fileMD5 = cls_Common.get_file_md5(filePath)
-                                            else:
-                                                response['errorMsg'] = copyFile['errorMsg']
-                                                # 删除新增的文件夹
-                                                cls_FileOperations.delete_folder(newFolder['path'])
-                                                raise FileExistsError(copyFile['errorMsg'])
+                                tempUrl = fileData['url'].replace(
+                                    settings.NGINX_SERVER,f"{settings.BASE_DIR._str}/_DataFiles/")
+                                dirType = 'Temp' if 'Temp' in tempUrl else 'Case'
+                                if dirType == 'Temp':  # 移动文件
+                                    # 创建文件夹
+                                    newFolder = cls_FileOperations.new_folder(
+                                        f'{settings.APIFILE_PATH}{basicInfo.apiId}')
+                                    if newFolder['state']:
+                                        # 复制文件从临时目录到接口目录
+                                        copyFile = cls_FileOperations.copy_file_to_dir(
+                                            f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
+                                        if copyFile['state']:
+                                            filePath = copyFile['newFilePath']
                                         else:
-                                            response['errorMsg'] = newFolder['errorMsg']
-                                            raise FileExistsError(newFolder['errorMsg'])
-                                    db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
-                                        updateTime=cls_Common.get_date_time(), is_del=1
-                                    )
+                                            response['errorMsg'] = copyFile['errorMsg']
+                                            # 删除新增的文件夹
+                                            cls_FileOperations.delete_folder(newFolder['path'])
+                                            raise FileExistsError(copyFile['errorMsg'])
+                                    else:
+                                        response['errorMsg'] = newFolder['errorMsg']
+                                        raise FileExistsError(newFolder['errorMsg'])
+                                else:
+                                    filePath = tempUrl
+
                                 # endregion
                             product_list_to_insert.append(db_ApiBody(
                                 apiId_id=basicInfo.apiId,
@@ -986,6 +979,9 @@ def edit_data(request):
                             )
                         db_ApiBody.objects.bulk_create(product_list_to_insert)
                     elif apiInfo.request.body.requestSaveType in ['raw', 'json']:
+                        db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
+                            updateTime=cls_Common.get_date_time(), is_del=1
+                        )
                         if apiInfo.request.body.requestSaveType == 'raw':
                             value = apiInfo.request.body.raw
                         elif apiInfo.request.body.requestSaveType == 'json':
@@ -1001,7 +997,6 @@ def edit_data(request):
                             is_del=0,
                             historyCode=historyCode
                         )
-                    # file 之后在做
                     # endregion
                     # region Extract
                     product_list_to_insert = list()
@@ -1083,7 +1078,8 @@ def edit_data(request):
                         cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
                     # endregion
                     # region 添加接口更变信息,用于用例中提醒使用
-                    obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, apiId_id=basicInfo.apiId)
+                    obj_db_CaseTestSet = db_CaseTestSet.objects.filter(
+                        is_del=0, apiId_id=basicInfo.apiId,is_synchronous=1)
                     product_list_to_insert = list()
                     for item_testSet in obj_db_CaseTestSet:
                         obj_db_ApiDynamic = db_ApiDynamic.objects.filter(
