@@ -613,6 +613,7 @@ export default {
                         'requestSaveType':'form-data',
                         'formData':[],
                         'rawValue':'',
+                        'deleteFileList':[],
                     },
                     'extract':[],
                     'validate':[],
@@ -667,6 +668,7 @@ export default {
                 tempTestSetTable.request.body.formData = data.body.formData;
                 tempTestSetTable.request.body.rawValue = data.body.rawValue;
                 tempTestSetTable.request.body.jsonValue = data.body.jsonValue;
+                tempTestSetTable.request.body.deleteFileList = data.body.deleteFileList;
 
                 tempTestSetTable.request.extract = data.extract;
                 tempTestSetTable.request.validate =data.validate;
