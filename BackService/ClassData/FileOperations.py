@@ -36,7 +36,7 @@ class FileOperations(object):
             errorMsg = str(e)
             results['state'] = False
             results['errorMsg'] = errorMsg
-            cls_Logging.print_log('error','file_to_path',errorMsg)
+            cls_Logging.print_log('error', 'file_to_path', errorMsg)
             cls_Logging.record_error_info('API', 'ClassData', 'file_to_path', errorMsg)
         else:
             results['state'] = True
@@ -142,7 +142,7 @@ class FileOperations(object):
         return results
 
     # 复制文件夹
-    def copy_dir(self,dir, newdir):
+    def copy_dir(self, dir, newdir):
         results = {}
         try:
             for p in os.listdir(dir):
@@ -158,10 +158,37 @@ class FileOperations(object):
             results['state'] = True
         return results
 
-
     # 判断该路径下是否有此文件夹
     def is_folder(self, path):
         if os.path.exists(path):
             return True
         else:
             return False
+
+    # 判断文件是否存在
+    def is_flie(self,path):
+        if os.path.exists(path):
+            return True
+        else:
+            return False
+
+    # 修改文件夹名称
+    def rename_dir(self, src, dst):
+        """
+        :param src:要修改的目录名
+        :param dst:修改后的目录名
+        :return:
+        """
+        results = {}
+        try:
+            os.rename(src, dst)
+        except BaseException as e:
+            errorMsg = f'改名失败:{e}'
+            results['state'] = False
+            results['errorMsg'] = errorMsg
+            cls_Logging.print_log('error', 'rename_dir', errorMsg)
+            cls_Logging.record_error_info('API', 'ClassData', 'rename_dir', errorMsg)
+        else:
+            results['state'] = True
+            results['newPath'] = dst
+        return results

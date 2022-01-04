@@ -922,7 +922,9 @@ class RequstOperation(cls_Logging, cls_Common):
                                             value = obj_db_CaseApiBody[0].value
                                         else:
                                             value = None
-                                        itemApi['bodyData'].append({'key': item_body.key, 'value': value})
+                                        fileList = [{'key': i.key, 'name': i.filePath.split('/')[-1], 'url': i.filePath}
+                                                    for i in obj_db_CaseApiBody if i.state and i.filePath]
+                                        itemApi['bodyData'].append({'key': item_body.key, 'value': value,'fileList':fileList})
 
                             elif itemApi['bodyRequestType'] in ('json', 'raw'):
                                 obj_db_CaseApiBody = db_CaseApiBody.objects.filter(is_del=0, testSet_id=item_testSet.id)
