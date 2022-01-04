@@ -1191,6 +1191,19 @@ def delete_data(request):
                     db_ApiDynamic.objects.filter(is_del=0, case_id=caseId).update(
                         is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                     # endregion
+                    # region 移动File文件到历史目录中
+                    sourcePath = f"{settings.CASEFILE_PATH}{caseId}"
+                    targetPath = f"{settings.BAKDATA_PATH}CaseFile/{caseId}"
+                    newFolder = cls_FileOperations.new_folder(targetPath)
+                    if newFolder['state']:
+                        copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
+                        if copy_dir['state']:
+                            cls_FileOperations.delete_folder(sourcePath)
+                        else:
+                            raise FileExistsError(copy_dir['errorMsg'])
+                    else:
+                        raise FileExistsError(newFolder['errorMsg'])
+                    # endregion
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Delete',
