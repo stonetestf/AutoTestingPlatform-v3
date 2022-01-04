@@ -168,7 +168,7 @@
                                 prop="labelId">
                                 <template slot-scope="scope">
                                     <el-tag type="success" v-if="scope.row.labelId=='CommonCase'">普通用例</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.labelId=='RetentCase'">回归用例</el-tag>
+                                    <el-tag type="warning" v-else-if="scope.row.labelId=='ReturnCase'">回归用例</el-tag>
                                 </template>
                             </el-table-column>
                             <el-table-column
