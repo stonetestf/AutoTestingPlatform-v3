@@ -1,3 +1,5 @@
+from shutil import copy
+
 # Create reference here.
 from ClassData.Logger import Logging
 from ClassData.Common import Common
@@ -138,3 +140,28 @@ class FileOperations(object):
             results['state'] = True
             results['newFilePath'] = newFilePath
         return results
+
+    # 复制文件夹
+    def copy_dir(self,dir, newdir):
+        results = {}
+        try:
+            for p in os.listdir(dir):
+                print(p)
+                filepath = newdir + '/' + p
+                oldpath = dir + '/' + p
+                if os.path.isfile(oldpath):
+                    copy(oldpath, filepath)
+        except BaseException as e:
+            results['state'] = False
+            results['errorMsg'] = f"复制文件夹失败:{e}"
+        else:
+            results['state'] = True
+        return results
+
+
+    # 判断该路径下是否有此文件夹
+    def is_folder(self, path):
+        if os.path.exists(path):
+            return True
+        else:
+            return False

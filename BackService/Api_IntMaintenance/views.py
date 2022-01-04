@@ -837,9 +837,9 @@ def edit_data(request):
                     db_ApiParams.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
                         updateTime=cls_Common.get_date_time(), is_del=1
                     )
-                    db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
-                        updateTime=cls_Common.get_date_time(), is_del=1
-                    )
+                    # db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
+                    #     updateTime=cls_Common.get_date_time(), is_del=1
+                    # )
                     db_ApiExtract.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
                         updateTime=cls_Common.get_date_time(), is_del=1
                     )
@@ -941,24 +941,35 @@ def edit_data(request):
                                 fileMD5 = None
                                 fileData = item_body.fileList[0]._object_maker__data
                                 fileName = fileData['name']
-                                # 创建文件夹
-                                newFolder = cls_FileOperations.new_folder(
-                                    f'{settings.APIFILE_PATH}{basicInfo.apiId}')
-                                if newFolder['state']:
-                                    # 复制文件从临时目录到接口目录
-                                    copyFile = cls_FileOperations.copy_file_to_dir(
-                                        f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
-                                    if copyFile['state']:
-                                        filePath = copyFile['newFilePath']
+                                obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId)
+                                for i in obj_db_ApiBody:
+                                    tempUrl = fileData['url'].replace(settings.NGINX_SERVER,
+                                                                      f"{settings.BASE_DIR._str}/_DataFiles/")
+                                    if i.filePath == tempUrl:
+                                        filePath = i.filePath
                                         fileMD5 = cls_Common.get_file_md5(filePath)
                                     else:
-                                        response['errorMsg'] = copyFile['errorMsg']
-                                        # 删除新增的文件夹
-                                        cls_FileOperations.delete_folder(newFolder['path'])
-                                        return response
-                                else:
-                                    response['errorMsg'] = newFolder['errorMsg']
-                                    return response
+                                        # 创建文件夹
+                                        newFolder = cls_FileOperations.new_folder(
+                                            f'{settings.APIFILE_PATH}{basicInfo.apiId}')
+                                        if newFolder['state']:
+                                            # 复制文件从临时目录到接口目录
+                                            copyFile = cls_FileOperations.copy_file_to_dir(
+                                                f'{settings.TEMP_PATH}{fileName}', newFolder['path'])
+                                            if copyFile['state']:
+                                                filePath = copyFile['newFilePath']
+                                                fileMD5 = cls_Common.get_file_md5(filePath)
+                                            else:
+                                                response['errorMsg'] = copyFile['errorMsg']
+                                                # 删除新增的文件夹
+                                                cls_FileOperations.delete_folder(newFolder['path'])
+                                                raise FileExistsError(copyFile['errorMsg'])
+                                        else:
+                                            response['errorMsg'] = newFolder['errorMsg']
+                                            raise FileExistsError(newFolder['errorMsg'])
+                                    db_ApiBody.objects.filter(is_del=0, apiId_id=basicInfo.apiId).update(
+                                        updateTime=cls_Common.get_date_time(), is_del=1
+                                    )
                                 # endregion
                             product_list_to_insert.append(db_ApiBody(
                                 apiId_id=basicInfo.apiId,
@@ -1153,6 +1164,19 @@ def delete_data(request):
                             is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
                         db_ApiOperation.objects.filter(is_del=0, apiId_id=apiId).update(
                             is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                        # endregion
+                        # region 移动File文件到历史目录中
+                        sourcePath = f"{settings.APIFILE_PATH}{apiId}"
+                        targetPath = f"{settings.BAKDATA_PATH}ApiFile/{apiId}"
+                        newFolder = cls_FileOperations.new_folder(targetPath)
+                        if newFolder['state']:
+                            copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
+                            if copy_dir['state']:
+                                cls_FileOperations.delete_folder(sourcePath)
+                            else:
+                                raise FileExistsError(copy_dir['errorMsg'])
+                        else:
+                            raise FileExistsError(newFolder['errorMsg'])
                         # endregion
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
@@ -1437,7 +1461,7 @@ def send_test_request(request):
             environmentUrl = obj_db_PageEnvironment[0].environmentUrl
             request = cls_object_maker(testSendData['ApiInfo']['request'])
             requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-                request.params, request.body.formData, request.body.raw,
+                request.params, request.body.formData, request.body.raw, request.body.json,
             )
             requestParamsType = 'Body' if testSendData['ApiInfo']['request']['body'][
                                               'requestSaveType'] == 'none' else requestParamsType
@@ -1944,6 +1968,24 @@ def restor_data(request):
                                                 is_del=0, updateTime=cls_Common.get_date_time())
                                             db_ApiOperation.objects.filter(historyCode=historyCode).update(
                                                 is_del=0, updateTime=cls_Common.get_date_time())
+                                            # endregion
+                                            # region 恢复文件数据
+                                            targetPath = f"{settings.APIFILE_PATH}{apiId}"
+                                            sourcePath = f"{settings.BAKDATA_PATH}ApiFile/{apiId}"
+                                            # 判断有没有此接口数据的文件根包
+                                            isFolder = cls_FileOperations.is_folder(sourcePath)
+                                            if isFolder:
+                                                newFolder = cls_FileOperations.new_folder(targetPath)
+                                                if newFolder['state']:
+                                                    copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
+                                                    if copy_dir['state']:
+                                                        cls_FileOperations.delete_folder(sourcePath)
+                                                    else:
+                                                        raise FileExistsError(copy_dir['errorMsg'])
+                                                else:
+                                                    raise FileExistsError(newFolder['errorMsg'])
+                                            else:
+                                                pass
                                             # endregion
                                             # region 操作记录
                                             cls_Logging.record_operation_info(

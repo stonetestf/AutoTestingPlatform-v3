@@ -21,6 +21,7 @@ DEBUG = True
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
 APIFILE_PATH = f"{BASE_DIR}/_DataFiles/ApiFile/"
+BAKDATA_PATH = f"{BASE_DIR}/_DataFiles/BakData/"
 
 # NginxServer
 NGINX_SERVER = 'http://192.168.2.12:9092/'

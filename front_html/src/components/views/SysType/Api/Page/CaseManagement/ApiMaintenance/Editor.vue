@@ -2117,6 +2117,8 @@ export default {
                                 'requestSaveType':self.EditApiRomeData.bodyRomeData.requestSaveType,
                                 'formData':self.EditApiRomeData.bodyRomeData.tableData,
                                 'raw':self.EditApiRomeData.bodyRomeData.rawValue,
+                                'json':self.EditApiRomeData.bodyRomeData.jsonValue,
+
                             },
                             'extract':self.EditApiRomeData.extractRomeData.tableData,
                             'validate':self.EditApiRomeData.validateRomeData.tableData,

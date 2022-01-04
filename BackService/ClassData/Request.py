@@ -1,3 +1,5 @@
+from django.conf import settings
+
 # Create your db here.
 from Api_TestReport.models import TempExtractData as db_TempExtractData
 from GlobalVariable.models import GlobalVariable as db_GlobalVariable
@@ -118,6 +120,7 @@ class RequstOperation(cls_Logging, cls_Common):
         headersDict = {}
         paramsDict = {}
         bodyDict = {}
+        bodyFile = {}
         for item_headers in headers:
             headersDict[item_headers['key']] = item_headers['value']
 
@@ -126,7 +129,12 @@ class RequstOperation(cls_Logging, cls_Common):
 
         if bodyType == 'form-data':
             for item_body in body:
-                bodyDict[item_body['key']] = item_body['value']
+                if item_body['fileList']:
+                    fileList = item_body['fileList'][0]
+                    filePath = fileList['url'].replace(settings.NGINX_SERVER,f"{settings.BASE_DIR._str}/_DataFiles/")
+                    bodyFile = {'name': item_body['key'],'url': filePath}
+                else:
+                    bodyDict[item_body['key']] = item_body['value']
         elif bodyType in ('json', 'raw'):
             pass
         else:
@@ -136,6 +144,7 @@ class RequstOperation(cls_Logging, cls_Common):
         results['headersDict'] = headersDict
         results['paramsDict'] = paramsDict
         results['bodyDict'] = bodyDict
+        results['bodyFile'] = bodyFile
         return results
 
     # 转换参数为最后请求的数据
@@ -157,12 +166,14 @@ class RequstOperation(cls_Logging, cls_Common):
             requestHeaders = conversionToJson['headersDict']
             requestParams = conversionToJson['paramsDict']
             requestBody = conversionToJson['bodyDict']
+            requestFile = conversionToJson['bodyFile']
             if requestParamsType == "Body":
                 requestData = requestBody
                 results['requestData'] = bodyData
             else:
                 requestData = requestParams
                 results['requestData'] = paramsData
+            results['requestFile'] = requestFile
 
             # 转换参数中带有引用的数据
             conversionImportData = self.conversion_params_import_data(
@@ -440,7 +451,10 @@ class RequstOperation(cls_Logging, cls_Common):
             # 获取body数据
             obj_db_ApiBody = db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).order_by('index')
             if results['bodyRequestType'] == 'form-data':
-                results['bodyData'] = [{'key': i.key, 'value': i.value} for i in obj_db_ApiBody if i.state]
+                fileList = [{'key': i.key,'name':i.filePath.split('/')[-1],'url':i.filePath}
+                            for i in obj_db_ApiBody if i.state and i.filePath]
+                results['bodyData'] = [{'key': i.key, 'value': i.value,'fileList':fileList}
+                                       for i in obj_db_ApiBody if i.state]
             elif results['bodyRequestType'] in ('json', 'raw'):
                 results['bodyData'] = obj_db_ApiBody[0].value
             else:
@@ -479,7 +493,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-单-请求
-    def requests_api(self, requestType, requestParamsType, bodyRequestType, url, headers, requestData, files=None):
+    def requests_api(self, requestType, requestParamsType, bodyRequestType, url, headers, requestData,requestFile):
         """
         :param requestType: GET/POST
         :param requestParamsType: Params,Body 2种请求参数方式
@@ -502,18 +516,18 @@ class RequstOperation(cls_Logging, cls_Common):
         cls_Logging.print_log(self, 'info', 'requests_api', f'requestParamsType:{bodyRequestType}')
         cls_Logging.print_log(self, 'info', 'requests_api', f'headers:{headers}')
         cls_Logging.print_log(self, 'info', 'requests_api', f'requestData:{requestData}')
-        cls_Logging.print_log(self, 'info', 'requests_api', f'files:{files}')
+        # cls_Logging.print_log(self, 'info', 'requests_api', f'files:{files}')
 
         try:
             if requestType == "GET":
                 r = requests.get(url, headers=headers, params=requestData, timeout=timeout)
             elif requestType == "POST":
-                file = {'file': open(files.url, 'rb')} if files else {}
+                files = {requestFile['name']: open(requestFile['url'], 'rb')} if requestFile else {}
                 if bodyRequestType in ("form-data", "raw", 'none'):
-                    r = requests.post(url, headers=headers, data=requestData, files=file, timeout=timeout)
+                    r = requests.post(url, headers=headers, data=requestData, files=files, timeout=timeout)
                 else:  # json
                     requestData = json.dumps(requestData)
-                    r = requests.post(url, headers=headers, params=requestData, files=file, timeout=timeout)
+                    r = requests.post(url, headers=headers, params=requestData,timeout=timeout)
             else:
                 message = f"当前使用了未录入的请求参数:{requestType}"
                 results['state'] = False
@@ -619,6 +633,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 conversionRequestUrl = conversionDataToRequestData['conversionRequestUrl']
                 conversionHeadersData = conversionDataToRequestData['conversionHeadersData']
                 conversionRequestData = conversionDataToRequestData['conversionRequestData']
+                requestFile = conversionDataToRequestData['requestFile']
 
                 results['request']['requestUrl'] = conversionRequestUrl
                 results['request']['headersList'] = cls_Common.conversion_dict_to_kv(self, conversionHeadersData)
@@ -631,6 +646,7 @@ class RequstOperation(cls_Logging, cls_Common):
                                                                             conversionRequestUrl,
                                                                             conversionHeadersData,
                                                                             conversionRequestData,
+                                                                            requestFile,
                                                                             userId)
                 if resultOfExecution['state']:
                     results['response']['responseCode'] = resultOfExecution['responseCode']
@@ -667,7 +683,9 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     def request_operation_extract_validate(self, labelName, onlyCode, getRequestData,
-                                           conversionRequestUrl, conversionHeadersData, conversionRequestData, userId):
+                                           conversionRequestUrl, conversionHeadersData, conversionRequestData,
+                                           requestFile,
+                                           userId):
         results = {
             'responseCode': 0,
             'time': 0,
@@ -728,7 +746,7 @@ class RequstOperation(cls_Logging, cls_Common):
         # region 发送请求
         requestsApi = self.requests_api(
             requestType, requestParamsType, bodyRequestType,
-            conversionRequestUrl, conversionHeadersData, conversionRequestData)
+            conversionRequestUrl, conversionHeadersData, conversionRequestData,requestFile=requestFile)
         if requestsApi['state']:
             results['responseCode'] = requestsApi['responseCode']
             results['time'] = requestsApi['time']
@@ -1216,7 +1234,7 @@ class RequstOperation(cls_Logging, cls_Common):
         for i in conversionNew.keys():
             if i not in passKeyName:
                 if conversionOld[i] != conversionNew[i]:
-                    diffList.append({'new':{i: conversionNew[i]},'old':{i:conversionOld[i]}})
+                    diffList.append({'new': {i: conversionNew[i]}, 'old': {i: conversionOld[i]}})
         # if diffList:
         for item in diffList:
             newData = item['new']
