@@ -11,13 +11,13 @@
                 background-color="#545c64"
                 text-color="#fff"
                 active-text-color="#ffd04b">
-                <el-menu-item index='/SysType/Api/Main' >
+                <el-menu-item index='/SysType/Api/ProjectManagement/Main' >
                   <template slot="title" >
                     <i class="el-icon-s-home"></i>
-                    <a>首页</a>
+                    <a>项目维护</a>
                   </template>
                 </el-menu-item>
-                <el-submenu 
+                <!-- <el-submenu 
                   v-for="itemLevel1 in RomeData.menuTable"
                   :index="itemLevel1.index"
                   :key="itemLevel1.menuName"
@@ -32,7 +32,7 @@
                       :index="item.path" :key="item.menuName"
                       >{{item.menuName}}
                     </el-menu-item>
-                </el-submenu>
+                </el-submenu> -->
               </el-menu>
             </el-col>
             <el-col :span="5">
@@ -191,16 +191,16 @@ export default {
       tabIndex: 1,
       tabsItem: [
         {
-          title: '首页',
+          title: '项目维护',
           name: '1',
           closable: false,
           ref: 'tabs',
-          content: ApiMain
+          content: Api_ProjectManagement
       }],
       tabsPath: [
         {
         name: "1",
-        path: '/SysType/Api/Main'
+        path: '/SysType/Api/ProjectManagement/Main'
       }
       ],
       levelList: [],//面包屑
@@ -312,9 +312,9 @@ export default {
       matched.forEach(d=>{
         // console.log('d',d)
         if(d.path=='/SysType/Api/Home'){
-          this.levelList.push({path: '/Choose', meta: { title: '测试系统'}})
-          this.levelList.push({path: '', meta: {title: '接口测试' }})
-          // this.levelList.push({path: '', meta: {title: '项目管理' }})
+          this.levelList.push({path: '/Choose', meta: { title: '测试系统(接口)'}})
+          this.levelList.push({path: '', meta: {title: '项目维护' }})
+          // this.levelList.push({path: '/SysType/Api/ProjectManagement/Main', meta: {title: '项目管理' }})
           // this.levelList.push({path: '/TestType_Fun/index', meta: { title: '首页' }})
         }
         else{

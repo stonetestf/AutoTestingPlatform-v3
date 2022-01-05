@@ -30,6 +30,7 @@ def upLoad_to_temp_path(request):
         cls_Logging.record_error_info('ALL', 'upLoad','upLoad_to_temp_path', errorMsg)
     else:
         for fileObj in fileList:
+            # originalName = fileObj['file'].name# 原始文件名称
             toTemp = cls_FileOperations.file_to_path(fileObj)
             if toTemp['state']:
                 fileName = toTemp['fileName']

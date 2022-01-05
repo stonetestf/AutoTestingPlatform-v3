@@ -384,10 +384,16 @@ def api_pagehome_select_test_results(request):
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_test_results', errorMsg)
     else:
         overviewOfTestResults = cls_FindTable.get_overview_of_test_results(proId)
-        timeData = overviewOfTestResults['timeData']
-        passData = overviewOfTestResults['passData']
-        failData = overviewOfTestResults['failData']
-        errorData = overviewOfTestResults['errorData']
+        if overviewOfTestResults:
+            timeData = overviewOfTestResults['timeData']
+            passData = overviewOfTestResults['passData']
+            failData = overviewOfTestResults['failData']
+            errorData = overviewOfTestResults['errorData']
+        else:
+            timeData = []
+            passData = []
+            failData = []
+            errorData = []
 
         response['statusCode'] = 2000
         response['timeData'] = timeData

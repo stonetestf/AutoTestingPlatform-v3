@@ -12,6 +12,8 @@ from ProjectManagement.models import ProManagement as db_ProManagement
 from ProjectManagement.models import ProBindMembers as db_ProBindMembers
 from PageManagement.models import PageManagement as db_PageManagement
 from ProjectManagement.models import ProHistory as db_ProHistory
+from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
+from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -61,6 +63,7 @@ def select_data(request):
             select_db_ProManagement = obj_db_ProManagement[minSize: maxSize]
         for i in select_db_ProManagement:
             bindMembers = []
+            tableItem = []  # 详情
             # region 查询创建人
             obj_db_UserTable = db_UserTable.objects.filter(is_del=0, id=i.cuid)
             if obj_db_UserTable:
@@ -104,19 +107,38 @@ def select_data(request):
                 bindMembers.append({'id': item.uid.id, 'name': item.uid.nickName})  # 载入关联的成员
             # endregion
             # endregion
+            # region 详情
+            performWeekTotal = 0
+            perforHistoryTotal = 0
+            tableItem.append({
+                "createUserName": createUserName,
+                "bindMembers": bindMembers,
+                "createTime": str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+            })
+            projectUnderStatisticalData = cls_FindTable.get_project_under_statistical_data(i.id)
+            for item in projectUnderStatisticalData['dataTable']:
+                performWeekTotal += item['performWeekTotal']
+                perforHistoryTotal += item['perforHistoryTotal']
+            # endregion
             dataList.append(
-                {"id": i.id,
-                 "proName": i.proName,
-                 "remarks": i.remarks,
-                 "bindMembers": bindMembers,
-                 "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                 "userName": i.uid.userName,
-                 "createUserName": createUserName,
-                 "isEnterInto": isEnterInto,
-                 "isMembers": isMembers,
-                 "isEdit": isEdit,
-                 "isDelete": isDelete,
-                 }
+                {
+                    "id": i.id,
+                    "proName": i.proName,
+                    "remarks": i.remarks,
+                    "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                    "userName": i.uid.userName,
+                    "isEnterInto": isEnterInto,
+                    "isMembers": isMembers,
+                    "isEdit": isEdit,
+                    "isDelete": isDelete,
+                    "apiTotal": db_ApiBaseData.objects.filter(is_del=0, pid_id=i.id).count(),
+                    "caseTotal": db_CaseBaseData.objects.filter(is_del=0, pid_id=i.id).count(),
+                    "taskTotal": "",
+                    "batchTotal": "",
+                    "performWeekTotal": performWeekTotal,
+                    "perforHistoryTotal": perforHistoryTotal,
+                    "tableItem": tableItem,
+                }
             )
 
         response['TableData'] = dataList

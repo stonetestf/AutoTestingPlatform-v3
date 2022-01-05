@@ -56,7 +56,7 @@ export default new Router({
       children:[
         {path: '/SysType/Api/Main',name: 'ApiMain',component: ApiMain},
         {path: '/SysType/Api/ProjectManagement/Main',name: 'Api_ProjectManagement',component: Api_ProjectManagement,
-          meta:{name: '项目维护',url:'/SysType/Api/ProjectManagement/Main',comp:'Api_ProjectManagement'}
+          // meta:{name: '项目维护',url:'/SysType/Api/ProjectManagement/Main',comp:'Api_ProjectManagement'}
         },
       ]
     },

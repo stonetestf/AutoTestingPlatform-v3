@@ -27,9 +27,45 @@
                             </el-table-column>
                             <el-table-column
                                 label="ID"
+                                prop="id"
                                 align= "center"
-                                width="50"
-                                prop="id">
+                                width="80px">
+                            </el-table-column>
+                            <el-table-column 
+                                label="详情" 
+                                width="50px"
+                                type="expand">
+                                <template slot-scope="props">
+                                    <el-form label-position="left" >
+                                        <el-table
+                                            :data="props.row.tableItem"
+                                            border>
+                                            <el-table-column
+                                                label="关联成员"
+                                                align= "center">
+                                                <template slot-scope="scope">
+                                                    <el-tag type="info" style="margin:0 5px"
+                                                        v-for="item in scope.row.bindMembers"
+                                                        :index="item.id" :key="item.name"
+                                                        >{{item.name}}
+                                                    </el-tag>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="创建人"
+                                                align= "center"
+                                                width="160px"
+                                                prop="createUserName">
+                                            </el-table-column>
+                                            <el-table-column
+                                                label="创建时间"
+                                                width="160px"
+                                                prop="createTime"
+                                                align= "center">
+                                            </el-table-column>
+                                        </el-table>
+                                    </el-form>
+                                </template>
                             </el-table-column>
                             <el-table-column
                                 label="项目名称"
@@ -38,24 +74,50 @@
                             </el-table-column>
                             <el-table-column
                                 label="备注"
+                                width="300px"
                                 align= "center"
                                 prop="remarks">
                             </el-table-column>
                             <el-table-column
-                                label="关联成员"
-                                align= "center">
-                                <template slot-scope="scope">
-                                    <el-tag type="info" style="margin:0 5px"
-                                        v-for="item in scope.row.bindMembers"
-                                        :index="item.id" :key="item.name"
-                                        >{{item.name}}
-                                    </el-tag>
-                                </template>
+                                label="接口数量"
+                                width="80px"
+                                align= "center"
+                                prop="apiTotal">
+                            </el-table-column>
+                            <el-table-column
+                                label="用例数量"
+                                width="80px"
+                                align= "center"
+                                prop="caseTotal">
+                            </el-table-column>
+                            <el-table-column
+                                label="定时任务"
+                                width="80px"
+                                align= "center"
+                                prop="taskTotal">
+                            </el-table-column>
+                            <el-table-column
+                                label="批量任务"
+                                width="80px"
+                                align= "center"
+                                prop="batchTotal">
+                            </el-table-column>
+                            <el-table-column
+                                label="本周执行"
+                                width="100px"
+                                align= "center"
+                                prop="performWeekTotal">
+                            </el-table-column>
+                            <el-table-column
+                                label="历史执行"
+                                width="100px"
+                                align= "center"
+                                prop="perforHistoryTotal">
                             </el-table-column>
                             <el-table-column
                                 label="更新时间"
                                 align= "center"
-                                width="200px"
+                                width="160px"
                                 prop="updateTime">
                             </el-table-column>
                             <el-table-column
@@ -63,12 +125,6 @@
                                 align= "center"
                                 width="150px"
                                 prop="userName">
-                            </el-table-column>
-                            <el-table-column
-                                label="创建人"
-                                align= "center"
-                                width="150px"
-                                prop="createUserName">
                             </el-table-column>
                             <el-table-column
                                 align="center"
@@ -233,14 +289,21 @@ export default {
                         obj.id =d.id;
                         obj.proName = d.proName;
                         obj.remarks = d.remarks;
-                        obj.bindMembers=d.bindMembers;
+                        // obj.bindMembers=d.bindMembers;
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;
-                        obj.createUserName = d.createUserName;
+                        // obj.createUserName = d.createUserName;
                         obj.isEnterInto=d.isEnterInto;
                         obj.isMembers=d.isMembers;
                         obj.isEdit = d.isEdit;
                         obj.isDelete = d.isDelete;
+                        obj.apiTotal=d.apiTotal;
+                        obj.caseTotal=d.caseTotal;
+                        obj.taskTotal=d.taskTotal;
+                        obj.batchTotal=d.batchTotal;
+                        obj.performWeekTotal=d.performWeekTotal;
+                        obj.perforHistoryTotal=d.perforHistoryTotal;
+                        obj.tableItem=d.tableItem;
 
                         self.RomeData.tableData.push(obj);
                     });

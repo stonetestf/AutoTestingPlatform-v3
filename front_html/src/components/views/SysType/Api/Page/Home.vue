@@ -322,8 +322,8 @@ export default {
       matched.forEach(d=>{
         // console.log('d',d)
         if(d.path=='/SysType/Api/Page/Home'){
-            this.levelList.push({path: '/Choose', meta: { title: '测试系统'}})
-            this.levelList.push({path: '/SysType/Api/Main', meta: {title: '接口测试' }})
+            this.levelList.push({path: '/Choose', meta: { title: '测试系统(接口)'}})
+            this.levelList.push({path: '/SysType/Api/Main', meta: {title: '选择项目' }})
             this.levelList.push({path: '', meta: {title:'项目:'+this.$cookies.get('proName')}})
           // this.levelList.push({path: '', meta: {title: '项目管理' }})
           // this.levelList.push({path: '/TestType_Fun/index', meta: { title: '首页' }})
@@ -376,6 +376,7 @@ export default {
       * 通过当前选中tabs的实例获得当前实例的path 重新定位路由
       * */
       let val = this.tabsPath.filter(item => thisTab.name == item.name)
+      PrintConsole(val)
       this.$router.push({ path: val[0].path})
     },
     CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据

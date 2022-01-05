@@ -155,7 +155,7 @@
                                     </el-button>
                                     <el-dropdown-menu slot="dropdown">
                                         <el-dropdown-item command="SwaggerImport">导入(Swagger)</el-dropdown-item>
-                                        <el-dropdown-item command="SwaggerImport">导出(Swagger)</el-dropdown-item>
+                                        <el-dropdown-item command="SwaggerExport">导出(Swagger)-未开发</el-dropdown-item>
                                         <el-dropdown-item command="CopyApi">复制接口</el-dropdown-item>
                                         <el-dropdown-item command="HistoryBack">历史恢复(勾选/不选)</el-dropdown-item>
                                     </el-dropdown-menu>
