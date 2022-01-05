@@ -71,17 +71,17 @@
                                 </template>
                             </el-table-column>
                             <el-table-column
-                                label="所属页面"
-                                width="200px"
+                                label="所属页面/功能"
+                                width="300px"
                                 align= "center"
-                                prop="pageName">
+                                prop="pageNameAndfunName">
                             </el-table-column>
-                            <el-table-column
+                            <!-- <el-table-column
                                 label="所属功能"
                                 width="200px"
                                 align= "center"
                                 prop="funName">
-                            </el-table-column>
+                            </el-table-column> -->
                             <el-table-column
                                 label="工单名称"
                                 align= "center"
@@ -253,8 +253,9 @@ export default {
                         obj.codeId = 'A-'+d.id;
                         obj.workSource=d.workSource;
                         obj.workType = d.workType;
-                        obj.pageName = d.pageName;
-                        obj.funName = d.funName;
+                        obj.pageNameAndfunName = d.pageNameAndfunName;
+                        // obj.pageName = d.pageName;
+                        // obj.funName = d.funName;
                         obj.workName = d.workName;
                         obj.message=d.message;
                         obj.workState=d.workState;

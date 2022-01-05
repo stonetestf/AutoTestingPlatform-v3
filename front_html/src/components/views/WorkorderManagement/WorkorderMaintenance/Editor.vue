@@ -70,7 +70,7 @@
                                         style="width:515px"></el-input>
                                     </el-form-item>
                                 </div>
-                                <el-form-item label="推送To:">
+                                <el-form-item label="接收人:">
                                     <el-cascader 
                                         @click.native="GetUserNameOption()"
                                         style="width:515px"
@@ -92,6 +92,22 @@
                             </el-form>
                         </div>
                     </div>
+                </div>
+            </el-tab-pane>
+            <el-tab-pane label="历史回复信息" name="historyInfo" v-if="isAddNew==false">
+                <div style=" height:760px;overflow:auto">
+                    <el-timeline style="text-align: left;">
+                        <el-timeline-item 
+                        placement="top"
+                        v-for="(activity, index) in RomeData.historyInfo"
+                        :key="index"
+                        :timestamp="activity.timestamp">
+                        <el-card style="width:600px">
+                            <h4>{{activity.title}}</h4>
+                            <p v-html="activity.content" style="white-space: pre-line;"></p>
+                        </el-card>
+                        </el-timeline-item>
+                    </el-timeline>
                 </div>
             </el-tab-pane>
             <el-tab-pane label="生命周期" name="lifeCycle" v-if="isAddNew==false">
@@ -152,6 +168,7 @@ export default {
                     {'label':'新增','value':'Add'},
                     {'label':'修改','value':'Edit'},
                     {'label':'删除','value':'Delete'},
+                    {'label':'BUG','value':'Delete'},
                     {'label':'其他','value':'Other'},
                 ],
                 workState:'',
@@ -172,6 +189,15 @@ export default {
                 userNameOptions:[],
                 reverse:false,
                 activities:[],
+                historyInfo:[
+                    // {'timestamp':'2022-21-21 12:11:11','title':'lipenglo(古雨辰):回复','content':'不要你管,我自己改了'},
+                    // {'timestamp':'2022-21-21 12:11:11','title':'lipenglo(古雨辰):回复','content':'不要你管,我自己改了'},
+                    // {'timestamp':'2022-21-21 12:11:11','title':'lipenglo(古雨辰):回复','content':'不要你管,我自己改了'},
+                    // {'timestamp':'2022-21-21 12:11:11','title':'lipenglo(古雨辰):回复','content':'不要你管,我自己改了'},
+                    // {'timestamp':'2022-21-21 12:11:11','title':'lipenglo(古雨辰):回复','content':'不要你管,我自己改了'},
+                    // {'timestamp':'2022-21-21 12:11:11','title':'lipenglo(古雨辰):回复','content':'不要你管,我自己改了'},
+                    // {'timestamp':'2022-21-21 12:11:11','title':'lipenglo(古雨辰):回复','content':'不要你管,我自己改了'},
+                ],
             },
             rules:{
                 workType:[{required: true, message: '请选择工单类型', trigger: 'change' }],
@@ -242,7 +268,8 @@ export default {
                                         self.RomeData.funNameOption = dd;
                                         self.RomeData.funId = d.dataTabel.funId;
                                         self.RomeData.workName = d.dataTabel.workName;
-                                        self.RomeData.message = d.dataTabel.message;
+                                        // self.RomeData.message = d.dataTabel.message;
+                                        self.RomeData.historyInfo = d.dataTabel.historyInfo;
                                         GetUserNameItems().then(dd=>{
                                             self.RomeData.userNameOptions = dd;
                                             self.RomeData.pushTo = d.dataTabel.pushTo;
@@ -309,6 +336,7 @@ export default {
             self.RomeData.workName='';
             self.RomeData.message='';
             self.RomeData.pushTo=[];
+            self.RomeData.historyInfo=[];
         },
         GetPageNameOption(){
             GetPageNameItems(this.$cookies.get('proId')).then(d=>{
