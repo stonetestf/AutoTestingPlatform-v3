@@ -17,6 +17,16 @@
                                 </el-option>
                             </el-select>
                         </el-form-item>
+                        <el-form-item label="报告状态:">
+                            <el-select v-model="SelectRomeData.reportStatus" clearable placeholder="请选择" style="width:150px;">
+                                <el-option
+                                    v-for="item in SelectRomeData.reportStatusOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
                         <el-form-item label="队列状态:">
                             <el-select v-model="SelectRomeData.queueStatus" clearable placeholder="请选择" style="width:200px;">
                                 <el-option
@@ -118,7 +128,7 @@
                                 <el-button
                                     size="mini"
                                     type="success"
-                                    @click="handleLog(scope.$index, scope.row)">Log
+                                    @click="handleLog(scope.$index, scope.row)">Log(未做)
                                 </el-button>
                                 <el-button
                                     size="mini"
@@ -171,6 +181,12 @@ export default {
                     {'label':'执行中','value':'1'},
                     {'label':'已结束','value':'2'},
                 ],
+                reportStatus:'',
+                reportStatusOption:[
+                    {'label':'Pass','value':'Pass'},
+                    {'label':'Fail','value':'Fail'},
+                    {'label':'Error','value':'Error'},
+                ],
             },
             RomeData:{
     
@@ -193,6 +209,8 @@ export default {
             self.SelectRomeData.reportName='';
             self.SelectRomeData.reportType='';
             self.SelectRomeData.queueStatus='';
+            self.SelectRomeData.reportStatus='';
+
             self.SelectData();
         },
         SelectData(){//刷新列表数据
@@ -203,6 +221,7 @@ export default {
                     'proId':self.$cookies.get('proId'),
                     'reportName':self.SelectRomeData.reportName,
                     'reportType':self.SelectRomeData.reportType,
+                    'reportStatus':self.SelectRomeData.reportStatus,
                     'queueStatus':self.SelectRomeData.queueStatus,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
@@ -219,7 +238,7 @@ export default {
                     if(d.runningTime!=null){
                         obj.runningTime=d.runningTime+' ms';
                     }else{
-                        obj.runningTime='Null';
+                        obj.runningTime='';
                     }
                     
                     obj.updateTime = d.updateTime;

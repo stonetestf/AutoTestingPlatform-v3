@@ -1,7 +1,10 @@
 <template>
   <div ref="tab-main">
     <template>
-      <el-container>
+      <el-container
+        v-loading="loading"
+        element-loading-text="拼命加载中"
+        element-loading-spinner="el-icon-loading">
         <el-header class="top-header">
           <el-row>
             <el-col :span="19">
@@ -198,6 +201,7 @@ export default {
   },
   data() {
     return {
+      loading:false,
       activeTab: '1',
       tabIndex:1,
       tabsItem: [
@@ -473,6 +477,7 @@ export default {
     },
     GetApiPermissions(){//加载用户菜单和权限信息
       let self = this;
+      self.loading=true;
       self.$axios.get('/api/home/GetApiPermissions', {
         params:{}
       }).then(res => {
@@ -488,11 +493,14 @@ export default {
               self.RomeData.menuTable.push(obj);
             }
           });
+          self.loading=false;
         }else{
           self.$message.error('API权限获取失败:'+res.data.errorMsg);
+          self.loading=false;
         }
       }).catch(function (error) {
         console.log(error);
+        self.loading=false;
       })
     },
     OpenRemindInfo(){

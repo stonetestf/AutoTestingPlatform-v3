@@ -43,7 +43,7 @@ def select_data(request):
         proId = objData.proId
         reportName = objData.reportName
         reportType = objData.reportType
-        # queueStatus = objData.queueStatus
+        reportStatus = objData.reportStatus
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -58,6 +58,9 @@ def select_data(request):
         select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         if reportName:
             obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName__icontains=reportName)
+            select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
+        if reportStatus:
+            obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportStatus=reportStatus)
             select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         if reportType:
             obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportType=reportType)
