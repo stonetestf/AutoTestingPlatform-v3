@@ -70,7 +70,7 @@
                                         style="width:515px"></el-input>
                                     </el-form-item>
                                 </div>
-                                <el-form-item label="接收人:">
+                                <el-form-item label="工单关联人:">
                                     <el-cascader 
                                         @click.native="GetUserNameOption()"
                                         style="width:515px"

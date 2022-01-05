@@ -189,8 +189,9 @@ def save_data(request):
                 if pushTo:
                     product_list_to_insert = list()
                     for i in pushToList:
-                        # 添加推送to数据
-                        cls_Logging.push_to_user(operationInfoId, i)
+                        if i != userId:#创建人不被推送信息
+                            # 添加推送to数据
+                            cls_Logging.push_to_user(operationInfoId, i)
                         product_list_to_insert.append(db_WorkBindPushToUsers(
                             work_id=save_db_WorkorderManagement.id,
                             uid_id=i,
@@ -403,20 +404,27 @@ def edit_data(request):
                         db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
                             is_del=1, updateTime=cls_Common.get_date_time())
                         product_list_to_insert = list()
-                        # 推送列表中加入 工单的创建人,但要先判断当前修改的人是不是创建人,如果是就不添加,如果不是才添加
-                        if userId==obj_db_WorkorderManagement[0].cuid:
-                            pass
-                        else:
-                            pushToList.append(obj_db_WorkorderManagement[0].cuid)
                         for i in pushToList:
-                            # 添加推送to数据
-                            cls_Logging.push_to_user(operationInfoId, i)
                             product_list_to_insert.append(db_WorkBindPushToUsers(
                                 work_id=workId,
                                 uid_id=i,
                                 is_del=0
                             ))
                         db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
+
+                        # 推送列表中加入 工单的创建人,但要先判断当前修改的人是不是创建人,如果是就不添加,如果不是才添加
+                        # 修改者==创建者时,不发推送给修改者
+                        if userId == obj_db_WorkorderManagement[0].cuid:
+                            pushToList.remove(userId)
+                        else:
+                            if obj_db_WorkorderManagement[0].cuid not in pushToList:
+                                pushToList.append(obj_db_WorkorderManagement[0].cuid)
+                        # 如果修改者在推送列表中的时候 不推送修改者
+                        if userId in pushToList:
+                            pushToList.remove(userId)
+                        for i in pushToList:
+                            # 添加推送to数据
+                            cls_Logging.push_to_user(operationInfoId, i)
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'工单修改失败:{e}'
