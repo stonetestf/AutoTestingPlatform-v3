@@ -12,6 +12,9 @@ from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 from Api_TestReport.models import ApiReportItem as db_ApiReportItem
+from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
+from WorkorderManagement.models import HistoryInfo as db_HistoryInfo
+from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
@@ -227,6 +230,47 @@ class FindTable(cls_Logging):
         for index, i in enumerate(dataTable[:10], 1):
             dataTable[index - 1]['index'] = str(index)
 
+        results['dataTable'] = dataTable
+        return results
+
+    # 我的工单
+    def get_my_work(self,sysType,proId,userId):
+        results = {}
+        dataTable = []
+        obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
+            ~Q(workState=3),is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
+        for i in obj_db_WorkorderManagement:
+            obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=i.id).order_by('-createTime')
+            if obj_db_HistoryInfo.exists():
+                message = obj_db_HistoryInfo[0].message
+            else:
+                message = ""
+            # region 查询创建人
+            obj_db_UserTable = db_UserTable.objects.filter(is_del=0, id=i.cuid)
+            if obj_db_UserTable:
+                createUserName = obj_db_UserTable[0].userName
+            else:
+                createUserName = None
+            # endregion
+            obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(is_del=0, uid_id=userId,
+                                                                               work_id=i.id)
+            # 创建人是自己 或 被关联人有自己
+            bindUser = [item_bindUser.uid_id for item_bindUser in obj_db_WorkBindPushToUsers]
+            if userId in bindUser or i.cuid == userId:
+                dataTable.append(
+                    {"id": i.id,
+                     "codeId":f'A-{i.id}',
+                     "workSource": i.workSource,
+                     "workType": i.workType,
+                     "pageNameAndfunName": f"{i.page.pageName}/{i.fun.funName}",
+                     # "pageName": ,
+                     # "funName": i.fun.funName,
+                     "workName": i.workName,
+                     "message": message,
+                     "workState": i.workState,
+                     "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                     "createUserName": createUserName,
+                     })
         results['dataTable'] = dataTable
         return results
 

@@ -109,6 +109,7 @@
                         <el-table-column
                             show-overflow-tooltip
                             label="接口地址"
+                            width="300px"
                             align= "center"
                             prop="requestUrl">
                         </el-table-column>
@@ -122,15 +123,12 @@
                                 <el-tag type="info" v-else>弃用</el-tag>
                             </template>
                         </el-table-column>   
-                        <!-- <el-table-column
-                            label="与我关联"
-                            width="80px"
+                        <el-table-column
+                            label="通过率"
+                            width="70px"
                             align= "center"
                             prop="associationMy">
-                            <template slot-scope="scope">
-                                <el-tag type="info" v-if="scope.row.associationMy">True</el-tag>
-                            </template>
-                        </el-table-column>  -->
+                        </el-table-column> 
                         <el-table-column
                             label="更新时间"
                             align= "center"
@@ -144,6 +142,7 @@
                             prop="userName">
                         </el-table-column>
                         <el-table-column
+                            fixed="right"
                             align="center"
                             width="330px">
                         <template slot="header">

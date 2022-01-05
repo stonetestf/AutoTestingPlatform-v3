@@ -18,10 +18,10 @@ from login.models import UserBindRole as db_UserBindRole
 from role.models import RoleBindMenu as db_RoleBindMenu
 from info.models import OperateInfo as db_OperateInfo
 from info.models import PushInfo as db_PushInfo
-from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
+# from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from Api_TestReport.models import ApiQueue as db_ApiQueue
-from Api_TestReport.models import ApiReportItem as db_ApiReportItem
-from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
+# from Api_TestReport.models import ApiReportItem as db_ApiReportItem
+# from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -337,7 +337,10 @@ def api_page_get_main_data(request):
         retMessage = str(request.websocket.wait(), 'utf-8')  # 接受前段发送来的数据
         if retMessage:
             objData = object_maker(json.loads(retMessage))
+
             proId = objData.Params.proId
+            token = objData.Params.token
+            userId = cls_FindTable.get_userId(token)
             if objData.Message == "Start":  # 开始执行
                 while True:
                     try:
@@ -351,7 +354,8 @@ def api_page_get_main_data(request):
                             # 项目下所有数据的统计
                             'proStatistical': cls_FindTable.get_project_under_statistical_data(proId),
                             'pastSevenDaysTop': cls_FindTable.get_past_seven_days_top_ten_data(proId),  # 过去7天内Top10
-                            'proQueue': cls_FindTable.get_pro_queue(proId)  # 获取项目队列
+                            'proQueue': cls_FindTable.get_pro_queue(proId),  # 获取项目队列
+                            'myWork':cls_FindTable.get_my_work('API',proId,userId),
                         }
 
                         request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))

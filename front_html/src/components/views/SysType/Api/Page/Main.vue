@@ -2,10 +2,6 @@
   <div ref="tab-main"  id="tab-main">
     <template>
       <el-card class="MainCard">
-          <!-- <span>这里显示当前项目的接口数量，单元测试数量，测试用例数量，定时任务数据，批量任务数量</span>
-          <span>当前项目的成功，失败全统计</span>
-          <span></span>
-           <span></span> -->
           <div>
             <el-row :gutter="10">
               <el-col :span="11">
@@ -137,77 +133,163 @@
                 </div>
               </el-col>
               <el-col :span="13">
-                <div>
-                  <el-card class="DownCard">
+                 <el-card class="DownCard">
                     <div style="margin-top:-10px">
-                      <el-tag type="info">项目队列</el-tag>
+                      <el-tag type="info">我的工单</el-tag>
                     </div>
                     <div style="margin-top:10px">
-                      <el-table
+                    <el-table
                         height="330px"
-                        :data="RomeData.queueTableData">
+                        :data="RomeData.myWorkTableData">
                         <el-table-column
-                          prop="taskName"
-                          align= "center"
-                          label="任务名称">
+                          label="编号"
+                          prop="codeId"
+                          width="70px"
+                          align= "center">
                         </el-table-column>
                         <el-table-column
-                          prop="itsName"
-                          align= "center"
-                          label="所属页面/功能">
-                        </el-table-column>
-                        <el-table-column
-                          width="100px"
-                          align= "center"
-                          label="任务类型">
+                          label="工单类型"
+                          width="80px"
+                          align= "center">
                           <template slot-scope="scope">
-                              <el-tag v-if="scope.row.taskType=='API'" >接口</el-tag>
-                              <el-tag type="success" v-else-if="scope.row.taskType=='CASE'" >测试用例</el-tag>
-                              <el-tag type="warning" v-else-if="scope.row.taskType=='TASK'" >定时任务</el-tag>
-                              <el-tag type="danger" v-else-if="scope.row.taskType=='BATCH'" >批量任务</el-tag>
+                            <el-tag type="success" v-if="scope.row.workType=='Add'">新增</el-tag>
+                            <el-tag type="warning"  v-else-if="scope.row.workType=='Edit'">修改</el-tag>
+                            <el-tag type="danger"  v-else-if="scope.row.workType=='Delete'">删除</el-tag>
+                            <el-tag type="warning"  v-else-if="scope.row.workType=='BUG'">BUG</el-tag>
+                            <el-tag type="info" v-else>其他</el-tag>
                           </template>
                         </el-table-column>
-                        <el-table-column
-                          width="100px"
+                        <!-- <el-table-column
+                          label="所属页面/功能"
+                          width="250px"
                           align= "center"
-                          label="任务状态">
-                          <template slot-scope="scope">
-                              <el-tag type="info" v-if="scope.row.taskState=='0'" >未开始</el-tag>
-                              <el-tag type="warning" v-else-if="scope.row.taskState=='1'" >执行中</el-tag>
-                          </template>
+                          prop="pageNameAndfunName">
+                        </el-table-column> -->
+                        <el-table-column
+                          label="工单名称"
+                          align= "center"
+                          prop="workName">
                         </el-table-column>
                         <el-table-column
-                          prop="performProgress"
-                          width="100px"
+                          label="工单信息"
+                          show-overflow-tooltip
                           align= "center"
-                          label="执行进度">
+                          prop="message">
                         </el-table-column>
                         <el-table-column
-                          prop="updateTime"
-                          width="100px"
-                          align= "center"
-                          label="发布时间">
+                            label="工单状态"
+                            width="100px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="info" v-if="scope.row.workState==0">待受理</el-tag>
+                                <el-tag type="danger" v-else-if="scope.row.workState==1">受理中</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.workState==2">已解决</el-tag>
+                                <el-tag type="success" v-else>已关闭</el-tag>
+                            </template>
                         </el-table-column>
                         <el-table-column
-                          label="操作"
-                          align="center"
-                          width="80px">
-                          <template slot-scope="scope" style="width:100px">
-                            <el-button
-                              type="info"
+                            label="更新时间"
+                            align= "center"
+                            width="160px"
+                            prop="updateTime">
+                        </el-table-column>   
+                        <el-table-column
+                            label="创建者"
+                            align= "center"
+                            width="120px"
+                            prop="createUserName">
+                        </el-table-column>
+                        <el-table-column
+                            label="操作"
+                            align="center"
+                            width="80px">
+                        <template slot-scope="scope" style="width:100px">
+                          <el-button
                               size="mini"
-                              @click="handleState(scope.$index, scope.row)">取消
-                            </el-button>
+                              type="warning"
+                              @click="handleDelete(scope.$index, scope.row)">跳转
+                          </el-button>
                         </template>
-                      </el-table-column>
+                        </el-table-column>
                       </el-table>
                     </div>
-                  </el-card>
-                </div>
+                 </el-card>
               </el-col>
             </el-row>
           </div>
+          <div ref="dragDiv" class="float-drag-button" v-if="dialog.queue.dialogVisible ==false">
+            <span @click="OpenQueueDialog()">队列({{RomeData.queueTableData.length}})</span>
+          </div>
       </el-card>
+    </template>
+    <template>
+      <el-drawer
+      :title="dialog.queue.dialogPara.dialogTitle"
+      size="1000px"
+      :visible.sync="dialog.queue.dialogVisible"
+      direction='rtl'
+      :before-close="closeQueueDialog">
+        <div>
+          <el-table
+            height="850px"
+            :data="RomeData.queueTableData">
+            <el-table-column
+              prop="taskName"
+              align= "center"
+              label="任务名称">
+            </el-table-column>
+            <el-table-column
+              prop="itsName"
+              align= "center"
+              label="所属页面/功能">
+            </el-table-column>
+            <el-table-column
+              width="100px"
+              align= "center"
+              label="任务类型">
+              <template slot-scope="scope">
+                  <el-tag v-if="scope.row.taskType=='API'" >接口</el-tag>
+                  <el-tag type="success" v-else-if="scope.row.taskType=='CASE'" >测试用例</el-tag>
+                  <el-tag type="warning" v-else-if="scope.row.taskType=='TASK'" >定时任务</el-tag>
+                  <el-tag type="danger" v-else-if="scope.row.taskType=='BATCH'" >批量任务</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              width="100px"
+              align= "center"
+              label="任务状态">
+              <template slot-scope="scope">
+                  <el-tag type="info" v-if="scope.row.taskState=='0'" >未开始</el-tag>
+                  <el-tag type="warning" v-else-if="scope.row.taskState=='1'" >执行中</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="performProgress"
+              width="100px"
+              align= "center"
+              label="执行进度">
+            </el-table-column>
+            <el-table-column
+              prop="updateTime"
+              width="100px"
+              align= "center"
+              label="发布时间">
+            </el-table-column>
+            <el-table-column
+              label="操作"
+              align="center"
+              width="80px">
+              <template slot-scope="scope" style="width:100px">
+                <el-button
+                  type="info"
+                  size="mini"
+                  @click="handleState(scope.$index, scope.row)">取消
+                </el-button>
+            </template>
+          </el-table-column>
+          </el-table>
+        </div>
+      </el-drawer>
     </template>
   </div>
 </template>
@@ -248,9 +330,21 @@ export default {
           queueTableData:[
             // {'itsName':'测试页面/测试功能','taskType':'API','taskName':'验证项目','taskState':'0','performProgress':'1/1'},
             // {'itsName':'测试页面/测试功能','taskType':'CASE','taskName':'验证项目','taskState':'1' ,'performProgress':'2/20'},
-          ]
-
+          ],
+          //我的工单
+          myWorkTableData:[
+            // {'codeId':'A-112','workType':'Add','message':'这你的这是个空的 因该是什么？？？？','workName':'测试上传接口问题','workState':0,'updateTime':'2021-21-12 23:22:22','createUserName':'lipenglo'},
+          ],
         },
+        dialog:{
+          queue:{
+            dialogVisible:false,
+            dialogPara:{
+              dialogTitle:"",//初始化标题
+              isAddNew:true,//初始化是否新增\修改
+            },
+          },
+        }
 
     };
   },
@@ -261,6 +355,7 @@ export default {
     this.SelectProStatistical();//项目统计
     this.SelectFormerlyData();//过去7天内Top10
     this.SelectProQueue();//项目队列
+    this.SelectMyWorkData();//我的工单
 
     this.PageMainDataRefresh();//当前页面的4块数据无感刷新
   },
@@ -446,7 +541,8 @@ export default {
         var data ={};
         data.Message = 'Start';
         data.Params = {
-          'proId':self.$cookies.get('proId')
+          'token':self.$cookies.get('token'),
+          'proId':self.$cookies.get('proId'),
         }
         socket.send(JSON.stringify(data));//发送数据到服务端
       };
@@ -593,6 +689,54 @@ export default {
           }
         });
 
+        //我的工单
+        retData.myWork.dataTable.forEach(d=>{
+          let tempTable = self.RomeData.myWorkTableData.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+            //查看是不是有差异
+            if(d.codeId!=tempTable.codeId){
+              tempTable.codeId = d.codeId
+            }
+            if(d.workType!=tempTable.workType){
+              tempTable.workType = d.workType
+            }
+            if(d.workName!=tempTable.workName){
+              tempTable.workName = d.workName
+            }
+            if(d.message!=tempTable.message){
+              tempTable.message = d.message
+            }
+            if(d.workState!=tempTable.workState){
+              tempTable.workState = d.workState
+            }
+            if(d.updateTime!=tempTable.updateTime){
+              tempTable.updateTime = d.updateTime
+            }
+            if(d.createUserName!=tempTable.createUserName){
+              tempTable.createUserName = d.createUserName
+            }
+          }else{
+            self.RomeData.myWorkTableData.push(d);//新增数据
+          }
+        });
+        //删除数据
+        self.RomeData.myWorkTableData.forEach((d,index)=>{
+          let tempTable = retData.myWork.dataTable.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+
+          }else{
+            self.RomeData.myWorkTableData.splice(index, 1)
+          }
+        });
+        //排序
+        // self.RomeData.myWorkTableData.sort(function(p1,p2){
+        //   return p2.updateTime-p1.updateTime
+        // });
+
 
         var data ={};
         data.Message = 'Heartbeat';
@@ -606,6 +750,55 @@ export default {
         PrintConsole("关闭TCP连接onclose",e);
       };
       if (socket.readyState == WebSocket.OPEN) socket.onopen();       
+    },
+    OpenQueueDialog(){
+      let self = this;
+      self.dialog.queue.dialogPara={
+        dialogTitle:'项目队列',//初始化标题
+        isAddNew:true,
+      }
+      self.dialog.queue.dialogVisible=true;
+    },
+    closeQueueDialog(done){
+      done();
+      this.dialog.queue.dialogVisible =false;
+    },
+    SelectMyWorkData(){//我的工单
+      let self = this;
+      self.RomeData.myWorkTableData= [];
+      self.$axios.get('/api/WorkorderManagement/SelectData',{
+        params:{
+            'sysType':'API',
+            'myWork':'My',
+            'proId':self.$cookies.get('proId'),
+            'pageId':'',
+            'funId':'',
+            'current':1,
+            'pageSize':999999999
+        }
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          res.data.TableData.forEach(d => {
+            let obj = {};
+            obj.id = d.id;
+            obj.codeId = 'A-'+d.id;
+            // obj.workSource=d.workSource;
+            obj.workType = d.workType;
+            obj.workName = d.workName;
+            obj.message=d.message;
+            obj.workState=d.workState;
+            obj.updateTime = d.updateTime;
+            obj.createUserName = d.createUserName;
+
+            self.RomeData.myWorkTableData.push(obj);
+          });
+        }else{
+          self.$message.error('我的工单获取数据失败:'+res.data.errorMsg);
+        }
+        // console.log(self.tableData);
+      }).catch(function (error) {
+        console.log(error);
+      })
     },
   }
 };
@@ -621,5 +814,17 @@ export default {
 .DownCard{
   height: 390px;
 }
-
+.float-drag-button {
+  position: absolute;
+  right: 0;
+  top: 43%;
+  z-index: 6666;
+  padding: 13px;
+  width: 60px;
+  opacity: 1;
+  background-color: #fff;
+  border-radius: 8px 0px 0px 8px;
+  box-shadow: 0px 2px 15px 0px rgba(9,41,77,0.15);
+  cursor: pointer;
+}
 </style>

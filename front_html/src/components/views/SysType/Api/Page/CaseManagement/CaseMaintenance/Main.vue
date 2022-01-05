@@ -192,6 +192,12 @@
                                 </template>
                             </el-table-column>
                             <el-table-column
+                                label="通过率"
+                                width="70px"
+                                align= "center"
+                                prop="associationMy">
+                            </el-table-column> 
+                            <el-table-column
                                 label="更新时间"
                                 width="160px"
                                 align= "center"

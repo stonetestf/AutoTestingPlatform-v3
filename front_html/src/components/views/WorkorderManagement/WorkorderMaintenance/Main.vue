@@ -67,6 +67,8 @@
                                 <template slot-scope="scope">
                                     <el-tag type="success" v-if="scope.row.workType=='Add'">新增</el-tag>
                                     <el-tag type="warning"  v-else-if="scope.row.workType=='Edit'">修改</el-tag>
+                                    <el-tag type="danger"  v-else-if="scope.row.workType=='Delete'">删除</el-tag>
+                                    <el-tag type="warning"  v-else-if="scope.row.workType=='BUG'">BUG</el-tag>
                                     <el-tag type="info" v-else>其他</el-tag>
                                 </template>
                             </el-table-column>

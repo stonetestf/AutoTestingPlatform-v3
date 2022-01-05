@@ -77,8 +77,10 @@ def select_data(request):
                 createUserName = None
             # endregion
             if myWork == "My":
-                obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(is_del=0, uid_id=userId)
-                if obj_db_WorkBindPushToUsers or i.cuid == userId:
+                obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(is_del=0, uid_id=userId,work_id=i.id)
+                # 创建人是自己 或 被关联人有自己
+                bindUser = [item_bindUser.uid_id for item_bindUser in obj_db_WorkBindPushToUsers]
+                if userId in bindUser or i.cuid == userId:
                     dataList.append(
                         {"id": i.id,
                          "workSource": i.workSource,
@@ -297,7 +299,7 @@ def edit_data(request):
                         oldData[0]['message'] = ""
                     newData = ast.literal_eval(json.dumps(request.POST))
                     if workState != obj_db_WorkorderManagement[0].workState and workMessage == \
-                            obj_db_WorkorderManagement[0].message:
+                            oldData[0]['message']:
                         # 0: 待受理, 1: 受理中, 2: 已解决, 3: 已关闭
                         if workState == 0:
                             workStateName = '待受理'

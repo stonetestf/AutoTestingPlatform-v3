@@ -10,7 +10,7 @@
         type="border-card" 
         v-model="activeName" 
         @tab-click="handleClick" 
-        style="height:860px"
+        style="height:870px"
         v-loading="loading"
         element-loading-text="拼命加载中"
         element-loading-spinner="el-icon-loading">
@@ -168,7 +168,7 @@ export default {
                     {'label':'新增','value':'Add'},
                     {'label':'修改','value':'Edit'},
                     {'label':'删除','value':'Delete'},
-                    {'label':'BUG','value':'Delete'},
+                    {'label':'BUG','value':'BUG'},
                     {'label':'其他','value':'Other'},
                 ],
                 workState:'',
