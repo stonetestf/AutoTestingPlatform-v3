@@ -10,6 +10,7 @@ from login.models import UserTable as db_UserTable
 from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
 from WorkorderManagement.models import WorkLifeCycle as db_WorkLifeCycle
+from WorkorderManagement.models import HistoryInfo as db_HistoryInfo
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -63,6 +64,11 @@ def select_data(request):
             obj_db_WorkorderManagement = obj_db_WorkorderManagement.filter(fun_id=funId)
             select_db_WorkorderManagement = obj_db_WorkorderManagement[minSize: maxSize]
         for i in select_db_WorkorderManagement:
+            obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=i.id).order_by('-createTime')
+            if obj_db_HistoryInfo.exists():
+                message = obj_db_HistoryInfo[0].message
+            else:
+                message = ""
             # region 查询创建人
             obj_db_UserTable = db_UserTable.objects.filter(is_del=0, id=i.cuid)
             if obj_db_UserTable:
@@ -77,10 +83,11 @@ def select_data(request):
                         {"id": i.id,
                          "workSource": i.workSource,
                          "workType": i.workType,
-                         "pageName": i.page.pageName,
-                         "funName": i.fun.funName,
+                         "pageNameAndfunName": f"{i.page.pageName}/{i.fun.funName}",
+                         # "pageName": ,
+                         # "funName": i.fun.funName,
                          "workName": i.workName,
-                         "message": i.message,
+                         "message": message,
                          "workState": i.workState,
                          "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                          "createUserName": createUserName,
@@ -90,10 +97,11 @@ def select_data(request):
                     {"id": i.id,
                      "workSource": i.workSource,
                      "workType": i.workType,
-                     "pageName": i.page.pageName,
-                     "funName": i.fun.funName,
+                     "pageNameAndfunName": f"{i.page.pageName}/{i.fun.funName}",
+                     # "pageName": i.page.pageName,
+                     # "funName": i.fun.funName,
                      "workName": i.workName,
-                     "message": i.message,
+                     "message": message,
                      "workState": i.workState,
                      "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                      "createUserName": createUserName,
@@ -134,6 +142,7 @@ def save_data(request):
         # else:
         try:
             with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                # region 基本信息
                 save_db_WorkorderManagement = db_WorkorderManagement.objects.create(
                     sysType=sysType,
                     pid_id=proId,
@@ -143,12 +152,13 @@ def save_data(request):
                     workType=workType,
                     workState=workState,
                     workName=workName,
-                    message=message,
+                    # message=message,
                     is_del=0,
                     uid_id=userId,
                     cuid=userId
                 )
-                # 添加操作信息
+                # endregion
+                # region 添加操作信息
                 operationInfoId = cls_Logging.record_operation_info(
                     'API', 'Manual', 3, "Add",
                     cls_FindTable.get_pro_name(proId),
@@ -158,7 +168,15 @@ def save_data(request):
                     f'工单编号:【A-{save_db_WorkorderManagement.id}】 {workName}:{message}',
                     CUFront=json.dumps(request.POST)
                 )
-                # 添加工单的生命周期
+                # endregion
+                # region 添加信息到历史信息
+                db_HistoryInfo.objects.create(
+                    work_id=save_db_WorkorderManagement.id,
+                    message=message,
+                    uid_id=userId,
+                )
+                # endregion
+                # region 添加工单的生命周期
                 db_WorkLifeCycle.objects.create(
                     work_id=save_db_WorkorderManagement.id,
                     operationType='Add',
@@ -166,7 +184,9 @@ def save_data(request):
                     uid_id=userId,
                     is_del=0,
                 )
-                if pushTo:  # 如果有推送To信息,就保存
+                # endregion
+                # region 如果有接收人,就保存
+                if pushTo:
                     product_list_to_insert = list()
                     for i in pushToList:
                         # 添加推送to数据
@@ -177,6 +197,7 @@ def save_data(request):
                             is_del=0
                         ))
                     db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
+                # endregion
         except BaseException as e:  # 自动回滚，不需要任何操作
             response['errorMsg'] = f'保存失败:{e}'
         else:
@@ -200,7 +221,7 @@ def load_data(request):
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(is_del=0, id=workId)
         if obj_db_WorkorderManagement.exists():
-            cuid = obj_db_WorkorderManagement[0].cuid
+            # cuid = obj_db_WorkorderManagement[0].cuid
             data = obj_db_WorkorderManagement[0]
             pushTo = []
             obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=data.id)
@@ -208,17 +229,27 @@ def load_data(request):
                 roleId = cls_FindTable.get_roleId(i.uid_id)
                 pushTo.append([roleId, i.uid.id])
 
-            # 在编辑时把创建人给加到推送TO中,省的反推时还要在添加
-            roleId = cls_FindTable.get_roleId(cuid)
-            if [roleId, cuid] not in pushTo:
-                pushTo.append([roleId, cuid])
+            # # 在编辑时把创建人给加到推送TO中,省的反推时还要在添加
+            # roleId = cls_FindTable.get_roleId(cuid)
+            # if [roleId, cuid] not in pushTo:
+            #     pushTo.append([roleId, cuid])
+            # region 历史回复信息
+            historyInfo = []
+            obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=workId).order_by('-createTime')
+            for item_hisInfo in obj_db_HistoryInfo:
+                historyInfo.append({
+                    'timestamp': str(item_hisInfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                    'title': f'{item_hisInfo.uid.userName}({item_hisInfo.uid.nickName}):',
+                    'content': item_hisInfo.message
+                })
+            # endregion
             dataTabel = {
                 'workType': data.workType,
                 'workState': data.workState,
                 'pageId': data.page_id,
                 'funId': data.fun_id,
                 'workName': data.workName,
-                'message': data.message,
+                'historyInfo': historyInfo,
                 'pushTo': pushTo,
             }
 
@@ -234,7 +265,6 @@ def load_data(request):
 @require_http_methods(["POST"])
 def edit_data(request):
     response = {}
-    # is_edit = False
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         workId = int(request.POST['workId'])
@@ -259,6 +289,11 @@ def edit_data(request):
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     # region添加操作信息
                     oldData = list(obj_db_WorkorderManagement.values())
+                    obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=workId).order_by('-createTime')
+                    if obj_db_HistoryInfo.exists():
+                        oldData[0]['message'] = obj_db_HistoryInfo[0].message
+                    else:
+                        oldData[0]['message'] = ""
                     newData = ast.literal_eval(json.dumps(request.POST))
                     if workState != obj_db_WorkorderManagement[0].workState and workMessage == \
                             obj_db_WorkorderManagement[0].message:
@@ -294,10 +329,20 @@ def edit_data(request):
                         workType=workType,
                         workState=workState,
                         workName=workName,
-                        message=workMessage,
                         uid_id=userId,
                         updateTime=cls_Common.get_date_time()
                     )
+                    # endregion
+                    # region 添加信息到历史信息
+                    obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=workId, message=workMessage)
+                    if obj_db_HistoryInfo.exists():
+                        pass
+                    else:
+                        db_HistoryInfo.objects.create(
+                            work_id=workId,
+                            message=workMessage,
+                            uid_id=userId,
+                        )
                     # endregion
                     # region 添加工单的生命周期
                     # region 把工单的修改差异显示出来
@@ -353,10 +398,16 @@ def edit_data(request):
                         is_del=0,
                     )
                     # endregion
-                    if pushTo:  # 如果有推送To信息,就保存
+                    # region 如果有推送To信息,就保存
+                    if pushTo:
                         db_WorkBindPushToUsers.objects.filter(is_del=0, work_id=workId).update(
                             is_del=1, updateTime=cls_Common.get_date_time())
                         product_list_to_insert = list()
+                        # 推送列表中加入 工单的创建人,但要先判断当前修改的人是不是创建人,如果是就不添加,如果不是才添加
+                        if userId==obj_db_WorkorderManagement[0].cuid:
+                            pass
+                        else:
+                            pushToList.append(obj_db_WorkorderManagement[0].cuid)
                         for i in pushToList:
                             # 添加推送to数据
                             cls_Logging.push_to_user(operationInfoId, i)
@@ -366,6 +417,7 @@ def edit_data(request):
                                 is_del=0
                             ))
                         db_WorkBindPushToUsers.objects.bulk_create(product_list_to_insert)
+                    # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'工单修改失败:{e}'
             else:

@@ -11,7 +11,7 @@ class WorkorderManagement(models.Model):  # 工单管理
     workType = models.CharField("工单类型(Add,Edit,Delete,Other)", max_length=20, null=False)
     workState = models.IntegerField("工单状态(0:待受理,1:受理中,2:已解决,3:已关闭)", null=False)
     workName = models.CharField("工单名称", max_length=20, null=False)
-    message = models.TextField("工单信息", null=True)
+    # message = models.TextField("工单信息", null=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
@@ -27,12 +27,18 @@ class WorkBindPushToUsers(models.Model):  # 新增工单时填写的推送To的�
     createTime = models.DateTimeField('创建时间', auto_now=True)
 
 
+class HistoryInfo(models.Model):  # 工单历史回复信息
+    work = models.ForeignKey(to='WorkorderManagement', to_field='id', on_delete=models.CASCADE)
+    message = models.TextField("工单信息", null=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+
+
 class WorkLifeCycle(models.Model):  # 工单生命周期
     work = models.ForeignKey(to='WorkorderManagement', to_field='id', on_delete=models.CASCADE)
     workState = models.IntegerField("工单状态(0:待受理,1:受理中,2:已解决,3:已关闭)", null=False)
     operationType = models.CharField("操作类型(Add,Edit,Close)", max_length=10, null=False)
-    operationInfo = models.TextField("操作信息字典类型",null=True)
+    operationInfo = models.TextField("操作信息字典类型", null=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
-
