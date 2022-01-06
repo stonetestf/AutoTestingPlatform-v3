@@ -54,7 +54,7 @@
                                 label="任务数量"
                                 width="100px"
                                 align= "center"
-                                prop="taskTotal">
+                                prop="taskSetTotal">
                             </el-table-column>
                             <el-table-column
                                 show-overflow-tooltip
@@ -226,49 +226,45 @@ export default {
     },
     methods: {
         SelectData(){//刷新列表数据
-        //     let self = this;
-        //     self.tableData= [];
-        //     self.$axios.get('/api/FunManagement/SelectData',{
-        //         params:{
-        //             'sysType':'API',
-        //             'proId':self.$cookies.get('proId'),
-        //             'pageId':self.SelectRomeData.pageId,
-        //             'funName':self.SelectRomeData.funName,
-        //             'current':self.page.current,
-        //             'pageSize':self.page.pageSize
-        //         }
-        //     }).then(res => {
-        //         if(res.data.statusCode==2000){
-        //             res.data.TableData.forEach(d => {
-        //                 let obj = {};
-        //                 obj.id =d.id;
-        //                 obj.pageId=d.pageId;
-        //                 obj.pageName = d.pageName;
-        //                 obj.funName = d.funName;
-        //                 obj.remarks = d.remarks;
-        //                 obj.apiNum = d.apiNum;
-        //                 obj.updateTime = d.updateTime;
-        //                 obj.userName = d.userName;
+            let self = this;
+            self.RomeData.tableData= [];
+            self.$axios.get('/api/ApiTimingTask/SelectData',{
+                params:{
+                    'proId':self.$cookies.get('proId'),
+                    'taskName':self.SelectRomeData.taskName,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.id =d.id;
+                        obj.taskName=d.taskName;
+                        obj.timingConfig=d.timingConfig;
+                        obj.taskSetTotal=d.taskSetTotal;
+                        obj.remarks = d.remarks;
+                        obj.taskStatus = d.taskStatus;
+                        obj.lastReportTime = d.lastReportTime;
+                        obj.lastReportStatus = d.lastReportStatus;
+                        obj.updateTime = d.updateTime;
+                        obj.userName = d.userName;
+                        obj.createUserName = d.createUserName;
 
-        //                 self.tableData.push(obj);
-        //             });
-        //             if(self.tableData.length==0 && self.page.current != 1){
-        //                 self.page.current = 1;
-        //                 self.SelectData();
-        //             }
-        //             self.page.total = res.data.Total;
-        //         }else{
-        //             self.$message.error('获取数据失败:'+res.data.errorMsg);
-        //         }
-        //         // console.log(self.tableData);
-        //     }).catch(function (error) {
-        //         console.log(error);
-        //     })
-        // },
-        // GetPageNameOption(){
-        //     GetPageNameItems(this.$cookies.get('proId')).then(d=>{
-        //         this.SelectRomeData.pageNameOption = d;
-        //     });
+                        self.RomeData.tableData.push(obj);
+                    });
+                    if(self.RomeData.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                }
+                // console.log(self.tableData);
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
         CloseEditDialog(){
             this.dialog.editor.dialogVisible =false;
@@ -281,19 +277,15 @@ export default {
             }
             self.dialog.editor.dialogVisible=true;
         },
-       
-        // handleEdit(index,row){
-        //     let self = this;
-        //     self.dialog.editor.dialogPara={
-        //         dialogTitle:"编辑功能",//初始化标题
-        //         isAddNew:false,//初始化是否新增\修改
-        //         funId:row.id,
-        //         pageId:row.pageId,
-        //         funName:row.funName,
-        //         remarks:row.remarks,
-        //     }
-        //     self.dialog.editor.dialogVisible=true;
-        // },
+        handleEdit(index,row){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑定时任务",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                taskId:row.id,
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
         // handleRowClick(row, column, event){//点击行选择勾选框
         // this.$refs.multipleTable.toggleRowSelection(row);
         // },

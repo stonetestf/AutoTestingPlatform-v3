@@ -20,9 +20,9 @@
                     element-loading-spinner="el-icon-loading">
                     <template v-if="StepsRomeData.active==0">
                         <div class="table">
-                           <div class="father" style="width: 100%; height: 600px;">
+                           <div class="father" style="width: 100%; height: 400px;">
                                 <div class="son" style="width: 1000px; height: 150px;">
-                                    <el-card style="width:1000px" shadow="never">
+                                    <el-card style="width:1050px" shadow="never">
                                         <el-form ref="BasicRomeData" :inline="true" :rules="BasicRomeData.rules" :model="BasicRomeData"  label-width="100px">
                                             <el-form-item label="任务名称:" prop="taskName" >
                                                 <el-input v-model.trim="BasicRomeData.taskName" clearable style="width:515px;"></el-input>
@@ -62,11 +62,11 @@
                                                     </el-option>
                                                 </el-select>
                                             </el-form-item>
-                                            <div style="margin-left:-313px">
+                                            <div>
                                                 <el-form-item label="关联用户:">
                                                     <el-cascader 
                                                         @click.native="GetUserNameOption()"
-                                                        style="width:515px"
+                                                        style="width:830px"
                                                         v-model="BasicRomeData.pushTo" 
                                                         :options="BasicRomeData.userNameOptions" 
                                                         :props="BasicRomeData.props" 
@@ -78,6 +78,14 @@
                                                             <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
                                                         </template>
                                                     </el-cascader>
+                                                </el-form-item>
+                                            </div>
+                                            <div>
+                                                <el-form-item label="备注:">
+                                                    <el-input type="textarea" 
+                                                        :autosize="{ minRows: 10, maxRows: 10}"
+                                                        v-model="BasicRomeData.remarks"
+                                                        style="width:830px"></el-input>
                                                 </el-form-item>
                                             </div>
                                         </el-form>
@@ -165,6 +173,7 @@
                         </div>
                         <div>
                             <el-table
+                            v-loading="loading"
                             :data="CharmRomeData.tableData"
                             border
                             height="660px">
@@ -239,6 +248,7 @@ export default {
                 disPlay_Previous:false,
             },
             BasicRomeData:{
+                taskId:'',
                 taskName:'',
                 environmentId:'',
                 environmentNameOption:[],
@@ -258,6 +268,7 @@ export default {
                 props: { multiple: true },
                 pushTo:[],
                 userNameOptions:[],
+                remarks:'',
                 rules:{
                     taskName: [
                         { required: true, message: '请输入任务名称', trigger: 'blur' },
@@ -320,7 +331,7 @@ export default {
                 this.isAddNew = newval.isAddNew;
 
                 if(newval.isAddNew==false){//进入编辑状态
-                  
+                    this.LoadTaskData(newval.taskId);
                 }
             }
         },
@@ -352,17 +363,25 @@ export default {
         next() {//下一步
             let self = this;
             if(self.StepsRomeData.active==0){//基本用例数据
-                self.StepsRomeData.active++;
-                self.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                    self.rowDrop();
-                });
-                // this.$refs['BasicRomeData'].validate((valid) => {
-                //     if (valid) {//通过
-                //         self.StepsRomeData.active++;
-                //     } 
+                // self.StepsRomeData.active++;
+                // self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                //     self.rowDrop();
                 // });
+                this.$refs['BasicRomeData'].validate((valid) => {
+                    if (valid) {//通过
+                        self.StepsRomeData.active++;
+                        self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                            self.rowDrop();
+                        });
+                    } 
+                });
             }else if(self.StepsRomeData.active==1){
-                self.StepsRomeData.active++;
+                if(self.SortCaseRomeData.tableData.length==0){
+                    self.$message.warning("不可保存用例集为空的定时任务,当前用例集为空!");
+                }else{
+                    self.StepsRomeData.active++;
+                    self.CharmCaseData();
+                }
             }
         },
         previous(){//上一步
@@ -370,6 +389,9 @@ export default {
             self.StepsRomeData.processStatus='process';
             if(self.StepsRomeData.active==0){
 
+            }else if(self.StepsRomeData.active==3){
+                self.StepsRomeData.active--;
+                self.StepsRomeData.active--;
             }
             else{
                 self.StepsRomeData.active--;
@@ -402,6 +424,7 @@ export default {
             self.BasicRomeData.priorityId='';
             self.BasicRomeData.taskStatus='';
             self.BasicRomeData.pushTo='';
+            self.BasicRomeData.remarks='';
         },
         GetPageEnvironmentNameOption(){
             GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{
@@ -481,6 +504,150 @@ export default {
                     // console.log(self.RomeData.TableData);
                 }
             });
+        },
+
+        //效验
+        CharmCaseData(){//验证用例数据的完整性
+            let self = this;
+            self.loading=true;
+            self.CharmRomeData.tableData = [];
+            self.CharmRomeData.title = '';
+            self.$axios.post('/api/ApiTimingTask/CharmTaskData',{
+                'CharmType':self.isAddNew,
+                'BasicInfo':{
+                    'taskId':self.BasicRomeData.taskId,
+                    'proId':self.$cookies.get('proId'),
+                    'taskName':self.BasicRomeData.taskName,
+                    'timingConfig':self.BasicRomeData.timingConfig,
+                },
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.stepsName =d.stepsName;
+                        obj.errorMsg = d.errorMsg;
+                        obj.updateTime = d.updateTime;
+                        self.CharmRomeData.tableData.push(obj);
+                    });
+                    if(self.CharmRomeData.tableData.length!=0){
+                        self.StepsRomeData.processStatus='error';
+                        self.CharmRomeData.title = '效验结果:失败,共发现错误数:'+self.CharmRomeData.tableData.length;
+                    }else{
+                        self.StepsRomeData.active++;
+                        self.CharmRomeData.title = '效验结果:完成,请点击保存';
+                    }
+                    self.loading=false;
+                }else{
+                    self.$message.error('效验定时任务信息发生错误:'+res.data.errorMsg);
+                    self.loading=false;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+            })
+        },
+        SaveData(){
+            let self = this;
+            if(self.CharmRomeData.tableData.length==0){
+                if(self.isAddNew){  
+                    self.$axios.post('/api/ApiTimingTask/SaveData',{
+                        'BasicInfo':{
+                            'proId':self.$cookies.get('proId'),
+                            'taskName':self.BasicRomeData.taskName,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'timingConfig':self.BasicRomeData.timingConfig,
+                            'priorityId':self.BasicRomeData.priorityId,
+                            'taskStatus':self.BasicRomeData.taskStatus,
+                            'pushTo':self.BasicRomeData.pushTo,
+                            'remarks':self.BasicRomeData.remarks,
+                        },
+                        'TestSet':self.SortCaseRomeData.tableData
+                    }).then(res => {
+                        if(res.data.statusCode==2001){
+                            self.$message.success('新增定时任务成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('保存失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }else{
+                    self.$axios.post('/api/ApiCaseMaintenance/EditData',{
+                       'BasicInfo':{
+                            'caseId':self.BasicRomeData.caseId,
+                            'proId':self.$cookies.get('proId'),
+                            'pageId':self.BasicRomeData.pageId,
+                            'funId':self.BasicRomeData.funId,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'priorityId':self.BasicRomeData.priorityId,
+                            'labelId':self.BasicRomeData.labelId,
+                            'testType':self.BasicRomeData.testType,
+                            'caseName':self.BasicRomeData.caseName,
+                            'caseState':self.BasicRomeData.caseState,
+                        },
+                        'TestSet':self.TestSetRomeData.tableData
+                    }).then(res => {
+                        if(res.data.statusCode==2002){
+                            self.$message.success('修改用例成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('修改用例失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }
+            }else{
+                self.$message.warning('请先修改错误数据后,在进行保存!');
+            }
+        },
+        LoadTaskData(taskId){
+            let self = this;
+            self.loading=true;
+            self.$axios.get('/api/ApiTimingTask/LoadTaskData',{
+                params:{
+                    'taskId':taskId
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    GetPageEnvironmentNameItems(self.$cookies.get('proId')).then(d=>{
+                        self.BasicRomeData.environmentNameOption = d;
+                        GetUserNameItems().then(d=>{
+                            self.BasicRomeData.userNameOptions = d;
+                            
+                            self.BasicRomeData.taskName = res.data.dataTable.basicInfo.taskName;
+                            self.BasicRomeData.environmentId = res.data.dataTable.basicInfo.environmentId;
+                            self.BasicRomeData.timingConfig = res.data.dataTable.basicInfo.timingConfig;
+                            self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
+                            self.BasicRomeData.taskStatus = res.data.dataTable.basicInfo.taskStatus;
+                            self.BasicRomeData.pushTo = res.data.dataTable.basicInfo.pushTo;
+                            self.BasicRomeData.remarks = res.data.dataTable.basicInfo.remarks;
+                        });
+                        // self.BasicRomeData.environmentNameOption = d;
+                        // 
+
+                        // self.BasicRomeData.testType = res.data.dataTable.basicInfo.testType;
+                        // self.BasicRomeData.labelId = res.data.dataTable.basicInfo.labelId;
+                        // self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
+                        // self.BasicRomeData.caseName = res.data.dataTable.basicInfo.caseName;
+                        // self.BasicRomeData.caseState = res.data.dataTable.basicInfo.caseState;
+
+                        // self.TestSetRomeData.tableData = res.data.dataTable.testSet;
+                        self.loading=false;
+                    });
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+                self.dialogClose();
+            })
         },
     }
 };
