@@ -626,14 +626,6 @@ export default {
                             self.BasicRomeData.pushTo = res.data.dataTable.basicInfo.pushTo;
                             self.BasicRomeData.remarks = res.data.dataTable.basicInfo.remarks;
                         });
-                        // self.BasicRomeData.environmentNameOption = d;
-                        // 
-
-                        // self.BasicRomeData.testType = res.data.dataTable.basicInfo.testType;
-                        // self.BasicRomeData.labelId = res.data.dataTable.basicInfo.labelId;
-                        // self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
-                        // self.BasicRomeData.caseName = res.data.dataTable.basicInfo.caseName;
-                        // self.BasicRomeData.caseState = res.data.dataTable.basicInfo.caseState;
 
                         // self.TestSetRomeData.tableData = res.data.dataTable.testSet;
                         self.loading=false;
