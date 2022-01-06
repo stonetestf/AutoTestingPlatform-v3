@@ -225,7 +225,7 @@
     <template>
       <el-drawer
       :title="dialog.queue.dialogPara.dialogTitle"
-      size="1000px"
+      size="1200px"
       :visible.sync="dialog.queue.dialogVisible"
       direction='rtl'
       :before-close="closeQueueDialog">
@@ -271,9 +271,15 @@
             </el-table-column>
             <el-table-column
               prop="updateTime"
-              width="100px"
+              width="150px"
               align= "center"
               label="发布时间">
+            </el-table-column>
+            <el-table-column
+              prop="userName"
+              width="150px"
+              align= "center"
+              label="发起者">
             </el-table-column>
             <el-table-column
               label="操作"
@@ -688,6 +694,9 @@ export default {
             if(d.updateTime!=tempTable.updateTime){
               tempTable.updateTime=d.updateTime
             }
+            if(d.userName!=tempTable.userName){
+              tempTable.userName=d.userName
+            }
 
           }else{
             self.RomeData.queueTableData.push(d);//新增数据
@@ -844,7 +853,7 @@ export default {
 <style>
 .MainCard{
   /* height: 759px; */
-  height: 765px;
+  height: 752px;
 }
 .TopCard{
   height: 320px;

@@ -314,7 +314,9 @@ class FindTable(cls_Logging):
                 'taskName': i.testReport.reportName,
                 'taskState': i.queueStatus,
                 'performProgress': f"{obj_db_ApiReportItem.count()}/{i.testReport.apiTotal}",
-                'updateTime': str(i.updateTime.strftime('%H:%M:%S')),
+                # 'updateTime': str(i.updateTime.strftime('%H:%M:%S')),
+                'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
             })
         results['dataTable'] = dataTable
         return results
