@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'Api_IntMaintenance',
     'Api_TestReport',
     'Api_CaseMaintenance',
+    'Api_TimingTask',
 ]
 # endregion
 

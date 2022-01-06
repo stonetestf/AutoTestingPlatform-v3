@@ -72,12 +72,12 @@
                             align= "center"
                             width="50">
                         </el-table-column>
-                        <!-- <el-table-column
+                        <el-table-column
                             label="ID"
                             align= "center"
                             width="80px"
                             prop="id">
-                        </el-table-column> -->
+                        </el-table-column>
                         <el-table-column
                             label="所属页面"
                             align= "center"

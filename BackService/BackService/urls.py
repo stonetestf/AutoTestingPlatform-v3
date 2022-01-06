@@ -35,6 +35,7 @@ import GlobalVariable.urls
 import Api_IntMaintenance.urls
 import Api_TestReport.urls
 import Api_CaseMaintenance.urls
+import Api_TimingTask.urls
 
 
 urlpatterns = [
@@ -56,5 +57,6 @@ urlpatterns = [
     url('api/GlobalVariable/', include(GlobalVariable.urls)),
     url('api/ApiTestReport/', include(Api_TestReport.urls)),
     url('api/ApiCaseMaintenance/', include(Api_CaseMaintenance.urls)),
+    url('api/ApiTimingTask/', include(Api_TimingTask.urls)),
 
 ]

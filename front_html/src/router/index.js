@@ -26,6 +26,7 @@ import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Ma
 import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告主页
 import Api_Report from '@/components/views/SysType/Api/Page/TestReport/Report';//测试报告
 import Api_CaseMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/CaseMaintenance/Main';//用例维护
+import Api_TimingTask from '@/components/views/SysType/Api/Page/TaskManagement/TimingTask/Main';//定时任务
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -93,6 +94,9 @@ export default new Router({
         },
         {path: '/SysType/Api/Page/CaseManagement/CaseMaintenance/Main',name: 'Api_CaseMaintenance',component: Api_CaseMaintenance,
           meta:{name: '用例维护',url:'/SysType/Api/Page/CaseManagement/CaseMaintenance/Main',comp:'Api_CaseMaintenance'}
+        },
+        {path: '/SysType/Api/Page/TaskManagement/TimingTask/Main',name: 'Api_TimingTask',component: Api_TimingTask,
+          meta:{name: '定时任务',url:'/SysType/Api/Page/TaskManagement/TimingTask/Main',comp:'Api_TimingTask'}
         },
       ]
     }

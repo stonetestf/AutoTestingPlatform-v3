@@ -4,7 +4,7 @@
         :visible.sync="dialogVisible"
         :close-on-click-modal=false
         :before-close="dialogClose"
-        width="1000px">
+        width="1200px">
             <template>
                 <el-form :inline="true"  method="post">
                     <el-form-item label="所属页面:">
@@ -33,6 +33,7 @@
             </template>
             <template>
                 <el-table
+                    v-loading="loading"
                     :data="RomeData.tableData"
                     height="510px"
                     border
@@ -45,9 +46,18 @@
                         width="50">
                     </el-table-column>
                     <el-table-column
-                        label="接口名称"
+                        label="测试类型"
                         align= "center"
-                        prop="apiName">
+                        width="100px">
+                        <template slot-scope="scope">
+                            <el-tag type="info" v-if="scope.row.testType=='UnitTest'" >单元测试</el-tag>
+                            <el-tag type="warning" v-else-if="scope.row.testType=='HybridTest'" >混合测试</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        label="用例名称"
+                        align= "center"
+                        prop="caseName">
                     </el-table-column>
                     <el-table-column
                         label="所属页面"
@@ -66,14 +76,20 @@
                         align= "center"
                         width="100">
                         <template slot-scope="scope">
-                            <el-tag type="warning" v-if="scope.row.apiState=='InDev'" >研发中</el-tag>
-                            <el-tag type="success" v-else-if="scope.row.apiState=='Completed'" >已完成</el-tag>
+                            <el-tag type="warning" v-if="scope.row.caseState=='InDev'" >研发中</el-tag>
+                            <el-tag type="success" v-else-if="scope.row.caseState=='Completed'" >已完成</el-tag>
                             <el-tag type="info" v-else>弃用</el-tag>
                         </template>
                     </el-table-column>
+                    <el-table-column
+                        label="修改者"
+                        width="150px"
+                        align= "center"
+                        prop="userName">
+                    </el-table-column>
                 </el-table>
             </template>
-            <div style="margin-top:20px;margin-left:750px;">
+            <div style="margin-top:20px;margin-left:950px;">
                 <el-button type="info"  @click="dialogClose()">取消</el-button>
                 <el-button type="success" @click="AddToSortCaseTable()">{{RomeData.buttonConfirm}}</el-button>
             </div>
@@ -88,6 +104,7 @@ import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 export default {
     data() {
         return {
+            loading:false,
             dialogTitle:"",
             dialogVisible:false,
             isAddNew:true,//是否是新增窗口
@@ -99,6 +116,7 @@ export default {
                 funId:'',
                 funNameOption:[],
                 buttonConfirm:'确认',
+                passCaseId:[],
             }
         };
     },
@@ -125,20 +143,8 @@ export default {
                 PrintConsole(newval);
                 this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
-                 
-                GetPageNameItems(this.$cookies.get('proId')).then(d=>{
-                    this.RomeData.pageNameOption = d;
-                    this.RomeData.pageId = newval.pageId;
-                    this.RomeData.funNameOption = [];
-                    if(this.RomeData.pageId){
-                        GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
-                            this.RomeData.funNameOption = d;
-                            this.RomeData.funId = newval.funId;
-                            this.SelectData();
-                        });
-                    }
-                   
-                });      
+                this.RomeData.passCaseId = newval.passCaseId;
+                this.SelectData();
             }
         },
         'RomeData.multipleSelection': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
@@ -178,38 +184,41 @@ export default {
                 this.$message.warning('请先选择所属页面!');
             }
         },
-        SelectData(){
+        SelectData(passCaseId){
             let self = this;
             self.RomeData.tableData= [];
-            self.$axios.get('/api/ApiIntMaintenance/SelectData',{
+            self.loading=true;
+            self.$axios.get('/api/ApiTimingTask/SelectCaseData',{
                 params:{
                     "proId":self.$cookies.get('proId'),
                     "pageId":self.RomeData.pageId,
                     "funId":self.RomeData.funId,
-                    "apiName":'',
-                    "requestUrl":'',
-                    'apiState':'',
-                    'associations':'',
-                    'current':1,
-                    'pageSize':99999999
+                    "passCaseId":self.RomeData.passCaseId.join(','),//需要忽略不显示在页面上的数据
                 }
             }).then(res => {
                 if(res.data.statusCode==2000){
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
+                        obj.testType =d.testType;
                         obj.pageName =d.pageName;
                         obj.funName =d.funName;
-                        obj.apiName = d.apiName;
-                        obj.apiState = d.apiState;
+                        obj.caseName = d.caseName;
+                        obj.caseState = d.caseState;
+                        obj.userName = d.userName;   
 
                         self.RomeData.tableData.push(obj);
                     });
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
                 }
             }).catch(function (error) {
                 console.log(error);
+                self.loading=false;
+                self.dialogClose();
             })
         },
         handleRowClick(row, column, event){//点击行选择勾选框
@@ -225,7 +234,7 @@ export default {
         AddToSortCaseTable(){
             let self = this;
             if(self.RomeData.multipleSelection.length==0){
-                self.$message.warning('未选择1条接口数据进行保存!');
+                self.$message.warning('未选择1条接用例数据进行保存!');
             }else{
                 // console.log(self.RomeData.multipleSelection)
                 self.$emit('getData',self.RomeData.multipleSelection);//回调传值
@@ -242,6 +251,7 @@ export default {
             let self = this;
             self.RomeData.pageId='';
             self.RomeData.funId='';
+            self.RomeData.passCaseId=[];
         },
 
     }

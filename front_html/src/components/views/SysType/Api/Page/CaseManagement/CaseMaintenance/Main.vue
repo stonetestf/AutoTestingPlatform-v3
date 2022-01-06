@@ -78,11 +78,12 @@
                             :data="tableData"
                             height="653px"
                             border>
-                            <!-- <el-table-column
-                                type="selection"
+                            <el-table-column
+                                label="ID"
                                 align= "center"
-                                width="50">
-                            </el-table-column> -->
+                                width="80px"
+                                prop="id">
+                            </el-table-column>
                             <el-table-column 
                                 label="步骤排序" 
                                 width="50px"

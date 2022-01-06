@@ -191,13 +191,14 @@ import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk
 import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
 import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告
 import Api_CaseMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/CaseMaintenance/Main';//用例维护
+import Api_TimingTask from '@/components/views/SysType/Api/Page/TaskManagement/TimingTask/Main';//定时任务
 
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
     Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment,Api_DebugTalk,Api_GlobalVariable,
-    Api_RemindInfo,Api_TestReport,Api_CaseMaintenance
+    Api_RemindInfo,Api_TestReport,Api_CaseMaintenance,Api_TimingTask
   },
   data() {
     return {
