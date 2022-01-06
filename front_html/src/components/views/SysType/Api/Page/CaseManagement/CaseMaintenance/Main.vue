@@ -2,7 +2,7 @@
     <div ref="tab-main"  id="tab-main">
         <template>
             <el-card class="MainCard">
-                <template>
+                <div style="margin-top:-10px">
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
                             <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
@@ -70,13 +70,13 @@
                         <el-button type="primary" @click="SelectData()">查询</el-button>
                         <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
                     </el-form>
-                </template>
-                <template>
+                </div>
+                <div>
                     <div style="margin-top:-15px;">
                         <el-table
                             v-loading="loading"
                             :data="tableData"
-                            height="630px"
+                            height="653px"
                             border>
                             <!-- <el-table-column
                                 type="selection"
@@ -215,8 +215,9 @@
                                 prop="updateTime">
                             </el-table-column>
                             <el-table-column
+                                show-overflow-tooltip
                                 label="修改者"
-                                width="120px"
+                                width="150px"
                                 align= "center"
                                 prop="userName">
                             </el-table-column>
@@ -265,8 +266,8 @@
                             </el-table-column>
                         </el-table>
                     </div>
-                </template>
-                <template>
+                </div>
+                <div>
                     <div style="margin-top:-10px">
                         <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                             @size-change="pageSizeChange"
@@ -277,7 +278,7 @@
                             style="margin: 20px auto auto auto;">
                         </el-pagination>
                     </div>
-                </template>
+                </div>
             </el-card>
         </template>
         <template>
@@ -545,5 +546,7 @@ export default {
 </script>
 
 <style>
-
+.MainCard{
+    height: 760px;
+}
 </style>

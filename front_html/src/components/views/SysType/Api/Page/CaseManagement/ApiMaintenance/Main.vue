@@ -2,67 +2,67 @@
     <div ref="tab-main"  id="tab-main">
         <template>
             <el-card class="MainCard">
-                <template>
+                <div style="margin-top:-10px">
                     <el-form :inline="true" class="demo-form-inline" method="post">
-                    <el-form-item label="所属页面:">
-                        <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:150px;" @click.native="GetPageNameOption()">
-                            <el-option
-                                v-for="item in SelectRomeData.pageNameOption"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="所属功能:">
-                        <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:150px;" @click.native="GetFunNameOption()">
-                            <el-option
-                                v-for="item in SelectRomeData.funNameOption"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="接口名称:">
-                        <el-input clearable v-model="SelectRomeData.apiName"></el-input>
-                    </el-form-item>
-                    <el-form-item label="接口地址:">
-                        <el-input clearable v-model="SelectRomeData.requestUrl"></el-input>
-                    </el-form-item>
-                    <el-form-item label="接口状态:">
-                        <el-select v-model="SelectRomeData.apiState" clearable placeholder="请选择" style="width:100px;">
-                            <el-option
-                                v-for="item in SelectRomeData.apiStateOption"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="关联对象:">
-                        <el-select v-model="SelectRomeData.associations" clearable placeholder="请选择" style="width:100px;">
-                            <el-option
-                                v-for="item in SelectRomeData.associationsOption"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-button type="primary" @click="SelectData()" >查询</el-button>
-                    <el-button type="info" @click="ClearSelectRomeData()">重置</el-button>
-                    <!-- <div style="float:right"> -->
-                        <!-- <el-button icon="el-icon-question" circle plain @click="helpMsg()"></el-button> -->
-                    <!-- </div> -->
-                </el-form>
-                </template>
-                <template>
+                        <el-form-item label="所属页面:">
+                            <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:150px;" @click.native="GetPageNameOption()">
+                                <el-option
+                                    v-for="item in SelectRomeData.pageNameOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="所属功能:">
+                            <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:150px;" @click.native="GetFunNameOption()">
+                                <el-option
+                                    v-for="item in SelectRomeData.funNameOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="接口名称:">
+                            <el-input clearable v-model="SelectRomeData.apiName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="接口地址:">
+                            <el-input clearable v-model="SelectRomeData.requestUrl"></el-input>
+                        </el-form-item>
+                        <el-form-item label="接口状态:">
+                            <el-select v-model="SelectRomeData.apiState" clearable placeholder="请选择" style="width:100px;">
+                                <el-option
+                                    v-for="item in SelectRomeData.apiStateOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="关联对象:">
+                            <el-select v-model="SelectRomeData.associations" clearable placeholder="请选择" style="width:100px;">
+                                <el-option
+                                    v-for="item in SelectRomeData.associationsOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-button type="primary" @click="SelectData()" >查询</el-button>
+                        <el-button type="info" @click="ClearSelectRomeData()">重置</el-button>
+                        <!-- <div style="float:right"> -->
+                            <!-- <el-button icon="el-icon-question" circle plain @click="helpMsg()"></el-button> -->
+                        <!-- </div> -->
+                    </el-form>
+                </div>
+                <div>
                     <div style="margin-top:-15px;">
                     <el-table
                         v-loading="loading"
                         :data=tableData
-                        height="630px"
+                        height="653px"
                         border
                         ref="multipleTable"
                         @selection-change="handleSelectionChange"
@@ -194,8 +194,8 @@
                         </el-table-column>
                     </el-table>
                     </div>
-                </template>
-                <template>
+                </div>
+                <div>
                     <div style="margin-top:-10px">
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                         @size-change="pageSizeChange"
@@ -206,7 +206,7 @@
                         style="margin: 20px auto auto auto;">
                     </el-pagination>
                     </div>
-                </template>
+                </div>
             </el-card>
         </template>
         <template>
@@ -636,5 +636,8 @@ export default {
 <style>
 body {
     margin: 0;
+}
+.MainCard{
+    height: 760px;
 }
 </style>

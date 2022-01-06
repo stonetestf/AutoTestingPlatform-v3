@@ -150,7 +150,7 @@ def select_data(request):
                         'caseState': i.caseState,
                         'passRate': passRate,
                         'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                        'userName': i.uid.userName,
+                        "userName": f"{i.uid.userName}({i.uid.nickName})",
                         'createUserName': cls_FindTable.get_userName(i.cuid),
                     })
             else:
@@ -167,7 +167,7 @@ def select_data(request):
                     'caseState': i.caseState,
                     'passRate': passRate,
                     'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                    'userName': i.uid.userName,
+                    "userName": f"{i.uid.userName}({i.uid.nickName})",
                     'createUserName': cls_FindTable.get_userName(i.cuid),
                 })
         response['TableData'] = dataList
