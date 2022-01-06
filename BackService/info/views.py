@@ -85,7 +85,7 @@ def select_operational_info(request):
                         'CURear': i.CURear,
                     }],
                     'is_read': i.is_read,
-                    'userName': i.uid.userName,
+                    "userName": f"{i.uid.userName}({i.uid.nickName})",
                     'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
                 })
         else:
@@ -116,7 +116,7 @@ def select_operational_info(request):
                         'CURear': i.oinfo.CURear,
                     }],
                     'is_read': i.is_read,
-                    'userName': i.oinfo.uid.userName,
+                    "userName": f"{i.oinfo.uid.userName}({i.oinfo.uid.nickName})",
                     'createTime': str(i.oinfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
                 })
         response['TableData'] = dataList
@@ -174,7 +174,7 @@ def user_operational_info(request):
                     # 'CUFront': i.CUFront,
                     # 'CURear': i.CURear,
                     'is_read': i.is_read,
-                    'userName': i.oinfo.uid.userName,
+                    "userName": f"{i.oinfo.uid.userName}({i.oinfo.uid.nickName})",
                     'createTime': str(i.oinfo.createTime.strftime('%Y-%m-%d %H:%M:%S')),
                 })
 

@@ -114,14 +114,15 @@
                                 prop="updateTime">
                             </el-table-column>   
                             <el-table-column
+                                show-overflow-tooltip
                                 label="创建者"
                                 align= "center"
-                                width="120px"
+                                width="150px"
                                 prop="createUserName">
                             </el-table-column>   
                             <el-table-column
                                 align="center"
-                                width="200px">
+                                width="170px">
                             <template slot="header">
                                 <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                             </template>

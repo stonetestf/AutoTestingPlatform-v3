@@ -63,7 +63,7 @@ def select_data(request):
                  "environmentUrl": i.environmentUrl,
                  "remarks": i.remarks,
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                 "userName": i.uid.userName,
+                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                  }
             )
 

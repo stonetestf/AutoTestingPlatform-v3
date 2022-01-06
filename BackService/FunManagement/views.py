@@ -70,7 +70,7 @@ def select_data(request):
                  "remarks": i.remarks,
                  "apiNum": db_ApiBaseData.objects.filter(is_del=0,fun_id=i.id).count(),
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                 "userName": i.uid.userName,
+                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                  }
             )
 

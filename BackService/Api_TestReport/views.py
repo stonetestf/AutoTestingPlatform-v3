@@ -81,7 +81,7 @@ def select_data(request):
                  "reportStatus": i.reportStatus if i.reportStatus else 'Error',
                  "runningTime": runningTime,
                  "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                 "userName": i.uid.userName,
+                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                  }
             )
 

@@ -6,6 +6,7 @@ from django.conf import settings
 import json
 
 # Create your db here.
+from DebugTalk.models import DebugTalk as db_DebugTalk
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -43,13 +44,20 @@ def select_data(request):
         else:
             fileName = ''
         try:
-            with open(f"{settings.BASE_DIR}/DebugTalk/Data/{fileName}.py",encoding="utf8") as f:
+            with open(f"{settings.BASE_DIR}/DebugTalk/Data/{fileName}.py", encoding="utf8") as f:
                 readText = f.read()
+            obj_db_DebugTalk = db_DebugTalk.objects.filter().order_by('-updateTime')
+            if obj_db_DebugTalk.exists():
+                titleInfo = f"{obj_db_DebugTalk[0].uid.userName}({obj_db_DebugTalk[0].uid.nickName}) " \
+                            f"最后更新时间:{str(obj_db_DebugTalk[0].updateTime.strftime('%Y-%m-%d %H:%M:%S'))}"
+            else:
+                titleInfo = ""
         except Exception as e:
             errorMsg = f"读取DebugTalk错误:{e}"
             response['errorMsg'] = errorMsg
             cls_Logging.record_error_info('API', 'DebugTalk', 'select_data', errorMsg)
         else:
+            response['titleInfo'] = titleInfo
             response['Text'] = readText
             response['statusCode'] = 2000
     return JsonResponse(response)
@@ -63,6 +71,7 @@ def data_save(request):
     try:
         responseData = json.loads(request.body)
         objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = objData.sysType
         text = objData.text
     except BaseException as e:
@@ -74,8 +83,16 @@ def data_save(request):
             fileName = 'ApiDebug'
         else:
             fileName = ''
-        with open(f"{settings.BASE_DIR}/DebugTalk/Data/{fileName}.py", 'w', encoding="utf8") as f:
-            f.write(text)
+        try:
+            with open(f"{settings.BASE_DIR}/DebugTalk/Data/{fileName}.py", 'w', encoding="utf8") as f:
+                f.write(text)
+            db_DebugTalk.objects.create(
+                codeInfo=text,
+                uid_id=userId,
+            )
+        except BaseException as e:
+            response['errorMsg'] = f'数据保存失败:{e}'
+        else:
             response['statusCode'] = 2001
     return JsonResponse(response)
 

@@ -843,7 +843,8 @@ export default {
 
 <style>
 .MainCard{
-  height: 750px;
+  /* height: 759px; */
+  height: 765px;
 }
 .TopCard{
   height: 320px;

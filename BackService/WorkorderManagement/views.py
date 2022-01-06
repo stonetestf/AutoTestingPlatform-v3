@@ -75,8 +75,10 @@ def select_data(request):
             obj_db_UserTable = db_UserTable.objects.filter(is_del=0, id=i.cuid)
             if obj_db_UserTable:
                 createUserName = obj_db_UserTable[0].userName
+                nickName = obj_db_UserTable[0].nickName
             else:
                 createUserName = None
+                nickName = None
             # endregion
             if myWork == "My":
                 obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(is_del=0, uid_id=userId,work_id=i.id)
@@ -95,7 +97,7 @@ def select_data(request):
                          "workState": i.workState,
                          "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                          "timeStamp": int(time.mktime(timeArray)),  # 用于排序使用,前端str类型的时间不可排序
-                         "createUserName": createUserName,
+                         "createUserName": f"{createUserName}({nickName})",
                          })
             else:
                 dataList.append(
@@ -110,7 +112,7 @@ def select_data(request):
                      "workState": i.workState,
                      "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                      "timeStamp": int(time.mktime(timeArray)),  # 用于排序使用,前端str类型的时间不可排序
-                     "createUserName": createUserName,
+                     "createUserName": f"{createUserName}({nickName})",
                      })
 
         response['TableData'] = dataList

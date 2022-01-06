@@ -69,6 +69,7 @@ def select_data(request):
         requestUrl = objData.requestUrl
         apiState = objData.apiState
         associations = objData.associations
+
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
         minSize = (current - 1) * pageSize
@@ -134,7 +135,7 @@ def select_data(request):
                         'associationMy': associationMy,  # 关联对象
                         'passRate': passRate,
                         'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                        'userName': i.uid.userName,
+                        "userName": f"{i.uid.userName}({i.uid.nickName})",
                         'createUserId': [[cls_FindTable.get_roleId(i.cuid), i.cuid]],
                         'createUserName': cls_FindTable.get_userName(i.cuid)
                     })
@@ -152,7 +153,7 @@ def select_data(request):
                     'associationMy': associationMy,  # 关联对象
                     'passRate': passRate,
                     'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                    'userName': i.uid.userName,
+                    "userName": f"{i.uid.userName}({i.uid.nickName})",
                     'createUserId': [[cls_FindTable.get_roleId(i.cuid), i.cuid]],
                     'createUserName': cls_FindTable.get_userName(i.cuid)
                 })

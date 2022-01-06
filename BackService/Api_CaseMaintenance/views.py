@@ -25,6 +25,7 @@ from Api_CaseMaintenance.models import CaseApiBody as db_CaseApiBody
 from Api_CaseMaintenance.models import CaseApiExtract as db_CaseApiExtract
 from Api_CaseMaintenance.models import CaseApiValidate as db_CaseApiValidate
 from Api_CaseMaintenance.models import CaseApiOperation as db_CaseApiOperation
+from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -63,6 +64,7 @@ def select_data(request):
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
 
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         proId = objData.proId
         pageId = objData.pageId
         funId = objData.funId
@@ -70,6 +72,7 @@ def select_data(request):
         labelId = objData.labelId
         caseState = objData.caseState
         caseName = objData.caseName
+        associations = objData.associations
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -126,20 +129,47 @@ def select_data(request):
                     'state': True if item_testSet.state == 1 else False,
                     'updateTime': str(item_testSet.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 })
-            dataList.append({
-                'id': i.id,
-                'tableItem': tableItem,
-                'priority': i.priority,
-                'testType': i.testType,
-                'caseName': i.caseName,
-                'pageName': i.page.pageName,
-                'funName': i.fun.funName,
-                'labelId': i.label,
-                'apidynamic': apidynamic,
-                'caseState': i.caseState,
-                'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                'userName': i.uid.userName,
-            })
+            # region 通过率
+            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, reportType='CASE', taskId=i.id)
+            passTotal = obj_db_ApiTestReport.filter(reportStatus='Pass').count()
+            passRate = round(passTotal / obj_db_ApiTestReport.count() * 100, 2)
+            # endregion
+            if associations == 'My':
+                # 当前查询的用户是修改者 或是 创建者
+                if userId == i.uid_id or userId == i.cuid:
+                    dataList.append({
+                        'id': i.id,
+                        'tableItem': tableItem,
+                        'priority': i.priority,
+                        'testType': i.testType,
+                        'caseName': i.caseName,
+                        'pageName': i.page.pageName,
+                        'funName': i.fun.funName,
+                        'labelId': i.label,
+                        'apidynamic': apidynamic,
+                        'caseState': i.caseState,
+                        'passRate': passRate,
+                        'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                        'userName': i.uid.userName,
+                        'createUserName': cls_FindTable.get_userName(i.cuid),
+                    })
+            else:
+                dataList.append({
+                    'id': i.id,
+                    'tableItem': tableItem,
+                    'priority': i.priority,
+                    'testType': i.testType,
+                    'caseName': i.caseName,
+                    'pageName': i.page.pageName,
+                    'funName': i.fun.funName,
+                    'labelId': i.label,
+                    'apidynamic': apidynamic,
+                    'caseState': i.caseState,
+                    'passRate': passRate,
+                    'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                    'userName': i.uid.userName,
+                    'createUserName': cls_FindTable.get_userName(i.cuid),
+                })
         response['TableData'] = dataList
         response['Total'] = obj_db_CaseBaseData.count()
         response['statusCode'] = 2000

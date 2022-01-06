@@ -136,9 +136,10 @@
                             prop="updateTime">
                         </el-table-column>
                         <el-table-column
+                            show-overflow-tooltip
                             label="修改者"
                             align= "center"
-                            width="120px"
+                            width="150px"
                             prop="userName">
                         </el-table-column>
                         <el-table-column
