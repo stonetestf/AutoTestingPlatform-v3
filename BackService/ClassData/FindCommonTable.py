@@ -21,6 +21,7 @@ from ClassData.Logger import Logging as cls_Logging
 from ClassData.Common import Common
 
 import operator
+import time
 
 cls_Common = Common()
 
@@ -164,7 +165,7 @@ class FindTable(cls_Logging):
             perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
             obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, page_id=item_page.id)
             results['dataTable'].append({
-                'id':item_page.id,
+                'id': item_page.id,
                 'pageName': item_page.pageName,
                 'apiTotal': apiTotal,
                 'unitAndCaseTotal': f'{obj_db_CaseBaseData.filter(testType="UnitTest").count()}/'
@@ -234,11 +235,11 @@ class FindTable(cls_Logging):
         return results
 
     # 我的工单
-    def get_my_work(self,sysType,proId,userId):
+    def get_my_work(self, sysType, proId, userId):
         results = {}
         dataTable = []
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
-            ~Q(workState=3),is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
+            ~Q(workState=3), is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
         for i in obj_db_WorkorderManagement:
             obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=i.id).order_by('-createTime')
             if obj_db_HistoryInfo.exists():
@@ -257,9 +258,10 @@ class FindTable(cls_Logging):
             # 创建人是自己 或 被关联人有自己
             bindUser = [item_bindUser.uid_id for item_bindUser in obj_db_WorkBindPushToUsers]
             if userId in bindUser or i.cuid == userId:
+                timeArray = time.strptime(i.updateTime.strftime('%Y-%m-%d %H:%M:%S'), "%Y-%m-%d %H:%M:%S")
                 dataTable.append(
                     {"id": i.id,
-                     "codeId":f'A-{i.id}',
+                     "codeId": f'A-{i.id}',
                      "workSource": i.workSource,
                      "workType": i.workType,
                      "pageNameAndfunName": f"{i.page.pageName}/{i.fun.funName}",
@@ -269,6 +271,7 @@ class FindTable(cls_Logging):
                      "message": message,
                      "workState": i.workState,
                      "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                     "timeStamp": int(time.mktime(timeArray)),  # 用于排序使用,前端str类型的时间不可排序
                      "createUserName": createUserName,
                      })
         results['dataTable'] = dataTable

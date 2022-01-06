@@ -714,6 +714,9 @@ export default {
             if(d.updateTime!=tempTable.updateTime){
               tempTable.updateTime = d.updateTime
             }
+            if(d.timeStamp!=tempTable.timeStamp){
+              tempTable.timeStamp = d.timeStamp
+            }
             if(d.createUserName!=tempTable.createUserName){
               tempTable.createUserName = d.createUserName
             }
@@ -733,9 +736,10 @@ export default {
           }
         });
         //排序
-        // self.RomeData.myWorkTableData.sort(function(p1,p2){
-        //   return p2.updateTime-p1.updateTime
-        // });
+        self.RomeData.myWorkTableData.sort(function(p1,p2){
+          PrintConsole(self.RomeData.myWorkTableData)
+          return p2.timeStamp-p1.timeStamp
+        });
 
 
         var data ={};
@@ -788,6 +792,7 @@ export default {
             obj.message=d.message;
             obj.workState=d.workState;
             obj.updateTime = d.updateTime;
+            obj.timeStamp = d.timeStamp;
             obj.createUserName = d.createUserName;
 
             self.RomeData.myWorkTableData.push(obj);

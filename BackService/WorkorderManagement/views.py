@@ -4,6 +4,7 @@ from django.db import transaction
 
 import json
 import ast
+import time
 
 # Create your db here.
 from login.models import UserTable as db_UserTable
@@ -64,6 +65,7 @@ def select_data(request):
             obj_db_WorkorderManagement = obj_db_WorkorderManagement.filter(fun_id=funId)
             select_db_WorkorderManagement = obj_db_WorkorderManagement[minSize: maxSize]
         for i in select_db_WorkorderManagement:
+            timeArray = time.strptime(i.updateTime.strftime('%Y-%m-%d %H:%M:%S'), "%Y-%m-%d %H:%M:%S")
             obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=i.id).order_by('-createTime')
             if obj_db_HistoryInfo.exists():
                 message = obj_db_HistoryInfo[0].message
@@ -92,6 +94,7 @@ def select_data(request):
                          "message": message,
                          "workState": i.workState,
                          "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                         "timeStamp": int(time.mktime(timeArray)),  # 用于排序使用,前端str类型的时间不可排序
                          "createUserName": createUserName,
                          })
             else:
@@ -106,6 +109,7 @@ def select_data(request):
                      "message": message,
                      "workState": i.workState,
                      "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                     "timeStamp": int(time.mktime(timeArray)),  # 用于排序使用,前端str类型的时间不可排序
                      "createUserName": createUserName,
                      })
 
@@ -417,7 +421,8 @@ def edit_data(request):
                         # 推送列表中加入 工单的创建人,但要先判断当前修改的人是不是创建人,如果是就不添加,如果不是才添加
                         # 修改者==创建者时,不发推送给修改者
                         if userId == obj_db_WorkorderManagement[0].cuid:
-                            pushToList.remove(userId)
+                            if userId in pushToList:
+                                pushToList.remove(userId)
                         else:
                             if obj_db_WorkorderManagement[0].cuid not in pushToList:
                                 pushToList.append(obj_db_WorkorderManagement[0].cuid)
