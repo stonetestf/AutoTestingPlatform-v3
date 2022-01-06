@@ -5,9 +5,22 @@
                 <el-col :span="16">
                     <div style="margin-top:-18px">
                         <el-divider>代码编写区</el-divider>
-                        <el-form-item>
-                            <el-button  type="primary" @click="DataSave()" style="float:right">Save</el-button>
-                        </el-form-item>
+                        <el-row>
+                            <el-col :span="22">
+                                <div style="text-align: center;">
+                                    <!-- <sapn>lipenglo(古雨辰) 最后更新时间:2021-21-12 14:22:22</sapn> -->
+                                    <sapn>{{RomeData.titleInfo}}</sapn>
+                                </div>
+                            </el-col>
+                            <el-col :span="2">
+                                <div style="float:right">
+                                    <el-form-item>
+                                        <el-button  type="primary" @click="DataSave()">Save</el-button>
+                                    </el-form-item>
+                                </div>
+                            </el-col>
+                        </el-row>
+                        
                     </div>
                     <div style="margin-top:10px">
                         <el-form-item>
@@ -57,6 +70,7 @@ export default {
         return {
             loading:false,
             RomeData:{
+                titleInfo:'',
                 codeEditText:'',
                 debugInput:'',
                 codeReturnText:'',
@@ -78,6 +92,7 @@ export default {
                 }
             }).then(res => {
                 if(res.data.statusCode==2000){
+                    self.RomeData.titleInfo = res.data.titleInfo;
                     self.RomeData.codeEditText = res.data.Text;
                 }else{
                     self.$message.error(res.data.errorMsg);
@@ -129,5 +144,7 @@ export default {
 </script>
 
 <style>
-
+.test{
+    text-align: center;
+}
 </style>

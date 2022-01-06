@@ -130,6 +130,7 @@
                         prop="createTime">
                     </el-table-column>
                     <el-table-column
+                        show-overflow-tooltip
                         label="创建者"
                         align= "center"
                         width="150px"

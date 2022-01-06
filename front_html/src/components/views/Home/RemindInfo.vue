@@ -76,6 +76,7 @@
                     prop="editInfo">
                 </el-table-column> -->
                 <el-table-column
+                    show-overflow-tooltip
                     label="推送者"
                     align= "center"
                     width="150px"

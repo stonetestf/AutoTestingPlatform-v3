@@ -48,6 +48,7 @@
                 prop="updateTime">
               </el-table-column>   
               <el-table-column
+                show-overflow-tooltip
                 label="修改者"
                 align= "center"
                 width="150px"

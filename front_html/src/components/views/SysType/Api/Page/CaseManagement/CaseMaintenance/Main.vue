@@ -25,7 +25,7 @@
                             </el-select>
                         </el-form-item>
                         <el-form-item label="测试类型:">
-                            <el-select v-model="SelectRomeData.testType" clearable placeholder="请选择" style="width:120px;">
+                            <el-select v-model="SelectRomeData.testType" clearable placeholder="请选择" style="width:110px;">
                                 <el-option
                                     v-for="item in SelectRomeData.testTypelOption"
                                     :key="item.value"
@@ -35,7 +35,7 @@
                             </el-select>
                         </el-form-item>
                         <el-form-item label="用例标签:">
-                            <el-select v-model="SelectRomeData.caseLabel" clearable placeholder="请选择" style="width:120px;">
+                            <el-select v-model="SelectRomeData.caseLabel" clearable placeholder="请选择" style="width:110px;">
                                 <el-option
                                     v-for="item in SelectRomeData.caseLabelOption"
                                     :key="item.value"
@@ -56,6 +56,16 @@
                         </el-form-item>
                         <el-form-item label="用例名称:">
                             <el-input clearable v-model.trim="SelectRomeData.caseName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="关联对象:">
+                            <el-select v-model="SelectRomeData.associations" clearable placeholder="请选择" style="width:100px;">
+                                <el-option
+                                    v-for="item in SelectRomeData.associationsOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
                         </el-form-item>
                         <el-button type="primary" @click="SelectData()">查询</el-button>
                         <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
@@ -146,6 +156,7 @@
                             </el-table-column>
                             <el-table-column
                                 label="用例名称"
+                                width="300px"
                                 align= "center"
                                 prop="caseName">
                             </el-table-column>
@@ -193,9 +204,9 @@
                             </el-table-column>
                             <el-table-column
                                 label="通过率"
-                                width="70px"
+                                width="80px"
                                 align= "center"
-                                prop="associationMy">
+                                prop="passRate">
                             </el-table-column> 
                             <el-table-column
                                 label="更新时间"
@@ -210,6 +221,13 @@
                                 prop="userName">
                             </el-table-column>
                             <el-table-column
+                                label="创建者"
+                                width="120px"
+                                align= "center"
+                                prop="createUserName">
+                            </el-table-column>
+                            <el-table-column
+                                fixed="right"
                                 align="center"
                                 width="240px">
                             <template slot="header">
@@ -323,6 +341,11 @@ export default {
                     {'label':'弃用','value':'Discard'},
                 ],
                 caseName:'',
+                associations:'',
+                associationsOption:[
+                    {'label':'我','value':'My'},
+                    {'label':'全部','value':''},
+                ],
             },
             RomeData:{
          
@@ -377,6 +400,7 @@ export default {
                     "labelId":self.SelectRomeData.caseLabel,
                     "caseState":self.SelectRomeData.caseState,
                     'caseName':self.SelectRomeData.caseName,
+                    'associations':self.SelectRomeData.associations,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -394,8 +418,10 @@ export default {
                         obj.labelId = d.labelId;
                         obj.apidynamic=d.apidynamic;
                         obj.caseState = d.caseState;
+                        obj.passRate = d.passRate+'%';
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;     
+                        obj.createUserName = d.createUserName;     
 
                         self.tableData.push(obj);
                     });
@@ -422,6 +448,7 @@ export default {
             self.SelectRomeData.caseLabel='';
             self.SelectRomeData.caseState='';
             self.SelectRomeData.caseName='';
+            self.SelectRomeData.associations='';
             self.SelectData();
         },
         GetPageNameOption(){
