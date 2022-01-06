@@ -125,9 +125,9 @@
                         </el-table-column>   
                         <el-table-column
                             label="通过率"
-                            width="70px"
+                            width="80px"
                             align= "center"
-                            prop="associationMy">
+                            prop="passRate">
                         </el-table-column> 
                         <el-table-column
                             label="更新时间"
@@ -140,6 +140,12 @@
                             align= "center"
                             width="120px"
                             prop="userName">
+                        </el-table-column>
+                        <el-table-column
+                            label="创建者"
+                            align= "center"
+                            width="120px"
+                            prop="createUserName">
                         </el-table-column>
                         <el-table-column
                             fixed="right"
@@ -393,9 +399,11 @@ export default {
                         obj.requestUrl = d.requestUrl;
                         obj.apiState =d.apiState;
                         obj.associationMy=d.associationMy;
+                        obj.passRate=d.passRate+'%';
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;
                         obj.createUserId = d.createUserId;        
+                        obj.createUserName = d.createUserName;        
 
                         self.tableData.push(obj);
                     });

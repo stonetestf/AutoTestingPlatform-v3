@@ -207,7 +207,7 @@
                           <el-button
                               size="mini"
                               type="warning"
-                              @click="handleDelete(scope.$index, scope.row)">跳转
+                              @click="handleJump(scope.$index, scope.row)">跳转
                           </el-button>
                         </template>
                         </el-table-column>
@@ -217,7 +217,7 @@
               </el-col>
             </el-row>
           </div>
-          <div ref="dragDiv" class="float-drag-button" v-if="dialog.queue.dialogVisible ==false">
+          <div ref="dragDiv" class="float-drag-button" v-if="dialog.queue.dialogVisible==false && dialog.myWork.dialogVisible==false">
             <span @click="OpenQueueDialog()">队列({{RomeData.queueTableData.length}})</span>
           </div>
       </el-card>
@@ -291,6 +291,13 @@
         </div>
       </el-drawer>
     </template>
+    <template>
+      <dialog-my-work
+          @closeDialog="closeMyWorkDialog" 
+          :isVisible="dialog.myWork.dialogVisible" 
+          :dialogPara="dialog.myWork.dialogPara">
+      </dialog-my-work>
+    </template>
   </div>
 </template>
 
@@ -300,9 +307,11 @@ import * as echarts from 'echarts';
 import store from '../../../../../store/index';
 import {PrintConsole} from "../../../../js/Logger.js";
 
+import DialogMyWork from "../../../WorkorderManagement/WorkorderMaintenance/Editor.vue";
+
 export default {
   components: {
-
+    DialogMyWork
   },
   data() {
     return {
@@ -338,6 +347,13 @@ export default {
         },
         dialog:{
           queue:{
+            dialogVisible:false,
+            dialogPara:{
+              dialogTitle:"",//初始化标题
+              isAddNew:true,//初始化是否新增\修改
+            },
+          },
+          myWork:{
             dialogVisible:false,
             dialogPara:{
               dialogTitle:"",//初始化标题
@@ -737,7 +753,6 @@ export default {
         });
         //排序
         self.RomeData.myWorkTableData.sort(function(p1,p2){
-          PrintConsole(self.RomeData.myWorkTableData)
           return p2.timeStamp-p1.timeStamp
         });
 
@@ -755,6 +770,8 @@ export default {
       };
       if (socket.readyState == WebSocket.OPEN) socket.onopen();       
     },
+
+    //队列
     OpenQueueDialog(){
       let self = this;
       self.dialog.queue.dialogPara={
@@ -767,7 +784,9 @@ export default {
       done();
       this.dialog.queue.dialogVisible =false;
     },
-    SelectMyWorkData(){//我的工单
+
+    //我的工单
+    SelectMyWorkData(){
       let self = this;
       self.RomeData.myWorkTableData= [];
       self.$axios.get('/api/WorkorderManagement/SelectData',{
@@ -804,6 +823,19 @@ export default {
       }).catch(function (error) {
         console.log(error);
       })
+    },
+    handleJump(index,row){
+      PrintConsole('handleJump',row);
+        let self = this;
+        self.dialog.myWork.dialogPara={
+          dialogTitle:"编辑工单",//初始化标题
+          isAddNew:false,//初始化是否新增\修改
+          workId:row.id,
+        }
+        self.dialog.myWork.dialogVisible=true;
+    },
+    closeMyWorkDialog(){
+      this.dialog.myWork.dialogVisible =false;
     },
   }
 };

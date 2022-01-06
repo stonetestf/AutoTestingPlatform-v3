@@ -53,6 +53,14 @@ class FindTable(cls_Logging):
         else:
             return None
 
+    # 根据用户ID,返回用户名称,用于创建者的名称返回
+    def get_userName(self, userId):
+        obj_db_UserTable = db_UserTable.objects.filter(is_del=0, id=userId)
+        if obj_db_UserTable.exists():
+            return obj_db_UserTable[0].userName
+        else:
+            return None
+
     # 根据角色ID，返回角色是不是管理员
     def get_role_is_admin(self, roleId):
         obj_db_BasicRole = db_BasicRole.objects.filter(is_del=0, id=roleId)

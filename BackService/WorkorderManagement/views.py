@@ -302,20 +302,20 @@ def edit_data(request):
                     else:
                         oldData[0]['message'] = ""
                     newData = ast.literal_eval(json.dumps(request.POST))
-                    if workState != obj_db_WorkorderManagement[0].workState and workMessage == \
-                            oldData[0]['message']:
+                    # if workState != obj_db_WorkorderManagement[0].workState:
                         # 0: 待受理, 1: 受理中, 2: 已解决, 3: 已关闭
-                        if workState == 0:
-                            workStateName = '待受理'
-                        elif workState == 1:
-                            workStateName = '受理中'
-                        elif workState == 2:
-                            workStateName = '已解决'
-                        else:
-                            workStateName = '已关闭'
-                        message = f'工单编号:【A-{workId}】 修改状态:{workStateName}'
+                    if workState == 0:
+                        workStateName = '待受理'
+                    elif workState == 1:
+                        workStateName = '受理中'
+                    elif workState == 2:
+                        workStateName = '已解决'
                     else:
-                        message = f'工单编号:【A-{workId}】 {workName}:{workMessage}'
+                        workStateName = '已关闭'
+                    message = f'工单编号:【A-{workId}】【{workStateName}】:{workMessage}'
+                        # message = f'工单编号:【A-{workId}】 修改状态:{workStateName}'
+                    # else:
+                    #     message = f'工单编号:【A-{workId}】 {workName}:{workMessage}'
                     operationInfoId = cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Edit',
                         cls_FindTable.get_pro_name(proId),

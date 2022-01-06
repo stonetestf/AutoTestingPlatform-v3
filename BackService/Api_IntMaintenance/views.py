@@ -25,6 +25,7 @@ from Api_IntMaintenance.models import ApiDynamic as db_ApiDynamic
 from Api_IntMaintenance.models import ApiHistory as db_ApiHistory
 from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
+from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -103,6 +104,21 @@ def select_data(request):
                 associationMy = False
             url = ast.literal_eval(i.requestUrl)
             callIndex = f'url{i.requestUrlRadio}'
+            # region 查询通过率 = 成功总数 / 成功+失败总数 * 100
+            passTotal = 0
+            failTotal = 0
+            errorTotal = 0
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, apiId_id=i.id)
+            for item in obj_db_ApiReportItem:
+                passTotal += item.successTotal
+                failTotal += item.failTotal
+                errorTotal += item.errorTotal
+            allTotal = passTotal+failTotal+errorTotal
+            if allTotal == 0:
+                passRate = 0
+            else:
+                passRate = round(passTotal / allTotal * 100,2)
+            # endregion
             if associations == 'My':
                 if associationMy:
                     dataList.append({
@@ -113,12 +129,14 @@ def select_data(request):
                         'funName': i.fun.funName,
                         'apiName': i.apiName,
                         'requestType': i.requestType,
-                        'requestUrl': url[f'{callIndex}'],
+                        'requestUrl': url[f'{callIndex}'],  # 转换读取json类型的URl
                         'apiState': i.apiState,
-                        'associationMy': associationMy,
+                        'associationMy': associationMy,  # 关联对象
+                        'passRate': passRate,
                         'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                         'userName': i.uid.userName,
-                        'createUserId': [[cls_FindTable.get_roleId(i.cuid), i.cuid]]
+                        'createUserId': [[cls_FindTable.get_roleId(i.cuid), i.cuid]],
+                        'createUserName': cls_FindTable.get_userName(i.cuid)
                     })
             else:
                 dataList.append({
@@ -129,12 +147,14 @@ def select_data(request):
                     'funName': i.fun.funName,
                     'apiName': i.apiName,
                     'requestType': i.requestType,
-                    'requestUrl': url[f'{callIndex}'],
+                    'requestUrl': url[f'{callIndex}'],  # 转换读取json类型的URl
                     'apiState': i.apiState,
-                    'associationMy': associationMy,
+                    'associationMy': associationMy,  # 关联对象
+                    'passRate': passRate,
                     'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                     'userName': i.uid.userName,
-                    'createUserId': [[cls_FindTable.get_roleId(i.cuid), i.cuid]]
+                    'createUserId': [[cls_FindTable.get_roleId(i.cuid), i.cuid]],
+                    'createUserName': cls_FindTable.get_userName(i.cuid)
                 })
         response['TableData'] = dataList
         response['Total'] = obj_db_ApiBaseData.count()
@@ -940,7 +960,7 @@ def edit_data(request):
                                 fileData = item_body.fileList[0]._object_maker__data
                                 fileName = fileData['name']
                                 tempUrl = fileData['url'].replace(
-                                    settings.NGINX_SERVER,f"{settings.BASE_DIR._str}/_DataFiles/")
+                                    settings.NGINX_SERVER, f"{settings.BASE_DIR._str}/_DataFiles/")
                                 dirType = 'Temp' if 'Temp' in tempUrl else 'Case'
                                 if dirType == 'Temp':  # 移动文件
                                     # 创建文件夹
@@ -1079,7 +1099,7 @@ def edit_data(request):
                     # endregion
                     # region 添加接口更变信息,用于用例中提醒使用
                     obj_db_CaseTestSet = db_CaseTestSet.objects.filter(
-                        is_del=0, apiId_id=basicInfo.apiId,is_synchronous=1)
+                        is_del=0, apiId_id=basicInfo.apiId, is_synchronous=1)
                     product_list_to_insert = list()
                     for item_testSet in obj_db_CaseTestSet:
                         obj_db_ApiDynamic = db_ApiDynamic.objects.filter(
