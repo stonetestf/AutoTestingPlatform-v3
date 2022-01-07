@@ -58,7 +58,7 @@
                             <el-input clearable v-model.trim="SelectRomeData.caseName"></el-input>
                         </el-form-item>
                         <el-form-item label="关联对象:">
-                            <el-select v-model="SelectRomeData.associations" clearable placeholder="请选择" style="width:100px;">
+                            <el-select v-model="SelectRomeData.associations" clearable placeholder="请选择" style="width:80px;">
                                 <el-option
                                     v-for="item in SelectRomeData.associationsOption"
                                     :key="item.value"

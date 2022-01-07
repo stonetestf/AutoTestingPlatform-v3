@@ -119,7 +119,7 @@
                             <el-table-column
                                 fixed="right"
                                 align="center"
-                                width="230px">
+                                width="240px">
                             <template slot="header">
                                 <el-button-group>
                                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
@@ -137,9 +137,10 @@
                             <template slot-scope="scope" style="width:100px">
                                 <el-button-group>
                                     <el-button
+                                        :loading="buttonLoading"
                                         size="mini"
                                         type="success"
-                                        @click="OpenRunTypeDialog(scope.$index, scope.row)">RunTask
+                                        @click="runTask(scope.$index, scope.row)">RunTask
                                     </el-button>
                                     <el-button
                                         size="mini"
@@ -201,6 +202,7 @@ export default {
     data() {
         return {
             loading:false,
+            buttonLoading:false,
             multipleSelection:[],
             SelectRomeData:{
                 taskName:'',
@@ -392,6 +394,25 @@ export default {
                 self.dialog.historyInfo.dialogVisible=true;
             }
         },
+        runTask(index,row){
+            let self = this;
+            self.buttonLoading=true;
+            self.$axios.post('/api/ApiTimingTask/ExecuteTask',Qs.stringify({
+                'taskId':row.id,
+            })).then(res => {
+            if(res.data.statusCode ==2001){
+                self.$message.success('定时任务已启动,任务ID:'+res.data.redisKey+',请稍后在测试报告页面查看结果!');
+                self.buttonLoading=false;
+            }
+            else{
+                self.$message.error('定时任务启动失败:'+ res.data.errorMsg);
+                self.buttonLoading=false;
+            }
+            }).catch(function (error) {
+                console.log(error);
+                self.buttonLoading=false;
+            })
+        }
     }
 };
 </script>

@@ -132,7 +132,10 @@ def select_data(request):
             # region 通过率
             obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, reportType='CASE', taskId=i.id)
             passTotal = obj_db_ApiTestReport.filter(reportStatus='Pass').count()
-            passRate = round(passTotal / obj_db_ApiTestReport.count() * 100, 2)
+            if obj_db_ApiTestReport.count() == 0:
+                passRate = 0
+            else:
+                passRate = round(passTotal / obj_db_ApiTestReport.count() * 100, 2)
             # endregion
             if associations == 'My':
                 # 当前查询的用户是修改者 或是 创建者

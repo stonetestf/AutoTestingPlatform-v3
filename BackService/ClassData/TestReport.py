@@ -3,6 +3,7 @@ from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 from Api_TestReport.models import ApiReport as db_ApiReport
 from Api_TestReport.models import ApiQueue as db_ApiQueue
+from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 
 import ast
 import json
@@ -146,7 +147,7 @@ class ApiReport(cls_Logging):
         for i in db_db_ApiReportItem:
             testReportRunningTime += float(i.runningTime)
         db_ApiTestReport.objects.filter(id=testReportId).update(
-            reportStatus=reportStatus, runningTime=testReportRunningTime, updateTime=cls_Common.get_date_time()
+            reportStatus=reportStatus, runningTime=round(testReportRunningTime,2), updateTime=cls_Common.get_date_time()
         )
 
     # 创建队列
@@ -303,10 +304,42 @@ class ApiReport(cls_Logging):
                         'reportStatus': reportStatus,
                     })
 
-                results['state'] = True
-                results['firstList'] = firstList
-            else:
-                pass
+            elif reportType=="TASK":
+                obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+                    is_del=0, testReport_id=testReportId).order_by('updateTime')
+                # 先筛选出当前报告的用例ID列表
+                caseList = [i.ctbId for i in obj_db_ApiReportItem]
+                setCaseList = list(set(caseList))
+                setCaseList.sort(key=caseList.index)
+                for item_caseId in setCaseList:
+                    select_db_ApiReportItem = obj_db_ApiReportItem.filter(ctbId=item_caseId)
+                    passTotal = 0
+                    failTotal = 0
+                    errorTotal = 0
+                    for i in select_db_ApiReportItem:
+                        passTotal += i.successTotal
+                        failTotal += i.failTotal
+                        errorTotal += i.errorTotal
+                    if passTotal + failTotal + errorTotal == 0:
+                        reportStatus = 'Error'
+                    elif errorTotal >= 1:
+                        reportStatus = 'Error'
+                    elif failTotal >= 1:
+                        reportStatus = 'Fail'
+                    else:
+                        reportStatus = 'Pass'
+                    obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_caseId)
+                    if obj_db_CaseBaseData.exists():
+                        caseName = obj_db_CaseBaseData[0].caseName
+                    else:
+                        caseName = ""
+                    firstList.append({
+                        'id': item_caseId,
+                        'name': caseName,
+                        'reportStatus': reportStatus,
+                    })
+            results['state'] = True
+            results['firstList'] = firstList
         else:
             results['state'] = False
             results['errorMsg'] = "当前选择的报告数据缺失!"

@@ -788,6 +788,7 @@ export default {
         isAddNew:true,
       }
       self.dialog.queue.dialogVisible=true;
+      self.SelectProQueue();//项目队列
     },
     closeQueueDialog(done){
       done();

@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'DeleteData', views.delete_data, name='DeleteData'),
     url(r'SelectHistory', views.select_history, name='SelectHistory'),
     url(r'RestorData', views.restor_data, name='RestorData'),
+    url(r'ExecuteTask', views.execute_task, name='ExecuteTask'),
 ]

@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'loadReportData', views.load_report_data, name='loadReportData'),
     url(r'LoadReportApi', views.load_report_api, name='LoadReportApi'),
     # url(r'RestorData', views.restor_data, name='RestorData'),
+    url(r'loadReportCase', views.load_report_case, name='loadReportCase'),
 ]

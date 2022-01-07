@@ -22,6 +22,8 @@ from Api_CaseMaintenance.models import CaseApiExtract as db_CaseApiExtract
 from Api_CaseMaintenance.models import CaseApiValidate as db_CaseApiValidate
 from Api_CaseMaintenance.models import CaseApiOperation as db_CaseApiOperation
 
+from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
+
 # Create reference here.
 from ClassData.Common import Common as cls_Common
 from ClassData.Logger import Logging as cls_Logging
@@ -412,7 +414,6 @@ class RequstOperation(cls_Logging, cls_Common):
             results['state'] = True
         return results
 
-    # region 核心-单接口的执行和获取
     # 核心-单-获取请求的数据
     def get_api_data(self, apiId, environmentId):
         results = {}
@@ -837,8 +838,6 @@ class RequstOperation(cls_Logging, cls_Common):
 
         return results
 
-    # endregion
-
     # 核心-用例-获取请求的数据
     def get_case_data(self, caseId, environmentId):
         results = {
@@ -1019,8 +1018,9 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-用例执行
-    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId):
+    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId,ctbId=None):
         results = {
+            'state': True,
             'itemResults': []
         }
         redisData = {}
@@ -1056,7 +1056,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 }
                 # 创建2级测试报告
                 createReportItems = cls_ApiReport.create_report_items(
-                    testReportId, item_request['apiId'], item_request['testName'])
+                    testReportId, item_request['apiId'], item_request['testName'],ctbId=ctbId)
                 if createReportItems['state']:
                     reportItemId = createReportItems['reportItemId']
                     itemResults['request']['environmentUrl'] = environmentUrl
@@ -1190,10 +1190,31 @@ class RequstOperation(cls_Logging, cls_Common):
                 else:
                     results['errorMsg'] = createReportItems['errorMsg']
                     results['state'] = False
+                    break
                     # return results
         else:
             results['errorMsg'] = getCaseData['errorMsg']
             results['state'] = False
+        return results
+
+    # 核心-定时任务执行
+    def excute_task(self, redisKey, testReportId, taskId,taskName,environmentId,userId):
+        results = {
+            'state': True,
+            'itemResults': []
+        }
+        obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
+            is_del=0,timingTask_id=taskId).order_by('index')
+        for item_taskTestSet in obj_db_ApiTimingTaskTestSet:
+            remindLabel = f"【定时任务:{taskName}>用例:{item_taskTestSet.case.caseName}】:"  # 推送的标识
+            caseId = item_taskTestSet.case_id
+            executeCase = self.execute_case(
+                remindLabel, redisKey, testReportId, caseId, environmentId, userId,ctbId=caseId)
+            if executeCase['state']:
+                results['itemResults'].append(executeCase['itemResults'])
+            else:
+                results['errorMsg'] = executeCase['errorMsg']
+                break
         return results
 
     #  region 接口差异的对比 专属

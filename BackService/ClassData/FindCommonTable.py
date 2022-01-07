@@ -164,11 +164,14 @@ class FindTable(cls_Logging):
             obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId, page_id=item_page.id)
             apiTotal = obj_db_ApiBaseData.count()  # 接口数量
             # region 本周新增
-            weekTotal = obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
+            weekTotal = 0  # 本周新增
+            weekTotal += obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
+            weekTotal += db_CaseBaseData.objects.filter(
+                pid_id=proId,page_id=item_page.id,createTime__gte=staTime, createTime__lte=endTime).count()
             # endregion
             # region 本周执行
             performWeekTotal = db_ApiQueue.objects.filter(
-                pid_id=proId, page_id=item_page.id, updateTime__gte=staTime, updateTime__lte=endTime).count()
+                pid_id=proId, page_id__in=[item_page.id,None], updateTime__gte=staTime, updateTime__lte=endTime).count()
             # endregion
             perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
             obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, page_id=item_page.id)

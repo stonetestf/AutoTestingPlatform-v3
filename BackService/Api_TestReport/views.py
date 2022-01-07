@@ -153,6 +153,47 @@ def load_report_data(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 点击1层列表加载2层列表
+def load_report_case(request):
+    response = {}
+    secondList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        # reportType = objData.reportType
+        testReportId = objData.testReportId
+        caseId = objData.caseId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_case', errorMsg)
+    else:
+        obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+            is_del=0,testReport_id=testReportId,ctbId=caseId).order_by('updateTime')
+        for i in obj_db_ApiReportItem:
+            passTotal = i.successTotal
+            failTotal = i.failTotal
+            errorTotal = i.errorTotal
+            if passTotal + failTotal + errorTotal == 0:
+                reportStatus = 'Error'
+            elif errorTotal >= 1:
+                reportStatus = 'Error'
+            elif failTotal >= 1:
+                reportStatus = 'Fail'
+            else:
+                reportStatus = 'Pass'
+            secondList.append({
+                'id':i.id,
+                'name':i.apiName,
+                'reportStatus':reportStatus
+            })
+        response['secondList'] = secondList
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
 @require_http_methods(["GET"])
 def load_report_api(request):
     response = {}
