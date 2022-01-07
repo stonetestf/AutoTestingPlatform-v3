@@ -1754,7 +1754,8 @@ def restor_data(request):
         if obj_db_ApiHistory.exists():
             historyCode = obj_db_ApiHistory[0].onlyCode
             # 恢复时是管理员或是 当前项目的创建人时才可恢复
-            if is_admin or obj_db_ApiHistory[0].pid.cuid == userId:
+            if is_admin or obj_db_ApiHistory[0].api.cuid == userId:
+            # if is_admin or obj_db_ApiHistory[0].pid.cuid == userId:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=obj_db_ApiHistory[0].pid_id)

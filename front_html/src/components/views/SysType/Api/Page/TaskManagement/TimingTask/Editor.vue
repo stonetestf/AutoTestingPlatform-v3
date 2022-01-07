@@ -206,7 +206,7 @@
                 </el-card>
                 <el-button style="margin-top: 12px;" icon="el-icon-arrow-left" type="primary" v-if="StepsRomeData.disPlay_Previous" @click="previous">上一步</el-button>
                 <el-button style="margin-top: 12px;" type="primary" v-if="StepsRomeData.disPlay_Next" @click="next">下一步<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="SaveData()">保存</el-button>
+                <el-button style="margin-top: 12px;" type="success" :loading="loading" v-if="StepsRomeData.disPlay_Save" @click="SaveData()">保存</el-button>
             </el-drawer>
         </template>
         <template>
@@ -331,6 +331,7 @@ export default {
                 this.isAddNew = newval.isAddNew;
 
                 if(newval.isAddNew==false){//进入编辑状态
+                    this.BasicRomeData.taskId = newval.taskId;
                     this.LoadTaskData(newval.taskId);
                 }
             }
@@ -418,6 +419,7 @@ export default {
         ClearBasicRomeData(){
             let self = this;
             self.resetForm('BasicRomeData');
+            self.loading=false;
             self.BasicRomeData.taskName='';
             self.BasicRomeData.environmentId='';
             self.BasicRomeData.timingConfig='';
@@ -543,7 +545,6 @@ export default {
                 }
             }).catch(function (error) {
                 console.log(error);
-                self.loading=false;
             })
         },
         SaveData(){
@@ -568,33 +569,32 @@ export default {
                             self.returnToMain();
                         
                         }else{
-                            self.$message.error('保存失败'+res.data.errorMsg);
+                            self.$message.error('保存定时任务失败'+res.data.errorMsg);
                         }
                     }).catch(function (error) {
                         console.log(error);
                     })
                 }else{
-                    self.$axios.post('/api/ApiCaseMaintenance/EditData',{
+                    self.$axios.post('/api/ApiTimingTask/EditData',{
                        'BasicInfo':{
-                            'caseId':self.BasicRomeData.caseId,
+                            'taskId':self.BasicRomeData.taskId,
                             'proId':self.$cookies.get('proId'),
-                            'pageId':self.BasicRomeData.pageId,
-                            'funId':self.BasicRomeData.funId,
+                            'taskName':self.BasicRomeData.taskName,
                             'environmentId':self.BasicRomeData.environmentId,
+                            'timingConfig':self.BasicRomeData.timingConfig,
                             'priorityId':self.BasicRomeData.priorityId,
-                            'labelId':self.BasicRomeData.labelId,
-                            'testType':self.BasicRomeData.testType,
-                            'caseName':self.BasicRomeData.caseName,
-                            'caseState':self.BasicRomeData.caseState,
+                            'taskStatus':self.BasicRomeData.taskStatus,
+                            'pushTo':self.BasicRomeData.pushTo,
+                            'remarks':self.BasicRomeData.remarks,
                         },
-                        'TestSet':self.TestSetRomeData.tableData
+                        'TestSet':self.SortCaseRomeData.tableData
                     }).then(res => {
                         if(res.data.statusCode==2002){
-                            self.$message.success('修改用例成功!');
+                            self.$message.success('修改定时任务成功!');
                             self.returnToMain();
                         
                         }else{
-                            self.$message.error('修改用例失败'+res.data.errorMsg);
+                            self.$message.error('修改定时任务失败'+res.data.errorMsg);
                         }
                     }).catch(function (error) {
                         console.log(error);
@@ -627,7 +627,7 @@ export default {
                             self.BasicRomeData.remarks = res.data.dataTable.basicInfo.remarks;
                         });
 
-                        // self.TestSetRomeData.tableData = res.data.dataTable.testSet;
+                        self.SortCaseRomeData.tableData = res.data.dataTable.testSet;
                         self.loading=false;
                     });
                 }else{

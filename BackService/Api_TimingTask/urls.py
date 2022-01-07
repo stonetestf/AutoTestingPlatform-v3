@@ -7,4 +7,8 @@ urlpatterns = [
     url(r'CharmTaskData', views.charm_task_data, name='CharmTaskData'),
     url(r'SaveData', views.save_data, name='SaveData'),
     url(r'LoadTaskData', views.load_task_data, name='LoadTaskData'),
+    url(r'EditData', views.edit_data, name='EditData'),
+    url(r'DeleteData', views.delete_data, name='DeleteData'),
+    url(r'SelectHistory', views.select_history, name='SelectHistory'),
+    url(r'RestorData', views.restor_data, name='RestorData'),
 ]

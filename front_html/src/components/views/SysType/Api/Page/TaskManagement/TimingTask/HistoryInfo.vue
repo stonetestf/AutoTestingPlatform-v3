@@ -1,0 +1,241 @@
+<template>
+    <el-dialog
+        :title="dialogTitle"
+        :visible.sync="dialogVisible"
+        :close-on-click-modal=false
+        :before-close="dialogClose"
+        width="1300px">
+        <el-form :inline="true" v-if="SelectRomeData.disPlay"  method="post">
+            <el-form-item label="任务名称:">
+                <el-input clearable v-model.trim="SelectRomeData.taskName"></el-input>
+            </el-form-item>
+            <el-button type="primary" @click="SelectData()">查询</el-button>
+            <el-button type="info"  @click="ClearRomeData()">重置</el-button>
+        </el-form>
+        <el-table
+            v-loading="loading"
+            :data="tableData"
+            height="600px"
+            border>
+            <el-table-column 
+                label="ID"  
+                width="80" 
+                align="center"
+                prop="id">
+            </el-table-column>
+            <el-table-column 
+                label="详情" 
+                width="50px"
+                type="expand">
+                <template slot-scope="props">
+                    <el-form v-if="props.row.tableItem.length!=0">
+                        <el-table
+                            :data="props.row.tableItem"
+                            border>
+                            <el-table-column
+                                label="Json">
+                                <template slot-scope="scope">
+                                    <el-input type="textarea" 
+                                        readonly
+                                        resize="none"
+                                        v-model="scope.row.restoreData"
+                                        :autosize="{ minRows: 20, maxRows: 20}">
+                                    </el-input>
+                                    <!-- <div style="white-space: pre-line;" v-html="scope.row.restoreData"></div> -->
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-form>
+                </template>
+            </el-table-column>
+            <el-table-column
+                label="任务名称"
+                align= "center"
+                prop="taskName">
+            </el-table-column>
+            <el-table-column
+                label="操作过程"
+                width="150px"
+                align= "center">
+                    <template slot-scope="scope">
+                        <el-tag type="danger" v-if="scope.row.operationType=='Delete'">删除</el-tag>
+                        <el-tag type="success" v-else-if="scope.row.operationType=='Add'">新增</el-tag>
+                        <el-tag type="warning" v-else-if="scope.row.operationType=='Edit'">修改</el-tag>
+                        <!-- <el-tag type="warning" v-else>修改</el-tag> -->
+                    </template>
+            </el-table-column>
+            <el-table-column
+                label="修改时间"
+                width="160px"
+                align= "center"
+                prop="createTime">
+            </el-table-column>
+            <el-table-column
+                label="修改者"
+                width="150px"
+                align= "center"
+                prop="userName">
+            </el-table-column>
+            <el-table-column
+                label="操作"
+                align="center"
+                width="100px">
+                <template slot-scope="scope" style="width:100px">
+                    <el-button
+                        v-if="scope.row.operationType!='Add'"
+                        size="mini"
+                        type="warning"
+                        @click="handleRestor(scope.$index, scope.row)">恢复
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </el-dialog>
+</template>
+
+<script>
+import Qs from 'qs';
+import {PrintConsole} from "../../../../../../js/Logger.js";
+
+export default {
+    data() {
+        return {
+            loading:false,
+            dialogTitle:"",
+            dialogVisible:false,
+            tableData:[],
+            SelectRomeData:{
+                taskName:'',
+                disPlay:false,
+            },
+            RomeData:{
+                taskId:'',
+            },
+
+          
+        };
+    },
+    mounted(){
+        
+
+    },
+    computed:{//计算属性
+
+    },
+    props:[//main页面在引用editor时 必须声明所需要调用的属性
+        'isVisible','dialogPara'
+    ],
+    watch:{//当我们输入值后，wacth监听每次修改变化的新值，然后计算输出值
+        isVisible:{//用于监听父页面的isVisible，true时就弹出窗口
+            handler(newval,oldval)
+            {
+                this.dialogVisible=newval;  
+            }
+        },
+        dialogPara:{
+            handler(newval,oldval)
+            {
+                PrintConsole(newval);
+                this.ClearRomeData();
+                this.dialogTitle = newval.dialogTitle;
+                if(newval.taskId){//有id时就隐藏查询框
+                    this.SelectRomeData.disPlay=false;
+                    this.RomeData.taskId = newval.taskId;
+                   
+                }else{
+                    this.SelectRomeData.disPlay=true;
+                }
+                
+                this.SelectData();
+            }
+        },
+    },
+    methods: {
+        dialogClose(done){//用于调用父页面方法
+            this.$emit('closeDialog');
+        },
+        ClearRomeData(){
+            let self = this;
+            self.tableData=[];
+            self.RomeData.taskId='';
+            self.SelectRomeData.taskName='';  
+        },
+        SelectData(){
+            let self = this;
+            self.loading=true;
+            self.tableData= [];
+            self.$axios.get('/api/ApiTimingTask/SelectHistory',{
+                params:{
+                    'taskId':self.RomeData.taskId,
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.id =d.id;
+                        obj.taskName = d.taskName;
+                        obj.operationType=d.operationType;
+                        obj.tableItem=d.tableItem;
+                        obj.createTime = d.createTime;
+                        obj.userName = d.userName;
+                     
+                        self.tableData.push(obj);
+                    });
+                    self.loading=false;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
+                }
+                // console.log(self.tableData);
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+                self.dialogClose();
+            })
+        },
+        handleRestor(index,row){
+            let message = ""
+            if(row.operationType=='Delete'){
+                message = "注意:此恢复会自动找最后一次操作的数据进行恢复,如最后一次无操作时将会恢复失败!如恢复的定时任务中有已被删除的用例时,该条用例不会被恢复在测试集中,请确定是否恢复?"
+            }else{
+                message = "注意:如恢复的定时任务中有已被删除的用例时,该条用例不会被恢复在测试集中,请确定是否恢复?"
+            }
+            this.$confirm(message, '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                   this.RestorData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        RestorData(id){//恢复数据
+            let self = this;
+            self.loading=true;
+            self.$axios.post('/api/ApiTimingTask/RestorData',Qs.stringify({
+                "id":id,
+            })).then(res => {
+                if(res.data.statusCode==2002){
+                    self.$message.success('定时任务恢复成功!');
+                    self.loading=false;
+                    self.dialogVisible = false;//关闭新增弹窗
+                    self.$emit('closeDialog');
+                    self.$emit('Succeed');//回调查询
+                }
+                else{
+                    self.$message.error('定时任务失败:'+res.data.errorMsg);
+                    self.loading=false;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+            })
+        }
+    }
+};
+</script>
+
+<style>
+
+</style>

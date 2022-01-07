@@ -17,16 +17,28 @@ class ApiTimingTask(models.Model):
     cuid = models.IntegerField("创建人", null=False)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     is_del = models.IntegerField("是否删除(0:删除,1:不删除)", null=False)
+    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiTimingTaskTestSet(models.Model):  # 用例排序数据
-    timingTask = models.ForeignKey(to='ApiTimingTask', to_field='id', on_delete=models.CASCADE)  # 项目id
+    timingTask = models.ForeignKey(to='ApiTimingTask', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("排序", null=False)
     case = models.ForeignKey(to='Api_CaseMaintenance.CaseBaseData', to_field='id', on_delete=models.CASCADE)
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     is_del = models.IntegerField("是否删除(0:删除,1:不删除)", null=False)
+    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+
+
+class ApiTimingTaskHistory(models.Model):  # 历史记录，恢复使用
+    timingTask = models.ForeignKey(to='ApiTimingTask', to_field='id', on_delete=models.CASCADE)
+    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    # 如果是删除的话，在恢复数据时取上一个操作的数据
+    operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)
+    restoreData = models.TextField('恢复数据,用来存放基础数据', null=True)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
 
 
 class ApiTimingTaskRunLog(models.Model):  # 运行记录

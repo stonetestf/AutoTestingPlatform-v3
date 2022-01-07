@@ -10,6 +10,7 @@ import ast
 from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
+from Api_TimingTask.models import ApiTimingTaskHistory as db_ApiTimingTaskHistory
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -154,7 +155,7 @@ def charm_task_data(request):
                     'updateTime': cls_Common.get_date_time()})
             else:
                 if obj_db_ApiTimingTask.exists():
-                    if basicInfo.caseId == obj_db_ApiTimingTask[0].id:
+                    if basicInfo.taskId == obj_db_ApiTimingTask[0].id:
                         pass
                     else:
                         dataList.append({
@@ -172,7 +173,7 @@ def charm_task_data(request):
                     'updateTime': cls_Common.get_date_time()})
             else:
                 if obj_db_ApiTimingTask.exists():
-                    if basicInfo.caseId == obj_db_ApiTimingTask[0].id:
+                    if basicInfo.taskId == obj_db_ApiTimingTask[0].id:
                         pass
                     else:
                         dataList.append({
@@ -211,6 +212,7 @@ def save_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
         basicInfo = objData.BasicInfo
         testSet = objData.TestSet
+        historyCode = cls_Common.generate_only_code()  # 生成历史记录唯一码
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -236,8 +238,9 @@ def save_data(request):
                     # region 保存基本信息
                     save_db_ApiTimingTask = db_ApiTimingTask.objects.create(
                         pid_id=basicInfo.proId, taskName=basicInfo.taskName, environment_id=basicInfo.environmentId,
-                        timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,remarks=basicInfo.remarks,
-                        pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, cuid=userId, uid_id=userId, is_del=0
+                        timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId, remarks=basicInfo.remarks,
+                        pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, cuid=userId, uid_id=userId, is_del=0,
+                        historyCode=historyCode
                     )
                     # endregion
                     # region 测试集
@@ -248,14 +251,25 @@ def save_data(request):
                             case_id=item_testSet.id,
                             state=1 if item_testSet.state else 0,
                             uid_id=userId,
-                            is_del=0
+                            is_del=0,
+                            historyCode=historyCode,
                         )
+                    # endregion
+                    # region 历史记录
+                    db_ApiTimingTaskHistory.objects.create(
+                        timingTask_id=save_db_ApiTimingTask.id,
+                        historyCode=historyCode,
+                        operationType='Add',
+                        restoreData=responseData,
+                        uid_id=userId
+                    )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:
                 response['statusCode'] = 2001
     return JsonResponse(response)
+
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
@@ -280,170 +294,24 @@ def load_task_data(request):
                 'timingConfig': obj_db_ApiTimingTask[0].timingConfig,
                 'priorityId': obj_db_ApiTimingTask[0].priority,
                 'taskStatus': obj_db_ApiTimingTask[0].taskStatus,
-                'pushTo':ast.literal_eval(obj_db_ApiTimingTask[0].pushTo) if obj_db_ApiTimingTask[0].pushTo else [],
-                'remarks':obj_db_ApiTimingTask[0].remarks,
+                'pushTo': ast.literal_eval(obj_db_ApiTimingTask[0].pushTo) if obj_db_ApiTimingTask[0].pushTo else [],
+                'remarks': obj_db_ApiTimingTask[0].remarks,
             }
             # endregion
             # region 测试集
             testSet = []
-            # obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
-            # for item_testSet in obj_db_CaseTestSet:
-            #     settingParams = False
-            #     synchronous = True if item_testSet.is_synchronous == 1 else False
-            #     requestData = {
-            #         'requestType': 'GET',
-            #         'requestUrl': '',
-            #         'headers': [],
-            #         'params': [],
-            #         'body': {
-            #             'requestSaveType': 'form-data',
-            #             'formData': [],
-            #             'rawValue': '',
-            #             'jsonValue': '',
-            #             'deleteFileList': [],
-            #         },
-            #         'extract': [],
-            #         'validate': [],
-            #         'preOperation': [],
-            #         'rearOperation': [],
-            #     }
-            #     obj_db_CaseApiBase = db_CaseApiBase.objects.filter(is_del=0, testSet_id=item_testSet.id)
-            #     if obj_db_CaseApiBase.exists():
-            #         requestData['requestType'] = obj_db_CaseApiBase[0].requestType
-            #         requestData['requestUrl'] = obj_db_CaseApiBase[0].requestUrl
-            #         requestData['body']['requestSaveType'] = obj_db_CaseApiBase[0].bodyRequestSaveType
-            #         if obj_db_CaseApiBase[0].requestUrl:
-            #             settingParams = True
-            #         # region headers
-            #         obj_db_CaseApiHeaders = db_CaseApiHeaders.objects.filter(
-            #             is_del=0, testSet_id=item_testSet.id).order_by('index')
-            #         for item_headers in obj_db_CaseApiHeaders:
-            #             requestData['headers'].append({
-            #                 'index': item_headers.index,
-            #                 'state': True if item_headers.state == 1 else False,
-            #                 'key': item_headers.key,
-            #                 'value': item_headers.value,
-            #                 'remarks': item_headers.remarks,
-            #             })
-            #         # endregion
-            #         # region params
-            #         obj_db_CaseApiParams = db_CaseApiParams.objects.filter(
-            #             is_del=0, testSet_id=item_testSet.id).order_by('index')
-            #         for item_params in obj_db_CaseApiParams:
-            #             requestData['params'].append({
-            #                 'index': item_params.index,
-            #                 'state': True if item_params.state == 1 else False,
-            #                 'key': item_params.key,
-            #                 'value': item_params.value,
-            #                 'remarks': item_params.remarks,
-            #             })
-            #         # endregion
-            #         # region body
-            #         obj_db_CaseApiBody = db_CaseApiBody.objects.filter(
-            #             is_del=0, testSet_id=item_testSet.id).order_by('index')
-            #         if obj_db_CaseApiBase[0].bodyRequestSaveType == 'form-data':
-            #             for item_body in obj_db_CaseApiBody:
-            #                 if item_body.paramsType == 'Text':
-            #                     fileList = []
-            #                 else:
-            #                     splitStr = item_body.filePath.split('/')
-            #                     name = splitStr[-1]
-            #                     url = f"{settings.NGINX_SERVER}CaseFile/{caseId}/{item_testSet.id}/{name}"
-            #                     fileList = [
-            #                         {'name': name, 'url': url}
-            #                     ]
-            #                 requestData['body']['formData'].append({
-            #                     'index': item_body.index,
-            #                     'state': True if item_body.state == 1 else False,
-            #                     'key': item_body.key,
-            #                     'paramsType': item_body.paramsType,
-            #                     'value': item_body.value,
-            #                     'fileList': fileList,
-            #                     'remarks': item_body.remarks,
-            #                 })
-            #         elif obj_db_CaseApiBase[0].bodyRequestSaveType == 'raw':
-            #             requestData['body']['rawValue'] = obj_db_CaseApiBody[0].value
-            #         elif obj_db_CaseApiBase[0].bodyRequestSaveType == 'json':
-            #             requestData['body']['jsonValue'] = obj_db_CaseApiBody[0].value
-            #         # endregion
-            #         # region Extract
-            #         obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(
-            #             is_del=0, testSet_id=item_testSet.id).order_by('index')
-            #         for item_extract in obj_db_CaseApiExtract:
-            #             requestData['extract'].append({
-            #                 'index': item_extract.index,
-            #                 'state': True if item_extract.state == 1 else False,
-            #                 'key': item_extract.key,
-            #                 'value': item_extract.value,
-            #                 'remarks': item_extract.remarks,
-            #             })
-            #         # endregion
-            #         # region Validate
-            #         obj_db_CaseApiValidate = db_CaseApiValidate.objects.filter(
-            #             is_del=0, testSet_id=item_testSet.id).order_by('index')
-            #         for item_validate in obj_db_CaseApiValidate:
-            #             requestData['validate'].append({
-            #                 'index': item_validate.index,
-            #                 'state': True if item_validate.state == 1 else False,
-            #                 'checkName': item_validate.checkName,
-            #                 'validateType': item_validate.validateType,
-            #                 'valueType': item_validate.valueType,
-            #                 'expectedResults': item_validate.expectedResults,
-            #                 'remarks': item_validate.remarks,
-            #             })
-            #         # endregion
-            #         # region 前置操作
-            #         obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(
-            #             is_del=0, testSet_id=item_testSet.id, location='Pre').order_by('index')
-            #         for item_preOperation in obj_db_CaseApiOperation:
-            #             requestData['preOperation'].append({
-            #                 'id': item_preOperation.index,
-            #                 'index': item_preOperation.index,
-            #                 'state': True if item_preOperation.state == 1 else False,
-            #                 'operationType': item_preOperation.operationType,
-            #                 'methodsName': item_preOperation.methodsName,
-            #                 'dataBase': item_preOperation.dataBaseId,
-            #                 'sql': item_preOperation.sql,
-            #                 'remarks': item_preOperation.remarks,
-            #             })
-            #         # endregion
-            #         # region 后置操作
-            #         obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(
-            #             is_del=0, testSet_id=item_testSet.id, location='Rear').order_by('index')
-            #         for item_rearOperation in obj_db_CaseApiOperation:
-            #             requestData['rearOperation'].append({
-            #                 'id': item_rearOperation.index,
-            #                 'index': item_rearOperation.index,
-            #                 'state': True if item_rearOperation.state == 1 else False,
-            #                 'operationType': item_rearOperation.operationType,
-            #                 'methodsName': item_rearOperation.methodsName,
-            #                 'dataBase': item_rearOperation.dataBaseId,
-            #                 'sql': item_rearOperation.sql,
-            #                 'remarks': item_rearOperation.remarks,
-            #             })
-            #         # endregion
-            #     obj_db_ApiDynamic = db_ApiDynamic.objects.filter(
-            #         case_id=caseId, apiId_id=item_testSet.apiId_id, is_del=0, is_read=0)
-            #     # 0 无更变、1 已更变、2 已知晓
-            #     if obj_db_ApiDynamic.exists():
-            #         if synchronous:  # 只对开启同步功能的接口 提示接口动态，未开始同步的接口因为是独立的参数可不提醒
-            #             apidynamic = 1
-            #         else:
-            #             apidynamic = 0
-            #     else:
-            #         apidynamic = 0
-            #     testSet.append({
-            #         'id': item_testSet.pluralIntId,
-            #         'apiId': item_testSet.apiId_id,
-            #         'state': True if item_testSet.state == 1 else False,
-            #         'apiName': item_testSet.apiId.apiName,
-            #         'apiState': item_testSet.apiId.apiState,
-            #         'testName': item_testSet.testName,
-            #         'is_synchronous': synchronous,
-            #         'settingParams': settingParams,
-            #         'apidynamic': apidynamic,
-            #         'request': requestData,
-            #     })
+            obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
+                is_del=0, timingTask_id=taskId).order_by('index')
+            for item_testSet in obj_db_ApiTimingTaskTestSet:
+                testSet.append({
+                    'id': item_testSet.case_id,
+                    'testType': item_testSet.case.testType,
+                    'caseName': item_testSet.case.caseName,
+                    'pageName': item_testSet.case.page.pageName,
+                    'funName': item_testSet.case.fun.funName,
+                    'caseState': item_testSet.case.caseState,
+                    'state': True if item_testSet.state == 1 else False
+                })
             # endregion
             response['dataTable'] = {
                 'basicInfo': basicInfo,
@@ -452,4 +320,336 @@ def load_task_data(request):
             response['statusCode'] = 2000
         else:
             response['errorMsg'] = "当前选择的数据不存在,请刷新后在重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def edit_data(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
+        basicInfo = objData.BasicInfo
+        testSet = objData.TestSet
+        taskId = basicInfo.taskId
+        historyCode = cls_Common.generate_only_code()  # 生成历史记录唯一码
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TimingTask', 'edit_data', errorMsg)
+    else:
+        obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(is_del=0, id=taskId)
+        if obj_db_ApiTimingTask.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加操作信息
+                    # region 查询以前的数据
+                    oldTestSet = []
+                    obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
+                        is_del=0, timingTask_id=taskId).order_by('index')
+                    for item_testSet in obj_db_ApiTimingTaskTestSet:
+                        oldTestSet.append({
+                            'id': item_testSet.case_id,
+                            'testType': item_testSet.case.testType,
+                            'caseName': item_testSet.case.caseName,
+                            'pageName': item_testSet.case.page.pageName,
+                            'funName': item_testSet.case.fun.funName,
+                            'caseState': item_testSet.case.caseState,
+                            'state': True if item_testSet.state == 1 else False
+                        })
+                    oldData = {
+                        'basicInfo': {
+                            'id': taskId,
+                            'taskName': obj_db_ApiTimingTask[0].taskName,
+                            'environmentId': obj_db_ApiTimingTask[0].environment_id,
+                            'timingConfig': obj_db_ApiTimingTask[0].timingConfig,
+                            'priorityId': obj_db_ApiTimingTask[0].priority,
+                            'taskStatus': obj_db_ApiTimingTask[0].taskStatus,
+                            'pushTo': ast.literal_eval(obj_db_ApiTimingTask[0].pushTo) if obj_db_ApiTimingTask[
+                                0].pushTo else [],
+                            'remarks': obj_db_ApiTimingTask[0].remarks,
+                        },
+                        'testSet': oldTestSet,
+                    }
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Edit',
+                        cls_FindTable.get_pro_name(basicInfo.proId),
+                        None, None,
+                        userId,
+                        f'【修改定时任务】 ID{taskId}:{obj_db_ApiTimingTask[0].taskName}',
+                        CUFront=oldData, CURear=responseData
+                    )
+                    # endregion
+                    # endregion
+                    # region 历史记录
+                    db_ApiTimingTaskHistory.objects.create(
+                        timingTask_id=taskId,
+                        historyCode=historyCode,
+                        operationType='Edit',
+                        restoreData=oldData,
+                        uid_id=userId
+                    )
+                    # endregion
+                    # region 删除测试集数据
+                    db_ApiTimingTaskTestSet.objects.filter(
+                        is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                    )
+                    # endregion
+                    # region 更新基本信息
+                    db_ApiTimingTask.objects.filter(is_del=0, id=taskId).update(
+                        pid_id=basicInfo.proId,
+                        taskName=basicInfo.taskName, environment_id=basicInfo.environmentId,
+                        timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,
+                        pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, remarks=basicInfo.remarks,
+                        historyCode=historyCode, uid_id=userId, updateTime=cls_Common.get_date_time()
+                    )
+                    # endregion
+                    # region 新增测试集数据
+                    for item_index, item_testSet in enumerate(testSet, 0):
+                        db_ApiTimingTaskTestSet.objects.create(
+                            timingTask_id=taskId,
+                            index=item_index,
+                            case_id=item_testSet.id,
+                            state=1 if item_testSet.state else 0,
+                            uid_id=userId,
+                            is_del=0,
+                            historyCode=historyCode,
+                        )
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'保存失败:{e}'
+            else:
+                response['statusCode'] = 2002
+        else:
+            response['errorMsg'] = '未找到当前定时任务,请刷新后在重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def delete_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        taskId = request.POST['taskId']
+        historyCode = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TimingTask', 'delete_data', errorMsg)
+    else:
+        obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId, is_del=0)
+        if obj_db_ApiTimingTask.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加历史恢复
+                    db_ApiTimingTaskHistory.objects.create(
+                        timingTask_id=taskId,
+                        historyCode=historyCode,
+                        operationType='Delete',
+                        restoreData=None,
+                        uid_id=userId
+                    )
+                    # endregion
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Delete',
+                        cls_FindTable.get_pro_name(obj_db_ApiTimingTask[0].pid_id),
+                        None, None,
+                        userId,
+                        f'【删除定时任务】 ID:{taskId}:{obj_db_ApiTimingTask[0].taskName}',
+                        CUFront=json.dumps(request.POST)
+                    )
+                    # endregion
+                    # region 删除关联信息
+                    db_ApiTimingTaskTestSet.objects.filter(
+                        is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                    )
+                    obj_db_ApiTimingTask.update(is_del=1, updateTime=cls_Common.get_date_time(),
+                                                historyCode=historyCode)
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'数据删除失败:{e}'
+            else:
+                response['statusCode'] = 2003
+        else:
+            response['errorMsg'] = '未找到当前接口数据,请刷新后重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询历史恢复
+def select_history(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        taskId = objData.taskId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TimingTask', 'select_history', errorMsg)
+    else:
+        if taskId:
+            obj_db_ApiTimingTaskHistory = db_ApiTimingTaskHistory.objects.filter(
+                timingTask_id=taskId).order_by('-createTime')
+        else:
+            obj_db_ApiTimingTaskHistory = db_ApiTimingTaskHistory.objects.filter().order_by('-createTime')
+        for i in obj_db_ApiTimingTaskHistory:
+            if i.restoreData:
+                restoreData = json.dumps(ast.literal_eval(i.restoreData),
+                                         sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+            else:
+                restoreData = None
+            tableItem = [{'restoreData': restoreData}] if restoreData else []
+            dataList.append({
+                'id': i.id,
+                'taskName': i.timingTask.taskName,
+                'operationType': i.operationType,
+                'tableItem': tableItem,
+                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                'userName': f"{i.uid.userName}({i.uid.nickName})",
+            })
+        response['TableData'] = dataList
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
+def restor_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        is_admin = cls_FindTable.get_role_is_admin(roleId)
+        id = request.POST['id']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TimingTask', 'restor_data', errorMsg)
+    else:
+        obj_db_ApiTimingTaskHistory = db_ApiTimingTaskHistory.objects.filter(id=id)
+        if obj_db_ApiTimingTaskHistory.exists():
+            historyCode = obj_db_ApiTimingTaskHistory[0].historyCode
+            # 恢复时是管理员或是 当前创建人时才可恢复
+            if is_admin or obj_db_ApiTimingTaskHistory[0].timingTask.cuid == userId:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        taskId = obj_db_ApiTimingTaskHistory[0].timingTask_id
+                        restoreData = obj_db_ApiTimingTaskHistory[0].restoreData
+                        # region 操作记录
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Update',
+                            cls_FindTable.get_pro_name(obj_db_ApiTimingTaskHistory[0].timingTask.pid_id),
+                            None, None,
+                            userId,
+                            f'【恢复定时任务】 ID:{taskId}:{obj_db_ApiTimingTaskHistory[0].timingTask.taskName}',
+                        )
+                        # endregion
+                        if obj_db_ApiTimingTaskHistory[0].operationType == "Edit":  # 编辑的恢复
+                            restoreData = ast.literal_eval(restoreData)
+                            obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId)
+                            if obj_db_ApiTimingTask:
+                                # region 基本数据
+                                obj_db_ApiTimingTask.update(
+                                    taskName=restoreData['basicInfo']['taskName'],
+                                    environment_id=restoreData['basicInfo']['environmentId'],
+                                    priority=restoreData['basicInfo']['priorityId'],
+                                    pushTo=restoreData['basicInfo']['pushTo'],
+                                    remarks=restoreData['basicInfo']['remarks'],
+                                    taskStatus=restoreData['basicInfo']['taskStatus'],
+                                    timingConfig=restoreData['basicInfo']['timingConfig'],
+                                    historyCode=historyCode,
+                                    uid_id=userId,
+                                    is_del=0,
+                                    updateTime=cls_Common.get_date_time()
+                                )
+                                # endregion
+                                # region 测试集
+                                for item_index, item_testSet in enumerate(restoreData['testSet'], 0):
+                                    obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_testSet['id'])
+                                    if obj_db_CaseBaseData.exists() or obj_db_CaseBaseData[0].is_del == 0:
+                                        db_ApiTimingTaskTestSet.objects.filter(
+                                            is_del=0, timingTask_id=taskId,
+                                            historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                                        )
+                                        db_ApiTimingTaskTestSet.objects.create(
+                                            timingTask_id=taskId,
+                                            index=item_index,
+                                            case_id=item_testSet['id'],
+                                            state=item_testSet['state'],
+                                            uid_id=userId,
+                                            is_del=0,
+                                            historyCode=historyCode,
+                                        )
+                                # endregion
+                            else:
+                                response['errorMsg'] = f"当前定时任务基础数据缺失,请联系管理人员进行恢复!"
+                        else:  # Delete
+                            select_db_ApiTimingTaskHistory = db_ApiTimingTaskHistory.objects.filter(
+                                timingTask_id=taskId).order_by('-createTime')
+                            if len(select_db_ApiTimingTaskHistory) < 2:
+                                response['errorMsg'] = f"当前选择的定时任务恢复没有上层可恢复的数据"
+                            else:
+                                # 倒数第二条数据
+                                penultimateData = select_db_ApiTimingTaskHistory[
+                                    len(select_db_ApiTimingTaskHistory) - 1]
+                                restoreData = ast.literal_eval(penultimateData.restoreData)
+                                obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId)
+                                if obj_db_ApiTimingTask.exists():
+                                    # region 基本数据
+                                    obj_db_ApiTimingTask.update(
+                                        taskName=restoreData['BasicInfo']['taskName'],
+                                        environment_id=restoreData['BasicInfo']['environmentId'],
+                                        priority=restoreData['BasicInfo']['priorityId'],
+                                        pushTo=restoreData['BasicInfo']['pushTo'],
+                                        remarks=restoreData['BasicInfo']['remarks'],
+                                        taskStatus=restoreData['BasicInfo']['taskStatus'],
+                                        timingConfig=restoreData['BasicInfo']['timingConfig'],
+                                        historyCode=penultimateData.historyCode,
+                                        uid_id=userId,
+                                        is_del=0,
+                                        updateTime=cls_Common.get_date_time()
+                                    )
+                                    # endregion
+                                    # region 测试集
+                                    for item_index, item_testSet in enumerate(restoreData['TestSet'], 0):
+                                        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_testSet['id'])
+                                        if obj_db_CaseBaseData.exists() or obj_db_CaseBaseData[0].is_del == 0:
+                                            db_ApiTimingTaskTestSet.objects.filter(
+                                                is_del=0, timingTask_id=taskId,
+                                                historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                                            )
+                                            db_ApiTimingTaskTestSet.objects.create(
+                                                timingTask_id=taskId,
+                                                index=item_index,
+                                                case_id=item_testSet['id'],
+                                                state=item_testSet['state'],
+                                                uid_id=userId,
+                                                is_del=0,
+                                                historyCode=penultimateData.historyCode,
+                                            )
+                                    # endregion
+                                else:
+                                    response['errorMsg'] = f"当前定时任务基础数据缺失,请联系管理人员进行恢复!"
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"数据恢复失败:{e}"
+                else:
+                    response['statusCode'] = 2002
+            else:
+                response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
+        else:
+            response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
     return JsonResponse(response)

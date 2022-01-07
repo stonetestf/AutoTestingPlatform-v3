@@ -234,12 +234,12 @@
             </dialog-work-order>
         </template>
         <template>
-        <dialog-history-info
-            @closeDialog="closeHistoryInfoDialog" 
-            :isVisible="dialog.historyInfo.dialogVisible" 
-            :dialogPara="dialog.historyInfo.dialogPara"
-            @Succeed="SelectData">
-        </dialog-history-info>
+            <dialog-history-info
+                @closeDialog="closeHistoryInfoDialog" 
+                :isVisible="dialog.historyInfo.dialogVisible" 
+                :dialogPara="dialog.historyInfo.dialogPara"
+                @Succeed="SelectData">
+            </dialog-history-info>
         </template>
         <template>
             <dialog-life-cycle

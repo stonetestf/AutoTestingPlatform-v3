@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card style="height: 760px;">
+            <el-card class="MainCard">
                 <div style="margin-top:-10px">
                     <el-form :inline="true"  method="post">
                         <el-form-item label="任务名称:">
@@ -24,14 +24,18 @@
                 <div>
                     <div style="margin-top:-15px;">
                         <el-table
+                            v-loading="loading"
                             :data="RomeData.tableData"
                             height="653px"
-                            border>
-                            <!-- <el-table-column
+                            border
+                            ref="multipleTable"
+                            @selection-change="handleSelectionChange"
+                            @row-click="handleRowClick">
+                            <el-table-column
                                 type="selection"
                                 align= "center"
                                 width="50">
-                            </el-table-column> -->
+                            </el-table-column>
                             <el-table-column
                                 label="ID"
                                 align= "center"
@@ -75,8 +79,11 @@
                             <el-table-column
                                 label="最后报告时间"
                                 width="160px"
-                                align= "center"
-                                prop="lastReportTime">
+                                align= "center">
+                                <template slot-scope="scope">
+                                    <span type="success" v-if="scope.row.lastReportTime" >Pass</span>
+                                    <el-tag v-else>无最新数据</el-tag>
+                                </template>
                             </el-table-column>
                             <el-table-column
                                 label="最后报告状态"
@@ -86,7 +93,7 @@
                                     <el-tag type="success" v-if="scope.row.lastReportStatus=='Pass'" >Pass</el-tag>
                                     <el-tag type="warning" v-else-if="scope.row.lastReportStatus=='Fail'">Fail</el-tag>
                                     <el-tag type="danger" v-else-if="scope.row.lastReportStatus=='Error'">Error</el-tag>
-                                    <el-tag v-else>未运行</el-tag>
+                                    <el-tag v-else>无最新数据</el-tag>
                                 </template>
                             </el-table-column> 
                             <el-table-column
@@ -121,8 +128,8 @@
                                             更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
-                                            <el-dropdown-item command="CopyCase">复制任务</el-dropdown-item>
-                                            <el-dropdown-item command="CaseRestore">恢复任务</el-dropdown-item>
+                                            <el-dropdown-item command="CopyTask">复制任务</el-dropdown-item>
+                                            <el-dropdown-item command="TaskRestore">恢复任务</el-dropdown-item>
                                         </el-dropdown-menu>
                                     </el-dropdown>
                                 </el-button-group>
@@ -169,6 +176,14 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+            <dialog-history-info
+                @closeDialog="closeHistoryInfoDialog" 
+                :isVisible="dialog.historyInfo.dialogVisible" 
+                :dialogPara="dialog.historyInfo.dialogPara"
+                @Succeed="SelectData">
+            </dialog-history-info>
+        </template>
     </div>
 </template>
 
@@ -177,13 +192,16 @@ import Qs from 'qs'
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import DialogEditor from "./Editor.vue";
+import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-        DialogEditor
+        DialogEditor,DialogHistoryInfo
     },
     data() {
         return {
+            loading:false,
+            multipleSelection:[],
             SelectRomeData:{
                 taskName:'',
                 reportState:'',
@@ -214,6 +232,13 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
+                historyInfo:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
             },
           
         };
@@ -227,6 +252,7 @@ export default {
     methods: {
         SelectData(){//刷新列表数据
             let self = this;
+            self.loading=true;
             self.RomeData.tableData= [];
             self.$axios.get('/api/ApiTimingTask/SelectData',{
                 params:{
@@ -258,12 +284,15 @@ export default {
                         self.SelectData();
                     }
                     self.page.total = res.data.Total;
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
                 }
                 // console.log(self.tableData);
             }).catch(function (error) {
                 console.log(error);
+                self.loading=false;
             })
         },
         CloseEditDialog(){
@@ -286,44 +315,47 @@ export default {
             }
             self.dialog.editor.dialogVisible=true;
         },
-        // handleRowClick(row, column, event){//点击行选择勾选框
-        // this.$refs.multipleTable.toggleRowSelection(row);
-        // },
-        // handleSelectionChange(val){//勾选数据时触发
-        //     // console.log(val)
-        //     this.multipleSelection=[];
-        //     val.forEach(d =>{
-        //         this.multipleSelection.push(d.id);
-        //     }); 
-        // },
-        // handleDelete(index,row){
-        //     this.$confirm('请确定是否删除?', '提示', {
-        //         confirmButtonText: '确定',
-        //         cancelButtonText: '取消',
-        //         type: 'warning'
-        //         }).then(() => {
-        //            this.DeleteData(row.id);     
-        //         }).catch(() => {       
-        //     });
-        // },
-        // DeleteData(id){
-        //     let self = this;
-        //     self.$axios.post('/api/FunManagement/DeleteData',Qs.stringify({
-        //         'funId':id,
-        //     })).then(res => {
-        //     if(res.data.statusCode ==2003){
-        //         self.$message.success('删除功能成功!');
-        //         self.SelectData();
-        //     }
-        //     else{
-        //         self.$message.error('删除功能失败:'+ res.data.errorMsg);
-        //     }
-        //     }).catch(function (error) {
-        //         console.log(error);
-        //     })
-        // },
+        handleRowClick(row, column, event){//点击行选择勾选框
+            this.$refs.multipleTable.toggleRowSelection(row);
+        },
+        handleSelectionChange(val){//勾选数据时触发
+            // console.log(val)
+            this.multipleSelection=[];
+            val.forEach(d =>{
+                this.multipleSelection.push(d.id);
+            }); 
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                   this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/ApiTimingTask/DeleteData',Qs.stringify({
+                'taskId':id,
+            })).then(res => {
+            if(res.data.statusCode ==2003){
+                self.$message.success('删除定时任务成功!');
+                self.SelectData();
+            }
+            else{
+                self.$message.error('删除定时任务失败:'+ res.data.errorMsg);
+            }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
         handleCommand(command){
             PrintConsole(command);
+            if(command=='TaskRestore'){
+                this.OpenHistoryInfoDialog();
+            }
         },
         ClearSelectRomeData(){
             let self = this;
@@ -343,9 +375,29 @@ export default {
             self.page.current=val;
             self.SelectData();
         },
+
+        //历史恢复
+        closeHistoryInfoDialog(){
+            this.dialog.historyInfo.dialogVisible =false;
+        },
+        OpenHistoryInfoDialog(){
+            let self = this;
+            if(self.multipleSelection.length>1){
+                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
+            }else{
+                self.dialog.historyInfo.dialogPara={
+                    dialogTitle:"历史恢复",//初始化标题
+                    taskId:self.multipleSelection[0],
+                }
+                self.dialog.historyInfo.dialogVisible=true;
+            }
+        },
     }
 };
 </script>
 
 <style>
+.MainCard{
+    height: 760px;
+}
 </style>
