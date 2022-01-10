@@ -12,6 +12,7 @@ from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_TimingTask.models import ApiTimingTaskHistory as db_ApiTimingTaskHistory
+from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 
 
 # Create reference here.
@@ -64,6 +65,13 @@ def select_data(request):
             select_db_ApiTimingTask = obj_db_ApiTimingTask[minSize: maxSize]
 
         for i in select_db_ApiTimingTask:
+            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, taskId=i.id).order_by('-updateTime')
+            if obj_db_ApiTestReport.exists():
+                lastReportTime = obj_db_ApiTestReport[0].runningTime
+                lastReportStatus = obj_db_ApiTestReport[0].reportStatus
+            else:
+                lastReportTime = ''
+                lastReportStatus = ''
             dataList.append({
                 'id': i.id,
                 'taskName': i.taskName,
@@ -71,8 +79,8 @@ def select_data(request):
                 'taskSetTotal': db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=i.id).count(),
                 'remarks': i.remarks,
                 'taskStatus': True if i.taskStatus == 1 else False,
-                'lastReportTime': '',
-                'lastReportStatus': '',
+                'lastReportTime': lastReportTime,
+                'lastReportStatus': lastReportStatus,
                 'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                 'createUserName': cls_FindTable.get_userName(i.cuid),

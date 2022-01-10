@@ -195,7 +195,7 @@ class FindTable(cls_Logging):
         dataTable = []
 
         # region 获取本周时间
-        weekData = cls_Common.get_this_weeks_interval_data()
+        weekData = cls_Common.get_seven_days_ago_time()
         staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
         endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
         # endregion

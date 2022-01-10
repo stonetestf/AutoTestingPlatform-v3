@@ -2,7 +2,7 @@
     <div ref="tab-main"  id="tab-main">
         <template>
             <el-card class="MainCard">
-                <div style="margin-top:-10px">
+                <div style="margin-top:-15px">
                     <el-form :inline="true"  method="post">
                         <el-form-item label="任务名称:">
                             <el-input clearable v-model.trim="SelectRomeData.taskName"></el-input>
@@ -81,7 +81,7 @@
                                 width="160px"
                                 align= "center">
                                 <template slot-scope="scope">
-                                    <span type="success" v-if="scope.row.lastReportTime" >Pass</span>
+                                    <span type="success" v-if="scope.row.lastReportTime" >{{scope.row.lastReportTime}} ms</span>
                                     <el-tag v-else>无最新数据</el-tag>
                                 </template>
                             </el-table-column>
@@ -419,6 +419,6 @@ export default {
 
 <style>
 .MainCard{
-    height: 760px;
+    height: 752px;
 }
 </style>
