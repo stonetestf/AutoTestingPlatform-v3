@@ -2,7 +2,7 @@
      <div ref="tab-main"  id="tab-main" style="height:830px">
         <el-row :gutter="20">
             <el-col :span="11">
-                <el-card style="height:828px">
+                <el-card style="height:858px">
                     <div>
                         <el-card style="height:320px" shadow="never">
                             <div slot="header" class="clearfix">
@@ -81,15 +81,18 @@
                         </el-card>
                     </div>
                     <div style="margin-top:10px">
-                        <el-card style="height:310px" shadow="never">
-                            <span>还没想好这里放哈</span>
+                        <el-card style="height:350px" shadow="never">
+                            <span>公告</span>
+                            <div style="margin-top:10px">
+                                <span v-html="RomeData.affiche"></span>
+                            </div>
                         </el-card>
                     </div>
 
                 </el-card>
             </el-col>
             <el-col :span="13">
-                <el-card style="height:828px">
+                <el-card style="height:858px">
                     <div style="margin-left:65px">
                         <el-row :gutter="290">
                             <el-col :span="4">
@@ -150,6 +153,9 @@ var echarts = require('echarts');
             api:api,
             ui:ui,
             pts:pts,
+        },
+        RomeData:{
+            affiche:'',//公告
         },
         ServerPerformance:{
             socket:'',

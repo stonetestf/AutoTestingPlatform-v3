@@ -1,7 +1,7 @@
 <template>
      <div ref="tab-main"  id="tab-main">
          <template>
-            <el-tabs type="border-card" style="height:843px">
+            <el-tabs type="border-card" style="height:850px">
                 <el-tab-pane label="用户管理">
                     <template>
                         <el-form :inline="true" class="demo-form-inline" method="post">

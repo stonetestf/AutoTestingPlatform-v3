@@ -940,13 +940,13 @@ export default {
 <style>
 .MainCard{
   /* height: 759px; */
-  height: 750px;
+  height: 770px;
 }
 .TopCard{
-  height: 320px;
+  height: 330px;
 }
 .DownCard{
-  height: 390px;
+  height: 400px;
 }
 .float-drag-button {
   position: absolute;

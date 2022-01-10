@@ -2,7 +2,7 @@
     <div ref="tab-main"  id="tab-main">
         <template>
             <el-card class="MainCard">
-                <div style="margin-top:-15px">
+                <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="任务名称:">
                             <el-input clearable v-model.trim="SelectRomeData.taskName"></el-input>
@@ -426,6 +426,6 @@ export default {
 
 <style>
 .MainCard{
-    height: 750px;
+    height: 780px;
 }
 </style>

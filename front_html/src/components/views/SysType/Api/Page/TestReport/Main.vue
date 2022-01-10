@@ -42,7 +42,7 @@
                     </el-form>
                 </template>
                 <template>
-                    <div style="margin-top:-15px;">
+                    <div>
                         <el-table
                             :data="tableData"
                             height="619px"

@@ -12,10 +12,10 @@
           </el-form>
         </template>
         <template>
-          <div style="margin-top:-15px;">
+          <div>
             <el-table
               :data="tableData"
-              height="596px"
+              height="619px"
               border
               ref="multipleTable"
               @selection-change="handleSelectionChange"

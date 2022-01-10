@@ -2,7 +2,7 @@
     <div ref="tab-main"  id="tab-main">
         <template>
             <el-card class="MainCard">
-                <div style="margin-top:-15px">
+                <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
                             <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
@@ -548,6 +548,6 @@ export default {
 
 <style>
 .MainCard{
-    height: 752px;
+    height: 780px;
 }
 </style>

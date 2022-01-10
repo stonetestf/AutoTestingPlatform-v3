@@ -31,10 +31,10 @@
             </el-form>
         </template>
         <template>
-            <div style="margin-top:-15px;">
+            <div>
                 <el-table
                     :data="tableData"
-                    height="630px"
+                    height="619px"
                     border>
                     <el-table-column
                         label="ID"
@@ -153,7 +153,7 @@
             </div>
         </template>
         <template>
-            <div style="margin-top:-10px">
+            <div>
                 <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                     @size-change="pageSizeChange"
                     @current-change="handleCurrentChange"
