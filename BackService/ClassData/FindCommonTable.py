@@ -15,6 +15,7 @@ from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
 from WorkorderManagement.models import HistoryInfo as db_HistoryInfo
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
+from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
@@ -148,8 +149,8 @@ class FindTable(cls_Logging):
             results['errorData'] = errorData
         return results
 
-    # 项目下所有数据的统计
-    def get_project_under_statistical_data(self, proId):
+    # 页面下所有数据的统计
+    def get_page_under_statistical_data(self, proId):
         results = {
             'dataTable': []
         }
@@ -157,36 +158,69 @@ class FindTable(cls_Logging):
         obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, pid_id=proId)
         for item_page in obj_db_PageManagement:
             # region 获取本周时间
-            weekData = cls_Common.get_this_weeks_interval_data()
-            staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
-            endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
+            # weekData = cls_Common.get_this_weeks_interval_data()
+            # staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
+            # endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
             # endregion
             obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId, page_id=item_page.id)
             apiTotal = obj_db_ApiBaseData.count()  # 接口数量
             # region 本周新增
-            weekTotal = 0  # 本周新增
-            weekTotal += obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
-            weekTotal += db_CaseBaseData.objects.filter(
-                pid_id=proId,page_id=item_page.id,createTime__gte=staTime, createTime__lte=endTime).count()
+            # weekTotal = 0  # 本周新增
+            # weekTotal += obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
+            # weekTotal += db_CaseBaseData.objects.filter(
+            #     pid_id=proId,page_id=item_page.id,createTime__gte=staTime, createTime__lte=endTime).count()
             # endregion
             # region 本周执行
-            performWeekTotal = db_ApiQueue.objects.filter(
-                pid_id=proId, page_id__in=[item_page.id,None], updateTime__gte=staTime, updateTime__lte=endTime).count()
+            # performWeekTotal = db_ApiQueue.objects.filter(
+            #     pid_id=proId, page_id__in=[item_page.id,None], updateTime__gte=staTime, updateTime__lte=endTime).count()
             # endregion
-            perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
+            # perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId, page_id=item_page.id).count()  # 历史执行
             obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, page_id=item_page.id)
             results['dataTable'].append({
                 'id': item_page.id,
                 'pageName': item_page.pageName,
                 'apiTotal': apiTotal,
-                'unitAndCaseTotal': f'{obj_db_CaseBaseData.filter(testType="UnitTest").count()}/'
-                                    f'{obj_db_CaseBaseData.filter(testType="HybridTest").count()}',
+                'unitTotal':obj_db_CaseBaseData.filter(testType="UnitTest").count(),
+                'hybridTestTotal':obj_db_CaseBaseData.filter(testType="HybridTest").count(),
                 'caseTotal': obj_db_CaseBaseData.count(),
-                'weekTotal': weekTotal,
-                'performWeekTotal': performWeekTotal,
-                'perforHistoryTotal': perforHistoryTotal
+                # 'weekTotal': weekTotal,
+                # 'performWeekTotal': performWeekTotal,
+                # 'perforHistoryTotal': perforHistoryTotal
 
             })
+        return results
+
+    # 项目下所有数据的统计
+    def get_pro_under_statistical_data(self, proId):
+        results = {
+            'dataTable': []
+        }
+        # region 获取本周时间
+        weekData = cls_Common.get_this_weeks_interval_data()
+        staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
+        endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
+        # endregion
+        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId)
+        # region 本周新增
+        weekTotal = 0  # 本周新增
+        weekTotal += obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
+        weekTotal += db_CaseBaseData.objects.filter(
+            pid_id=proId,createTime__gte=staTime, createTime__lte=endTime).count()
+        # endregion
+        # region 本周执行
+        performWeekTotal = db_ApiQueue.objects.filter(
+            pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime).count()
+        # endregion
+        perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId).count()  # 历史执行
+        # 定时任务
+        taskTotal = db_ApiTimingTask.objects.filter(is_del=0,pid_id=proId).count()
+        results['dataTable'].append({
+            'taskTotal':taskTotal,
+            'batchTotal':0,
+            'weekTotal': weekTotal,
+            'performWeekTotal': performWeekTotal,
+            'perforHistoryTotal': perforHistoryTotal
+        })
         return results
 
     # 过去7天内Top10

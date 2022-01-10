@@ -277,7 +277,7 @@ export default {
                     environmentId:[{required: true, message: '请选择页面环境', trigger: 'change' }],
                     timingConfig: [
                         { required: true, message: '请输入正确的CronTab时间', trigger: 'blur' },
-                        { min: 1, max: 10, message: '例:* * * * *', trigger: 'blur' }
+                        { min: 1, max: 20, message: '例:* * * * *', trigger: 'blur' }
                     ],
                     priorityId:[{required: true, message: '请选择优先级', trigger: 'change' }],
                     taskStatus:[{required: true, message: '请选择任务状态', trigger: 'change' }],

@@ -1,6 +1,8 @@
 from functools import wraps
 
 import json
+import datetime
+import croniter
 
 # select db here
 from djcelery import models as celery_models
@@ -61,7 +63,7 @@ class TimingTask(object):
         return results
 
     # 编辑定时任务
-    def edit_task(self, periodicTaskId,taskName, crontabtime, taskStatus):
+    def edit_task(self, periodicTaskId, taskName, crontabtime, taskStatus):
         results = {}
         try:
             temp_Timingconfig = crontabtime.split(' ')
@@ -84,7 +86,7 @@ class TimingTask(object):
                     month_of_year=month_of_year
                 )
                 statis = True if taskStatus else False
-                disable_task = self.disable_task(taskName, statis)
+                disable_task = self.disable_task(periodicTaskId, statis)
                 if disable_task['state']:
                     pass
                 else:
@@ -116,14 +118,41 @@ class TimingTask(object):
         return results
 
     # 关闭或开启任务 定时任务开启和关闭必须通过这种方式来调用，不然会出现不运行的问题
-    def disable_task(self, name, is_disable):
+    def disable_task(self, periodicTaskId, is_disable):
         results = {}
         try:
-            task = celery_models.PeriodicTask.objects.get(name=name)
+            task = celery_models.PeriodicTask.objects.get(id=periodicTaskId)
             task.enabled = is_disable  # 设置关闭
             task.save()
             results['state'] = True
         except BaseException as e:
             results['state'] = False
             results['errorMsg'] = f"修改内置定时任务失败:{e}"
+        return results
+
+    # 计算定时任务下次运行时间
+    def crontab_next_run_time(self, crontabTime, timeFormat="%Y-%m-%d %H:%M", queryTimes=1):
+        """计算定时任务下次运行时间
+        sched str: 定时任务时间表达式
+        timeFormat str: 格式为"%Y-%m-%d %H:%M"
+        queryTimes int: 查询下次运行次数
+        get_next 明天
+        get_prev 当天
+        """
+        results = {}
+        now = datetime.datetime.now()
+        try:
+            # 以当前时间为基准开始计算
+            cron = croniter.croniter(crontabTime, now)
+            for i in range(queryTimes):
+                get_prev = cron.get_prev(datetime.datetime).strftime(timeFormat)
+                results['time'] = get_prev
+                break
+            else:
+                results['state'] = False
+        except BaseException as e:
+            results['state'] = False
+            results['errorMsg'] = f"时间转换失败:{e}"
+        else:
+            results['state'] = True
         return results

@@ -115,10 +115,10 @@ def select_data(request):
                 "bindMembers": bindMembers,
                 "createTime": str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
             })
-            projectUnderStatisticalData = cls_FindTable.get_project_under_statistical_data(i.id)
-            for item in projectUnderStatisticalData['dataTable']:
-                performWeekTotal += item['performWeekTotal']
-                perforHistoryTotal += item['perforHistoryTotal']
+            # projectUnderStatisticalData = cls_FindTable.get_page_under_statistical_data(i.id)
+            # for item in projectUnderStatisticalData['dataTable']:
+            #     performWeekTotal += item['performWeekTotal']
+            #     perforHistoryTotal += item['perforHistoryTotal']
             # endregion
             dataList.append(
                 {

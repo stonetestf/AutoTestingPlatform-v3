@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'GetUserStatisticsInfo', views.get_user_statistics_info, name='GetUserStatisticsInfo'),
     url(r'GetServerIndicators', views.get_server_indicators, name='GetServerIndicators'),
     url(r'ApiPageHomeSelectTestResults', views.api_pagehome_select_test_results, name='ApiPageHomeSelectTestResults'),
+    url(r'ApiPageHomeSelectPageStatistical', views.api_pagehome_select_page_statistical, name='ApiPageHomeSelectPageStatistical'),
     url(r'ApiPageHomeSelectProStatistical', views.api_pagehome_select_pro_statistical, name='ApiPageHomeSelectProStatistical'),
     url(r'ApiPageHomeSelectFormerlyData', views.api_pagehome_select_Formerly_data, name='ApiPageHomeSelectFormerlyData'),
     url(r'ApiPageHomeSelectProQueue', views.api_pagehome_select_pro_queue, name='ApiPageHomeSelectProQueue'),

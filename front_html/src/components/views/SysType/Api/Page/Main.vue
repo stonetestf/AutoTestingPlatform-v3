@@ -12,35 +12,41 @@
                 </div>
               </el-col>
               <el-col :span="13">
-                <div>
-                  <el-card class="TopCard">
+                <el-card class="TopCard">
+                  <div>
                     <el-table
-                      height="290px"
-                      :data="RomeData.proTableData">
+                      height="200px"
+                      :data="RomeData.pageTableData">
                       <el-table-column
                         prop="pageName"
                         align= "center"
                         label="所属页面">
                       </el-table-column>
                       <el-table-column
-                        width="80px"
+                        width="150px"
                         prop="apiTotal"
                         align= "center"
                         label="接口数量">
                       </el-table-column>
                       <el-table-column
-                        width="80px"
-                        prop="unitAndCaseTotal"
+                        width="150px"
+                        prop="unitTotal"
                         align= "center"
-                        label="单元/混合">
+                        label="单元测试">
                       </el-table-column>
                       <el-table-column
-                        width="80px"
+                        width="150px"
+                        prop="hybridTestTotal"
+                        align= "center"
+                        label="混合测试">
+                      </el-table-column>
+                      <el-table-column
+                        width="150px"
                         prop="caseTotal"
                         align= "center"
                         label="测试用例">
                       </el-table-column>
-                      <el-table-column
+                      <!-- <el-table-column
                         width="80px"
                         prop="taskTotal"
                         align= "center"
@@ -51,8 +57,8 @@
                         prop="batchTotal"
                         align= "center"
                         label="批量任务">
-                      </el-table-column>
-                      <el-table-column
+                      </el-table-column> -->
+                      <!-- <el-table-column
                         width="80px"
                         prop="weekTotal"
                         align= "center"
@@ -69,10 +75,45 @@
                         prop="perforHistoryTotal"
                         align= "center"
                         label="历史执行">
+                      </el-table-column> -->
+                    </el-table>
+                  </div>
+                  <div>
+                    <el-table
+                      :data="RomeData.proTableData">
+                      <el-table-column
+                        width="185px"
+                        prop="taskTotal"
+                        align= "center"
+                        label="定时任务">
+                      </el-table-column>
+                      <el-table-column
+                        width="185px"
+                        prop="batchTotal"
+                        align= "center"
+                        label="批量任务">
+                      </el-table-column>
+                      <el-table-column
+                        width="185px"
+                        prop="weekTotal"
+                        align= "center"
+                        label="本周新增">
+                      </el-table-column>
+                      <el-table-column
+                        width="185px"
+                        prop="performWeekTotal"
+                        align= "center"
+                        label="本周执行">
+                      </el-table-column>
+                      <el-table-column
+                        width="185px"
+                        prop="perforHistoryTotal"
+                        align= "center"
+                        label="历史执行">
                       </el-table-column>
                     </el-table>
-                  </el-card>
-                </div>
+                  </div>
+                </el-card>
               </el-col>
             </el-row>
           </div>
@@ -331,8 +372,10 @@ export default {
             errorData:[],
           },
           //项目统计
-          proTableData:[
+          pageTableData:[
             // {'itsName':'测试页面/测试功能','apiTotal':'1000000','unitTotal':'20','caseTotal':'13','taskTotal':'30','batchTotal':'20','weekTotal':"12",'performWeek':'11','perforHistory':'30'}
+          ],
+          proTableData:[
           ],
           //过去7天失败错误列表
           formerlyTableData:[
@@ -374,6 +417,7 @@ export default {
     this.myChart_line = echarts.init(document.getElementById('topline'));//初始化
     // this.topline();
     this.SelectTestResults();//测试结果总览
+    this.SelectPageStatistical();//页面下的统计
     this.SelectProStatistical();//项目统计
     this.SelectFormerlyData();//过去7天内Top10
     this.SelectProQueue();//项目队列
@@ -491,6 +535,22 @@ export default {
       };
       this.myChart_line.setOption(option_line,true);//加载属性后显示 true自动每次清除数据
     },
+    SelectPageStatistical(){//页面下总览
+      let self = this;
+      self.$axios.get('/api/home/ApiPageHomeSelectPageStatistical',{
+        params:{
+          'proId':self.$cookies.get('proId'),
+        }
+      }).then(res => {
+        if(res.data.statusCode==2000){
+          self.RomeData.pageTableData = res.data.dataTable;
+        }else{
+          self.$message.error('获取数据失败:'+res.data.errorMsg);
+        }
+      }).catch(function (error) {
+          console.log(error);
+      })
+    },
     SelectProStatistical(){//项目总览
       let self = this;
       self.$axios.get('/api/home/ApiPageHomeSelectProStatistical',{
@@ -578,9 +638,9 @@ export default {
         self.RomeData.topLine.errorData = retData.testResults.errorData;
         self.topline();
 
-        //项目下统计数据
-        retData.proStatistical.dataTable.forEach(d=>{
-          let tempTable = self.RomeData.proTableData.find(item=>
+        //页面下统计数据
+        retData.pageStatistical.dataTable.forEach(d=>{
+          let tempTable = self.RomeData.pageTableData.find(item=>
             item.id == d.id
           );
           if(tempTable){
@@ -591,12 +651,38 @@ export default {
             if(d.apiTotal!=tempTable.apiTotal){
               tempTable.apiTotal = d.apiTotal
             }
-            if(d.unitAndCaseTotal!=tempTable.unitAndCaseTotal){
-              tempTable.unitAndCaseTotal = d.unitAndCaseTotal
+            if(d.unitTotal!=tempTable.unitTotal){
+              tempTable.unitTotal = d.unitTotal
+            }
+            if(d.hybridTestTotal!=tempTable.hybridTestTotal){
+              tempTable.hybridTestTotal = d.hybridTestTotal
             }
             if(d.caseTotal!=tempTable.caseTotal){
               tempTable.caseTotal = d.caseTotal
             }
+          }else{
+            self.RomeData.pageTableData.push(d);//新增数据
+          }
+        });
+        //删除数据
+        self.RomeData.pageTableData.forEach((d,index)=>{
+          let tempTable = retData.pageStatistical.dataTable.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+
+          }else{
+            self.RomeData.pageTableData.splice(index, 1)
+          }
+        });
+
+        //项目下统计数据
+        retData.proStatistical.dataTable.forEach(d=>{
+          let tempTable = self.RomeData.proTableData.find(item=>
+            item.id == d.id
+          );
+          if(tempTable){
+            //查看是不是有差异
             if(d.taskTotal!=tempTable.taskTotal){
               tempTable.taskTotal = d.taskTotal
             }
@@ -612,9 +698,8 @@ export default {
             if(d.perforHistoryTotal!=tempTable.perforHistoryTotal){
               tempTable.perforHistoryTotal = d.perforHistoryTotal
             }
-
           }else{
-            self.RomeData.proTableData.push(d);//新增数据
+            self.RomeData.pageTableData.push(d);//新增数据
           }
         });
         //删除数据
@@ -628,6 +713,7 @@ export default {
             self.RomeData.proTableData.splice(index, 1)
           }
         });
+
 
         //过去7天内Top10
         retData.pastSevenDaysTop.dataTable.forEach(d=>{

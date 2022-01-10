@@ -13,7 +13,6 @@ from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_TimingTask.models import ApiTimingTaskHistory as db_ApiTimingTaskHistory
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
-from djcelery import models as celery_models
 
 
 # Create reference here.
@@ -742,5 +741,5 @@ def execute_task(request):
                         response['statusCode'] = 2001
                         response['redisKey'] = redisKey
         else:
-            response['errorMsg'] = '当前选择的用例不存在,请刷新后在重新尝试!'
+            response['errorMsg'] = '当前选择的定时任务不存在,请刷新后在重新尝试!'
     return JsonResponse(response)

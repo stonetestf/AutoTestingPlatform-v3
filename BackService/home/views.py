@@ -352,7 +352,8 @@ def api_page_get_main_data(request):
                         sendText = {
                             'testResults': cls_FindTable.get_overview_of_test_results(proId),  # 测试结果概述
                             # 项目下所有数据的统计
-                            'proStatistical': cls_FindTable.get_project_under_statistical_data(proId),
+                            'pageStatistical': cls_FindTable.get_page_under_statistical_data(proId),
+                            'proStatistical': cls_FindTable.get_pro_under_statistical_data(proId),
                             'pastSevenDaysTop': cls_FindTable.get_past_seven_days_top_ten_data(proId),  # 过去7天内Top10
                             'proQueue': cls_FindTable.get_pro_queue(proId),  # 获取项目队列
                             'myWork':cls_FindTable.get_my_work('API',proId,userId),
@@ -409,6 +410,27 @@ def api_pagehome_select_test_results(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 页面下的所有数据总统计
+def api_pagehome_select_page_statistical(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = object_maker(responseData)
+        proId = objData.proId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_statistical', errorMsg)
+    else:
+        projectUnderStatisticalData = cls_FindTable.get_page_under_statistical_data(proId)
+        dataTable = projectUnderStatisticalData['dataTable']
+        response['dataTable'] = dataTable
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
 @require_http_methods(["GET"])  # 项目下的所有数据总统计
 def api_pagehome_select_pro_statistical(request):
     response = {}
@@ -421,7 +443,7 @@ def api_pagehome_select_pro_statistical(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_statistical', errorMsg)
     else:
-        projectUnderStatisticalData = cls_FindTable.get_project_under_statistical_data(proId)
+        projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data(proId)
         dataTable = projectUnderStatisticalData['dataTable']
         response['dataTable'] = dataTable
         response['statusCode'] = 2000
