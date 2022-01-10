@@ -130,7 +130,7 @@ def select_data(request):
                     'updateTime': str(item_testSet.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 })
             # region 通过率
-            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, reportType='CASE', taskId=i.id)
+            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, taskId=i.id)
             passTotal = obj_db_ApiTestReport.filter(reportStatus='Pass').count()
             if obj_db_ApiTestReport.count() == 0:
                 passRate = 0

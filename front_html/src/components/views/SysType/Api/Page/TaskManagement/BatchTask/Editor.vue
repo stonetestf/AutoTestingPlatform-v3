@@ -3,7 +3,7 @@
         <template>
             <el-drawer
             :title="dialogTitle"
-            size="1200px"
+            size="1100px"
             :wrapperClosable="false"
             :visible.sync="dialogVisible"
             direction='rtl'
@@ -11,8 +11,8 @@
             :before-close="dialogClose">
                 <el-steps :active="StepsRomeData.active" simple :process-status="StepsRomeData.processStatus" finish-status="success">
                     <el-step title="维护基本信息"></el-step>
-                    <el-step title="排列用例集"></el-step>
-                    <el-step title="效验定时任务"></el-step>
+                    <el-step title="排列定时任务集"></el-step>
+                    <el-step title="效验批量任务"></el-step>
                 </el-steps>
                 <el-card style="height:755px"
                     v-loading="loading"
@@ -20,25 +20,14 @@
                     element-loading-spinner="el-icon-loading">
                     <template v-if="StepsRomeData.active==0">
                         <div class="table">
-                           <div class="father" style="width: 100%; height: 400px;">
+                           <div class="father" style="width: 100%; height: 230px;">
                                 <div class="son" style="width: 1000px; height: 150px;">
                                     <!-- <el-card style="width:1050px" shadow="never"> -->
-                                        <el-form ref="BasicRomeData" :inline="true" :rules="BasicRomeData.rules" :model="BasicRomeData"  label-width="100px">
-                                            <el-form-item label="任务名称:" prop="taskName" >
-                                                <el-input v-model.trim="BasicRomeData.taskName" clearable style="width:515px;"></el-input>
-                                            </el-form-item>
-                                            <el-form-item label="页面环境:" prop="environmentId">
-                                                <el-select v-model="BasicRomeData.environmentId" clearable placeholder="请选择" style="width:200px;float:left;" @click.native="GetPageEnvironmentNameOption()">
-                                                    <el-option
-                                                        v-for="item in BasicRomeData.environmentNameOption"
-                                                        :key="item.value"
-                                                        :label="item.label"
-                                                        :value="item.value">
-                                                    </el-option>
-                                                </el-select>
-                                            </el-form-item>
-                                            <el-form-item label="定时配置:" prop="timingConfig" >
-                                                <el-input v-model="BasicRomeData.timingConfig" style="width:200px;float:left;"></el-input>
+                                    <el-form ref="BasicRomeData" :inline="true" :rules="BasicRomeData.rules" :model="BasicRomeData"  label-width="100px">
+                                        <div>
+                                            <h3>基础信息</h3>
+                                            <el-form-item label="任务名称:" prop="batchName" >
+                                                <el-input v-model.trim="BasicRomeData.batchName" clearable style="width:515px;"></el-input>
                                             </el-form-item>
                                             <el-form-item label="优先级:" prop="priorityId">
                                                 <el-select v-model="BasicRomeData.priorityId" clearable placeholder="请选择" style="width:200px;float:left;">
@@ -49,16 +38,6 @@
                                                         :value="item.value">
                                                         <span style="float: left">{{ item.label }}</span>
                                                         <span style="float: right; color: #8492a6; font-size: 13px">{{ item.details }}</span>
-                                                    </el-option>
-                                                </el-select>
-                                            </el-form-item>
-                                            <el-form-item label="任务状态:" prop="taskStatus">
-                                                <el-select v-model="BasicRomeData.taskStatus" clearable placeholder="请选择"  style="width:200px;float:left;">
-                                                    <el-option
-                                                        v-for="item in BasicRomeData.taskStatusOption"
-                                                        :key="item.value"
-                                                        :label="item.label"
-                                                        :value="item.value">
                                                     </el-option>
                                                 </el-select>
                                             </el-form-item>
@@ -88,7 +67,20 @@
                                                         style="width:830px"></el-input>
                                                 </el-form-item>
                                             </div>
-                                        </el-form>
+                                        </div>
+                                        <div><el-divider></el-divider></div>
+                                        <div>
+                                            <h3>钩子信息</h3>
+                                            <el-form-item label="钩子状态:">
+                                            <el-switch v-model="BasicRomeData.hookState" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                            </el-form-item>
+                                            <el-form-item label="钩子ID:">
+                                                <el-input :disabled="true" v-model.trim="BasicRomeData.hookId" style="width:420px;">
+                                                    <el-button slot="append" type="primary" :loading="BasicRomeData.buttonLoading" @click="CreateHookId()">重新生成</el-button>
+                                                </el-input>
+                                            </el-form-item>
+                                        </div>
+                                    </el-form>
                                     <!-- </el-card> -->
                                 </div>
                             </div>
@@ -98,7 +90,7 @@
                         <el-table
                             id="TestSet" 
                             row-key="id"
-                            :data="SortCaseRomeData.tableData"
+                            :data="SortTaskRomeData.tableData"
                             height="710px"
                             border>
                             <el-table-column
@@ -108,45 +100,35 @@
                                 width="80">
                             </el-table-column>
                             <el-table-column
-                                label="测试类型"
+                                label="定时任务名称"
                                 align= "center"
-                                width="100px">
+                                prop="taskName">
+                            </el-table-column>
+                            <el-table-column
+                                label="用例数量"
+                                width="100px"
+                                align= "center"
+                                prop="caseTotal">
+                            </el-table-column>
+                            <el-table-column
+                                label="任务状态"
+                                width="100px"
+                                align= "center">
                                 <template slot-scope="scope">
-                                    <el-tag type="info" v-if="scope.row.testType=='UnitTest'" >单元测试</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.testType=='HybridTest'" >混合测试</el-tag>
+                                    <el-tag type="success" v-if="scope.row.taskStatus" >启用</el-tag>
+                                    <el-tag type="danger" v-else>禁用</el-tag>
                                 </template>
-                            </el-table-column>
+                            </el-table-column> 
                             <el-table-column
-                                label="用例名称"
+                                label="通过率"
+                                width="100px"
                                 align= "center"
-                                width="350px"
-                                prop="caseName">
-                            </el-table-column>
-                            <el-table-column
-                                label="所属页面"
-                                align= "center"
-                                prop="pageName">
-                            </el-table-column>
-                            <el-table-column
-                                label="所属功能"
-                                align= "center"
-                                prop="funName">
-                            </el-table-column>
-                            <el-table-column
-                                label="用例状态"
-                                align= "center"
-                                width="100px">
-                                <template slot-scope="scope">
-                                    <el-tag type="warning" v-if="scope.row.caseState=='InDev'">研发中</el-tag>
-                                    <el-tag type="success" v-else-if="scope.row.caseState=='Completed'">已完成</el-tag>
-                                    <!-- <el-tag type="success" v-else-if="scope.row.caseState=='Completed'"><i class="el-icon-check"></i></el-tag> -->
-                                    <el-tag type="info" v-else>弃用</el-tag>
-                                </template>
-                            </el-table-column>
+                                prop="passRate">
+                            </el-table-column> 
                             <el-table-column
                                 label="启用"
                                 align= "center"
-                                width="90px">
+                                width="100px">
                                 <template slot-scope="scope">
                                 <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
                                 </template>
@@ -155,7 +137,7 @@
                                 align="center"
                                 width="100px">
                                 <template slot="header">
-                                    <el-button type="primary" @click="OpenCaseMainDialog()">新增</el-button>
+                                    <el-button type="primary" @click="OpenTaskMainDialog()">新增</el-button>
                                 </template>
                                 <template slot-scope="scope" style="width:100px">
                                     <el-button
@@ -210,12 +192,12 @@
             </el-drawer>
         </template>
         <template>
-            <dialog-case-main
-                @closeDialog="CloseCaseMainDialog" 
-                :isVisible="dialog.caseMain.dialogVisible" 
-                :dialogPara="dialog.caseMain.dialogPara"
+            <dialog-task-main
+                @closeDialog="CloseTaskMainDialog" 
+                :isVisible="dialog.taskMain.dialogVisible" 
+                :dialogPara="dialog.taskMain.dialogPara"
                 @getData="AddToTestSetTable($event)">
-            </dialog-case-main>
+            </dialog-task-main>
         </template>
     </div>
 </template>
@@ -225,13 +207,12 @@ import Qs from 'qs';
 import Sortable from 'sortablejs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
-import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetUserNameItems} from "../../../../../../js/GetSelectTable.js";
-import DialogCaseMain from "./CaseMain.vue";
+import DialogTaskMain from "./TaskMain.vue";
 
 export default {
     components: {
-        DialogCaseMain
+        DialogTaskMain
     },
     data() {
         return {
@@ -248,52 +229,39 @@ export default {
                 disPlay_Previous:false,
             },
             BasicRomeData:{
-                taskId:'',
-                taskName:'',
-                environmentId:'',
-                environmentNameOption:[],
-                timingConfig:'',
-                priorityId:'',//优先级
+                batchId:'',
+                batchName:'',
+                priorityId:'',
                 priorityNameOption:[
                     {'label':'P0','value':'P0','details':'最高'},
                     {'label':'P1','value':'P1','details':'高'},
                     {'label':'P2','value':'P2','details':'中'},
                     {'label':'P3','value':'P3','details':'低'},
                 ],
-                taskStatus:'',
-                taskStatusOption:[
-                    {'label':'开启','value':1},
-                    {'label':'关闭','value':0},
-                ],
                 props: { multiple: true },
                 pushTo:[],
                 userNameOptions:[],
                 remarks:'',
+                hookState:true,
+                hookId:'',
                 rules:{
-                    taskName: [
+                    batchName: [
                         { required: true, message: '请输入任务名称', trigger: 'blur' },
                         { min: 1, max: 20, message: '长度在 1 到 20 个字符', trigger: 'blur' }
                     ],
-                    environmentId:[{required: true, message: '请选择页面环境', trigger: 'change' }],
-                    timingConfig: [
-                        { required: true, message: '请输入正确的CronTab时间', trigger: 'blur' },
-                        { min: 1, max: 20, message: '例:* * * * *', trigger: 'blur' }
-                    ],
                     priorityId:[{required: true, message: '请选择优先级', trigger: 'change' }],
-                    taskStatus:[{required: true, message: '请选择任务状态', trigger: 'change' }],
-                    
                 },
-
+                buttonLoading:false,
             },
-            SortCaseRomeData:{
-                tableData:[]
+            SortTaskRomeData:{
+                tableData:[],
             },
             CharmRomeData:{
                 title:'',
                 tableData:[],
             },
             dialog:{
-                caseMain:{
+                taskMain:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -325,14 +293,16 @@ export default {
                 PrintConsole(newval);
                 this.ClearStepsRomeData();
                 this.ClearBasicRomeData();
-                this.ClearSortCaseRomeData();
+                this.ClearSortTaskRomeData();
 
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew;
 
                 if(newval.isAddNew==false){//进入编辑状态
-                    this.BasicRomeData.taskId = newval.taskId;
-                    this.LoadTaskData(newval.taskId);
+                    this.BasicRomeData.batchId = newval.batchId
+                    this.LoadBatchData(this.BasicRomeData.batchId);
+                }else{
+                    this.CreateHookId();
                 }
             }
         },
@@ -365,9 +335,6 @@ export default {
             let self = this;
             if(self.StepsRomeData.active==0){//基本用例数据
                 // self.StepsRomeData.active++;
-                // self.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                //     self.rowDrop();
-                // });
                 this.$refs['BasicRomeData'].validate((valid) => {
                     if (valid) {//通过
                         self.StepsRomeData.active++;
@@ -377,11 +344,12 @@ export default {
                     } 
                 });
             }else if(self.StepsRomeData.active==1){
-                if(self.SortCaseRomeData.tableData.length==0){
-                    self.$message.warning("不可保存用例集为空的定时任务,当前用例集为空!");
+                // self.StepsRomeData.active++;
+                if(self.SortTaskRomeData.tableData.length==0){
+                    self.$message.warning("不可保存任务集为空的定时任务,当前用例集为空!");
                 }else{
                     self.StepsRomeData.active++;
-                    self.CharmCaseData();
+                    self.CharmBatchData();
                 }
             }
         },
@@ -419,19 +387,12 @@ export default {
         ClearBasicRomeData(){
             let self = this;
             self.resetForm('BasicRomeData');
-            self.loading=false;
-            self.BasicRomeData.taskName='';
-            self.BasicRomeData.environmentId='';
-            self.BasicRomeData.timingConfig='';
+            self.BasicRomeData.batchName='';
             self.BasicRomeData.priorityId='';
-            self.BasicRomeData.taskStatus='';
             self.BasicRomeData.pushTo='';
             self.BasicRomeData.remarks='';
-        },
-        GetPageEnvironmentNameOption(){
-            GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{
-                this.BasicRomeData.environmentNameOption = d;
-            });
+            self.BasicRomeData.hookState=true;
+            self.BasicRomeData.hookId='';
         },
         GetUserNameOption(){
             GetUserNameItems().then(d=>{
@@ -443,45 +404,48 @@ export default {
                 this.$refs[formName].resetFields();
             }
         },
+        CreateHookId(){
+            let self = this;
+            self.BasicRomeData.buttonLoading=true;
+            self.$axios.get('/api/ApiBatchTask/CreateHookId',{
+                params:{
+                   
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    self.BasicRomeData.hookId = res.data.hookId;
+                    self.BasicRomeData.buttonLoading=false;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.BasicRomeData.buttonLoading=false;
+                }
+                // console.log(self.tableData);
+            }).catch(function (error) {
+                console.log(error);
+                self.BasicRomeData.buttonLoading=false;
+            })
+        },
 
-        //用例集
-        ClearSortCaseRomeData(){
+        //测试集
+        ClearSortTaskRomeData(){
             let self = this;
-            self.SortCaseRomeData.tableData=[];
+            self.SortTaskRomeData.tableData= []
         },
-        CloseCaseMainDialog(){
-            this.dialog.caseMain.dialogVisible = false;
+        CloseTaskMainDialog(){
+            this.dialog.taskMain.dialogVisible = false;
         },
-        OpenCaseMainDialog(){
+        OpenTaskMainDialog(){
             let self = this;
-            let passCaseId = [];
-            self.SortCaseRomeData.tableData.forEach(d=>{
-                passCaseId.push(d.id)
+            let passTaskId = [];
+            self.SortTaskRomeData.tableData.forEach(d=>{
+                passTaskId.push(d.id)
             });
                 
-            self.dialog.caseMain.dialogPara={
-                dialogTitle:"导入用例",//初始化标题
-                passCaseId:passCaseId
+            self.dialog.taskMain.dialogPara={
+                dialogTitle:"导入定时任务",//初始化标题
+                passTaskId:passTaskId
             }
-            self.dialog.caseMain.dialogVisible=true;
-        },
-        AddToTestSetTable(data){
-            let self = this;
-            PrintConsole('回调数据:',data);
-            data.forEach(d=>{
-                let obj = {};
-                obj.id=d.id;
-                obj.testType=d.testType;
-                obj.pageName = d.pageName;
-                obj.funName = d.funName;
-                obj.caseName = d.caseName;
-                obj.caseState = d.caseState;
-                obj.state = true;
-
-                self.SortCaseRomeData.tableData.push(obj);
-            });
-            self.rowDrop();
-            PrintConsole('列表保存数据:',self.SortCaseRomeData.tableData);   
+            self.dialog.taskMain.dialogVisible=true;
         },
         handleDelete(index,row){
             let self = this;
@@ -490,8 +454,8 @@ export default {
                 cancelButtonText: '取消',
                 type: 'warning'
                 }).then(() => {
-                    self.SortCaseRomeData.tableData.splice(index,1);
-                    PrintConsole('最终数据:',self.SortCaseRomeData.tableData);
+                    self.SortTaskRomeData.tableData.splice(index,1);
+                    PrintConsole('最终数据:',self.SortTaskRomeData.tableData);
                 }).catch(() => {       
             });
         },
@@ -501,26 +465,43 @@ export default {
             let self = this;
             Sortable.create(tbody, {
                 onEnd ({ newIndex, oldIndex }) {
-                    const currRow = self.SortCaseRomeData.tableData.splice(oldIndex, 1)[0];
-                    self.SortCaseRomeData.tableData.splice(newIndex, 0, currRow);
+                    const currRow = self.SortTaskRomeData.tableData.splice(oldIndex, 1)[0];
+                    self.SortTaskRomeData.tableData.splice(newIndex, 0, currRow);
                     // console.log(self.RomeData.TableData);
                 }
             });
         },
+        AddToTestSetTable(data){
+            let self = this;
+            PrintConsole('回调数据:',data);
+            data.forEach(d=>{
+                let obj = {};
+                obj.id=d.id;
+                obj.taskName=d.taskName;
+                obj.caseTotal = d.caseTotal;
+                obj.taskStatus = d.taskStatus;
+                obj.passRate = d.passRate;
+                obj.state = true;
 
-        //效验
-        CharmCaseData(){//验证用例数据的完整性
+                self.SortTaskRomeData.tableData.push(obj);
+            });
+            self.rowDrop();
+            PrintConsole('列表保存数据:',self.SortTaskRomeData.tableData);   
+        },
+
+        //保存
+        CharmBatchData(){
             let self = this;
             self.loading=true;
             self.CharmRomeData.tableData = [];
             self.CharmRomeData.title = '';
-            self.$axios.post('/api/ApiTimingTask/CharmTaskData',{
+            self.$axios.post('/api/ApiBatchTask/CharmBatchData',{
                 'CharmType':self.isAddNew,
                 'BasicInfo':{
-                    'taskId':self.BasicRomeData.taskId,
+                    'batchId':self.BasicRomeData.batchId,
                     'proId':self.$cookies.get('proId'),
-                    'taskName':self.BasicRomeData.taskName,
-                    'timingConfig':self.BasicRomeData.timingConfig,
+                    'batchName':self.BasicRomeData.batchName,
+                    'hookId':self.BasicRomeData.hookId
                 },
             }).then(res => {
                 if(res.data.statusCode==2000){
@@ -540,7 +521,7 @@ export default {
                     }
                     self.loading=false;
                 }else{
-                    self.$message.error('效验定时任务信息发生错误:'+res.data.errorMsg);
+                    self.$message.error('效验批量任务信息发生错误:'+res.data.errorMsg);
                     self.loading=false;
                 }
             }).catch(function (error) {
@@ -551,25 +532,24 @@ export default {
             let self = this;
             if(self.CharmRomeData.tableData.length==0){
                 if(self.isAddNew){  
-                    self.$axios.post('/api/ApiTimingTask/SaveData',{
+                    self.$axios.post('/api/ApiBatchTask/SaveData',{
                         'BasicInfo':{
                             'proId':self.$cookies.get('proId'),
-                            'taskName':self.BasicRomeData.taskName,
-                            'environmentId':self.BasicRomeData.environmentId,
-                            'timingConfig':self.BasicRomeData.timingConfig,
+                            'batchName':self.BasicRomeData.batchName,
                             'priorityId':self.BasicRomeData.priorityId,
-                            'taskStatus':self.BasicRomeData.taskStatus,
                             'pushTo':self.BasicRomeData.pushTo,
                             'remarks':self.BasicRomeData.remarks,
+                            'hookState':self.BasicRomeData.hookState,
+                            'hookId':self.BasicRomeData.hookId,
                         },
-                        'TestSet':self.SortCaseRomeData.tableData
+                        'TestSet':self.SortTaskRomeData.tableData
                     }).then(res => {
                         if(res.data.statusCode==2001){
-                            self.$message.success('新增定时任务成功!');
+                            self.$message.success('新增批量任务成功!');
                             self.returnToMain();
                         
                         }else{
-                            self.$message.error('保存定时任务失败'+res.data.errorMsg);
+                            self.$message.error('保存批量任务失败'+res.data.errorMsg);
                         }
                     }).catch(function (error) {
                         console.log(error);
@@ -604,32 +584,29 @@ export default {
                 self.$message.warning('请先修改错误数据后,在进行保存!');
             }
         },
-        LoadTaskData(taskId){
+        LoadBatchData(batchId){
             let self = this;
             self.loading=true;
-            self.$axios.get('/api/ApiTimingTask/LoadTaskData',{
+            self.$axios.get('/api/ApiBatchTask/LoadBatchData',{
                 params:{
-                    'taskId':taskId
+                    'batchId':batchId
                 }
             }).then(res => {
                 if(res.data.statusCode==2000){
-                    GetPageEnvironmentNameItems(self.$cookies.get('proId')).then(d=>{
-                        self.BasicRomeData.environmentNameOption = d;
-                        GetUserNameItems().then(d=>{
-                            self.BasicRomeData.userNameOptions = d;
-                            
-                            self.BasicRomeData.taskName = res.data.dataTable.basicInfo.taskName;
-                            self.BasicRomeData.environmentId = res.data.dataTable.basicInfo.environmentId;
-                            self.BasicRomeData.timingConfig = res.data.dataTable.basicInfo.timingConfig;
-                            self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
-                            self.BasicRomeData.taskStatus = res.data.dataTable.basicInfo.taskStatus;
-                            self.BasicRomeData.pushTo = res.data.dataTable.basicInfo.pushTo;
-                            self.BasicRomeData.remarks = res.data.dataTable.basicInfo.remarks;
-                        });
-
-                        self.SortCaseRomeData.tableData = res.data.dataTable.testSet;
-                        self.loading=false;
+                    GetUserNameItems().then(d=>{
+                        self.BasicRomeData.userNameOptions = d;
+                        
+                        // self.BasicRomeData.taskName = res.data.dataTable.basicInfo.taskName;
+                        // self.BasicRomeData.environmentId = res.data.dataTable.basicInfo.environmentId;
+                        // self.BasicRomeData.timingConfig = res.data.dataTable.basicInfo.timingConfig;
+                        // self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
+                        // self.BasicRomeData.taskStatus = res.data.dataTable.basicInfo.taskStatus;
+                        // self.BasicRomeData.pushTo = res.data.dataTable.basicInfo.pushTo;
+                        // self.BasicRomeData.remarks = res.data.dataTable.basicInfo.remarks;
                     });
+
+                    // self.SortCaseRomeData.tableData = res.data.dataTable.testSet;
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
                     self.loading=false;

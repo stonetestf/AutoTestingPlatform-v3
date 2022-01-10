@@ -36,6 +36,7 @@ import Api_IntMaintenance.urls
 import Api_TestReport.urls
 import Api_CaseMaintenance.urls
 import Api_TimingTask.urls
+import Api_BatchTask.urls
 
 
 urlpatterns = [
@@ -58,5 +59,6 @@ urlpatterns = [
     url('api/ApiTestReport/', include(Api_TestReport.urls)),
     url('api/ApiCaseMaintenance/', include(Api_CaseMaintenance.urls)),
     url('api/ApiTimingTask/', include(Api_TimingTask.urls)),
+    url('api/ApiBatchTask/', include(Api_BatchTask.urls)),
 
 ]

@@ -5,7 +5,7 @@
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="任务名称:">
-                            <el-input clearable v-model.trim="SelectRomeData.taskName"></el-input>
+                            <el-input clearable v-model.trim="SelectRomeData.batchName"></el-input>
                         </el-form-item>
                         <el-form-item label="报告状态:">
                             <el-select v-model="SelectRomeData.reportState" clearable placeholder="请选择" style="width:120px;">
@@ -46,19 +46,7 @@
                                 label="任务名称"
                                 width="300px"
                                 align= "center"
-                                prop="taskName">
-                            </el-table-column>
-                            <el-table-column
-                                label="定时配置"
-                                width="200px"
-                                align= "center"
-                                prop="timingConfig">
-                            </el-table-column>
-                            <el-table-column
-                                label="用例数量"
-                                width="100px"
-                                align= "center"
-                                prop="taskSetTotal">
+                                prop="batchName">
                             </el-table-column>
                             <el-table-column
                                 show-overflow-tooltip
@@ -66,16 +54,22 @@
                                 width="300px"
                                 align= "center"
                                 prop="remarks">
-                            </el-table-column>      
+                            </el-table-column>    
                             <el-table-column
-                                label="任务状态"
+                                label="任务数量"
+                                width="100px"
+                                align= "center"
+                                prop="taskTotal">
+                            </el-table-column>  
+                            <el-table-column
+                                label="钩子状态"
                                 width="100px"
                                 align= "center">
                                 <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.taskStatus" >启用</el-tag>
-                                    <el-tag type="danger" v-else>禁用</el-tag>
+                                    <el-tag type="success" v-if="scope.row.hookState">开启</el-tag>
+                                    <el-tag type="danger" v-else>关闭</el-tag>
                                 </template>
-                            </el-table-column>          
+                            </el-table-column>      
                             <el-table-column
                                 label="最后报告时间"
                                 width="160px"
@@ -134,8 +128,8 @@
                                             更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
-                                            <el-dropdown-item command="CopyTask">复制定时任务(未开发)</el-dropdown-item>
-                                            <el-dropdown-item command="TaskRestore">恢复定时任务</el-dropdown-item>
+                                            <el-dropdown-item command="CopyTask">复制批量任务(未开发)</el-dropdown-item>
+                                            <el-dropdown-item command="TaskRestore">恢复批量任务(未开发)</el-dropdown-item>
                                         </el-dropdown-menu>
                                     </el-dropdown>
                                 </el-button-group>
@@ -146,7 +140,7 @@
                                         :loading="buttonLoading"
                                         size="mini"
                                         type="success"
-                                        @click="runTask(scope.$index, scope.row)">RunTask
+                                        @click="runTask(scope.$index, scope.row)">RunBatch
                                     </el-button>
                                     <el-button
                                         size="mini"
@@ -183,14 +177,6 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
-        <template>
-            <dialog-history-info
-                @closeDialog="closeHistoryInfoDialog" 
-                :isVisible="dialog.historyInfo.dialogVisible" 
-                :dialogPara="dialog.historyInfo.dialogPara"
-                @Succeed="SelectData">
-            </dialog-history-info>
-        </template>
     </div>
 </template>
 
@@ -199,11 +185,10 @@ import Qs from 'qs'
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import DialogEditor from "./Editor.vue";
-import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-        DialogEditor,DialogHistoryInfo
+        DialogEditor
     },
     data() {
         return {
@@ -211,7 +196,7 @@ export default {
             buttonLoading:false,
             multipleSelection:[],
             SelectRomeData:{
-                taskName:'',
+                batchName:'',
                 reportState:'',
                 reportStateOption:[
                     {'label':'Pass','value':'Pass'},
@@ -220,12 +205,7 @@ export default {
                 ],
             },
             RomeData:{
-                tableData: [
-                    // {'id':'1','taskName':'测试任务','timingConfig':'* * * * *','taskTotal':8,'remarks':'这是备注啊','taskStatus':true,'lastReportTime':'2021-22-22 12:22:21',
-                    // 'lastReportStatus':'Pass','updateTime':'2021-22-22 12:22:21','userName':'liepnglo(古雨辰)','createUserName':'lipenglo'},
-                    // {'id':'2','taskName':'测试任务','timingConfig':'* * * * *','taskTotal':8,'remarks':'这是备注啊','taskStatus':false,'lastReportTime':'2021-22-22 12:22:21',
-                    // 'lastReportStatus':'Fail','updateTime':'2021-22-22 12:22:21','userName':'liepnglo(古雨辰)','createUserName':'lipenglo'},
-                ],
+                tableData: [],
             },
             page: { 
                 current: 1,// 默认显示第几页
@@ -234,13 +214,6 @@ export default {
             },
             dialog:{
                 editor:{
-                    dialogVisible:false,
-                    dialogPara:{
-                        dialogTitle:"",//初始化标题
-                        isAddNew:true,//初始化是否新增\修改
-                    },
-                },
-                historyInfo:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -262,10 +235,10 @@ export default {
             let self = this;
             self.loading=true;
             self.RomeData.tableData= [];
-            self.$axios.get('/api/ApiTimingTask/SelectData',{
+            self.$axios.get('/api/ApiBatchTask/SelectData',{
                 params:{
                     'proId':self.$cookies.get('proId'),
-                    'taskName':self.SelectRomeData.taskName,
+                    'batchName':self.SelectRomeData.batchName,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -274,11 +247,10 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
-                        obj.taskName=d.taskName;
-                        obj.timingConfig=d.timingConfig;
-                        obj.taskSetTotal=d.taskSetTotal;
+                        obj.batchName=d.batchName;
                         obj.remarks = d.remarks;
-                        obj.taskStatus = d.taskStatus;
+                        obj.taskTotal = d.taskTotal;
+                        obj.hookState = d.hookState;
                         obj.lastReportTime = d.lastReportTime;
                         obj.lastReportStatus = d.lastReportStatus;
                         obj.passRate=d.passRate+'%';
@@ -304,25 +276,15 @@ export default {
                 self.loading=false;
             })
         },
-        CloseEditDialog(){
-            this.dialog.editor.dialogVisible =false;
+        handleCommand(command){
+            PrintConsole(command);
+           
         },
-        OpenEditDialog(){
+        ClearSelectRomeData(){
             let self = this;
-            self.dialog.editor.dialogPara={
-                dialogTitle:"新增定时任务",//初始化标题
-                isAddNew:true,//初始化是否新增\修改
-            }
-            self.dialog.editor.dialogVisible=true;
-        },
-        handleEdit(index,row){
-            let self = this;
-            self.dialog.editor.dialogPara={
-                dialogTitle:"编辑定时任务",//初始化标题
-                isAddNew:false,//初始化是否新增\修改
-                taskId:row.id,
-            }
-            self.dialog.editor.dialogVisible=true;
+            self.SelectRomeData.batchName='';
+            self.SelectRomeData.reportState='';
+            self.SelectData();
         },
         handleRowClick(row, column, event){//点击行选择勾选框
             this.$refs.multipleTable.toggleRowSelection(row);
@@ -334,43 +296,25 @@ export default {
                 this.multipleSelection.push(d.id);
             }); 
         },
-        handleDelete(index,row){
-            this.$confirm('请确定是否删除?', '提示', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-                type: 'warning'
-                }).then(() => {
-                   this.DeleteData(row.id);     
-                }).catch(() => {       
-            });
+        CloseEditDialog(){
+            this.dialog.editor.dialogVisible =false;
         },
-        DeleteData(id){
+        OpenEditDialog(){
             let self = this;
-            self.$axios.post('/api/ApiTimingTask/DeleteData',Qs.stringify({
-                'taskId':id,
-            })).then(res => {
-            if(res.data.statusCode ==2003){
-                self.$message.success('删除定时任务成功!');
-                self.SelectData();
+            self.dialog.editor.dialogPara={
+                dialogTitle:"新增批量任务",//初始化标题
+                isAddNew:true,//初始化是否新增\修改
             }
-            else{
-                self.$message.error('删除定时任务失败:'+ res.data.errorMsg);
-            }
-            }).catch(function (error) {
-                console.log(error);
-            })
+            self.dialog.editor.dialogVisible=true;
         },
-        handleCommand(command){
-            PrintConsole(command);
-            if(command=='TaskRestore'){
-                this.OpenHistoryInfoDialog();
-            }
-        },
-        ClearSelectRomeData(){
+        handleEdit(index,row){
             let self = this;
-            self.SelectRomeData.taskName='';
-            self.SelectRomeData.reportState='';
-            self.SelectData();
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑批量任务",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                batchId:row.id,
+            }
+            self.dialog.editor.dialogVisible=true;
         },
         pageSizeChange(pageSize) {
             let self = this;
@@ -384,42 +328,6 @@ export default {
             self.page.current=val;
             self.SelectData();
         },
-
-        //历史恢复
-        closeHistoryInfoDialog(){
-            this.dialog.historyInfo.dialogVisible =false;
-        },
-        OpenHistoryInfoDialog(){
-            let self = this;
-            if(self.multipleSelection.length>1){
-                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
-            }else{
-                self.dialog.historyInfo.dialogPara={
-                    dialogTitle:"历史恢复",//初始化标题
-                    taskId:self.multipleSelection[0],
-                }
-                self.dialog.historyInfo.dialogVisible=true;
-            }
-        },
-        runTask(index,row){
-            let self = this;
-            self.buttonLoading=true;
-            self.$axios.post('/api/ApiTimingTask/ExecuteTask',Qs.stringify({
-                'taskId':row.id,
-            })).then(res => {
-            if(res.data.statusCode ==2001){
-                self.$message.success('定时任务已启动,任务ID:'+res.data.redisKey+',请稍后在测试报告页面查看结果!');
-                self.buttonLoading=false;
-            }
-            else{
-                self.$message.error('定时任务启动失败:'+ res.data.errorMsg);
-                self.buttonLoading=false;
-            }
-            }).catch(function (error) {
-                console.log(error);
-                self.buttonLoading=false;
-            })
-        }
     }
 };
 </script>

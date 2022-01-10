@@ -4,7 +4,7 @@
         :visible.sync="dialogVisible"
         :close-on-click-modal=false
         :before-close="dialogClose"
-        width="1200px">
+        width="1300px">
             <template>
                 <el-form :inline="true"  method="post">
                     <el-form-item label="所属页面:">
@@ -86,6 +86,12 @@
                         width="150px"
                         align= "center"
                         prop="userName">
+                    </el-table-column>
+                    <el-table-column
+                        label="更新时间"
+                        width="160px"
+                        align= "center"
+                        prop="updateTime">
                     </el-table-column>
                 </el-table>
             </template>
@@ -206,6 +212,7 @@ export default {
                         obj.caseName = d.caseName;
                         obj.caseState = d.caseState;
                         obj.userName = d.userName;   
+                        obj.updateTime=d.updateTime;
 
                         self.RomeData.tableData.push(obj);
                     });

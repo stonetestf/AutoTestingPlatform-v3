@@ -67,7 +67,8 @@ def select_data(request):
             select_db_ApiTimingTask = obj_db_ApiTimingTask[minSize: maxSize]
 
         for i in select_db_ApiTimingTask:
-            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, taskId=i.id).order_by('-updateTime')
+            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
+                is_del=0,reportType='TASK',taskId=i.id).order_by('-updateTime')
             if obj_db_ApiTestReport.exists():
                 lastReportTime = obj_db_ApiTestReport[0].runningTime
                 lastReportStatus = obj_db_ApiTestReport[0].reportStatus
@@ -142,6 +143,7 @@ def select_case_data(request):
                 'caseState': i.caseState,
                 'testType': i.testType,
                 "userName": f"{i.uid.userName}({i.uid.nickName})",
+                'updateTime':str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
             })
 
         response['TableData'] = dataList
@@ -283,16 +285,18 @@ def save_data(request):
                         )
                         # endregion
                         # region 测试集
+                        product_list_to_insert = list()
                         for item_index, item_testSet in enumerate(testSet, 0):
-                            db_ApiTimingTaskTestSet.objects.create(
+                            product_list_to_insert.append(db_ApiTimingTaskTestSet(
                                 timingTask_id=save_db_ApiTimingTask.id,
                                 index=item_index,
                                 case_id=item_testSet.id,
                                 state=1 if item_testSet.state else 0,
                                 uid_id=userId,
                                 is_del=0,
-                                historyCode=historyCode,
+                                historyCode=historyCode)
                             )
+                        db_ApiTimingTaskTestSet.objects.bulk_create(product_list_to_insert)
                         # endregion
                     else:
                         raise ValueError('内置任务创建失败!')
