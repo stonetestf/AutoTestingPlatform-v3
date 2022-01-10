@@ -12,6 +12,8 @@ class ApiTimingTask(models.Model):
     pushTo = models.CharField('接收邮件', max_length=100, null=True)
     taskStatus = models.IntegerField("任务状态(0:禁用,1:启用)", null=False)
     remarks = models.TextField("备注信息", null=True)
+    # periodicTask = models.ForeignKey(to='djcelery.PeriodicTask', to_field='id', on_delete=models.CASCADE)  # 内置任务ID
+    periodicTask_id = models.IntegerField("内置任务ID", null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     cuid = models.IntegerField("创建人", null=False)

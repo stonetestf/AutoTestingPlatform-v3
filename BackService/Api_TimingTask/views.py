@@ -13,6 +13,7 @@ from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_TimingTask.models import ApiTimingTaskHistory as db_ApiTimingTaskHistory
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
+from djcelery import models as celery_models
 
 
 # Create reference here.
@@ -23,6 +24,7 @@ from ClassData.Common import Common
 from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.TestReport import ApiReport
+from ClassData.TimingTask import TimingTask
 
 from Task.tasks import api_asynchronous_run_task
 
@@ -33,6 +35,7 @@ cls_FindTable = FindTable()
 cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
 cls_ApiReport = ApiReport()
+cls_TimingTask = TimingTask()
 
 
 # Create your views here.
@@ -176,7 +179,7 @@ def charm_task_data(request):
                             'updateTime': cls_Common.get_date_time()})
         # endregion
         # region 相同时间
-        obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(timingConfig=basicInfo.timingConfig)
+        obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(is_del=0,timingConfig=basicInfo.timingConfig)
         if obj_db_ApiTimingTask.exists():
             if charmType:
                 dataList.append({
@@ -238,44 +241,53 @@ def save_data(request):
         else:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Add',
-                        cls_FindTable.get_pro_name(basicInfo.proId),
-                        None, None,
-                        userId,
-                        '【新增定时任务】', CUFront=responseData
-                    )
+                    # region 保存内置定时任务
+                    createTask = cls_TimingTask.create_task(
+                        basicInfo.taskName, 'Task.tasks.api_daily_run_tasks',
+                        {},basicInfo.timingConfig,basicInfo.taskStatus)
                     # endregion
-                    # region 保存基本信息
-                    save_db_ApiTimingTask = db_ApiTimingTask.objects.create(
-                        pid_id=basicInfo.proId, taskName=basicInfo.taskName, environment_id=basicInfo.environmentId,
-                        timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId, remarks=basicInfo.remarks,
-                        pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, cuid=userId, uid_id=userId, is_del=0,
-                        historyCode=historyCode
-                    )
-                    # endregion
-                    # region 历史记录
-                    db_ApiTimingTaskHistory.objects.create(
-                        timingTask_id=save_db_ApiTimingTask.id,
-                        operationType='Add',
-                        restoreData=responseData,
-                        historyCode=historyCode,
-                        uid_id=userId
-                    )
-                    # endregion
-                    # region 测试集
-                    for item_index, item_testSet in enumerate(testSet, 0):
-                        db_ApiTimingTaskTestSet.objects.create(
-                            timingTask_id=save_db_ApiTimingTask.id,
-                            index=item_index,
-                            case_id=item_testSet.id,
-                            state=1 if item_testSet.state else 0,
-                            uid_id=userId,
-                            is_del=0,
-                            historyCode=historyCode,
+                    if createTask['state']:
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Add',
+                            cls_FindTable.get_pro_name(basicInfo.proId),
+                            None, None,
+                            userId,
+                            '【新增定时任务】', CUFront=responseData
                         )
-                    # endregion
+                        # endregion
+                        # region 保存基本信息
+                        save_db_ApiTimingTask = db_ApiTimingTask.objects.create(
+                            pid_id=basicInfo.proId, taskName=basicInfo.taskName, environment_id=basicInfo.environmentId,
+                            timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,
+                            remarks=basicInfo.remarks,
+                            pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, periodicTask_id=createTask['id'],
+                            cuid=userId, uid_id=userId,is_del=0,historyCode=historyCode
+                        )
+                        # endregion
+                        # region 历史记录
+                        db_ApiTimingTaskHistory.objects.create(
+                            timingTask_id=save_db_ApiTimingTask.id,
+                            operationType='Add',
+                            restoreData=responseData,
+                            historyCode=historyCode,
+                            uid_id=userId
+                        )
+                        # endregion
+                        # region 测试集
+                        for item_index, item_testSet in enumerate(testSet, 0):
+                            db_ApiTimingTaskTestSet.objects.create(
+                                timingTask_id=save_db_ApiTimingTask.id,
+                                index=item_index,
+                                case_id=item_testSet.id,
+                                state=1 if item_testSet.state else 0,
+                                uid_id=userId,
+                                is_del=0,
+                                historyCode=historyCode,
+                            )
+                        # endregion
+                    else:
+                        raise ValueError('内置任务创建失败!')
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:
@@ -357,81 +369,91 @@ def edit_data(request):
         if obj_db_ApiTimingTask.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    # region 添加操作信息
-                    # region 查询以前的数据
-                    oldTestSet = []
-                    obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
-                        is_del=0, timingTask_id=taskId).order_by('index')
-                    for item_testSet in obj_db_ApiTimingTaskTestSet:
-                        oldTestSet.append({
-                            'id': item_testSet.case_id,
-                            'testType': item_testSet.case.testType,
-                            'caseName': item_testSet.case.caseName,
-                            'pageName': item_testSet.case.page.pageName,
-                            'funName': item_testSet.case.fun.funName,
-                            'caseState': item_testSet.case.caseState,
-                            'state': True if item_testSet.state == 1 else False
-                        })
-                    oldData = {
-                        'basicInfo': {
-                            'id': taskId,
-                            'taskName': obj_db_ApiTimingTask[0].taskName,
-                            'environmentId': obj_db_ApiTimingTask[0].environment_id,
-                            'timingConfig': obj_db_ApiTimingTask[0].timingConfig,
-                            'priorityId': obj_db_ApiTimingTask[0].priority,
-                            'taskStatus': obj_db_ApiTimingTask[0].taskStatus,
-                            'pushTo': ast.literal_eval(obj_db_ApiTimingTask[0].pushTo) if obj_db_ApiTimingTask[
-                                0].pushTo else [],
-                            'remarks': obj_db_ApiTimingTask[0].remarks,
-                        },
-                        'testSet': oldTestSet,
-                    }
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Edit',
-                        cls_FindTable.get_pro_name(basicInfo.proId),
-                        None, None,
-                        userId,
-                        f'【修改定时任务】 ID{taskId}:{obj_db_ApiTimingTask[0].taskName}',
-                        CUFront=oldData, CURear=responseData
-                    )
+                    # region 内置定时任务
+                    editTask = cls_TimingTask.edit_task(
+                        obj_db_ApiTimingTask[0].periodicTask_id,
+                        basicInfo.taskName,
+                        basicInfo.timingConfig,
+                        basicInfo.taskStatus)
                     # endregion
-                    # endregion
-                    # region 历史记录
-                    db_ApiTimingTaskHistory.objects.create(
-                        timingTask_id=taskId,
-                        historyCode=historyCode,
-                        operationType='Edit',
-                        restoreData=oldData,
-                        uid_id=userId
-                    )
-                    # endregion
-                    # region 删除测试集数据
-                    db_ApiTimingTaskTestSet.objects.filter(
-                        is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
-                    )
-                    # endregion
-                    # region 更新基本信息
-                    db_ApiTimingTask.objects.filter(is_del=0, id=taskId).update(
-                        pid_id=basicInfo.proId,
-                        taskName=basicInfo.taskName, environment_id=basicInfo.environmentId,
-                        timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,
-                        pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, remarks=basicInfo.remarks,
-                        historyCode=historyCode, uid_id=userId, updateTime=cls_Common.get_date_time()
-                    )
-                    # endregion
-                    # region 新增测试集数据
-                    for item_index, item_testSet in enumerate(testSet, 0):
-                        db_ApiTimingTaskTestSet.objects.create(
-                            timingTask_id=taskId,
-                            index=item_index,
-                            case_id=item_testSet.id,
-                            state=1 if item_testSet.state else 0,
-                            uid_id=userId,
-                            is_del=0,
-                            historyCode=historyCode,
+                    if editTask['state']:
+                        # region 添加操作信息
+                        # region 查询以前的数据
+                        oldTestSet = []
+                        obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
+                            is_del=0, timingTask_id=taskId).order_by('index')
+                        for item_testSet in obj_db_ApiTimingTaskTestSet:
+                            oldTestSet.append({
+                                'id': item_testSet.case_id,
+                                'testType': item_testSet.case.testType,
+                                'caseName': item_testSet.case.caseName,
+                                'pageName': item_testSet.case.page.pageName,
+                                'funName': item_testSet.case.fun.funName,
+                                'caseState': item_testSet.case.caseState,
+                                'state': True if item_testSet.state == 1 else False
+                            })
+                        oldData = {
+                            'basicInfo': {
+                                'id': taskId,
+                                'taskName': obj_db_ApiTimingTask[0].taskName,
+                                'environmentId': obj_db_ApiTimingTask[0].environment_id,
+                                'timingConfig': obj_db_ApiTimingTask[0].timingConfig,
+                                'priorityId': obj_db_ApiTimingTask[0].priority,
+                                'taskStatus': obj_db_ApiTimingTask[0].taskStatus,
+                                'pushTo': ast.literal_eval(obj_db_ApiTimingTask[0].pushTo) if obj_db_ApiTimingTask[
+                                    0].pushTo else [],
+                                'remarks': obj_db_ApiTimingTask[0].remarks,
+                            },
+                            'testSet': oldTestSet,
+                        }
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Edit',
+                            cls_FindTable.get_pro_name(basicInfo.proId),
+                            None, None,
+                            userId,
+                            f'【修改定时任务】 ID{taskId}:{obj_db_ApiTimingTask[0].taskName}',
+                            CUFront=oldData, CURear=responseData
                         )
-                    # endregion
+                        # endregion
+                        # endregion
+                        # region 历史记录
+                        db_ApiTimingTaskHistory.objects.create(
+                            timingTask_id=taskId,
+                            historyCode=historyCode,
+                            operationType='Edit',
+                            restoreData=oldData,
+                            uid_id=userId
+                        )
+                        # endregion
+                        # region 删除测试集数据
+                        db_ApiTimingTaskTestSet.objects.filter(
+                            is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                        )
+                        # endregion
+                        # region 更新基本信息
+                        db_ApiTimingTask.objects.filter(is_del=0, id=taskId).update(
+                            pid_id=basicInfo.proId,
+                            taskName=basicInfo.taskName, environment_id=basicInfo.environmentId,
+                            timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,
+                            pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, remarks=basicInfo.remarks,
+                            historyCode=historyCode, uid_id=userId, updateTime=cls_Common.get_date_time()
+                        )
+                        # endregion
+                        # region 新增测试集数据
+                        for item_index, item_testSet in enumerate(testSet, 0):
+                            db_ApiTimingTaskTestSet.objects.create(
+                                timingTask_id=taskId,
+                                index=item_index,
+                                case_id=item_testSet.id,
+                                state=1 if item_testSet.state else 0,
+                                uid_id=userId,
+                                is_del=0,
+                                historyCode=historyCode,
+                            )
+                        # endregion
+                    else:
+                        raise ValueError(f'内置定时任务修改失败:{editTask["errorMsg"]}')
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:
@@ -459,33 +481,39 @@ def delete_data(request):
         if obj_db_ApiTimingTask.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    # region 添加历史恢复
-                    db_ApiTimingTaskHistory.objects.create(
-                        timingTask_id=taskId,
-                        operationType='Delete',
-                        restoreData=None,
-                        uid_id=userId,
-                        historyCode=historyCode,
-                    )
-                    # endregion
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Delete',
-                        cls_FindTable.get_pro_name(obj_db_ApiTimingTask[0].pid_id),
-                        None, None,
-                        userId,
-                        f'【删除定时任务】 ID:{taskId}:{obj_db_ApiTimingTask[0].taskName}',
-                        CUFront=json.dumps(request.POST)
-                    )
-                    # endregion
-                    # region 删除关联信息
-                    db_ApiTimingTaskTestSet.objects.filter(
-                        is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
-                    )
-                    obj_db_ApiTimingTask.update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
-                    # endregion
+                    deleteTask = cls_TimingTask.delete_task(obj_db_ApiTimingTask[0].periodicTask_id)
+                    if deleteTask['state']:
+                        # region 添加历史恢复
+                        db_ApiTimingTaskHistory.objects.create(
+                            timingTask_id=taskId,
+                            operationType='Delete',
+                            restoreData=None,
+                            uid_id=userId,
+                            historyCode=historyCode,
+                        )
+                        # endregion
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Delete',
+                            cls_FindTable.get_pro_name(obj_db_ApiTimingTask[0].pid_id),
+                            None, None,
+                            userId,
+                            f'【删除定时任务】 ID:{taskId}:{obj_db_ApiTimingTask[0].taskName}',
+                            CUFront=json.dumps(request.POST)
+                        )
+                        # endregion
+                        # region 删除关联信息
+                        db_ApiTimingTaskTestSet.objects.filter(
+                            is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                        )
+                        obj_db_ApiTimingTask.update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode,
+                            periodicTask_id=None
+                        )
+                        # endregion
+                    else:
+                        raise ValueError(f'内置定时任务删除失败:{deleteTask["errorMsg"]}!')
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'数据删除失败:{e}'
             else:
