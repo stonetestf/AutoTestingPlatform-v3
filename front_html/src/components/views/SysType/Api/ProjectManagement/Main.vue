@@ -434,6 +434,6 @@ export default {
 
 <style>
 .MainCard{
-    height:752px ;
+    height:750px ;
 }
 </style>

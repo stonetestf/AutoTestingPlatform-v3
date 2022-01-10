@@ -14,6 +14,7 @@ from PageManagement.models import PageManagement as db_PageManagement
 from ProjectManagement.models import ProHistory as db_ProHistory
 from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
+from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -115,11 +116,11 @@ def select_data(request):
                 "bindMembers": bindMembers,
                 "createTime": str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
             })
-            # projectUnderStatisticalData = cls_FindTable.get_page_under_statistical_data(i.id)
-            # for item in projectUnderStatisticalData['dataTable']:
-            #     performWeekTotal += item['performWeekTotal']
-            #     perforHistoryTotal += item['perforHistoryTotal']
             # endregion
+            projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data(i.id)
+            for item in projectUnderStatisticalData['dataTable']:
+                performWeekTotal += item['performWeekTotal']
+                perforHistoryTotal += item['perforHistoryTotal']
             dataList.append(
                 {
                     "id": i.id,
@@ -133,7 +134,7 @@ def select_data(request):
                     "isDelete": isDelete,
                     "apiTotal": db_ApiBaseData.objects.filter(is_del=0, pid_id=i.id).count(),
                     "caseTotal": db_CaseBaseData.objects.filter(is_del=0, pid_id=i.id).count(),
-                    "taskTotal": "",
+                    "taskTotal": db_ApiTimingTask.objects.filter(is_del=0, pid_id=i.id).count(),
                     "batchTotal": "",
                     "performWeekTotal": performWeekTotal,
                     "perforHistoryTotal": perforHistoryTotal,

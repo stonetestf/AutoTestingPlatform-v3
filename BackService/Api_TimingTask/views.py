@@ -74,6 +74,14 @@ def select_data(request):
             else:
                 lastReportTime = ''
                 lastReportStatus = ''
+            # region 通过率
+            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, reportType='TASK', taskId=i.id)
+            passTotal = obj_db_ApiTestReport.filter(reportStatus='Pass').count()
+            if obj_db_ApiTestReport.count() == 0:
+                passRate = 0
+            else:
+                passRate = round(passTotal / obj_db_ApiTestReport.count() * 100, 2)
+            # endregion
             dataList.append({
                 'id': i.id,
                 'taskName': i.taskName,
@@ -83,6 +91,7 @@ def select_data(request):
                 'taskStatus': True if i.taskStatus == 1 else False,
                 'lastReportTime': lastReportTime,
                 'lastReportStatus': lastReportStatus,
+                'passRate':passRate,
                 'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                 'createUserName': cls_FindTable.get_userName(i.cuid),

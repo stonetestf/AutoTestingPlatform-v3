@@ -97,6 +97,12 @@
                                 </template>
                             </el-table-column> 
                             <el-table-column
+                                label="通过率"
+                                width="80px"
+                                align= "center"
+                                prop="passRate">
+                            </el-table-column> 
+                            <el-table-column
                                 label="更新时间"
                                 align= "center"
                                 width="200px"
@@ -275,6 +281,7 @@ export default {
                         obj.taskStatus = d.taskStatus;
                         obj.lastReportTime = d.lastReportTime;
                         obj.lastReportStatus = d.lastReportStatus;
+                        obj.passRate=d.passRate+'%';
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;
                         obj.createUserName = d.createUserName;
