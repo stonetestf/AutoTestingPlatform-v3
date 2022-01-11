@@ -14,7 +14,6 @@ from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSe
 from Api_TimingTask.models import ApiTimingTaskHistory as db_ApiTimingTaskHistory
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 
-
 # Create reference here.
 from ClassData.Logger import Logging
 from ClassData.GlobalDecorator import GlobalDer
@@ -68,7 +67,7 @@ def select_data(request):
 
         for i in select_db_ApiTimingTask:
             obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
-                is_del=0,reportType='TASK',taskId=i.id).order_by('-updateTime')
+                is_del=0, reportType='TASK', taskId=i.id).order_by('-updateTime')
             if obj_db_ApiTestReport.exists():
                 lastReportTime = obj_db_ApiTestReport[0].runningTime
                 lastReportStatus = obj_db_ApiTestReport[0].reportStatus
@@ -92,7 +91,7 @@ def select_data(request):
                 'taskStatus': True if i.taskStatus == 1 else False,
                 'lastReportTime': lastReportTime,
                 'lastReportStatus': lastReportStatus,
-                'passRate':passRate,
+                'passRate': passRate,
                 'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                 'createUserName': cls_FindTable.get_userName(i.cuid),
@@ -143,7 +142,7 @@ def select_case_data(request):
                 'caseState': i.caseState,
                 'testType': i.testType,
                 "userName": f"{i.uid.userName}({i.uid.nickName})",
-                'updateTime':str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
             })
 
         response['TableData'] = dataList
@@ -189,7 +188,7 @@ def charm_task_data(request):
                             'updateTime': cls_Common.get_date_time()})
         # endregion
         # region 相同时间
-        obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(is_del=0,timingConfig=basicInfo.timingConfig)
+        obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(is_del=0, timingConfig=basicInfo.timingConfig)
         if obj_db_ApiTimingTask.exists():
             if charmType:
                 dataList.append({
@@ -254,7 +253,7 @@ def save_data(request):
                     # region 保存内置定时任务
                     createTask = cls_TimingTask.create_task(
                         basicInfo.taskName, 'Task.tasks.api_daily_run_tasks',
-                        {},basicInfo.timingConfig,basicInfo.taskStatus)
+                        {}, basicInfo.timingConfig, basicInfo.taskStatus)
                     # endregion
                     if createTask['state']:
                         # region 添加操作信息
@@ -272,7 +271,7 @@ def save_data(request):
                             timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,
                             remarks=basicInfo.remarks,
                             pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, periodicTask_id=createTask['id'],
-                            cuid=userId, uid_id=userId,is_del=0,historyCode=historyCode
+                            cuid=userId, uid_id=userId, is_del=0, historyCode=historyCode
                         )
                         # endregion
                         # region 历史记录
@@ -519,7 +518,7 @@ def delete_data(request):
                         )
                         obj_db_ApiTimingTask.update(
                             is_del=1, updateTime=cls_Common.get_date_time(),
-                            periodicTask_id=None,uid_id=userId
+                            periodicTask_id=None, uid_id=userId
                         )
                         # endregion
                     else:
@@ -697,13 +696,12 @@ def restor_data(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["POST"])
+@require_http_methods(["POST"])  # 运行
 def execute_task(request):
     response = {}
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         taskId = request.POST['taskId']
-        redisKey = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -718,10 +716,11 @@ def execute_task(request):
             else:
                 # region 获取当前定时任务的需要运行多少个接口
                 total = 0
-                obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(is_del=0,timingTask_id=taskId)
+                obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=taskId)
                 for item_testSet in obj_db_ApiTimingTaskTestSet:
-                    if item_testSet.state==1:
-                        total += db_CaseTestSet.objects.filter(is_del=0,caseId_id=item_testSet.case_id,state=1).count()
+                    if item_testSet.state == 1:
+                        total += db_CaseTestSet.objects.filter(is_del=0, caseId_id=item_testSet.case_id,
+                                                               state=1).count()
                 # endregion
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
@@ -736,7 +735,7 @@ def execute_task(request):
                             testReportId = createTestReport['testReportId']
                             # region 创建队列
                             queueId = cls_ApiReport.create_queue(
-                                obj_db_ApiTimingTask[0].pid_id, None,None,
+                                obj_db_ApiTimingTask[0].pid_id, None, None,
                                 'TASK', taskId, testReportId, userId)  # 创建队列
                             # endregion
                         else:
@@ -746,11 +745,11 @@ def execute_task(request):
                 else:
                     environmentId = obj_db_ApiTimingTask[0].environment_id
                     taskName = obj_db_ApiTimingTask[0].taskName
-                    result = api_asynchronous_run_task.delay(redisKey, testReportId, queueId, taskId,taskName,
-                                                             environmentId, userId)
+                    result = api_asynchronous_run_task.delay(
+                        testReportId, queueId, taskId, taskName,environmentId, userId)
                     if result.task_id:
                         response['statusCode'] = 2001
-                        response['redisKey'] = redisKey
+                        response['celeryTaskId'] = result.task_id
         else:
             response['errorMsg'] = '当前选择的定时任务不存在,请刷新后在重新尝试!'
     return JsonResponse(response)

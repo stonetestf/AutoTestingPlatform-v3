@@ -408,7 +408,7 @@ export default {
                 'taskId':row.id,
             })).then(res => {
             if(res.data.statusCode ==2001){
-                self.$message.success('定时任务已启动,任务ID:'+res.data.redisKey+',请稍后在测试报告页面查看结果!');
+                self.$message.success('定时任务已启动,任务ID:'+res.data.celeryTaskId+',请稍后在测试报告页面查看结果!');
                 self.buttonLoading=false;
             }
             else{

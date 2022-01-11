@@ -119,7 +119,7 @@
                             <el-table-column
                                 fixed="right"
                                 align="center"
-                                width="240px">
+                                width="250px">
                             <template slot="header">
                                 <el-button-group>
                                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
@@ -140,7 +140,7 @@
                                         :loading="buttonLoading"
                                         size="mini"
                                         type="success"
-                                        @click="runTask(scope.$index, scope.row)">RunBatch
+                                        @click="RunBatch(scope.$index, scope.row)">RunBatch
                                     </el-button>
                                     <el-button
                                         size="mini"
@@ -353,6 +353,25 @@ export default {
             // 改变默认的页数
             self.page.current=val;
             self.SelectData();
+        },
+        RunBatch(index,row){
+            let self = this;
+            self.buttonLoading=true;
+            self.$axios.post('/api/ApiBatchTask/ExecuteBatchTask',Qs.stringify({
+                'batchId':row.id,
+            })).then(res => {
+            if(res.data.statusCode ==2001){
+                self.$message.success('批量任务已启动,任务ID:'+res.data.redisKey+',请稍后在测试报告页面查看结果!');
+                self.buttonLoading=false;
+            }
+            else{
+                self.$message.error('批量任务启动失败:'+ res.data.errorMsg);
+                self.buttonLoading=false;
+            }
+            }).catch(function (error) {
+                console.log(error);
+                self.buttonLoading=false;
+            })
         },
     }
 };

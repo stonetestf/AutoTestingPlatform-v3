@@ -1018,7 +1018,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-用例执行
-    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId,ctbId=None):
+    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId, ctbId=None):
         results = {
             'state': True,
             'itemResults': []
@@ -1056,7 +1056,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 }
                 # 创建2级测试报告
                 createReportItems = cls_ApiReport.create_report_items(
-                    testReportId, item_request['apiId'], item_request['testName'],ctbId=ctbId)
+                    testReportId, item_request['apiId'], item_request['testName'], ctbId=ctbId)
                 if createReportItems['state']:
                     reportItemId = createReportItems['reportItemId']
                     itemResults['request']['environmentUrl'] = environmentUrl
@@ -1198,18 +1198,19 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-定时任务执行
-    def excute_task(self, redisKey, testReportId, taskId,taskName,environmentId,userId):
+    def excute_task(self, testReportId, taskId, taskName, environmentId, userId):
         results = {
             'state': True,
             'itemResults': []
         }
         obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
-            is_del=0,timingTask_id=taskId).order_by('index')
+            is_del=0, timingTask_id=taskId).order_by('index')
         for item_taskTestSet in obj_db_ApiTimingTaskTestSet:
+            redisKey = cls_Common.generate_only_code(self)  # 1个用例1个key
             remindLabel = f"【定时任务:{taskName}>用例:{item_taskTestSet.case.caseName}】:"  # 推送的标识
             caseId = item_taskTestSet.case_id
             executeCase = self.execute_case(
-                remindLabel, redisKey, testReportId, caseId, environmentId, userId,ctbId=caseId)
+                remindLabel, redisKey, testReportId, caseId, environmentId, userId, ctbId=caseId)
             if executeCase['state']:
                 results['itemResults'].append(executeCase['itemResults'])
             else:

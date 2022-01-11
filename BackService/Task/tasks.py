@@ -55,10 +55,10 @@ def api_asynchronous_run_case(remindLabel, redisKey, testReportId, queueId, case
 
 
 @shared_task  # 异步任务-测试用例运行
-def api_asynchronous_run_task(redisKey, testReportId, queueId, taskId, taskName, environmentId, userId):
+def api_asynchronous_run_task(testReportId, queueId, taskId, taskName, environmentId, userId):
     cls_ApiReport.update_queue(queueId, 1, userId)  # 更新队列-执行中
 
-    executeTask = cls_RequstOperation.excute_task(redisKey, testReportId, taskId, taskName, environmentId, userId)
+    executeTask = cls_RequstOperation.excute_task(testReportId, taskId, taskName, environmentId, userId)
     # cls_ApiReport.get_report_top_data(testReportId)  # 更新主测试报告
     cls_ApiReport.update_queue(queueId, 2, userId)  # 更新队列-完成
     if executeTask['state']:
@@ -87,7 +87,7 @@ def api_daily_run_tasks():
                 # region 运行定时任务
                 itemResults['taskId'] = taskId
                 itemResults['timingConfig'] = timingConfig
-                redisKey = cls_Common.generate_only_code()
+
                 obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(is_del=0, id=taskId)
                 if obj_db_ApiTimingTask.exists():
                     userId = obj_db_ApiTimingTask[0].uid_id
@@ -136,10 +136,8 @@ def api_daily_run_tasks():
                         else:
                             environmentId = obj_db_ApiTimingTask[0].environment_id
                             taskName = obj_db_ApiTimingTask[0].taskName
-                            result = api_asynchronous_run_task.delay(redisKey, testReportId, queueId, taskId, taskName,
+                            result = api_asynchronous_run_task.delay(testReportId, queueId, taskId, taskName,
                                                                      environmentId, userId)
-                            if result.task_id:
-                                itemResults['redisKey'] = redisKey
                 else:
                     errorMsg = f'ID:{taskId},当前定时任务不存在,请刷新后在重新尝试!'
                     itemResults['errorMsg'] = errorMsg

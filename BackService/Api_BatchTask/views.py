@@ -522,3 +522,65 @@ def delete_data(request):
     return JsonResponse(response)
 
 
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 运行
+def execute_batch_task(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        batchId = request.POST['batchId']
+        redisKey = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_BatchTask', 'execute_batch_task', errorMsg)
+    else:
+        obj_db_ApiTimingTask = db.objects.filter(is_del=0, id=taskId)
+        if obj_db_ApiTimingTask.exists():
+            queueState = cls_FindTable.get_queue_state('TASK', taskId)
+            if queueState:
+                response['errorMsg'] = '当前已有相同定时任务在运行,不可重复运行!您可在主页中项目里查看此用例的动态!' \
+                                       '如遇错误可取消该项目队列后重新运行!'
+            else:
+                # region 获取当前定时任务的需要运行多少个接口
+                total = 0
+                obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=taskId)
+                for item_testSet in obj_db_ApiTimingTaskTestSet:
+                    if item_testSet.state == 1:
+                        total += db_CaseTestSet.objects.filter(is_del=0, caseId_id=item_testSet.case_id,
+                                                               state=1).count()
+                # endregion
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region 创建1级主报告
+                        createTestReport = cls_ApiReport.create_test_report(
+                            obj_db_ApiTimingTask[0].pid_id,
+                            obj_db_ApiTimingTask[0].taskName,
+                            'TASK', taskId, total, userId
+                        )
+                        # endregion
+                        if createTestReport['state']:
+                            testReportId = createTestReport['testReportId']
+                            # region 创建队列
+                            queueId = cls_ApiReport.create_queue(
+                                obj_db_ApiTimingTask[0].pid_id, None, None,
+                                'TASK', taskId, testReportId, userId)  # 创建队列
+                            # endregion
+                        else:
+                            raise ValueError(f'创建主测试报告失败:{createTestReport["errorMsg"]}')
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"失败:{e}"
+                else:
+                    environmentId = obj_db_ApiTimingTask[0].environment_id
+                    taskName = obj_db_ApiTimingTask[0].taskName
+                    result = api_asynchronous_run_task.delay(redisKey, testReportId, queueId, taskId, taskName,
+                                                             environmentId, userId)
+                    if result.task_id:
+                        response['statusCode'] = 2001
+                        response['redisKey'] = redisKey
+        else:
+            response['errorMsg'] = '当前选择的定时任务不存在,请刷新后在重新尝试!'
+    return JsonResponse(response)
+
+
