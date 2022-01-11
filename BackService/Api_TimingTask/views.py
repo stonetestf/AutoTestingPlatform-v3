@@ -483,7 +483,6 @@ def delete_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         taskId = request.POST['taskId']
-        historyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -501,7 +500,6 @@ def delete_data(request):
                             operationType='Delete',
                             restoreData=None,
                             uid_id=userId,
-                            historyCode=historyCode,
                         )
                         # endregion
                         # region 添加操作信息
@@ -520,8 +518,8 @@ def delete_data(request):
                             is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                         )
                         obj_db_ApiTimingTask.update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode,
-                            periodicTask_id=None
+                            is_del=1, updateTime=cls_Common.get_date_time(),
+                            periodicTask_id=None,uid_id=userId
                         )
                         # endregion
                     else:
@@ -531,7 +529,7 @@ def delete_data(request):
             else:
                 response['statusCode'] = 2003
         else:
-            response['errorMsg'] = '未找到当前接口数据,请刷新后重新尝试!'
+            response['errorMsg'] = '未找到当前定时任务,请刷新后重新尝试!'
     return JsonResponse(response)
 
 

@@ -316,6 +316,32 @@ export default {
             }
             self.dialog.editor.dialogVisible=true;
         },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                   this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/ApiBatchTask/DeleteData',Qs.stringify({
+                'batchId':id,
+            })).then(res => {
+            if(res.data.statusCode ==2003){
+                self.$message.success('删除定批量任务成功!');
+                self.SelectData();
+            }
+            else{
+                self.$message.error('删除批量任务失败:'+ res.data.errorMsg);
+            }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
         pageSizeChange(pageSize) {
             let self = this;
             self.page.current = 1;

@@ -35,7 +35,7 @@ class ApiTimingTaskTestSet(models.Model):  # 用例排序数据
 
 class ApiTimingTaskHistory(models.Model):  # 历史记录，恢复使用
     timingTask = models.ForeignKey(to='ApiTimingTask', to_field='id', on_delete=models.CASCADE)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    historyCode = models.CharField('历史记录唯一码', max_length=100, null=True)
     # 如果是删除的话，在恢复数据时取上一个操作的数据
     operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)
     restoreData = models.TextField('恢复数据,用来存放基础数据', null=True)

@@ -15,6 +15,7 @@ from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
 from Api_BatchTask.models import ApiBatchTaskTestSet as db_ApiBatchTaskTestSet
+from Api_BatchTask.models import ApiBatchTaskHistory as db_ApiBatchTaskHistory
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -204,7 +205,7 @@ def charm_batch_data(request):
                     'updateTime': cls_Common.get_date_time()})
             else:
                 if obj_db_ApiBatchTask.exists():
-                    if basicInfo.taskId == obj_db_ApiBatchTask[0].id:
+                    if basicInfo.batchId == obj_db_ApiBatchTask[0].id:
                         pass
                     else:
                         dataList.append({
@@ -224,7 +225,7 @@ def charm_batch_data(request):
                     'updateTime': cls_Common.get_date_time()})
             else:
                 if obj_db_ApiBatchTask.exists():
-                    if basicInfo.taskId == obj_db_ApiBatchTask[0].id:
+                    if basicInfo.batchId == obj_db_ApiBatchTask[0].id:
                         pass
                     else:
                         dataList.append({
@@ -249,6 +250,7 @@ def save_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
         basicInfo = objData.BasicInfo
         testSet = objData.TestSet
+        historyCode = cls_Common.generate_only_code()  # 生成历史记录唯一码
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -273,18 +275,19 @@ def save_data(request):
                     # region 保存基本信息
                     save_db_ApiBatchTask = db_ApiBatchTask.objects.create(
                         pid_id=basicInfo.proId, batchName=basicInfo.batchName, priority=basicInfo.priorityId,
-                        remarks=basicInfo.remarks, pushTo=basicInfo.pushTo, hookState=basicInfo.hookState,
+                        remarks=basicInfo.remarks, pushTo=basicInfo.pushTo,
+                        hookState=basicInfo.hookState,hookId=basicInfo.hookId,historyCode=historyCode,
                         cuid=userId, uid_id=userId, is_del=0,
                     )
                     # endregion
                     # region 历史记录
-                    # db_ApiTimingTaskHistory.objects.create(
-                    #     timingTask_id=save_db_ApiTimingTask.id,
-                    #     operationType='Add',
-                    #     restoreData=responseData,
-                    #     historyCode=historyCode,
-                    #     uid_id=userId
-                    # )
+                    db_ApiBatchTaskHistory.objects.create(
+                        batchTask_id=save_db_ApiBatchTask.id,
+                        operationType='Add',
+                        restoreData=responseData,
+                        historyCode=historyCode,
+                        uid_id=userId
+                    )
                     # endregion
                     # region 测试集
                     product_list_to_insert = list()
@@ -295,7 +298,8 @@ def save_data(request):
                             task_id=item_testSet.id,
                             state=1 if item_testSet.state else 0,
                             uid_id=userId,
-                            is_del=0, )
+                            is_del=0,
+                            historyCode=historyCode)
                         )
                     db_ApiBatchTaskTestSet.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -320,32 +324,39 @@ def load_batch_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'Api_BatchTask', 'load_batch_data', errorMsg)
     else:
-        obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(is_del=0, id=taskId)
-        if obj_db_ApiTimingTask.exists():
+        obj_db_ApiBatchTask = db_ApiBatchTask.objects.filter(is_del=0, id=batchId)
+        if obj_db_ApiBatchTask.exists():
             # region 基础信息
             basicInfo = {
-                'taskName': obj_db_ApiTimingTask[0].taskName,
-                'environmentId': obj_db_ApiTimingTask[0].environment_id,
-                'timingConfig': obj_db_ApiTimingTask[0].timingConfig,
-                'priorityId': obj_db_ApiTimingTask[0].priority,
-                'taskStatus': obj_db_ApiTimingTask[0].taskStatus,
-                'pushTo': ast.literal_eval(obj_db_ApiTimingTask[0].pushTo) if obj_db_ApiTimingTask[0].pushTo else [],
-                'remarks': obj_db_ApiTimingTask[0].remarks,
+                'batchName': obj_db_ApiBatchTask[0].batchName,
+                'priorityId': obj_db_ApiBatchTask[0].priority,
+                'pushTo': ast.literal_eval(obj_db_ApiBatchTask[0].pushTo) if obj_db_ApiBatchTask[0].pushTo else [],
+                'remarks': obj_db_ApiBatchTask[0].remarks,
+                'hookState': True if obj_db_ApiBatchTask[0].hookState == 1 else False,
+                'hookId':obj_db_ApiBatchTask[0].hookId,
             }
             # endregion
             # region 测试集
             testSet = []
-            obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
-                is_del=0, timingTask_id=taskId).order_by('index')
-            for item_testSet in obj_db_ApiTimingTaskTestSet:
+            obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(
+                is_del=0, batchTask_id=batchId).order_by('index')
+            for item_testSet in obj_db_ApiBatchTaskTestSet:
+                # region 通过率
+                obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
+                    is_del=0, reportType='TASK', taskId=item_testSet.task_id)
+                passTotal = obj_db_ApiTestReport.filter(reportStatus='Pass').count()
+                if obj_db_ApiTestReport.count() == 0:
+                    passRate = 0
+                else:
+                    passRate = round(passTotal / obj_db_ApiTestReport.count() * 100, 2)
+                # endregion
                 testSet.append({
-                    'id': item_testSet.case_id,
-                    'testType': item_testSet.case.testType,
-                    'caseName': item_testSet.case.caseName,
-                    'pageName': item_testSet.case.page.pageName,
-                    'funName': item_testSet.case.fun.funName,
-                    'caseState': item_testSet.case.caseState,
-                    'state': True if item_testSet.state == 1 else False
+                    'id': item_testSet.task_id,
+                    'taskName': item_testSet.task.taskName,
+                    'caseTotal': db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=item_testSet.task_id).count(),
+                    'taskState': True if item_testSet.task.taskStatus == 1 else False,
+                    'passRate': f"{passRate}%",
+                    'state':True if item_testSet.state == 1 else False,
                 })
             # endregion
             response['dataTable'] = {
@@ -356,3 +367,158 @@ def load_batch_data(request):
         else:
             response['errorMsg'] = "当前选择的数据不存在,请刷新后在重新尝试!"
     return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def edit_data(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
+        basicInfo = objData.BasicInfo
+        testSet = objData.TestSet
+        batchId = basicInfo.batchId
+        historyCode = cls_Common.generate_only_code()  # 生成历史记录唯一码
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_BatchTask', 'edit_data', errorMsg)
+    else:
+        obj_db_ApiBatchTask = db_ApiBatchTask.objects.filter(is_del=0, id=batchId)
+        if obj_db_ApiBatchTask.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加操作信息
+                    # region 查询以前的数据
+                    oldTestSet = []
+                    obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(
+                        is_del=0, batchTask_id=batchId).order_by('index')
+                    for item_testSet in obj_db_ApiBatchTaskTestSet:
+                        oldTestSet.append({
+                            'id': item_testSet.task_id,
+                            'state': True if item_testSet.state == 1 else False,
+                        })
+                    oldData = {
+                        'basicInfo': {
+                            'batchName': obj_db_ApiBatchTask[0].batchName,
+                            'priorityId': obj_db_ApiBatchTask[0].priority,
+                            'pushTo': ast.literal_eval(obj_db_ApiBatchTask[0].pushTo) if obj_db_ApiBatchTask[
+                                0].pushTo else [],
+                            'remarks': obj_db_ApiBatchTask[0].remarks,
+                            'hookState': True if obj_db_ApiBatchTask[0].hookState == 1 else False,
+                            'hookId': obj_db_ApiBatchTask[0].hookId,
+                        },
+                        'testSet': oldTestSet,
+                    }
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Edit',
+                        cls_FindTable.get_pro_name(basicInfo.proId),
+                        None, None,
+                        userId,
+                        f'【修改批量任务】 ID:{batchId}:{obj_db_ApiBatchTask[0].batchName}',
+                        CUFront=oldData, CURear=responseData
+                    )
+                    # endregion
+                    # endregion
+                    # region 历史记录
+                    db_ApiBatchTaskHistory.objects.create(
+                        batchTask_id=batchId,
+                        historyCode=historyCode,
+                        operationType='Edit',
+                        restoreData=oldData,
+                        uid_id=userId
+                    )
+                    # endregion
+                    # region 删除测试集数据
+                    db_ApiBatchTaskTestSet.objects.filter(
+                        is_del=0, batchTask_id=batchId,historyCode=obj_db_ApiBatchTask[0].historyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                    )
+                    # endregion
+                    # region 更新基本信息
+                    db_ApiBatchTask.objects.filter(is_del=0, id=batchId).update(
+                        pid_id=basicInfo.proId, batchName=basicInfo.batchName, priority=basicInfo.priorityId,
+                        remarks=basicInfo.remarks, pushTo=basicInfo.pushTo,historyCode=historyCode,
+                        hookState=basicInfo.hookState, hookId=basicInfo.hookId,uid_id=userId, is_del=0,
+                    )
+                    # endregion
+                    # region 新增测试集数据
+                    product_list_to_insert = list()
+                    for item_index, item_testSet in enumerate(testSet, 0):
+                        product_list_to_insert.append(db_ApiBatchTaskTestSet(
+                            batchTask_id=batchId,
+                            index=item_index,
+                            task_id=item_testSet.id,
+                            state=1 if item_testSet.state else 0,
+                            uid_id=userId,
+                            is_del=0,
+                            historyCode=historyCode)
+                        )
+                    db_ApiBatchTaskTestSet.objects.bulk_create(product_list_to_insert)
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'保存失败:{e}'
+            else:
+                response['statusCode'] = 2002
+        else:
+            response['errorMsg'] = '未找到当前批量任务,请刷新后在重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def delete_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        batchId = request.POST['batchId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_BatchTask', 'delete_data', errorMsg)
+    else:
+        obj_db_ApiBatchTask = db_ApiBatchTask.objects.filter(id=batchId, is_del=0)
+        if obj_db_ApiBatchTask.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加历史恢复
+                    db_ApiBatchTaskHistory.objects.create(
+                        batchTask_id=batchId,
+                        operationType='Delete',
+                        restoreData=None,
+                        uid_id=userId,
+                        historyCode=None,
+                    )
+                    # endregion
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'API', 'Manual', 3, 'Delete',
+                        cls_FindTable.get_pro_name(obj_db_ApiBatchTask[0].pid_id),
+                        None, None,
+                        userId,
+                        f'【删除批量任务】 ID:{batchId}:{obj_db_ApiBatchTask[0].batchName}',
+                        CUFront=json.dumps(request.POST)
+                    )
+                    # endregion
+                    # region 删除关联信息
+                    db_ApiBatchTaskTestSet.objects.filter(
+                        is_del=0, batchTask_id=batchId, historyCode=obj_db_ApiBatchTask[0].historyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                    )
+                    obj_db_ApiBatchTask.update(
+                        is_del=1, updateTime=cls_Common.get_date_time(),uid_id=userId
+                    )
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'数据删除失败:{e}'
+            else:
+                response['statusCode'] = 2003
+        else:
+            response['errorMsg'] = '未找到当前批量任务,请刷新后重新尝试!'
+    return JsonResponse(response)
+
+

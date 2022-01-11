@@ -555,26 +555,25 @@ export default {
                         console.log(error);
                     })
                 }else{
-                    self.$axios.post('/api/ApiTimingTask/EditData',{
-                       'BasicInfo':{
-                            'taskId':self.BasicRomeData.taskId,
+                    self.$axios.post('/api/ApiBatchTask/EditData',{
+                        'BasicInfo':{
+                            'batchId':self.BasicRomeData.batchId,
                             'proId':self.$cookies.get('proId'),
-                            'taskName':self.BasicRomeData.taskName,
-                            'environmentId':self.BasicRomeData.environmentId,
-                            'timingConfig':self.BasicRomeData.timingConfig,
+                            'batchName':self.BasicRomeData.batchName,
                             'priorityId':self.BasicRomeData.priorityId,
-                            'taskStatus':self.BasicRomeData.taskStatus,
                             'pushTo':self.BasicRomeData.pushTo,
                             'remarks':self.BasicRomeData.remarks,
+                            'hookState':self.BasicRomeData.hookState,
+                            'hookId':self.BasicRomeData.hookId,
                         },
-                        'TestSet':self.SortCaseRomeData.tableData
+                        'TestSet':self.SortTaskRomeData.tableData
                     }).then(res => {
                         if(res.data.statusCode==2002){
-                            self.$message.success('修改定时任务成功!');
+                            self.$message.success('修改批量任务成功!');
                             self.returnToMain();
                         
                         }else{
-                            self.$message.error('修改定时任务失败'+res.data.errorMsg);
+                            self.$message.error('修改批量任务失败'+res.data.errorMsg);
                         }
                     }).catch(function (error) {
                         console.log(error);
@@ -596,16 +595,15 @@ export default {
                     GetUserNameItems().then(d=>{
                         self.BasicRomeData.userNameOptions = d;
                         
-                        // self.BasicRomeData.taskName = res.data.dataTable.basicInfo.taskName;
-                        // self.BasicRomeData.environmentId = res.data.dataTable.basicInfo.environmentId;
-                        // self.BasicRomeData.timingConfig = res.data.dataTable.basicInfo.timingConfig;
-                        // self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
-                        // self.BasicRomeData.taskStatus = res.data.dataTable.basicInfo.taskStatus;
-                        // self.BasicRomeData.pushTo = res.data.dataTable.basicInfo.pushTo;
-                        // self.BasicRomeData.remarks = res.data.dataTable.basicInfo.remarks;
+                        self.BasicRomeData.batchName = res.data.dataTable.basicInfo.batchName;
+                        self.BasicRomeData.priorityId = res.data.dataTable.basicInfo.priorityId;
+                        self.BasicRomeData.pushTo = res.data.dataTable.basicInfo.pushTo;
+                        self.BasicRomeData.remarks = res.data.dataTable.basicInfo.remarks;
+                        self.BasicRomeData.hookState = res.data.dataTable.basicInfo.hookState;
+                        self.BasicRomeData.hookId = res.data.dataTable.basicInfo.hookId;
                     });
 
-                    // self.SortCaseRomeData.tableData = res.data.dataTable.testSet;
+                    self.SortTaskRomeData.tableData = res.data.dataTable.testSet;
                     self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
