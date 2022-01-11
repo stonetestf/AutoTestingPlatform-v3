@@ -44,7 +44,7 @@ class ApiTimingTaskHistory(models.Model):  # 历史记录，恢复使用
 
 
 class ApiTimingTaskRunLog(models.Model):  # 运行记录
-    TimingTask = models.ForeignKey(to='ApiTimingTask', to_field='id', on_delete=models.CASCADE)  # 项目id
+    timingTask = models.ForeignKey(to='ApiTimingTask', to_field='id', on_delete=models.CASCADE)  # 项目id
     runType = models.CharField('运行类型(手动(Manual)/自动(Auto))', max_length=10, null=False)
     testReport = models.ForeignKey(to='Api_TestReport.ApiTestReport', to_field='id', on_delete=models.CASCADE)
     updateTime = models.DateTimeField('修改时间', auto_now=True)

@@ -4,21 +4,28 @@
             <el-card class="MainCard">
                 <div>
                     <el-form :inline="true"  method="post">
-                        <el-form-item label="任务名称:">
-                            <el-input clearable v-model.trim="SelectRomeData.batchName"></el-input>
-                        </el-form-item>
-                        <el-form-item label="报告状态:">
-                            <el-select v-model="SelectRomeData.reportState" clearable placeholder="请选择" style="width:120px;">
-                                <el-option
-                                    v-for="item in SelectRomeData.reportStateOption"
-                                    :key="item.value"
-                                    :label="item.label"
-                                    :value="item.value">
-                                </el-option>
-                            </el-select>
-                        </el-form-item>
-                        <el-button type="primary" @click="SelectData()">查询</el-button>
-                        <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+                        <el-row>
+                            <el-col :span="20">
+                                <el-form-item label="任务名称:">
+                                    <el-input clearable v-model.trim="SelectRomeData.batchName"></el-input>
+                                </el-form-item>
+                                <el-form-item label="报告状态:">
+                                    <el-select v-model="SelectRomeData.reportState" clearable placeholder="请选择" style="width:120px;">
+                                        <el-option
+                                            v-for="item in SelectRomeData.reportStateOption"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                                <el-button type="primary" @click="SelectData()">查询</el-button>
+                                <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+                            </el-col>
+                            <el-col :span="4">
+                                <el-tag style="float:right">钩子接口地址:{{SelectRomeData.hookUrl}}/api/ApiBatchTask/RunHookTask?hookId=***&version=自定义</el-tag>
+                            </el-col>
+                        </el-row>
                     </el-form>
                 </div>
                 <div>
@@ -182,7 +189,8 @@
 </template>
 
 <script>
-import Qs from 'qs'
+import Qs from 'qs';
+import store from '../../../../../../../store/index';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import DialogEditor from "./Editor.vue";
@@ -204,6 +212,7 @@ export default {
                     {'label':'Fail','value':'Fail'},
                     {'label':'Error','value':'Error'},
                 ],
+                hookUrl:store.state.BackService
             },
             RomeData:{
                 tableData: [],

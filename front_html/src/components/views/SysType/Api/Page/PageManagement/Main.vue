@@ -14,6 +14,7 @@
         <template>
           <div>
             <el-table
+              v-loading="loading"
               :data="tableData"
               height="619px"
               border
@@ -56,12 +57,15 @@
               </el-table-column>   
               <el-table-column
                   align="center"
-                  width="200px">
+                  width="180px">
                 <template slot="header">
+                  <el-button-group>
                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                     <el-button type="warning" @click="OpenHistoryInfoDialog()">历史</el-button>
+                  </el-button-group>
                 </template>
                 <template slot-scope="scope" style="width:100px">
+                  <el-button-group>
                     <el-button
                         size="mini"
                         @click="handleEdit(scope.$index, scope.row)">Edit
@@ -71,6 +75,7 @@
                         type="danger"
                         @click="handleDelete(scope.$index, scope.row)">Delete
                     </el-button>
+                  </el-button-group>
                 </template>
               </el-table-column>
             </el-table>
@@ -119,6 +124,7 @@ export default {
   },
   data() {
     return {
+      loading:false,
       tableData: [],
       multipleSelection:[],
       SelectRomeData:{
@@ -128,9 +134,9 @@ export default {
 
       },
       page: { 
-          current: 1,// 默认显示第几页
-          total: 0,// 总条数，根据接口获取数据长度(注意：这里不能为空)
-          pageSize: 10, // 默认每页显示的条数（可修改）
+        current: 1,// 默认显示第几页
+        total: 0,// 总条数，根据接口获取数据长度(注意：这里不能为空)
+        pageSize: 10, // 默认每页显示的条数（可修改）
       },
       dialog:{
         editor:{
@@ -158,6 +164,7 @@ export default {
   methods: {
     SelectData(){//刷新列表数据
       let self = this;
+      self.loading=true;
       self.tableData= [];
       self.$axios.get('/api/PageManagement/SelectData',{
         params:{
@@ -184,12 +191,14 @@ export default {
               self.SelectData();
           }
           self.page.total = res.data.Total;
+          self.loading=false;
         }else{
-            self.$message.error('获取数据失败:'+res.data.errorMsg);
+          self.$message.error('获取数据失败:'+res.data.errorMsg);
+          self.loading=false;
         }
-          // console.log(self.tableData);
       }).catch(function (error) {
-          console.log(error);
+        console.log(error);
+        self.loading=false;
       })
     },
     closeEditDialog(){

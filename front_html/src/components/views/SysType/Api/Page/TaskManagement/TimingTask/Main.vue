@@ -134,7 +134,7 @@
                                             更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
-                                            <el-dropdown-item command="ExecutiveLogging">执行记录(未开发)</el-dropdown-item>
+                                            <el-dropdown-item command="ExecutiveLogging">执行记录</el-dropdown-item>
                                             <el-dropdown-item command="CopyTask">复制定时任务(未开发)</el-dropdown-item>
                                             <el-dropdown-item command="TaskRestore">恢复定时任务</el-dropdown-item>
                                         </el-dropdown-menu>
@@ -192,6 +192,14 @@
                 @Succeed="SelectData">
             </dialog-history-info>
         </template>
+        <template>
+            <dialog-run-log
+                @closeDialog="closeRunLogDialog" 
+                :isVisible="dialog.runLog.dialogVisible" 
+                :dialogPara="dialog.runLog.dialogPara"
+                @Succeed="SelectData">
+            </dialog-run-log>
+        </template>
     </div>
 </template>
 
@@ -201,10 +209,11 @@ import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import DialogEditor from "./Editor.vue";
 import DialogHistoryInfo from "./HistoryInfo.vue";
+import DialogRunLog from "./RunLog.vue"
 
 export default {
     components: {
-        DialogEditor,DialogHistoryInfo
+        DialogEditor,DialogHistoryInfo,DialogRunLog
     },
     data() {
         return {
@@ -242,6 +251,13 @@ export default {
                     },
                 },
                 historyInfo:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                runLog:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -365,6 +381,8 @@ export default {
             PrintConsole(command);
             if(command=='TaskRestore'){
                 this.OpenHistoryInfoDialog();
+            }else if(command=='ExecutiveLogging'){
+                this.OpenRunLogDialog();
             }
         },
         ClearSelectRomeData(){
@@ -420,7 +438,20 @@ export default {
                 console.log(error);
                 self.buttonLoading=false;
             })
-        }
+        },
+
+        //执行记录
+        closeRunLogDialog(){
+            this.dialog.runLog.dialogVisible =false;
+        },
+        OpenRunLogDialog(){
+            let self = this;
+            self.dialog.runLog.dialogPara={
+                dialogTitle:"执行记录",//初始化标题
+                taskId:self.multipleSelection[0],
+            }
+            self.dialog.runLog.dialogVisible=true;
+        },
     }
 };
 </script>

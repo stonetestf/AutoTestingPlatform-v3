@@ -315,8 +315,15 @@ def select_history(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+
         sysType = objData.sysType
         pageId = objData.pageId
+        pageName = objData.pageName
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -327,7 +334,11 @@ def select_history(request):
                 page_id=pageId,page__sysType=sysType).order_by('-createTime')
         else:
             obj_db_PageHistory = db_PageHistory.objects.filter(page__sysType=sysType).order_by('-createTime')
-        for i in obj_db_PageHistory:
+            if pageName:
+                obj_db_PageHistory = db_PageHistory.objects.filter(
+                    page__sysType=sysType,pageName__icontains=pageName).order_by('-createTime')
+        select_db_PageHistory = obj_db_PageHistory[minSize: maxSize]
+        for i in select_db_PageHistory:
             if i.restoreData:
                 restoreData = json.dumps(ast.literal_eval(i.restoreData),
                                          sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
@@ -344,6 +355,7 @@ def select_history(request):
                 'userName': i.pid.uid.userName,
             })
         response['TableData'] = dataList
+        response['Total'] = obj_db_PageHistory.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 

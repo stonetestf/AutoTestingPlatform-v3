@@ -14,6 +14,7 @@
                 <template>
                     <div style="margin-top:-15px;">
                         <el-table
+                            v-loading="loading"
                             :data="RomeData.tableData"
                             height="596px"
                             border
@@ -131,8 +132,10 @@
                                 align="center"
                                 width="255px">
                                 <template slot="header">
-                                    <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
-                                    <el-button type="warning" @click="OpenHistoryInfoDialog()">历史</el-button>
+                                    <el-button-group>
+                                        <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                                        <el-button type="warning" @click="OpenHistoryInfoDialog()">历史恢复</el-button>
+                                    </el-button-group>
                                 </template>
                                 <template slot-scope="scope" style="width:100px">
                                     <el-button-group>
@@ -218,6 +221,7 @@ export default {
     },
     data() {
         return {
+            loading:false,
             multipleSelection:[],
             RomeData:{
                 proName:'',
@@ -275,6 +279,7 @@ export default {
         },
         SelectData(){
             let self = this;
+            self.loading=true;
             self.RomeData.tableData= [];
             self.$axios.get('/api/ProjectManagement/SelectData',{
                 params:{
@@ -313,12 +318,15 @@ export default {
                         self.SelectData();
                     }
                     self.page.total = res.data.Total;
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
                 }
                 // console.log(self.tableData);
             }).catch(function (error) {
                 console.log(error);
+                self.loading=false;
             })
         },
         closeEditDialog(){

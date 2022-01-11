@@ -583,6 +583,12 @@ def select_history(request):
         objData = cls_object_maker(responseData)
         sysType = objData.sysType
         proId = objData.proId
+        proName = objData.proName
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -592,7 +598,11 @@ def select_history(request):
             obj_db_ProHistory = db_ProHistory.objects.filter(pid_id=proId, pid__sysType=sysType).order_by('-createTime')
         else:
             obj_db_ProHistory = db_ProHistory.objects.filter(pid__sysType=sysType).order_by('-createTime')
-        for i in obj_db_ProHistory:
+            if proName:
+                obj_db_ProHistory = db_ProHistory.objects.filter(
+                    pid__sysType=sysType,proName__icontains=proName).order_by('-createTime')
+        select_db_ProHistory = obj_db_ProHistory[minSize: maxSize]
+        for i in select_db_ProHistory:
             if i.restoreData:
                 restoreData = json.dumps(ast.literal_eval(i.restoreData),
                                          sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
@@ -609,6 +619,7 @@ def select_history(request):
                 'userName': i.pid.uid.userName,
             })
         response['TableData'] = dataList
+        response['Total'] = obj_db_ProHistory.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 

@@ -24,6 +24,7 @@
                 <template>
                     <div>
                         <el-table
+                            v-loading="loading"
                             :data="tableData"
                             height="619px"
                             border
@@ -140,6 +141,7 @@ export default {
     },
     data() {
         return {
+            loading:false,
             tableData: [],
             multipleSelection:[],
             SelectRomeData:{
@@ -183,6 +185,7 @@ export default {
     methods: {
         SelectData(){//刷新列表数据
             let self = this;
+            self.loading=true;
             self.tableData= [];
             self.$axios.get('/api/FunManagement/SelectData',{
                 params:{
@@ -213,12 +216,15 @@ export default {
                         self.SelectData();
                     }
                     self.page.total = res.data.Total;
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
                 }
                 // console.log(self.tableData);
             }).catch(function (error) {
                 console.log(error);
+                self.loading=false;
             })
         },
         GetPageNameOption(){

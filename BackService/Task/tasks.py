@@ -9,6 +9,7 @@ import datetime
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
+from Api_TimingTask.models import ApiTimingTaskRunLog as db_ApiTimingTaskRunLog
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -134,6 +135,14 @@ def api_daily_run_tasks():
                                     queueId = cls_ApiReport.create_queue(
                                         obj_db_ApiTimingTask[0].pid_id, None, None,
                                         'TASK', taskId, testReportId, userId)  # 创建队列
+                                    # endregion
+                                    # region 运行记录
+                                    db_ApiTimingTaskRunLog.objects.create(
+                                        timingTask_id=taskId,
+                                        runType='Auto',
+                                        testReport_id=testReportId,
+                                        uid_id=userId
+                                    )
                                     # endregion
                                 else:
                                     raise ValueError(f'创建主测试报告失败:{createTestReport["errorMsg"]}')

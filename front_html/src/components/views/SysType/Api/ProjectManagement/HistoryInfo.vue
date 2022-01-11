@@ -1,89 +1,104 @@
 <template>
-    <el-dialog
+    <el-drawer
         :title="dialogTitle"
+        size="1100px"
         :visible.sync="dialogVisible"
-        :close-on-click-modal=false
-        :before-close="dialogClose"
-        width="1100px">
-        <el-form :inline="true" v-if="SelectRomeData.disPlay"  method="post">
-            <el-form-item label="项目名称:">
-                <el-input clearable v-model.trim="SelectRomeData.proName"></el-input>
-            </el-form-item>
-            <el-button type="primary" @click="SelectData()">查询</el-button>
-            <el-button type="info"  @click="ClearRomeData()">重置</el-button>
-        </el-form>
-        <el-table
-            :data="tableData"
-            height="550px"
-            border>
-            <el-table-column 
-                label="ID"  
-                width="80" 
-                align="center"
-                prop="id">
-            </el-table-column>
-            <el-table-column 
-                label="详情" 
-                width="50px"
-                type="expand">
-                <template slot-scope="props">
-                    <el-form label-position="left" >
-                        <el-table
-                            :data="props.row.tableItem"
-                            border>
-                            <el-table-column
-                                label="原始信息">
-                                <template slot-scope="scope">
-                                    <div style="white-space: pre-line;" v-html="scope.row.restoreData"></div>
-                                </template>
-                            </el-table-column>
-                        </el-table>
-                    </el-form>
-                </template>
-            </el-table-column>
-            <el-table-column
-                label="项目名称"
-                align= "center"
-                prop="proName">
-            </el-table-column>
-            <el-table-column
-                label="操作过程"
-                width="150px"
-                align= "center">
-                    <template slot-scope="scope">
-                        <el-tag type="danger" v-if="scope.row.operationType=='Delete'">删除</el-tag>
-                        <el-tag type="success" v-else-if="scope.row.operationType=='Add'">新增</el-tag>
-                        <el-tag type="warning" v-else-if="scope.row.operationType=='Edit'">修改</el-tag>
-                        <!-- <el-tag type="warning" v-else>修改</el-tag> -->
+        direction='rtl'
+        :before-close="dialogClose">
+        <div>
+            <el-form :inline="true" v-if="SelectRomeData.disPlay"  method="post">
+                <el-form-item label="项目名称:">
+                    <el-input clearable v-model.trim="SelectRomeData.proName"></el-input>
+                </el-form-item>
+                <el-button type="primary" @click="SelectData()">查询</el-button>
+                <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+            </el-form>
+        </div>
+        <div>
+            <el-table
+                v-loading="loading"
+                :data="tableData"
+                height="733px"
+                border>
+                <el-table-column 
+                    label="ID"  
+                    width="80" 
+                    align="center"
+                    prop="id">
+                </el-table-column>
+                <el-table-column 
+                    label="详情" 
+                    width="50px"
+                    type="expand">
+                    <template slot-scope="props">
+                        <el-form label-position="left" >
+                            <el-table
+                                :data="props.row.tableItem"
+                                border>
+                                <el-table-column
+                                    label="原始信息">
+                                    <template slot-scope="scope">
+                                        <div style="white-space: pre-line;" v-html="scope.row.restoreData"></div>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-form>
                     </template>
-            </el-table-column>
-            <el-table-column
-                label="修改时间"
-                width="160px"
-                align= "center"
-                prop="createTime">
-            </el-table-column>
-            <el-table-column
-                label="修改者"
-                width="150px"
-                align= "center"
-                prop="userName">
-            </el-table-column>
-            <el-table-column
-                label="操作"
-                align="center"
-                width="100px">
-                <template slot-scope="scope" style="width:100px">
-                    <el-button
-                        v-if="scope.row.operationType!='Add'"
-                        size="mini"
-                        type="warning"
-                        @click="handleRestor(scope.$index, scope.row)">恢复
-                    </el-button>
-                </template>
-            </el-table-column>
-        </el-table>
-    </el-dialog>
+                </el-table-column>
+                <el-table-column
+                    label="项目名称"
+                    align= "center"
+                    prop="proName">
+                </el-table-column>
+                <el-table-column
+                    label="操作过程"
+                    width="150px"
+                    align= "center">
+                        <template slot-scope="scope">
+                            <el-tag type="danger" v-if="scope.row.operationType=='Delete'">删除</el-tag>
+                            <el-tag type="success" v-else-if="scope.row.operationType=='Add'">新增</el-tag>
+                            <el-tag type="warning" v-else-if="scope.row.operationType=='Edit'">修改</el-tag>
+                            <!-- <el-tag type="warning" v-else>修改</el-tag> -->
+                        </template>
+                </el-table-column>
+                <el-table-column
+                    label="修改时间"
+                    width="160px"
+                    align= "center"
+                    prop="createTime">
+                </el-table-column>
+                <el-table-column
+                    label="修改者"
+                    width="150px"
+                    align= "center"
+                    prop="userName">
+                </el-table-column>
+                <el-table-column
+                    label="操作"
+                    align="center"
+                    width="100px">
+                    <template slot-scope="scope" style="width:100px">
+                        <el-button
+                            v-if="scope.row.operationType!='Add'"
+                            size="mini"
+                            type="warning"
+                            @click="handleRestor(scope.$index, scope.row)">恢复
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        <div>
+            <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                @size-change="pageSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="page.current" 
+                :total="page.total"
+                :page-sizes = [12,30,50,100]
+                style="margin: 20px auto auto auto;">
+            </el-pagination>
+        </div>
+    </el-drawer>
 </template>
 
 <script>
@@ -93,6 +108,7 @@ import {PrintConsole} from "../../../../js/Logger.js";
 export default {
     data() {
         return {
+            loading:false,
             dialogTitle:"",
             dialogVisible:false,
             tableData:[],
@@ -103,7 +119,11 @@ export default {
             RomeData:{
                 proId:'',
             },
-
+            page: { 
+                current: 1,// 默认显示第几页
+                total: 0,// 总条数，根据接口获取数据长度(注意：这里不能为空)
+                pageSize: 12, // 默认每页显示的条数（可修改）
+            },
           
         };
     },
@@ -133,7 +153,6 @@ export default {
                 if(newval.proId){//有id时就隐藏查询框
                     this.SelectRomeData.disPlay=false;
                     this.RomeData.proId = newval.proId;
-                   
                 }else{
                     this.SelectRomeData.disPlay=true;
                 }
@@ -151,15 +170,24 @@ export default {
             self.tableData=[];
             self.RomeData.proId='';
             self.SelectRomeData.proName='';
-            
+        },
+        ClearSelectRomeData(){
+            let self = this;
+            self.tableData=[];
+            self.SelectRomeData.proName='';
+            self.SelectData();
         },
         SelectData(){
             let self = this;
+            self.loading=true;
             self.tableData= [];
             self.$axios.get('/api/ProjectManagement/SelectHistory',{
                 params:{
                     'sysType':'API',
                     'proId':self.RomeData.proId,
+                    'proName':self.SelectRomeData.proName,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
                 }
             }).then(res => {
                 if(res.data.statusCode==2000){
@@ -172,15 +200,24 @@ export default {
                         obj.createTime = d.createTime;
                         obj.userName = d.userName;
                      
-
                         self.tableData.push(obj);
                     });
+                    if(self.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
                 }
                 // console.log(self.tableData);
             }).catch(function (error) {
                 console.log(error);
+                self.loading=false;
+                self.dialogClose();
             })
         },
         handleRestor(index,row){
@@ -216,7 +253,19 @@ export default {
             }).catch(function (error) {
                 console.log(error);
             })
-        }
+        },
+        pageSizeChange(pageSize) {
+            let self = this;
+            self.page.current = 1;
+            self.page.pageSize = pageSize;
+        },
+        // 显示第几页
+        handleCurrentChange(val) {
+            let self = this;
+            // 改变默认的页数
+            self.page.current=val
+            self.SelectData();
+        },
     }
 };
 </script>

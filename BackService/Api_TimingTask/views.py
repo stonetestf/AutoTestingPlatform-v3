@@ -12,6 +12,7 @@ from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_TimingTask.models import ApiTimingTaskHistory as db_ApiTimingTaskHistory
+from Api_TimingTask.models import ApiTimingTaskRunLog as db_ApiTimingTaskRunLog
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 
 # Create reference here.
@@ -738,6 +739,14 @@ def execute_task(request):
                                 obj_db_ApiTimingTask[0].pid_id, None, None,
                                 'TASK', taskId, testReportId, userId)  # 创建队列
                             # endregion
+                            # region 运行记录
+                            db_ApiTimingTaskRunLog.objects.create(
+                                timingTask_id=taskId,
+                                runType='Manual',
+                                testReport_id=testReportId,
+                                uid_id=userId
+                            )
+                            # endregion
                         else:
                             raise ValueError(f'创建主测试报告失败:{createTestReport["errorMsg"]}')
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -746,10 +755,56 @@ def execute_task(request):
                     environmentId = obj_db_ApiTimingTask[0].environment_id
                     remindLabel = f"定时任务:{obj_db_ApiTimingTask[0].taskName}>"  # 推送的标识
                     result = api_asynchronous_run_task.delay(
-                        testReportId, queueId, taskId, remindLabel,environmentId, userId)
+                        testReportId, queueId, taskId, remindLabel, environmentId, userId)
                     if result.task_id:
                         response['statusCode'] = 2001
                         response['celeryTaskId'] = result.task_id
         else:
             response['errorMsg'] = '当前选择的定时任务不存在,请刷新后在重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def executive_logging(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        taskId = objData.taskId
+        taskName = objData.taskName
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TimingTask', 'executive_logging', errorMsg)
+    else:
+        if taskId:
+            obj_db_ApiTimingTaskRunLog = db_ApiTimingTaskRunLog.objects.filter(
+                timingTask_id=taskId).order_by('-updateTime')
+        else:
+            obj_db_ApiTimingTaskRunLog = db_ApiTimingTaskRunLog.objects.filter().order_by('-updateTime')
+            if taskName:
+                obj_db_ApiTimingTaskRunLog = db_ApiTimingTaskRunLog.objects.filter(
+                    timingTask__taskName__icontains=taskName
+                ).order_by('-updateTime')
+        select_db_ApiTimingTask = obj_db_ApiTimingTaskRunLog[minSize: maxSize]
+        for i in select_db_ApiTimingTask:
+            dataList.append({
+                'id': i.id,
+                'taskName': i.timingTask.taskName,
+                'runType': i.runType,
+                'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
+            })
+
+        response['TableData'] = dataList
+        response['Total'] = obj_db_ApiTimingTaskRunLog.count()
+        response['statusCode'] = 2000
     return JsonResponse(response)
