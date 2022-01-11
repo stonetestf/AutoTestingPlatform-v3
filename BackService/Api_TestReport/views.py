@@ -10,6 +10,7 @@ from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 from Api_TestReport.models import ApiReport as db_ApiReport
 from Api_TestReport.models import ApiQueue as db_ApiQueue
+from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -160,33 +161,68 @@ def load_report_case(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
-        # reportType = objData.reportType
+        reportType = objData.reportType
         testReportId = objData.testReportId
-        caseId = objData.caseId
+        id = objData.id  # 定时任务时:caseId,批量任务时:batchItemId
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_case', errorMsg)
     else:
-        obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
-            is_del=0,testReport_id=testReportId,ctbId=caseId).order_by('updateTime')
-        for i in obj_db_ApiReportItem:
-            passTotal = i.successTotal
-            failTotal = i.failTotal
-            errorTotal = i.errorTotal
-            if passTotal + failTotal + errorTotal == 0:
-                reportStatus = 'Error'
-            elif errorTotal >= 1:
-                reportStatus = 'Error'
-            elif failTotal >= 1:
-                reportStatus = 'Fail'
-            else:
-                reportStatus = 'Pass'
-            secondList.append({
-                'id':i.id,
-                'name':i.apiName,
-                'reportStatus':reportStatus
-            })
+        if reportType == 'TASK':
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+                is_del=0, testReport_id=testReportId, case_id=id).order_by('updateTime')
+            for i in obj_db_ApiReportItem:
+                passTotal = i.successTotal
+                failTotal = i.failTotal
+                errorTotal = i.errorTotal
+                if passTotal + failTotal + errorTotal == 0:
+                    reportStatus = 'Error'
+                elif errorTotal >= 1:
+                    reportStatus = 'Error'
+                elif failTotal >= 1:
+                    reportStatus = 'Fail'
+                else:
+                    reportStatus = 'Pass'
+                secondList.append({
+                    'id': i.id,
+                    'name': i.apiName,
+                    'reportStatus': reportStatus
+                })
+        else:
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+                is_del=0, testReport_id=testReportId, batchItem_id=id).order_by('updateTime')
+            # 先筛选出当前报告的用例ID列表
+            caseList = [i.case_id for i in obj_db_ApiReportItem]
+            setCaseList = list(set(caseList))
+            setCaseList.sort(key=caseList.index)
+            for item_caseId in setCaseList:
+                select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
+                passTotal = 0
+                failTotal = 0
+                errorTotal = 0
+                for i in select_db_ApiReportItem:
+                    passTotal += i.successTotal
+                    failTotal += i.failTotal
+                    errorTotal += i.errorTotal
+                if passTotal + failTotal + errorTotal == 0:
+                    reportStatus = 'Error'
+                elif errorTotal >= 1:
+                    reportStatus = 'Error'
+                elif failTotal >= 1:
+                    reportStatus = 'Fail'
+                else:
+                    reportStatus = 'Pass'
+                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_caseId)
+                if obj_db_CaseBaseData.exists():
+                    caseName = obj_db_CaseBaseData[0].caseName
+                else:
+                    caseName = ""
+                secondList.append({
+                    'id': item_caseId,
+                    'name': caseName,
+                    'reportStatus': reportStatus,
+                })
         response['secondList'] = secondList
         response['statusCode'] = 2000
     return JsonResponse(response)

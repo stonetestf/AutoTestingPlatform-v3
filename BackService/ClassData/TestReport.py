@@ -4,6 +4,7 @@ from Api_TestReport.models import ApiReportItem as db_ApiReportItem
 from Api_TestReport.models import ApiReport as db_ApiReport
 from Api_TestReport.models import ApiQueue as db_ApiQueue
 from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
+from Api_TestReport.models import ApiReportTaskItem as db_ApiReportTaskItem
 
 import ast
 import json
@@ -49,12 +50,12 @@ class ApiReport(cls_Logging):
         return results
 
     # 创建2级报告列表
-    def create_report_items(self, testReportId, apiId, apiName, ctbId=None):
+    def create_report_items(self, testReportId, apiId, apiName, caseId=None, reportTaskItemId=None):
         """
         :param testReportId:
         :param apiId:
         :param apiName:
-        :param ctbId: 单接口没有此ID/Case,Task,Batch类型时这里显示CaseId
+        :param caseId: 单接口没有此ID/Case,Task,Batch类型时这里显示CaseId
         :return:
         """
         results = {}
@@ -63,7 +64,8 @@ class ApiReport(cls_Logging):
                 testReport_id=testReportId,
                 apiId_id=apiId,
                 apiName=apiName,
-                ctbId=ctbId,
+                case_id=caseId,
+                batchItem_id=reportTaskItemId,
                 successTotal=0,
                 failTotal=0,
                 errorTotal=0,
@@ -73,12 +75,57 @@ class ApiReport(cls_Logging):
             results['state'] = False
             errorMsg = f"保存失败:{e}"
             results['errorMsg'] = errorMsg
+            cls_Logging.print_log(self, 'error', 'create_report_items', errorMsg)
             cls_Logging.record_error_info(
                 self, 'API', 'ClassData>TestReport>ApiReport', 'create_report_items', errorMsg)
         else:
             results['state'] = True
             results['reportItemId'] = save_db_ApiReportItem.id
         return results
+
+    # 创建2级批量任务的列表
+    def create_report_task_items(self, testReportId, taskId, taskName):
+        results = {}
+        try:
+            save_db_ApiReportTaskItem = db_ApiReportTaskItem.objects.create(
+                testReport_id=testReportId,
+                task_id=taskId,
+                taskName=taskName,
+                successTotal=0,
+                failTotal=0,
+                errorTotal=0,
+                is_del=0,
+            )
+        except BaseException as e:
+            results['state'] = False
+            errorMsg = f"保存失败:{e}"
+            results['errorMsg'] = errorMsg
+            cls_Logging.print_log(self, 'error', 'create_report_task_items', errorMsg)
+            cls_Logging.record_error_info(
+                self, 'API', 'ClassData>TestReport>ApiReport', 'create_report_task_items', errorMsg)
+        else:
+            results['state'] = True
+            results['reportTaskItemId'] = save_db_ApiReportTaskItem.id
+        return results
+
+    # 更新2级报告 批量任务列表
+    def update_report_task_items(self, testReportId):
+        runningTime = 0
+        passTotal = 0
+        failTotal = 0
+        errorTotal = 0
+        obj_db_ApiReportTaskItem = db_ApiReportTaskItem.objects.filter(is_del=0, testReport_id=testReportId)
+        for item_reportTaskItem in obj_db_ApiReportTaskItem:
+            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+                is_del=0, testReport_id=testReportId, batchItem_id=item_reportTaskItem.id)
+            for item_reportItem in obj_db_ApiReportItem:
+                runningTime += item_reportItem.runningTime
+                passTotal += item_reportItem.successTotal
+                failTotal += item_reportItem.failTotal
+                errorTotal += item_reportItem.errorTotal
+            db_ApiReportTaskItem.objects.filter(id=item_reportTaskItem.id).update(
+                runningTime=runningTime, successTotal=passTotal, failTotal=failTotal, errorTotal=errorTotal
+            )
 
     # 创建单接口报告
     def create_api_report(self, reportItemId, results):
@@ -147,7 +194,8 @@ class ApiReport(cls_Logging):
         for i in db_db_ApiReportItem:
             testReportRunningTime += float(i.runningTime)
         db_ApiTestReport.objects.filter(id=testReportId).update(
-            reportStatus=reportStatus, runningTime=round(testReportRunningTime,2), updateTime=cls_Common.get_date_time()
+            reportStatus=reportStatus, runningTime=round(testReportRunningTime, 2),
+            updateTime=cls_Common.get_date_time()
         )
 
     # 创建队列
@@ -303,16 +351,15 @@ class ApiReport(cls_Logging):
                         'name': i.apiName,
                         'reportStatus': reportStatus,
                     })
-
-            elif reportType=="TASK":
+            elif reportType == "TASK":
                 obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
                     is_del=0, testReport_id=testReportId).order_by('updateTime')
                 # 先筛选出当前报告的用例ID列表
-                caseList = [i.ctbId for i in obj_db_ApiReportItem]
+                caseList = [i.case_id for i in obj_db_ApiReportItem]
                 setCaseList = list(set(caseList))
                 setCaseList.sort(key=caseList.index)
                 for item_caseId in setCaseList:
-                    select_db_ApiReportItem = obj_db_ApiReportItem.filter(ctbId=item_caseId)
+                    select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
                     passTotal = 0
                     failTotal = 0
                     errorTotal = 0
@@ -336,6 +383,46 @@ class ApiReport(cls_Logging):
                     firstList.append({
                         'id': item_caseId,
                         'name': caseName,
+                        'reportStatus': reportStatus,
+                    })
+            else:
+                obj_db_ApiReportTaskItem = db_ApiReportTaskItem.objects.filter(
+                    is_del=0, testReport_id=testReportId).order_by('updateTime')
+                for item_reportTaskItem in obj_db_ApiReportTaskItem:
+                    obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+                        is_del=0, testReport_id=testReportId, batchItem_id=item_reportTaskItem.id).order_by(
+                        'updateTime')
+                    # 先筛选出当前报告的用例ID列表
+                    caseList = [i.case_id for i in obj_db_ApiReportItem]
+                    setCaseList = list(set(caseList))
+                    setCaseList.sort(key=caseList.index)
+                    reportItemList = []
+                    for item_caseId in setCaseList:
+                        select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
+                        passTotal = 0
+                        failTotal = 0
+                        errorTotal = 0
+                        for i in select_db_ApiReportItem:
+                            passTotal += i.successTotal
+                            failTotal += i.failTotal
+                            errorTotal += i.errorTotal
+                        if passTotal + failTotal + errorTotal == 0:
+                            reportItemList.append('Error')
+                        elif errorTotal >= 1:
+                            reportItemList.append('Error')
+                        elif failTotal >= 1:
+                            reportItemList.append('Fail')
+                        else:
+                            reportItemList.append('Pass')
+                    if 'Error' in reportItemList:
+                        reportStatus = 'Error'
+                    elif 'Fail' in reportItemList:
+                        reportStatus = 'Fail'
+                    else:
+                        reportStatus = 'Pass'
+                    firstList.append({
+                        'id': item_reportTaskItem.id,
+                        'name': item_reportTaskItem.taskName,
                         'reportStatus': reportStatus,
                     })
             results['state'] = True

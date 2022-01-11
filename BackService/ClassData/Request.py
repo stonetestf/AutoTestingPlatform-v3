@@ -1018,7 +1018,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-用例执行
-    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId, ctbId=None):
+    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId,reportTaskItemId=None):
         results = {
             'state': True,
             'itemResults': []
@@ -1056,7 +1056,8 @@ class RequstOperation(cls_Logging, cls_Common):
                 }
                 # 创建2级测试报告
                 createReportItems = cls_ApiReport.create_report_items(
-                    testReportId, item_request['apiId'], item_request['testName'], ctbId=ctbId)
+                    testReportId, item_request['apiId'], item_request['testName'],
+                    caseId=caseId,reportTaskItemId=reportTaskItemId)
                 if createReportItems['state']:
                     reportItemId = createReportItems['reportItemId']
                     itemResults['request']['environmentUrl'] = environmentUrl
@@ -1198,7 +1199,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-定时任务执行
-    def excute_task(self, testReportId, taskId, label, environmentId, userId):
+    def excute_task(self, testReportId, taskId, label, environmentId, userId,reportTaskItemId=None):
         results = {
             'state': True,
             'itemResults': []
@@ -1211,7 +1212,7 @@ class RequstOperation(cls_Logging, cls_Common):
             label = label + caseText
             caseId = item_taskTestSet.case_id
             executeCase = self.execute_case(
-                label, redisKey, testReportId, caseId, environmentId, userId, ctbId=caseId)
+                label, redisKey, testReportId, caseId, environmentId, userId,reportTaskItemId=reportTaskItemId)
             if executeCase['state']:
                 results['itemResults'].append(executeCase['itemResults'])
             else:
@@ -1228,15 +1229,25 @@ class RequstOperation(cls_Logging, cls_Common):
         obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(
             is_del=0,batchTask_id=batchId).order_by('index')
         for item_task in obj_db_ApiBatchTaskTestSet:
-            taskText = f"定时任务:{item_task.task.taskName}>:"
-            label = label + taskText
-            environmentId = item_task.task.environment_id
-            excuteTask = self.excute_task(testReportId, item_task.task_id, label, environmentId, userId)
-            if excuteTask['state']:
-                results['itemResults'].append(excuteTask['itemResults'])
+            createReportTaskItems = cls_ApiReport.create_report_task_items(
+                testReportId,item_task.task_id,item_task.task.taskName)
+            if createReportTaskItems['state']:
+                taskText = f"定时任务:{item_task.task.taskName}>:"
+                label = label + taskText
+                environmentId = item_task.task.environment_id
+                reportTaskItemId = createReportTaskItems['reportTaskItemId']
+                excuteTask = self.excute_task(
+                    testReportId, item_task.task_id, label, environmentId, userId,reportTaskItemId=reportTaskItemId)
+                if excuteTask['state']:
+                    results['itemResults'].append(excuteTask['itemResults'])
+                else:
+                    results['errorMsg'] = excuteTask['errorMsg']
+                    break
             else:
-                results['errorMsg'] = excuteTask['errorMsg']
+                results['errorMsg'] = createReportTaskItems['errorMsg']
                 break
+            # 更新2级的批量任务报告
+            cls_ApiReport.update_report_task_items(testReportId)
         return results
 
     #  region 接口差异的对比 专属

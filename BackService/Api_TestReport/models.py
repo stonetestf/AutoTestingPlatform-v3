@@ -23,11 +23,24 @@ class ApiTestReport(models.Model):  # 一级主报告列表
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
 
 
+class ApiReportTaskItem(models.Model):  # 二级批量任务列表
+    testReport = models.ForeignKey("ApiTestReport", to_field='id', on_delete=models.CASCADE)  # 主报告ID
+    task = models.ForeignKey("Api_TimingTask.ApiTimingTask", to_field='id', on_delete=models.CASCADE)
+    taskName = models.CharField("定时任务名称", max_length=50, null=True)
+    runningTime = models.FloatField("运行总时间", null=True)
+    successTotal = models.IntegerField("成功数", null=False)
+    failTotal = models.IntegerField("失败数", null=False)
+    errorTotal = models.IntegerField("错误数", null=False)
+    updateTime = models.DateTimeField('修改时间', auto_now=True)
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+
+
 class ApiReportItem(models.Model):  # 二级报告列表
     testReport = models.ForeignKey("ApiTestReport", to_field='id', on_delete=models.CASCADE)  # 主报告ID
     apiId = models.ForeignKey("Api_IntMaintenance.ApiBaseData", to_field='id', on_delete=models.CASCADE)  # 接口ID
     apiName = models.CharField("接口名称", max_length=50, null=True)
-    ctbId = models.IntegerField("单接口没有此ID/Case,Task,Batch类型时这里显示CaseId", null=True)
+    case_id = models.IntegerField("单接口没有此ID/Case,Task,Batch类型时这里显示CaseId", null=True)  # 这个接口出自哪个用例的
+    batchItem_id = models.IntegerField("Batch类型时才有此ID", null=True)
     runningTime = models.FloatField("运行总时间", null=True)
     successTotal = models.IntegerField("成功数", null=False)
     failTotal = models.IntegerField("失败数", null=False)
@@ -42,7 +55,6 @@ class ApiReport(models.Model):  # 三级用例报告
     requestType = models.CharField("请求类型(GET/POST)", max_length=50, null=False)
     requestHeaders = models.TextField('请求头部', null=True)
     requestData = models.TextField('请求数据', null=True)
-    # requestFile = models.TextField('请求文件', null=True)
     reportStatus = models.CharField("测试报告状态(Pass,Fail,Error)", max_length=10, null=False)
 
     statusCode = models.IntegerField("返回代码", null=True)
@@ -63,8 +75,6 @@ class ApiQueue(models.Model):  # 队列信息
     pid = models.ForeignKey("ProjectManagement.ProManagement", to_field='id', on_delete=models.CASCADE)
     page_id = models.IntegerField("所属页面", null=True)
     fun_id = models.IntegerField("所属功能", null=True)
-    # page = models.ForeignKey(to='PageManagement.PageManagement', to_field='id', on_delete=models.CASCADE)
-    # fun = models.ForeignKey(to='FunManagement.FunManagement', to_field='id', on_delete=models.CASCADE)
     taskType = models.CharField('任务类型(API:单接口,Case,Task:定时任务,batch:批量任务)', max_length=50, null=False)
     taskId = models.IntegerField("任务ID,apiId,CaseId,TaskId,BatchId", null=False)
     testReport = models.ForeignKey("ApiTestReport", to_field='id', on_delete=models.CASCADE)  # 主报告id

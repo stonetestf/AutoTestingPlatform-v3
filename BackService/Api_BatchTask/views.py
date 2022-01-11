@@ -561,6 +561,8 @@ def execute_batch_task(request):
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         # region 创建1级主报告
+                        # 批量任务的报告是不同的有4层! 接口,用例,定时任务只有3层,
+                        # 1级主报告>定时任务报告>用例报告>接口报告
                         createTestReport = cls_ApiReport.create_test_report(
                             obj_db_ApiBatchTask[0].pid_id,
                             obj_db_ApiBatchTask[0].batchName,

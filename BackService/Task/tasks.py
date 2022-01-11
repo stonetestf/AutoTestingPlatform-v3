@@ -71,7 +71,6 @@ def api_asynchronous_run_task(testReportId, queueId, taskId, label, environmentI
 def api_asynchronous_run_batch(testReportId, queueId, batchId, label, userId):
     cls_ApiReport.update_queue(queueId, 1, userId)  # 更新队列-执行中
     executeBatch = cls_RequstOperation.excute_batch(testReportId, batchId, label, userId)
-
     cls_ApiReport.update_queue(queueId, 2, userId)  # 更新队列-完成
     if executeBatch['state']:
         return "int_asynchronous_run_case-批量任务运行完成"
