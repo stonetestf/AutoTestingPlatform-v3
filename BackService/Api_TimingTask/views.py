@@ -542,7 +542,15 @@ def select_history(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+
         taskId = objData.taskId
+        taskName = objData.taskName
+        operationType = objData.operationType
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -553,7 +561,14 @@ def select_history(request):
                 timingTask_id=taskId).order_by('-createTime')
         else:
             obj_db_ApiTimingTaskHistory = db_ApiTimingTaskHistory.objects.filter().order_by('-createTime')
-        for i in obj_db_ApiTimingTaskHistory:
+            if taskName:
+                obj_db_ApiTimingTaskHistory = obj_db_ApiTimingTaskHistory.filter(
+                    timingTask__taskName__icontains=taskName).order_by('-createTime')
+            if operationType:
+                obj_db_ApiTimingTaskHistory = obj_db_ApiTimingTaskHistory.filter(
+                    operationType=operationType).order_by('-createTime')
+        select_db_ApiTimingTaskHistory = obj_db_ApiTimingTaskHistory[minSize: maxSize]
+        for i in select_db_ApiTimingTaskHistory:
             if i.restoreData:
                 restoreData = json.dumps(ast.literal_eval(i.restoreData),
                                          sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
@@ -569,6 +584,7 @@ def select_history(request):
                 'userName': f"{i.uid.userName}({i.uid.nickName})",
             })
         response['TableData'] = dataList
+        response['Total'] = obj_db_ApiTimingTaskHistory.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 

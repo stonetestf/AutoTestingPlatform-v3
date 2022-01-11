@@ -10,6 +10,16 @@
                 <el-form-item label="页面名称:">
                     <el-input clearable v-model.trim="SelectRomeData.pageName"></el-input>
                 </el-form-item>
+                <el-form-item label="操作类型:">
+                    <el-select v-model="SelectRomeData.operationType" clearable placeholder="请选择" style="width:150px;">
+                        <el-option
+                            v-for="item in SelectRomeData.operationTypeOption"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
                 <el-button type="primary" @click="SelectData()">查询</el-button>
                 <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
             </el-form>
@@ -31,7 +41,7 @@
                     width="50px"
                     type="expand">
                     <template slot-scope="props">
-                        <el-form label-position="left" >
+                        <el-form label-position="left" v-if="props.row.tableItem.length!=0">
                             <el-table
                                 :data="props.row.tableItem"
                                 border>
@@ -115,6 +125,12 @@ export default {
             SelectRomeData:{
                 pageName:'',
                 disPlay:false,
+                operationType:'',
+                operationTypeOption:[
+                    {'label':'Add','value':'Add'},
+                    {'label':'Edit','value':'Edit'},
+                    {'label':'Delete','value':'Delete'},
+                ],
             },
             RomeData:{
                 pageId:'',
@@ -171,11 +187,13 @@ export default {
             self.tableData=[];
             self.RomeData.pageId='';
             self.SelectRomeData.pageName='';
+            self.SelectRomeData.operationType='';
         },
         ClearSelectRomeData(){
             let self = this;
             self.tableData=[];
             self.SelectRomeData.pageName='';
+            self.SelectRomeData.operationType='';
             self.SelectData();
         },
         SelectData(){
@@ -187,6 +205,7 @@ export default {
                     'sysType':'API',
                     'pageId':self.RomeData.pageId,
                     'pageName':self.SelectRomeData.pageName,
+                    'operationType':self.SelectRomeData.operationType,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }

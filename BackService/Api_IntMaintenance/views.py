@@ -1702,7 +1702,17 @@ def select_history(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+
         apiId = objData.apiId
+        pageId = objData.pageId
+        funId = objData.funId
+        apiName = objData.apiName
+        operationType = objData.operationType
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -1712,25 +1722,37 @@ def select_history(request):
             obj_db_ApiHistory = db_ApiHistory.objects.filter(api_id=apiId).order_by('-createTime')
         else:
             obj_db_ApiHistory = db_ApiHistory.objects.filter().order_by('-createTime')
-        for i in obj_db_ApiHistory:
+            if pageId:
+                obj_db_ApiHistory = obj_db_ApiHistory.filter(page_id=pageId).order_by('-createTime')
+            if funId:
+                obj_db_ApiHistory = obj_db_ApiHistory.filter(fun_id=funId).order_by('-createTime')
+            if apiName:
+                obj_db_ApiHistory = obj_db_ApiHistory.filter(apiName__icontains=apiName).order_by('-createTime')
+            if operationType:
+                obj_db_ApiHistory = obj_db_ApiHistory.filter(operationType=operationType).order_by('-createTime')
+        select_db_ApiHistory = obj_db_ApiHistory[minSize: maxSize]
+        for i in select_db_ApiHistory:
             if i.restoreData:
                 restoreData = json.dumps(ast.literal_eval(i.restoreData),
                                          sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
             else:
                 restoreData = None
+            if restoreData:
+                tableItem = [{'restoreData': restoreData,'textInfo':i.textInfo}]
+            else:
+                tableItem = []
             dataList.append({
                 'id': i.id,
                 'pageName': i.page.pageName,
                 'funName': i.fun.funName,
                 'apiName': i.apiName,
                 'operationType': i.operationType,
-                'tableItem': [
-                    {'restoreData': restoreData}
-                ],
+                'tableItem': tableItem,
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
                 'userName': i.pid.uid.userName,
             })
         response['TableData'] = dataList
+        response['Total'] = obj_db_ApiHistory.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 

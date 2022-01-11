@@ -335,8 +335,16 @@ def select_history(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+
         sysType = objData.sysType
         funId = objData.funId
+        funName = objData.funName
+        operationType = objData.operationType
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -347,23 +355,31 @@ def select_history(request):
                 fun_id=funId,page__sysType=sysType).order_by('-createTime')
         else:
             obj_db_FunHistory = db_FunHistory.objects.filter(page__sysType=sysType).order_by('-createTime')
-        for i in obj_db_FunHistory:
+            if funName:
+                obj_db_FunHistory = obj_db_FunHistory.filter(funName__icontains=funName).order_by('-createTime')
+            if operationType:
+                obj_db_FunHistory = obj_db_FunHistory.filter(operationType=operationType).order_by('-createTime')
+        select_db_FunHistory = obj_db_FunHistory[minSize: maxSize]
+        for i in select_db_FunHistory:
             if i.restoreData:
                 restoreData = json.dumps(ast.literal_eval(i.restoreData),
                                          sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
             else:
                 restoreData = None
+            if restoreData:
+                tableItem = [{'restoreData': restoreData}]
+            else:
+                tableItem = []
             dataList.append({
                 'id': i.id,
                 'funName': i.funName,
                 'operationType': i.operationType,
-                'tableItem': [
-                    {'restoreData': restoreData}
-                ],
+                'tableItem': tableItem,
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
                 'userName': i.pid.uid.userName,
             })
         response['TableData'] = dataList
+        response['Total'] = obj_db_FunHistory.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 

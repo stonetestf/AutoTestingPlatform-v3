@@ -78,21 +78,25 @@
                             </el-table-column>   
                             <el-table-column
                                 align="center"
-                                width="200px">
+                                width="180px">
                             <template slot="header">
-                                <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
-                                <el-button type="warning" @click="OpenHistoryInfoDialog()">历史</el-button>
+                                <el-button-group>
+                                    <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                                    <el-button type="warning" @click="OpenHistoryInfoDialog()">历史</el-button>
+                                </el-button-group>
                             </template>
                             <template slot-scope="scope" style="width:100px">
-                                <el-button
-                                    size="mini"
-                                    @click="handleEdit(scope.$index, scope.row)">Edit
-                                </el-button>
-                                <el-button
-                                    size="mini"
-                                    type="danger"
-                                    @click="handleDelete(scope.$index, scope.row)">Delete
-                                </el-button>
+                                <el-button-group>
+                                    <el-button
+                                        size="mini"
+                                        @click="handleEdit(scope.$index, scope.row)">Edit
+                                    </el-button>
+                                    <el-button
+                                        size="mini"
+                                        type="danger"
+                                        @click="handleDelete(scope.$index, scope.row)">Delete
+                                    </el-button>
+                                </el-button-group>
                             </template>
                             </el-table-column>
                         </el-table>

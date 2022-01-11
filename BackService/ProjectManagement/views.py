@@ -584,6 +584,7 @@ def select_history(request):
         sysType = objData.sysType
         proId = objData.proId
         proName = objData.proName
+        operationType = objData.operationType
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -599,8 +600,9 @@ def select_history(request):
         else:
             obj_db_ProHistory = db_ProHistory.objects.filter(pid__sysType=sysType).order_by('-createTime')
             if proName:
-                obj_db_ProHistory = db_ProHistory.objects.filter(
-                    pid__sysType=sysType,proName__icontains=proName).order_by('-createTime')
+                obj_db_ProHistory = obj_db_ProHistory.filter(proName__icontains=proName).order_by('-createTime')
+            if operationType:
+                obj_db_ProHistory = obj_db_ProHistory.filter(operationType=operationType).order_by('-createTime')
         select_db_ProHistory = obj_db_ProHistory[minSize: maxSize]
         for i in select_db_ProHistory:
             if i.restoreData:
@@ -608,13 +610,15 @@ def select_history(request):
                                          sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
             else:
                 restoreData = None
+            if restoreData:
+                tableItem = [{'restoreData': restoreData}]
+            else:
+                tableItem = []
             dataList.append({
                 'id': i.id,
                 'proName': i.proName,
                 'operationType': i.operationType,
-                'tableItem': [
-                    {'restoreData': restoreData}
-                ],
+                'tableItem': tableItem,
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
                 'userName': i.pid.uid.userName,
             })

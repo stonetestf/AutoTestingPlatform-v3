@@ -1,141 +1,170 @@
 <template>
-    <el-dialog
+    <el-drawer
         :title="dialogTitle"
+        size="1500px"
         :visible.sync="dialogVisible"
-        :close-on-click-modal=false
-        :before-close="dialogClose"
-        width="1500px">
-        <el-form :inline="true" v-if="SelectRomeData.disPlay"  method="post">
-            <el-form-item label="所属页面:">
-                <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:150px;" @click.native="GetPageNameOption()">
-                    <el-option
-                        v-for="item in SelectRomeData.pageNameOption"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value">
-                    </el-option>
-                </el-select>
-            </el-form-item>
-            <el-form-item label="所属功能:">
-                <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:150px;" @click.native="GetFunNameOption()">
-                    <el-option
-                        v-for="item in SelectRomeData.funNameOption"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value">
-                    </el-option>
-                </el-select>
-            </el-form-item>
-            <el-form-item label="接口名称:">
-                <el-input clearable v-model.trim="SelectRomeData.apiName"></el-input>
-            </el-form-item>
-            <el-button type="primary" @click="SelectData()">查询</el-button>
-            <el-button type="info"  @click="ClearRomeData()">重置</el-button>
-        </el-form>
-        <el-table
-            :data="tableData"
-            height="640px"
-            border>
-            <el-table-column 
-                label="ID"  
-                width="80" 
-                align="center"
-                prop="id">
-            </el-table-column>
-            <el-table-column 
-                label="详情" 
-                width="50px"
-                type="expand">
-                <template slot-scope="props">
-                    <el-form v-if="props.row.tableItem.restoreData">
-                        <el-table
-                            :data="props.row.tableItem"
-                            border>
-                            <el-table-column
-                                label="Json">
-                                <template slot-scope="scope">
-                                    <el-input type="textarea" 
-                                        readonly
-                                        resize="none"
-                                        v-model="scope.row.restoreData"
-                                        :autosize="{ minRows: 20, maxRows: 20}">
-                                    </el-input>
-                                    <!-- <div style="white-space: pre-line;" v-html="scope.row.restoreData"></div> -->
-                                </template>
-                            </el-table-column>
-                            <el-table-column 
-                                label="文本信息"   
-                                align="center">
-                                <template slot-scope="scope">
-                                    <div v-html="scope.row.textInfo"></div>
-                                </template>
-                            </el-table-column>
-                        </el-table>
-                    </el-form>
-                </template>
-            </el-table-column>
-            <el-table-column
-                label="所属页面"
-                align= "center"
-                prop="pageName">
-            </el-table-column>
-            <el-table-column
-                label="所属功能"
-                align= "center"
-                prop="funName">
-            </el-table-column>
-            <el-table-column
-                label="接口名称"
-                align= "center"
-                prop="apiName">
-            </el-table-column>
-            <el-table-column
-                label="操作过程"
-                width="150px"
-                align= "center">
-                    <template slot-scope="scope">
-                        <el-tag type="danger" v-if="scope.row.operationType=='Delete'">删除</el-tag>
-                        <el-tag type="success" v-else-if="scope.row.operationType=='Add'">新增</el-tag>
-                        <el-tag type="warning" v-else-if="scope.row.operationType=='Edit'">修改</el-tag>
-                        <!-- <el-tag type="warning" v-else>修改</el-tag> -->
+        direction='rtl'
+        :before-close="dialogClose">
+        <div>
+            <el-form :inline="true" v-if="SelectRomeData.disPlay"  method="post">
+                <el-form-item label="所属页面:">
+                    <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
+                        <el-option
+                            v-for="item in SelectRomeData.pageNameOption"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="所属功能:">
+                    <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:200px;" @click.native="GetFunNameOption()">
+                        <el-option
+                            v-for="item in SelectRomeData.funNameOption"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="接口名称:">
+                    <el-input clearable v-model.trim="SelectRomeData.apiName"></el-input>
+                </el-form-item>
+                <el-form-item label="操作类型:">
+                    <el-select v-model="SelectRomeData.operationType" clearable placeholder="请选择" style="width:150px;">
+                        <el-option
+                            v-for="item in SelectRomeData.operationTypeOption"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-button type="primary" @click="SelectData()">查询</el-button>
+                <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+            </el-form>
+        </div>
+        <div>
+            <el-table
+                v-loading="loading"
+                :data="tableData"
+                height="733px"
+                border>
+                <el-table-column 
+                    label="ID"  
+                    width="80" 
+                    align="center"
+                    prop="id">
+                </el-table-column>
+                <el-table-column 
+                    label="详情" 
+                    width="50px"
+                    type="expand">
+                    <template slot-scope="props">
+                        <el-form v-if="props.row.tableItem.length!=0">
+                            <el-table
+                                :data="props.row.tableItem"
+                                border>
+                                <el-table-column
+                                    label="Json">
+                                    <template slot-scope="scope">
+                                        <el-input type="textarea" 
+                                            readonly
+                                            resize="none"
+                                            v-model="scope.row.restoreData"
+                                            :autosize="{ minRows: 20, maxRows: 20}">
+                                        </el-input>
+                                        <!-- <div style="white-space: pre-line;" v-html="scope.row.restoreData"></div> -->
+                                    </template>
+                                </el-table-column>
+                                <el-table-column 
+                                    label="文本信息"   
+                                    align="center">
+                                    <template slot-scope="scope">
+                                        <div style="white-space: pre-line;text-align: left;" v-html="scope.row.textInfo"></div>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-form>
                     </template>
-            </el-table-column>
-            <el-table-column
-                label="修改时间"
-                width="160px"
-                align= "center"
-                prop="createTime">
-            </el-table-column>
-            <el-table-column
-                label="修改者"
-                width="150px"
-                align= "center"
-                prop="userName">
-            </el-table-column>
-            <el-table-column
-                label="操作"
-                align="center"
-                width="100px">
-                <template slot-scope="scope" style="width:100px">
-                    <el-button
-                        v-if="scope.row.operationType!='Add'"
-                        size="mini"
-                        type="warning"
-                        @click="handleRestor(scope.$index, scope.row)">恢复
-                    </el-button>
-                </template>
-            </el-table-column>
-        </el-table>
-    </el-dialog>
+                </el-table-column>
+                <el-table-column
+                    label="所属页面"
+                    align= "center"
+                    prop="pageName">
+                </el-table-column>
+                <el-table-column
+                    label="所属功能"
+                    align= "center"
+                    prop="funName">
+                </el-table-column>
+                <el-table-column
+                    label="接口名称"
+                    align= "center"
+                    prop="apiName">
+                </el-table-column>
+                <el-table-column
+                    label="操作过程"
+                    width="150px"
+                    align= "center">
+                        <template slot-scope="scope">
+                            <el-tag type="danger" v-if="scope.row.operationType=='Delete'">删除</el-tag>
+                            <el-tag type="success" v-else-if="scope.row.operationType=='Add'">新增</el-tag>
+                            <el-tag type="warning" v-else-if="scope.row.operationType=='Edit'">修改</el-tag>
+                            <!-- <el-tag type="warning" v-else>修改</el-tag> -->
+                        </template>
+                </el-table-column>
+                <el-table-column
+                    label="修改时间"
+                    width="160px"
+                    align= "center"
+                    prop="createTime">
+                </el-table-column>
+                <el-table-column
+                    label="修改者"
+                    width="150px"
+                    align= "center"
+                    prop="userName">
+                </el-table-column>
+                <el-table-column
+                    label="操作"
+                    align="center"
+                    width="100px">
+                    <template slot-scope="scope" style="width:100px">
+                        <el-button
+                            v-if="scope.row.operationType!='Add'"
+                            size="mini"
+                            type="warning"
+                            @click="handleRestor(scope.$index, scope.row)">恢复
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        <div>
+            <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                @size-change="pageSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="page.current" 
+                :total="page.total"
+                :page-sizes = [12,30,50,100]
+                style="margin: 20px auto auto auto;">
+            </el-pagination>
+        </div>
+    </el-drawer>
 </template>
 
 <script>
 import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
+import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
+
 export default {
     data() {
         return {
+            loading:false,
             dialogTitle:"",
             dialogVisible:false,
             tableData:[],
@@ -145,12 +174,22 @@ export default {
                 funId:'',
                 funNameOption:[],
                 apiName:'',
+                operationType:'',
+                operationTypeOption:[
+                    {'label':'Add','value':'Add'},
+                    {'label':'Edit','value':'Edit'},
+                    {'label':'Delete','value':'Delete'},
+                ],
                 disPlay:false,
             },
             RomeData:{
                 apiId:'',
             },
-
+            page: { 
+                current: 1,// 默认显示第几页
+                total: 0,// 总条数，根据接口获取数据长度(注意：这里不能为空)
+                pageSize: 12, // 默认每页显示的条数（可修改）
+            },
           
         };
     },
@@ -188,6 +227,13 @@ export default {
                 this.SelectData();
             }
         },
+        'SelectRomeData.pageId': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
+            let self = this;
+            if(newVal!=oldVal){
+                self.SelectRomeData.funId='';
+                self.SelectRomeData.funNameOption=[];
+            }
+        },
     },
     methods: {
         dialogClose(done){//用于调用父页面方法
@@ -200,14 +246,45 @@ export default {
             self.SelectRomeData.pageId='';
             self.SelectRomeData.funId='';
             self.SelectRomeData.apiName='';  
+            self.SelectRomeData.operationType='';
+        },
+        ClearSelectRomeData(){
+            let self = this;
+            self.tableData=[];
+            self.SelectRomeData.pageId='';
+            self.SelectRomeData.funId='';
+            self.SelectRomeData.apiName='';  
+            self.SelectRomeData.operationType='';
+            self.SelectData();
+        },
+        GetPageNameOption(){
+            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+                this.SelectRomeData.pageNameOption = d;
+            });
+        },
+        GetFunNameOption(){
+            if(this.SelectRomeData.pageId){
+                GetFunNameItems(this.$cookies.get('proId'),this.SelectRomeData.pageId).then(d=>{
+                    this.SelectRomeData.funNameOption = d;
+                });
+            }else{
+                this.$message.warning('请先选择所属页面!');
+            }
         },
         SelectData(){
             let self = this;
+            self.loading=true;
             self.tableData= [];
             self.$axios.get('/api/ApiIntMaintenance/SelectHistory',{
                 params:{
                     'sysType':'API',
                     'apiId':self.RomeData.apiId,
+                    'pageId':self.SelectRomeData.pageId,
+                    'funId':self.SelectRomeData.funId,
+                    'apiName':self.SelectRomeData.apiName,
+                    'operationType':self.SelectRomeData.operationType,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
                 }
             }).then(res => {
                 if(res.data.statusCode==2000){
@@ -221,16 +298,25 @@ export default {
                         obj.tableItem=d.tableItem;
                         obj.createTime = d.createTime;
                         obj.userName = d.userName;
-                     
 
                         self.tableData.push(obj);
                     });
+                    if(self.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                    self.loading=false;
                 }else{
                     self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
                 }
                 // console.log(self.tableData);
             }).catch(function (error) {
                 console.log(error);
+                self.loading=false;
+                self.dialogClose();
             })
         },
         handleRestor(index,row){
@@ -266,11 +352,25 @@ export default {
             }).catch(function (error) {
                 console.log(error);
             })
-        }
+        },
+        pageSizeChange(pageSize) {
+            let self = this;
+            self.page.current = 1;
+            self.page.pageSize = pageSize;
+        },
+        // 显示第几页
+        handleCurrentChange(val) {
+            let self = this;
+            // 改变默认的页数
+            self.page.current=val
+            self.SelectData();
+        },
     }
 };
 </script>
 
 <style>
-
+.test{
+    text-align: left;
+}
 </style>
