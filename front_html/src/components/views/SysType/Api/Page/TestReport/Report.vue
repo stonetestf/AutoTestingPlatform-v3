@@ -495,6 +495,13 @@
                                         </el-tab-pane>
                                     </el-tabs>
                                 </div>
+                                <div v-else>
+                                    <el-tabs tab-position="left" @tab-click="handleClick_secondMenu"> 
+                                        <el-tab-pane v-for="pane in RomeData.secondList" :key="pane.name" :label="pane.label" :name="pane.name" v-loading="loading">
+
+                                        </el-tab-pane>
+                                    </el-tabs>
+                                </div>
                             </el-tab-pane>
                         </el-tabs>
                     </template>
@@ -821,10 +828,8 @@ export default {
                         }else{
                             lebel=d.name;
                         }
-                        // obj.id = d.id;
                         obj.name = String(d.id);
                         obj.label = lebel;
-                        // obj.reportStatus = d.reportStatus;
 
                         self.RomeData.firstList.push(obj);
                     });

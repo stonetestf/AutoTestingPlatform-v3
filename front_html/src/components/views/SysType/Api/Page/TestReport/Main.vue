@@ -64,9 +64,9 @@
                                 align= "center">
                                 <template slot-scope="scope">
                                     <el-tag v-if="scope.row.reportType=='API'" >接口</el-tag>
-                                    <el-tag type="info" v-else-if="scope.row.reportType=='CASE'" >测试用例</el-tag>
+                                    <el-tag type="success" v-else-if="scope.row.reportType=='CASE'" >测试用例</el-tag>
                                     <el-tag type="warning" v-else-if="scope.row.reportType=='TASK'" >定时任务</el-tag>
-                                    <el-tag type="primary" v-else-if="scope.row.reportType=='BATCH'" >批量任务</el-tag>
+                                    <el-tag type="danger" v-else-if="scope.row.reportType=='BATCH'" >批量任务</el-tag>
                                 </template>
                             </el-table-column>         
                            <el-table-column

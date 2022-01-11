@@ -16,6 +16,9 @@ from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSe
 from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
 from Api_BatchTask.models import ApiBatchTaskTestSet as db_ApiBatchTaskTestSet
 from Api_BatchTask.models import ApiBatchTaskHistory as db_ApiBatchTaskHistory
+from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
+
+from Task.tasks import api_asynchronous_run_batch
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -276,7 +279,7 @@ def save_data(request):
                     save_db_ApiBatchTask = db_ApiBatchTask.objects.create(
                         pid_id=basicInfo.proId, batchName=basicInfo.batchName, priority=basicInfo.priorityId,
                         remarks=basicInfo.remarks, pushTo=basicInfo.pushTo,
-                        hookState=basicInfo.hookState,hookId=basicInfo.hookId,historyCode=historyCode,
+                        hookState=basicInfo.hookState, hookId=basicInfo.hookId, historyCode=historyCode,
                         cuid=userId, uid_id=userId, is_del=0,
                     )
                     # endregion
@@ -333,7 +336,7 @@ def load_batch_data(request):
                 'pushTo': ast.literal_eval(obj_db_ApiBatchTask[0].pushTo) if obj_db_ApiBatchTask[0].pushTo else [],
                 'remarks': obj_db_ApiBatchTask[0].remarks,
                 'hookState': True if obj_db_ApiBatchTask[0].hookState == 1 else False,
-                'hookId':obj_db_ApiBatchTask[0].hookId,
+                'hookId': obj_db_ApiBatchTask[0].hookId,
             }
             # endregion
             # region 测试集
@@ -353,10 +356,11 @@ def load_batch_data(request):
                 testSet.append({
                     'id': item_testSet.task_id,
                     'taskName': item_testSet.task.taskName,
-                    'caseTotal': db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=item_testSet.task_id).count(),
+                    'caseTotal': db_ApiTimingTaskTestSet.objects.filter(is_del=0,
+                                                                        timingTask_id=item_testSet.task_id).count(),
                     'taskState': True if item_testSet.task.taskStatus == 1 else False,
                     'passRate': f"{passRate}%",
-                    'state':True if item_testSet.state == 1 else False,
+                    'state': True if item_testSet.state == 1 else False,
                 })
             # endregion
             response['dataTable'] = {
@@ -434,15 +438,15 @@ def edit_data(request):
                     # endregion
                     # region 删除测试集数据
                     db_ApiBatchTaskTestSet.objects.filter(
-                        is_del=0, batchTask_id=batchId,historyCode=obj_db_ApiBatchTask[0].historyCode).update(
+                        is_del=0, batchTask_id=batchId, historyCode=obj_db_ApiBatchTask[0].historyCode).update(
                         is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                     )
                     # endregion
                     # region 更新基本信息
                     db_ApiBatchTask.objects.filter(is_del=0, id=batchId).update(
                         pid_id=basicInfo.proId, batchName=basicInfo.batchName, priority=basicInfo.priorityId,
-                        remarks=basicInfo.remarks, pushTo=basicInfo.pushTo,historyCode=historyCode,
-                        hookState=basicInfo.hookState, hookId=basicInfo.hookId,uid_id=userId, is_del=0,
+                        remarks=basicInfo.remarks, pushTo=basicInfo.pushTo, historyCode=historyCode,
+                        hookState=basicInfo.hookState, hookId=basicInfo.hookId, uid_id=userId, is_del=0,
                     )
                     # endregion
                     # region 新增测试集数据
@@ -510,7 +514,7 @@ def delete_data(request):
                         is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                     )
                     obj_db_ApiBatchTask.update(
-                        is_del=1, updateTime=cls_Common.get_date_time(),uid_id=userId
+                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -530,57 +534,58 @@ def execute_batch_task(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         batchId = request.POST['batchId']
-        redisKey = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'Api_BatchTask', 'execute_batch_task', errorMsg)
     else:
-        obj_db_ApiTimingTask = db.objects.filter(is_del=0, id=taskId)
-        if obj_db_ApiTimingTask.exists():
-            queueState = cls_FindTable.get_queue_state('TASK', taskId)
+        obj_db_ApiBatchTask = db_ApiBatchTask.objects.filter(is_del=0, id=batchId)
+        if obj_db_ApiBatchTask.exists():
+            queueState = cls_FindTable.get_queue_state('BATCH', batchId)
             if queueState:
-                response['errorMsg'] = '当前已有相同定时任务在运行,不可重复运行!您可在主页中项目里查看此用例的动态!' \
+                response['errorMsg'] = '当前已有相同批量任务在运行,不可重复运行!您可在主页中项目里查看此用例的动态!' \
                                        '如遇错误可取消该项目队列后重新运行!'
             else:
-                # region 获取当前定时任务的需要运行多少个接口
+                # region 获取当前批量任务的需要运行多少个接口
                 total = 0
-                obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=taskId)
-                for item_testSet in obj_db_ApiTimingTaskTestSet:
-                    if item_testSet.state == 1:
-                        total += db_CaseTestSet.objects.filter(is_del=0, caseId_id=item_testSet.case_id,
-                                                               state=1).count()
+                obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(is_del=0, batchTask_id=batchId)
+                for item_taskSet in obj_db_ApiBatchTaskTestSet:
+                    if item_taskSet.state == 1:
+                        obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
+                            is_del=0, timingTask_id=item_taskSet.task_id)
+                        for item_caseSet in obj_db_ApiTimingTaskTestSet:
+                            if item_caseSet.state == 1:
+                                total += db_CaseTestSet.objects.filter(
+                                    is_del=0, caseId_id=item_caseSet.case_id,state=1).count()
                 # endregion
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         # region 创建1级主报告
                         createTestReport = cls_ApiReport.create_test_report(
-                            obj_db_ApiTimingTask[0].pid_id,
-                            obj_db_ApiTimingTask[0].taskName,
-                            'TASK', taskId, total, userId
+                            obj_db_ApiBatchTask[0].pid_id,
+                            obj_db_ApiBatchTask[0].batchName,
+                            'BATCH', batchId, total, userId
                         )
                         # endregion
                         if createTestReport['state']:
                             testReportId = createTestReport['testReportId']
                             # region 创建队列
                             queueId = cls_ApiReport.create_queue(
-                                obj_db_ApiTimingTask[0].pid_id, None, None,
-                                'TASK', taskId, testReportId, userId)  # 创建队列
+                                obj_db_ApiBatchTask[0].pid_id, None, None,
+                                'BATCH', batchId, testReportId, userId)  # 创建队列
                             # endregion
                         else:
                             raise ValueError(f'创建主测试报告失败:{createTestReport["errorMsg"]}')
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f"失败:{e}"
                 else:
-                    environmentId = obj_db_ApiTimingTask[0].environment_id
-                    taskName = obj_db_ApiTimingTask[0].taskName
-                    result = api_asynchronous_run_task.delay(redisKey, testReportId, queueId, taskId, taskName,
-                                                             environmentId, userId)
+                    # environmentId = obj_db_ApiTimingTask[0].environment_id
+                    # taskName = obj_db_ApiTimingTask[0].taskName
+                    remindLabel = f"批量任务:{obj_db_ApiBatchTask[0].batchName}>"  # 推送的标识
+                    result = api_asynchronous_run_batch.delay(testReportId, queueId, batchId,remindLabel,userId)
                     if result.task_id:
                         response['statusCode'] = 2001
-                        response['redisKey'] = redisKey
+                        response['celeryTaskId'] = result.task_id
         else:
-            response['errorMsg'] = '当前选择的定时任务不存在,请刷新后在重新尝试!'
+            response['errorMsg'] = '当前选择的批量任务不存在,请刷新后在重新尝试!'
     return JsonResponse(response)
-
-

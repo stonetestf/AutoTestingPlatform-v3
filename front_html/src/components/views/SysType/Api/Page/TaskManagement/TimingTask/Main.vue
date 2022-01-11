@@ -134,6 +134,7 @@
                                             更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
+                                            <el-dropdown-item command="ExecutiveLogging">执行记录(未开发)</el-dropdown-item>
                                             <el-dropdown-item command="CopyTask">复制定时任务(未开发)</el-dropdown-item>
                                             <el-dropdown-item command="TaskRestore">恢复定时任务</el-dropdown-item>
                                         </el-dropdown-menu>

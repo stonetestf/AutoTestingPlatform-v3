@@ -18,7 +18,7 @@ class ApiBatchTask(models.Model):
     historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
-class ApiBatchTaskTestSet(models.Model):  # 定时任务排序数据
+class ApiBatchTaskTestSet(models.Model):  # 任务排序数据
     batchTask = models.ForeignKey(to='ApiBatchTask', to_field='id', on_delete=models.CASCADE)
     index = models.IntegerField("排序", null=False)
     task = models.ForeignKey(to='Api_TimingTask.ApiTimingTask', to_field='id', on_delete=models.CASCADE)

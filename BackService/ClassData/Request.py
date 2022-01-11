@@ -23,6 +23,7 @@ from Api_CaseMaintenance.models import CaseApiValidate as db_CaseApiValidate
 from Api_CaseMaintenance.models import CaseApiOperation as db_CaseApiOperation
 
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
+from Api_BatchTask.models import ApiBatchTaskTestSet as db_ApiBatchTaskTestSet
 
 # Create reference here.
 from ClassData.Common import Common as cls_Common
@@ -690,8 +691,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
     def request_operation_extract_validate(self, labelName, onlyCode, getRequestData,
                                            conversionRequestUrl, conversionHeadersData, conversionRequestData,
-                                           requestFile,
-                                           userId):
+                                           requestFile,userId):
         results = {
             'responseCode': 0,
             'time': 0,
@@ -1198,7 +1198,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-定时任务执行
-    def excute_task(self, testReportId, taskId, taskName, environmentId, userId):
+    def excute_task(self, testReportId, taskId, label, environmentId, userId):
         results = {
             'state': True,
             'itemResults': []
@@ -1207,14 +1207,35 @@ class RequstOperation(cls_Logging, cls_Common):
             is_del=0, timingTask_id=taskId).order_by('index')
         for item_taskTestSet in obj_db_ApiTimingTaskTestSet:
             redisKey = cls_Common.generate_only_code(self)  # 1个用例1个key
-            remindLabel = f"【定时任务:{taskName}>用例:{item_taskTestSet.case.caseName}】:"  # 推送的标识
+            caseText = f"用例:{item_taskTestSet.case.caseName}:"
+            label = label + caseText
             caseId = item_taskTestSet.case_id
             executeCase = self.execute_case(
-                remindLabel, redisKey, testReportId, caseId, environmentId, userId, ctbId=caseId)
+                label, redisKey, testReportId, caseId, environmentId, userId, ctbId=caseId)
             if executeCase['state']:
                 results['itemResults'].append(executeCase['itemResults'])
             else:
                 results['errorMsg'] = executeCase['errorMsg']
+                break
+        return results
+
+    # 核心-批量任务执行
+    def excute_batch(self,testReportId,batchId,label, userId):
+        results = {
+            'state': True,
+            'itemResults': []
+        }
+        obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(
+            is_del=0,batchTask_id=batchId).order_by('index')
+        for item_task in obj_db_ApiBatchTaskTestSet:
+            taskText = f"定时任务:{item_task.task.taskName}>:"
+            label = label + taskText
+            environmentId = item_task.task.environment_id
+            excuteTask = self.excute_task(testReportId, item_task.task_id, label, environmentId, userId)
+            if excuteTask['state']:
+                results['itemResults'].append(excuteTask['itemResults'])
+            else:
+                results['errorMsg'] = excuteTask['errorMsg']
                 break
         return results
 

@@ -128,6 +128,7 @@
                                             更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
+                                            <el-dropdown-item command="ExecutiveLogging">执行记录(未开发)</el-dropdown-item>
                                             <el-dropdown-item command="CopyTask">复制批量任务(未开发)</el-dropdown-item>
                                             <el-dropdown-item command="TaskRestore">恢复批量任务(未开发)</el-dropdown-item>
                                         </el-dropdown-menu>
@@ -361,7 +362,7 @@ export default {
                 'batchId':row.id,
             })).then(res => {
             if(res.data.statusCode ==2001){
-                self.$message.success('批量任务已启动,任务ID:'+res.data.redisKey+',请稍后在测试报告页面查看结果!');
+                self.$message.success('批量任务已启动,任务ID:'+res.data.celeryTaskId+',请稍后在测试报告页面查看结果!');
                 self.buttonLoading=false;
             }
             else{

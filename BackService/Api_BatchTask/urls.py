@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'LoadBatchData', views.load_batch_data, name='LoadBatchData'),
     url(r'EditData', views.edit_data, name='EditData'),
     url(r'DeleteData', views.delete_data, name='DeleteData'),
+    url(r'ExecuteBatchTask', views.execute_batch_task, name='ExecuteBatchTask'),
 
 
 ]
