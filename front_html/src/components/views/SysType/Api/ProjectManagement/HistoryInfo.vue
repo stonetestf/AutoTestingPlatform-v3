@@ -89,7 +89,7 @@
                     width="100px">
                     <template slot-scope="scope" style="width:100px">
                         <el-button
-                            v-if="scope.row.operationType!='Add'"
+                            v-if="scope.row.operationType!='Delete'"
                             size="mini"
                             type="warning"
                             @click="handleRestor(scope.$index, scope.row)">恢复
@@ -242,7 +242,7 @@ export default {
         handleRestor(index,row){
             let message = ""
             if(row.operationType=='Delete'){
-                message = "注意:此恢复会自动找最后一次操作的数据进行恢复,如最后一次无操作时将会恢复失败!项目恢复时并不会恢复关联的成员,请确定是否恢复?"
+                message = "注意:此恢复会自动找当前选择的恢复数据的上一条操作的数据进行恢复,如上一条无操作时将会恢复失败!项目恢复时并不会恢复关联的成员,请确定是否恢复?"
             }else{
                 message = "注意:项目恢复时并不会恢复关联的成员,请确定是否恢复?"
             }
