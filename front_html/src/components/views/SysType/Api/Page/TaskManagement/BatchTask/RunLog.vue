@@ -1,14 +1,14 @@
 <template>
        <el-drawer
         :title="dialogTitle"
-        size="900px"
+        size="1100px"
         :visible.sync="dialogVisible"
         direction='rtl'
         :before-close="dialogClose">
         <div>
             <el-form :inline="true" v-if="SelectRomeData.disPlay"  method="post">
                 <el-form-item label="任务名称:">
-                    <el-input clearable v-model.trim="SelectRomeData.taskName"></el-input>
+                    <el-input clearable v-model.trim="SelectRomeData.batchName"></el-input>
                 </el-form-item>
                 <el-button type="primary" @click="SelectData()">查询</el-button>
                 <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
@@ -29,7 +29,13 @@
                 <el-table-column
                     label="任务名称"
                     align= "center"
-                    prop="taskName">
+                    prop="batchName">
+                </el-table-column>
+                <el-table-column
+                    label="版本号"
+                    width="200px"
+                    align= "center"
+                    prop="versions">
                 </el-table-column>
                 <el-table-column
                     label="运行类型"
@@ -37,7 +43,7 @@
                     align= "center">
                     <template slot-scope="scope">
                         <el-tag type="info" v-if="scope.row.runType=='Manual'">手动</el-tag>
-                        <el-tag type="warning" v-else>自动</el-tag>
+                        <el-tag type="warning" v-else>钩子</el-tag>
                     </template>
                 </el-table-column>
                 <el-table-column
@@ -79,7 +85,7 @@ export default {
             dialogVisible:false,
             tableData:[],
             SelectRomeData:{
-                taskName:'',
+                batchName:'',
                 disPlay:false,
             },
             RomeData:{
@@ -117,9 +123,9 @@ export default {
                 this.ClearRomeData();
                 
                 this.dialogTitle = newval.dialogTitle;
-                if(newval.taskId){//有id时就隐藏查询框
+                if(newval.batchId){//有id时就隐藏查询框
                     this.SelectRomeData.disPlay=false;
-                    this.RomeData.taskId = newval.taskId;
+                    this.RomeData.batchId = newval.batchId;
                    
                 }else{
                     this.SelectRomeData.disPlay=true;
@@ -135,24 +141,24 @@ export default {
         },
         ClearRomeData(){
             let self = this;
-            self.RomeData.taskId='';
+            self.RomeData.batchId='';
             self.tableData=[];
-            self.SelectRomeData.taskName='';  
+            self.SelectRomeData.batchName='';  
         },
         ClearSelectRomeData(){
             let self = this;
             self.tableData=[];
-            self.SelectRomeData.taskName='';  
+            self.SelectRomeData.batchName='';  
             self.SelectData();
         },
         SelectData(){
             let self = this;
             self.loading=true;
             self.tableData= [];
-            self.$axios.get('/api/ApiTimingTask/ExecutiveLogging',{
+            self.$axios.get('/api/ApiBatchTask/ExecutiveLogging',{
                 params:{
-                    'taskId':self.RomeData.taskId,
-                    'taskName':self.SelectRomeData.taskName,
+                    'batchId':self.RomeData.batchId,
+                    'batchName':self.SelectRomeData.batchName,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -161,7 +167,8 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
-                        obj.taskName = d.taskName;
+                        obj.batchName = d.batchName;
+                        obj.versions=d.versions;
                         obj.runType=d.runType;
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;
