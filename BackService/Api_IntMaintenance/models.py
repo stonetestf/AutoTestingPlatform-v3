@@ -21,6 +21,7 @@ class ApiBaseData(models.Model):
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiHeaders(models.Model):  # 头部参数

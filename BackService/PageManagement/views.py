@@ -116,16 +116,6 @@ def save_data(request):
                     )
                     # endregion
                     # region 添加历史恢复
-                    # restoreData = {
-                    #     'sysType': sysType,
-                    #     'pid_id':proId,
-                    #     'pageName': pageName,
-                    #     'remarks': remarks,
-                    #     'is_del': 0,
-                    #     'uid_id': userId,
-                    #     'cuid': userId,
-                    #     'createTime': getDateTime,
-                    # }
                     db_PageHistory.objects.create(
                         pid_id=proId,
                         page_id=save_db_PageManagement.id,
@@ -249,20 +239,6 @@ def delete_data(request):
                         )
                         # endregion
                         # region 添加历史恢复
-                        # oldData = list(obj_db_PageManagement.values())
-                        # oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                        # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                        # restoreData = {
-                        #     'sysType': oldData[0]['sysType'],
-                        #     'pid_id':oldData[0]['pid_id'],
-                        #     'pageName': oldData[0]['pageName'],
-                        #     'remarks': oldData[0]['remarks'],
-                        #     'is_del': oldData[0]['is_del'],
-                        #     'uid_id': oldData[0]['uid_id'],
-                        #     'cuid': oldData[0]['cuid'],
-                        #     'createTime': oldData[0]['createTime'],
-                        #     'updateTime': oldData[0]['updateTime'],
-                        # }
                         db_PageHistory.objects.create(
                             pid_id=obj_db_PageManagement[0].pid_id,
                             page_id=pageId,

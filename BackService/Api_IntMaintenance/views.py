@@ -669,11 +669,6 @@ def edit_data(request):
             assignedUserId = basicInfo.assignedUserId[1]
         else:
             assignedUserId = userId
-        requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-            apiInfo.request.params,
-            apiInfo.request.body.formData,
-            apiInfo.request.body.raw,
-            apiInfo.request.body.json)
         historyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -684,6 +679,9 @@ def edit_data(request):
         if obj_db_ApiBaseData.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
+                        apiInfo.request.params,apiInfo.request.body.formData,
+                        apiInfo.request.body.raw,apiInfo.request.body.json)
                     # region 添加操作信息
                     # region 查询以前的数据
                     headers = []

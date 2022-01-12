@@ -27,6 +27,7 @@ from Api_CaseMaintenance.models import CaseApiValidate as db_CaseApiValidate
 from Api_CaseMaintenance.models import CaseApiOperation as db_CaseApiOperation
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
+from Api_CaseMaintenance.models import ApiCaseHistory as db_ApiCaseHistory
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -488,6 +489,7 @@ def save_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
         basicInfo = objData.BasicInfo
         testSet = objData.TestSet
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -518,6 +520,17 @@ def save_data(request):
                         environmentId_id=basicInfo.environmentId, testType=basicInfo.testType,
                         label=basicInfo.labelId, priority=basicInfo.priorityId, caseName=basicInfo.caseName,
                         caseState=basicInfo.caseState, cuid=userId, uid_id=userId, is_del=0
+                    )
+                    # endregion
+                    # region 历史恢复
+                    db_ApiCaseHistory.objects.create(
+                        pid_id=basicInfo.proId,
+                        page_id=basicInfo.pageId,
+                        fun_id=basicInfo.funId,
+                        case_id=save_db_CaseBaseData.id,
+                        caseName=basicInfo.caseName,
+                        onlyCode=onlyCode,
+                        operationType='Add',
                     )
                     # endregion
                     # region 测试集
@@ -736,6 +749,7 @@ def edit_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
         basicInfo = objData.BasicInfo
         testSet = objData.TestSet
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -898,7 +912,7 @@ def edit_data(request):
                         'testSet': oldTestSet,
 
                     }
-                    operationInfoId = cls_Logging.record_operation_info(
+                    cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Edit',
                         cls_FindTable.get_pro_name(basicInfo.proId),
                         cls_FindTable.get_page_name(basicInfo.pageId),
@@ -909,6 +923,18 @@ def edit_data(request):
                     )
 
                     # endregion
+                    # endregion
+                    # region 历史恢复
+                    db_ApiCaseHistory.objects.create(
+                        pid_id=basicInfo.proId,
+                        page_id=basicInfo.pageId,
+                        fun_id=basicInfo.funId,
+                        case_id=basicInfo.caseId,
+                        caseName=basicInfo.caseName,
+                        onlyCode=onlyCode,
+                        operationType='Edit',
+                        restoreData=oldData,
+                    )
                     # endregion
                     # region 删除 各类原数据
                     obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=basicInfo.caseId)
@@ -1185,6 +1211,7 @@ def delete_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         caseId = request.POST['caseId']
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -1199,6 +1226,17 @@ def delete_data(request):
             else:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region 历史恢复
+                        db_ApiCaseHistory.objects.create(
+                            pid_id=obj_db_ApiTimingTaskTestSet[0].pid_id,
+                            page_id=obj_db_ApiTimingTaskTestSet[0].page_id,
+                            fun_id=obj_db_ApiTimingTaskTestSet[0].fun_id,
+                            case_id=caseId,
+                            caseName=obj_db_ApiTimingTaskTestSet[0].caseName,
+                            onlyCode=onlyCode,
+                            operationType='Delete',
+                        )
+                        # endregion
                         # region 删除关联信息
                         obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
                         for item_testSet in obj_db_CaseTestSet:

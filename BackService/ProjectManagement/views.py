@@ -123,7 +123,7 @@ def select_data(request):
                 performWeekTotal += item['performWeekTotal']
                 perforHistoryTotal += item['perforHistoryTotal']
             unitCase = db_CaseBaseData.objects.filter(is_del=0, pid_id=i.id, testType='UnitTest').count()
-            HybridCase = db_CaseBaseData.objects.filter(is_del=0, pid_id=i.id,testType='HybridTest').count()
+            HybridCase = db_CaseBaseData.objects.filter(is_del=0, pid_id=i.id, testType='HybridTest').count()
             dataList.append(
                 {
                     "id": i.id,
@@ -162,7 +162,7 @@ def save_data(request):
         sysType = request.POST['sysType']
         proName = request.POST['proName']
         remarks = request.POST['remarks']
-        getDateTime = cls_Common.get_date_time()
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -183,6 +183,7 @@ def save_data(request):
                             is_del=0,
                             uid_id=userId,
                             cuid=userId,
+                            onlyCode=onlyCode,
                         )
                         # endregion
                         # region 绑定默认创建人到项目成员中
@@ -202,21 +203,12 @@ def save_data(request):
                         )
                         # endregion
                         # region 添加历史恢复
-                        # restoreData = {
-                        #     'sysType': sysType,
-                        #     'proName': proName,
-                        #     'remarks': remarks,
-                        #     'is_del': 0,
-                        #     'uid_id': userId,
-                        #     'cuid': userId,
-                        #     'createTime': getDateTime,
-                        # }
                         db_ProHistory.objects.create(
                             pid_id=save_db_ProManagement.id,
                             proName=proName,
-                            onlyCode=cls_Common.generate_only_code(),
+                            onlyCode=onlyCode,
                             operationType='Add',
-                            restoreData=None,
+                            restoreData=json.dumps(request.POST),
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -244,6 +236,7 @@ def edit_data(request):
         proId = int(request.POST['proId'])
         proName = request.POST['proName']
         remarks = request.POST['remarks']
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -277,7 +270,8 @@ def edit_data(request):
                                     proName=proName,
                                     uid_id=userId,
                                     remarks=remarks,
-                                    updateTime=cls_Common.get_date_time())
+                                    updateTime=cls_Common.get_date_time(),
+                                    onlyCode=onlyCode)
                                 # region 添加操作信息
                                 cls_Logging.record_operation_info(
                                     'API', 'Manual', 3, 'Edit',
@@ -293,7 +287,7 @@ def edit_data(request):
                                 db_ProHistory.objects.create(
                                     pid_id=proId,
                                     proName=proName,
-                                    onlyCode=cls_Common.generate_only_code(),
+                                    onlyCode=onlyCode,
                                     operationType='Edit',
                                     restoreData=oldData[0]
                                 )
@@ -321,14 +315,15 @@ def edit_data(request):
                                 proName=proName,
                                 uid_id=userId,
                                 remarks=remarks,
-                                updateTime=cls_Common.get_date_time())
+                                updateTime=cls_Common.get_date_time(),
+                                onlyCode=onlyCode)
                             # region 添加历史恢复
                             oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
                             oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
                             db_ProHistory.objects.create(
                                 pid_id=proId,
                                 proName=proName,
-                                onlyCode=cls_Common.generate_only_code(),
+                                onlyCode=onlyCode,
                                 operationType='Edit',
                                 restoreData=oldData[0]
                             )
@@ -378,13 +373,16 @@ def delete_data(request):
                 if is_edit:
                     try:
                         with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                            # region 删除基础信息
                             obj_db_ProManagement.update(
                                 is_del=1, uid_id=userId, updateTime=cls_Common.get_date_time()
                             )
-                            # 删除人员绑定表
+                            # endregion
+                            # region 删除人员绑定表
                             db_ProBindMembers.objects.filter(pid_id=proId, is_del=0).update(
                                 is_del=1, updateTime=cls_Common.get_date_time()
                             )
+                            # endregion
                             # region 添加操作信息
                             cls_Logging.record_operation_info(
                                 'API', 'Manual', 3, 'Delete',
@@ -394,19 +392,6 @@ def delete_data(request):
                             )
                             # endregion
                             # region 添加历史恢复
-                            # oldData = list(obj_db_ProManagement.values())
-                            # oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                            # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                            # restoreData = {
-                            #     'sysType': oldData[0]['sysType'],
-                            #     'proName': oldData[0]['proName'],
-                            #     'remarks': oldData[0]['remarks'],
-                            #     'is_del': oldData[0]['is_del'],
-                            #     'uid_id': oldData[0]['uid_id'],
-                            #     'cuid': oldData[0]['cuid'],
-                            #     'createTime': oldData[0]['createTime'],
-                            #     'updateTime':oldData[0]['updateTime'],
-                            # }
                             db_ProHistory.objects.create(
                                 pid_id=proId,
                                 proName=obj_db_ProManagement[0].proName,
@@ -640,7 +625,7 @@ def restor_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         roleId = cls_FindTable.get_roleId(userId)
         is_admin = cls_FindTable.get_role_is_admin(roleId)
-        historyId = request.POST['historyId']
+        historyId = int(request.POST['historyId'])
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -653,35 +638,34 @@ def restor_data(request):
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         restoreData = obj_db_ProHistory[0].restoreData
-                        if obj_db_ProHistory[0].operationType == "Edit":
-                            restoreData = ast.literal_eval(restoreData)
-                            db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id).update(
-                                proName=restoreData['proName'],
-                                remarks=restoreData['remarks'],
-                                updateTime=cls_Common.get_date_time(),
-                                createTime=restoreData['createTime'],
-                                uid=userId,
-                                is_del=0
-                            )
-                        else:  # Delete
+                        if obj_db_ProHistory[0].operationType == "Add":
                             obj_db_ProManagement = db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id)
                             if obj_db_ProManagement.exists():
+                                restoreData = ast.literal_eval(restoreData)
                                 obj_db_ProManagement.update(
-                                    uid_id=userId, updateTime=cls_Common.get_date_time(), is_del=0
+                                    proName=restoreData['proName'],
+                                    remarks=restoreData['remarks'],
+                                    updateTime=cls_Common.get_date_time(),
+                                    is_del=0
                                 )
                             else:
-                                response['errorMsg'] = "未找到当前可恢复的数据!"
-                            # restoreData = ast.literal_eval(obj_db_ProHistory[0].restoreData)
-                            # db_ProManagement.objects.create(
-                            #     sysType=restoreData['sysType'],
-                            #     proName=restoreData['proName'],
-                            #     remarks=restoreData['remarks'],
-                            #     updateTime=cls_Common.get_date_time(),
-                            #     createTime=restoreData['createTime'],
-                            #     uid_id=userId,
-                            #     cuid=restoreData['cuid'],
-                            #     is_del=0
-                            # )
+                                raise ValueError('此数据原始数据在库中无法查询到!')
+                        elif obj_db_ProHistory[0].operationType == "Edit":
+                            obj_db_ProManagement = db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id)
+                            if obj_db_ProManagement.exists():
+                                restoreData = ast.literal_eval(restoreData)
+                                obj_db_ProManagement.update(
+                                    proName=restoreData['proName'],
+                                    remarks=restoreData['remarks'],
+                                    updateTime=cls_Common.get_date_time(),
+                                    createTime=restoreData['createTime'],
+                                    uid=userId,
+                                    is_del=0
+                                )
+                            else:
+                                raise ValueError('此数据原始数据在库中无法查询到!')
+                        else:
+                            raise ValueError('使用了未录入的操作类型!')
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f"数据恢复失败:{e}"
                 else:
