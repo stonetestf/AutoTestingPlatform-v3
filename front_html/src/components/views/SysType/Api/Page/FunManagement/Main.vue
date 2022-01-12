@@ -275,7 +275,7 @@ export default {
             self.dialog.editor.dialogVisible=true;
         },
         handleRowClick(row, column, event){//点击行选择勾选框
-        this.$refs.multipleTable.toggleRowSelection(row);
+            this.$refs.multipleTable.toggleRowSelection(row);
         },
         handleSelectionChange(val){//勾选数据时触发
             // console.log(val)

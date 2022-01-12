@@ -26,7 +26,6 @@ class CaseTestSet(models.Model):  # 用例的测试集
     apiId = models.ForeignKey(to='Api_IntMaintenance.ApiBaseData', to_field='id', on_delete=models.CASCADE)
     # 因为同1用例下出现多个相同的接口,和上面一个Id不等时取这个
     pluralIntId = models.CharField("多相同接口时用-1，-2来区别,只用编辑读取中用到此id", max_length=50, null=True)
-
     testName = models.CharField("测试名称", max_length=50, null=True)
     is_synchronous = models.IntegerField("是否开启同步(1:开启,0:不开启)", null=False)
     state = models.IntegerField("是否启用(1:启用,0:禁用)", null=False)

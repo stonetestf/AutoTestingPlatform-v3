@@ -618,13 +618,11 @@ def save_data(request):
                                         if copyFile['state']:
                                             filePath = copyFile['newFilePath']
                                         else:
-                                            response['errorMsg'] = copyFile['errorMsg']
                                             # 删除新增的文件夹
                                             cls_FileOperations.delete_folder(newFolder['path'])
-                                            return response
+                                            raise FileExistsError(copyFile['errorMsg'])
                                     else:
-                                        response['errorMsg'] = newFolder['errorMsg']
-                                        return response
+                                        raise FileExistsError(newFolder['errorMsg'])
                                     # endregion
                                 product_list_to_insert.append(db_CaseApiBody(
                                     testSet_id=save_db_CaseTestSet.id,
@@ -1194,7 +1192,7 @@ def delete_data(request):
     else:
         obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=caseId)
         if obj_db_CaseBaseData.exists():
-            obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(is_del=0,case_id=caseId)
+            obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(is_del=0, case_id=caseId)
             if obj_db_ApiTimingTaskTestSet.exists():
                 taskName = obj_db_ApiTimingTaskTestSet[0].timingTask.taskName
                 response['errorMsg'] = f'当前用例已被定时任务:{taskName},绑定!请解除绑定后在进行删除操作!'
@@ -1230,18 +1228,20 @@ def delete_data(request):
                         db_ApiDynamic.objects.filter(is_del=0, case_id=caseId).update(
                             is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                         # endregion
-                        # region 移动File文件到历史目录中
+                        # region 移动File文件到历史目录中 先判断有没有此用例的文件夹
                         sourcePath = f"{settings.CASEFILE_PATH}{caseId}"
                         targetPath = f"{settings.BAKDATA_PATH}CaseFile/{caseId}"
-                        newFolder = cls_FileOperations.new_folder(targetPath)
-                        if newFolder['state']:
-                            copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
-                            if copy_dir['state']:
-                                cls_FileOperations.delete_folder(sourcePath)
+                        is_folder = cls_FileOperations.is_folder(sourcePath)
+                        if is_folder:
+                            newFolder = cls_FileOperations.new_folder(targetPath)
+                            if newFolder['state']:
+                                copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
+                                if copy_dir['state']:
+                                    cls_FileOperations.delete_folder(sourcePath)
+                                else:
+                                    raise FileExistsError(copy_dir['errorMsg'])
                             else:
-                                raise FileExistsError(copy_dir['errorMsg'])
-                        else:
-                            raise FileExistsError(newFolder['errorMsg'])
+                                raise FileExistsError(newFolder['errorMsg'])
                         # endregion
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
@@ -1574,3 +1574,197 @@ def read_case_result(request):
                                 cls_Logging.print_log('error', 'read_case_result', f'心跳包:{counter}秒内无响应,断开连接')
                                 break
                         sleep(0.1)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def copy_case(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        caseId = objData.caseId
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_CaseMaintenance', 'copy_case', errorMsg)
+    else:
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, id=caseId)
+        if obj_db_CaseBaseData.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 基本信息
+                    save_db_CaseBaseData = db_CaseBaseData.objects.create(
+                        pid_id=obj_db_CaseBaseData[0].pid_id,
+                        page_id=obj_db_CaseBaseData[0].page_id,
+                        fun_id=obj_db_CaseBaseData[0].fun_id,
+                        environmentId_id=obj_db_CaseBaseData[0].environmentId_id,
+                        testType=obj_db_CaseBaseData[0].testType,
+                        label=obj_db_CaseBaseData[0].label,
+                        priority=obj_db_CaseBaseData[0].priority,
+                        caseName=f"副本-{obj_db_CaseBaseData[0].caseName}",
+                        caseState=obj_db_CaseBaseData[0].caseState,
+                        cuid=userId,
+                        uid_id=userId,
+                        is_del=0
+                    )
+                    # endregion
+                    # region 测试集
+                    obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
+                    for item_testSet in obj_db_CaseTestSet:
+                        # region TestSet
+                        save_db_CaseTestSet = db_CaseTestSet.objects.create(
+                            caseId_id=save_db_CaseBaseData.id,
+                            index=item_testSet.index,
+                            apiId_id=item_testSet.apiId_id,
+                            pluralIntId=item_testSet.pluralIntId,
+                            testName=item_testSet.testName,
+                            is_synchronous=item_testSet.is_synchronous,
+                            state=item_testSet.state,
+                            uid_id=userId,
+                            is_del=0,
+                        )
+                        # endregion
+                        # region ApiBase
+                        obj_db_CaseApiBase = db_CaseApiBase.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        product_list_to_insert = list()
+                        for item_apiBase in obj_db_CaseApiBase:
+                            product_list_to_insert.append(db_CaseApiBase(
+                                testSet_id=save_db_CaseTestSet.id,
+                                requestType=item_apiBase.requestType,
+                                requestUrl=item_apiBase.requestUrl,
+                                requestParamsType=item_apiBase.requestParamsType,
+                                bodyRequestSaveType=item_apiBase.bodyRequestSaveType,
+                                is_del=0,
+                            ))
+                        db_CaseApiBase.objects.bulk_create(product_list_to_insert)
+                        # endregion
+                        # region Header
+                        obj_db_CaseApiHeaders = db_CaseApiHeaders.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        product_list_to_insert = list()
+                        for item_headers in obj_db_CaseApiHeaders:
+                            product_list_to_insert.append(db_CaseApiHeaders(
+                                testSet_id=save_db_CaseTestSet.id,
+                                index=item_headers.index,
+                                key=item_headers.key,
+                                value=item_headers.value,
+                                remarks=item_headers.remarks,
+                                state=item_headers.state,
+                                is_del=0,
+                            ))
+                        db_CaseApiHeaders.objects.bulk_create(product_list_to_insert)
+                        # endregion
+                        # region params
+                        obj_db_CaseApiParams = db_CaseApiParams.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        product_list_to_insert = list()
+                        for item_params in obj_db_CaseApiParams:
+                            product_list_to_insert.append(db_CaseApiParams(
+                                testSet_id=save_db_CaseTestSet.id,
+                                index=item_params.index,
+                                key=item_params.key,
+                                value=item_params.value,
+                                remarks=item_params.remarks,
+                                state=item_params.state,
+                                is_del=0,
+                            ))
+                        db_CaseApiParams.objects.bulk_create(product_list_to_insert)
+                        # endregion
+                        # region body
+                        obj_db_CaseApiBody = db_CaseApiBody.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        product_list_to_insert = list()
+                        for item_body in obj_db_CaseApiBody:
+                            paramsType = item_body.paramsType
+                            if paramsType == "Text":
+                                filePath = None
+                            else:
+                                # region file文件处理
+                                fileData = item_body.filePath
+                                # 创建文件夹
+                                newFolder = cls_FileOperations.new_folder(
+                                    f'{settings.CASEFILE_PATH}{save_db_CaseBaseData.id}/{save_db_CaseTestSet.id}')
+                                if newFolder['state']:
+                                    # 复制文件从临时目录到接口目录
+                                    copyFile = cls_FileOperations.copy_file_to_dir(fileData, newFolder['path'])
+                                    if copyFile['state']:
+                                        filePath = copyFile['newFilePath']
+                                    else:
+                                        # 删除新增的文件夹
+                                        cls_FileOperations.delete_folder(newFolder['path'])
+                                        raise FileExistsError(copyFile['errorMsg'])
+                                else:
+                                    raise FileExistsError(newFolder['errorMsg'])
+                                # endregion
+                            product_list_to_insert.append(db_CaseApiBody(
+                                testSet_id=save_db_CaseTestSet.id,
+                                index=item_body.index,
+                                key=item_body.key,
+                                paramsType=paramsType,
+                                value=item_body.value,
+                                filePath=filePath,
+                                remarks=item_body.remarks,
+                                state=item_body.state,
+                                is_del=0,
+                            ))
+                        db_CaseApiBody.objects.bulk_create(product_list_to_insert)
+                        # endregion
+                        # region 提取
+                        obj_db_CaseApiExtract = db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        product_list_to_insert = list()
+                        for item_extract in obj_db_CaseApiExtract:
+                            product_list_to_insert.append(db_CaseApiExtract(
+                                testSet_id=save_db_CaseTestSet.id,
+                                index=item_extract.index,
+                                key=item_extract.key,
+                                value=item_extract.value,
+                                remarks=item_extract.remarks,
+                                state=item_extract.state,
+                                is_del=0,
+                            ))
+                        db_CaseApiExtract.objects.bulk_create(product_list_to_insert)
+                        # endregion
+                        # region 断言
+                        obj_db_CaseApiValidate = db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id)
+                        product_list_to_insert = list()
+                        for item_validate in obj_db_CaseApiValidate:
+                            product_list_to_insert.append(db_CaseApiValidate(
+                                testSet_id=save_db_CaseTestSet.id,
+                                index=item_validate.index,
+                                checkName=item_validate.checkName,
+                                validateType=item_validate.validateType,
+                                valueType=item_validate.valueType,
+                                expectedResults=item_validate.expectedResults,
+                                remarks=item_validate.remarks,
+                                state=item_validate.state,
+                                is_del=0,
+                            ))
+                        db_CaseApiValidate.objects.bulk_create(product_list_to_insert)
+                        # endregion
+                        # region 前后操作
+                        obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(
+                        is_del=0,testSet_id=item_testSet.id)
+                        product_list_to_insert = list()
+                        for item_operation in obj_db_CaseApiOperation:
+                            product_list_to_insert.append(db_CaseApiOperation(
+                                testSet_id=save_db_CaseTestSet.id,
+                                index=item_operation.index,
+                                location=item_operation.location,
+                                operationType=item_operation.operationType,
+                                methodsName=item_operation.methodsName,
+                                dataBaseId=item_operation.dataBaseId,
+                                sql=item_operation.sql,
+                                remarks=item_operation.remarks,
+                                state=item_operation.state,
+                                is_del=0,
+                            ))
+                        db_CaseApiOperation.objects.bulk_create(product_list_to_insert)
+                        # endregion
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = str(e)
+            else:
+                response['statusCode'] = 2000
+        else:
+            response['errorMsg'] = "当前选择的数据不存在,请刷新后在重新尝试!"
+    return JsonResponse(response)

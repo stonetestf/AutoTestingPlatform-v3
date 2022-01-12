@@ -11,7 +11,7 @@ urlpatterns = [
     url(r'CharmCaseData', views.charm_case_data, name='CharmCaseData'),
     url(r'ExecuteCase', views.execute_case, name='ExecuteCase'),
     url(r'ReadCaseResult', views.read_case_result, name='ReadCaseResult'),
-    # url(r'SelectHistory', views.select_history, name='SelectHistory'),
+    url(r'CopyCase', views.copy_case, name='CopyCase'),
     # url(r'RestorData', views.restor_data, name='RestorData'),
 
 ]

@@ -77,7 +77,15 @@
                             v-loading="loading"
                             :data="tableData"
                             height="653px"
-                            border>
+                            border
+                            ref="multipleTable"
+                            @selection-change="handleSelectionChange"
+                            @row-click="handleRowClick">
+                            <el-table-column
+                                type="selection"
+                                align= "center"
+                                width="50">
+                            </el-table-column>
                             <el-table-column
                                 label="ID"
                                 align= "center"
@@ -316,6 +324,7 @@ export default {
     },
     data() {
         return {
+            multipleSelection:[],
             loading:false,
             tableData: [
                 // {'priority':'P0','testType':'UnitTest','caseName':'测试登录','pageName':'测试页面','funName':'测试功能','caseLabel':'CommonCase','Apidynamic':false,'caseState':'InDev','updateTime':'2021-12-12 14:13:22','userName':'lipenglo'},
@@ -468,8 +477,21 @@ export default {
                 this.$message.warning('请先选择所属页面!');
             }
         },
+        handleRowClick(row, column, event){//点击行选择勾选框
+            this.$refs.multipleTable.toggleRowSelection(row);
+        },
+        handleSelectionChange(val){//勾选数据时触发
+            // console.log(val)
+            this.multipleSelection=[];
+            val.forEach(d =>{
+                this.multipleSelection.push(d.id);
+            }); 
+        },
         handleCommand(command){
             PrintConsole(command);
+            if(command=='CopyCase'){
+                this.copyCase();
+            }
         },
         pageSizeChange(pageSize) {
             let self = this;
@@ -540,6 +562,31 @@ export default {
                 caseName:row.caseName,
             }
             self.dialog.runType.dialogVisible=true;
+        },
+        copyCase(){
+            let self = this;
+            if(self.multipleSelection.length!=1){
+                self.$message.warning('请勾选1条用例进行复制操作');
+            }else{
+                self.loading=true;
+                self.$axios.get('/api/ApiCaseMaintenance/CopyCase',{
+                    params:{
+                        'caseId':self.multipleSelection[0]
+                    }
+                }).then(res => {
+                    if(res.data.statusCode==2000){
+                        self.$message.success('复制成功');
+                        self.loading=false;
+                        self.SelectData();
+                    }else{
+                        self.$message.error('复制失败:'+res.data.errorMsg);
+                        self.loading=false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.loading=false;
+                })
+            }
         },
        
     }
