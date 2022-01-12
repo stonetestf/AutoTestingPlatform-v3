@@ -16,6 +16,7 @@ from WorkorderManagement.models import WorkorderManagement as db_WorkorderManage
 from WorkorderManagement.models import HistoryInfo as db_HistoryInfo
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
+from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
@@ -180,8 +181,8 @@ class FindTable(cls_Logging):
                 'id': item_page.id,
                 'pageName': item_page.pageName,
                 'apiTotal': apiTotal,
-                'unitTotal':obj_db_CaseBaseData.filter(testType="UnitTest").count(),
-                'hybridTestTotal':obj_db_CaseBaseData.filter(testType="HybridTest").count(),
+                'unitTotal': obj_db_CaseBaseData.filter(testType="UnitTest").count(),
+                'hybridTestTotal': obj_db_CaseBaseData.filter(testType="HybridTest").count(),
                 'caseTotal': obj_db_CaseBaseData.count(),
                 # 'weekTotal': weekTotal,
                 # 'performWeekTotal': performWeekTotal,
@@ -203,20 +204,24 @@ class FindTable(cls_Logging):
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId)
         # region 本周新增
         weekTotal = 0  # 本周新增
-        weekTotal += obj_db_ApiBaseData.filter(createTime__gte=staTime, createTime__lte=endTime).count()
-        weekTotal += db_CaseBaseData.objects.filter(
-            pid_id=proId,createTime__gte=staTime, createTime__lte=endTime).count()
+        weekTotal += obj_db_ApiBaseData.filter(  # 接口
+            pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
+        weekTotal += db_CaseBaseData.objects.filter(  # 测试用例
+            pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
+        weekTotal += db_ApiTimingTask.objects.filter(  # 定时任务
+            is_del=0, pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
+        weekTotal += db_ApiBatchTask.objects.filter(  # 批量任务
+            is_del=0, pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
         # endregion
         # region 本周执行
         performWeekTotal = db_ApiQueue.objects.filter(
             pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime).count()
         # endregion
         perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId).count()  # 历史执行
-        # 定时任务
-        taskTotal = db_ApiTimingTask.objects.filter(is_del=0,pid_id=proId).count()
+
         results['dataTable'].append({
-            'taskTotal':taskTotal,
-            'batchTotal':0,
+            'taskTotal': db_ApiTimingTask.objects.filter(is_del=0, pid_id=proId).count(),  # 定时任务
+            'batchTotal': db_ApiBatchTask.objects.filter(is_del=0, pid_id=proId).count(),  # 批量任务,
             'weekTotal': weekTotal,
             'performWeekTotal': performWeekTotal,
             'perforHistoryTotal': perforHistoryTotal

@@ -618,6 +618,7 @@ def executive_logging(request):
 
         batchId = objData.batchId
         batchName = objData.batchName
+        runType = objData.runType
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -635,8 +636,9 @@ def executive_logging(request):
             obj_db_ApiBatchTaskRunLog = db_ApiBatchTaskRunLog.objects.filter().order_by('-updateTime')
             if batchName:
                 obj_db_ApiBatchTaskRunLog = obj_db_ApiBatchTaskRunLog.filter(
-                    batchTask__batchName__icontains=batchName
-                ).order_by('-updateTime')
+                    batchTask__batchName__icontains=batchName).order_by('-updateTime')
+            if runType:
+                obj_db_ApiBatchTaskRunLog = obj_db_ApiBatchTaskRunLog.filter(runType=runType).order_by('-updateTime')
         select_db_ApiBatchTaskRunLog = obj_db_ApiBatchTaskRunLog[minSize: maxSize]
         for i in select_db_ApiBatchTaskRunLog:
             dataList.append({
@@ -655,7 +657,81 @@ def executive_logging(request):
 
 
 @cls_Logging.log
-@cls_GlobalDer.foo_isToken
 @require_http_methods(["GET"])  # 钩子运行
 def run_hook_task(request):
-    pass
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        hookId = objData.hookId
+        versions = objData.versions
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_BatchTask', 'run_hook_task', errorMsg)
+    else:
+        obj_db_ApiBatchTask = db_ApiBatchTask.objects.filter(is_del=0, hookId=hookId)
+        if obj_db_ApiBatchTask.exists():
+            batchId = obj_db_ApiBatchTask[0].id
+            userId = obj_db_ApiBatchTask[0].uid_id
+            queueState = cls_FindTable.get_queue_state('BATCH', batchId)
+            if queueState:
+                response['errorMsg'] = '当前已有相同批量任务在运行,不可重复运行!您可在主页中项目里查看此用例的动态!' \
+                                       '如遇错误可取消该项目队列后重新运行!'
+            else:
+                # region 获取当前批量任务的需要运行多少个接口
+                total = 0
+                obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(is_del=0, batchTask_id=batchId)
+                for item_taskSet in obj_db_ApiBatchTaskTestSet:
+                    if item_taskSet.state == 1:
+                        obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
+                            is_del=0, timingTask_id=item_taskSet.task_id)
+                        for item_caseSet in obj_db_ApiTimingTaskTestSet:
+                            if item_caseSet.state == 1:
+                                total += db_CaseTestSet.objects.filter(
+                                    is_del=0, caseId_id=item_caseSet.case_id, state=1).count()
+                # endregion
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region 创建1级主报告
+                        # 批量任务的报告是不同的有4层! 接口,用例,定时任务只有3层,
+                        # 1级主报告>定时任务报告>用例报告>接口报告
+                        if versions:
+                            reportName = f"{versions}-{obj_db_ApiBatchTask[0].batchName}"
+                        else:
+                            reportName = obj_db_ApiBatchTask[0].batchName
+                        createTestReport = cls_ApiReport.create_test_report(
+                            obj_db_ApiBatchTask[0].pid_id, reportName,
+                            'BATCH', batchId, total, userId
+                        )
+                        # endregion
+                        if createTestReport['state']:
+                            testReportId = createTestReport['testReportId']
+                            # region 创建队列
+                            queueId = cls_ApiReport.create_queue(
+                                obj_db_ApiBatchTask[0].pid_id, None, None,
+                                'BATCH', batchId, testReportId, userId)  # 创建队列
+                            # endregion
+                            # region 创建运行记录
+                            db_ApiBatchTaskRunLog.objects.create(
+                                batchTask_id=batchId,
+                                versions=versions,
+                                runType="Hook",
+                                testReport_id=testReportId,
+                                uid_id=userId
+                            )
+                            # endregion
+                        else:
+                            raise ValueError(f'创建主测试报告失败:{createTestReport["errorMsg"]}')
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"失败:{e}"
+                else:
+                    remindLabel = f"批量任务:{obj_db_ApiBatchTask[0].batchName}>"  # 推送的标识
+                    result = api_asynchronous_run_batch.delay(testReportId, queueId, batchId, remindLabel, userId)
+                    if result.task_id:
+                        response['statusCode'] = 2001
+                        response['celeryTaskId'] = result.task_id
+        else:
+            response['errorMsg'] = '当前选择的批量任务不存在,请刷新后在重新尝试!'
+    return JsonResponse(response)

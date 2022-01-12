@@ -14,6 +14,7 @@ from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSe
 from Api_TimingTask.models import ApiTimingTaskHistory as db_ApiTimingTaskHistory
 from Api_TimingTask.models import ApiTimingTaskRunLog as db_ApiTimingTaskRunLog
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
+from Api_BatchTask.models import ApiBatchTaskTestSet as db_ApiBatchTaskTestSet
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -490,44 +491,49 @@ def delete_data(request):
     else:
         obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId, is_del=0)
         if obj_db_ApiTimingTask.exists():
-            try:
-                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    deleteTask = cls_TimingTask.delete_task(obj_db_ApiTimingTask[0].periodicTask_id)
-                    if deleteTask['state']:
-                        # region 添加历史恢复
-                        db_ApiTimingTaskHistory.objects.create(
-                            timingTask_id=taskId,
-                            operationType='Delete',
-                            restoreData=None,
-                            uid_id=userId,
-                        )
-                        # endregion
-                        # region 添加操作信息
-                        cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Delete',
-                            cls_FindTable.get_pro_name(obj_db_ApiTimingTask[0].pid_id),
-                            None, None,
-                            userId,
-                            f'【删除定时任务】 ID:{taskId}:{obj_db_ApiTimingTask[0].taskName}',
-                            CUFront=json.dumps(request.POST)
-                        )
-                        # endregion
-                        # region 删除关联信息
-                        db_ApiTimingTaskTestSet.objects.filter(
-                            is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
-                        )
-                        obj_db_ApiTimingTask.update(
-                            is_del=1, updateTime=cls_Common.get_date_time(),
-                            periodicTask_id=None, uid_id=userId
-                        )
-                        # endregion
-                    else:
-                        raise ValueError(f'内置定时任务删除失败:{deleteTask["errorMsg"]}!')
-            except BaseException as e:  # 自动回滚，不需要任何操作
-                response['errorMsg'] = f'数据删除失败:{e}'
+            obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(is_del=0,task_id=taskId)
+            if obj_db_ApiBatchTaskTestSet.exists():
+                batchName = obj_db_ApiBatchTaskTestSet[0].batchTask.batchName
+                response['errorMsg'] = f'当前定时任务已被批量任务:{batchName},绑定!请解除绑定后在进行删除操作!'
             else:
-                response['statusCode'] = 2003
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        deleteTask = cls_TimingTask.delete_task(obj_db_ApiTimingTask[0].periodicTask_id)
+                        if deleteTask['state']:
+                            # region 添加历史恢复
+                            db_ApiTimingTaskHistory.objects.create(
+                                timingTask_id=taskId,
+                                operationType='Delete',
+                                restoreData=None,
+                                uid_id=userId,
+                            )
+                            # endregion
+                            # region 添加操作信息
+                            cls_Logging.record_operation_info(
+                                'API', 'Manual', 3, 'Delete',
+                                cls_FindTable.get_pro_name(obj_db_ApiTimingTask[0].pid_id),
+                                None, None,
+                                userId,
+                                f'【删除定时任务】 ID:{taskId}:{obj_db_ApiTimingTask[0].taskName}',
+                                CUFront=json.dumps(request.POST)
+                            )
+                            # endregion
+                            # region 删除关联信息
+                            db_ApiTimingTaskTestSet.objects.filter(
+                                is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                                is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                            )
+                            obj_db_ApiTimingTask.update(
+                                is_del=1, updateTime=cls_Common.get_date_time(),
+                                periodicTask_id=None, uid_id=userId
+                            )
+                            # endregion
+                        else:
+                            raise ValueError(f'内置定时任务删除失败:{deleteTask["errorMsg"]}!')
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'数据删除失败:{e}'
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前定时任务,请刷新后重新尝试!'
     return JsonResponse(response)
@@ -792,6 +798,8 @@ def executive_logging(request):
 
         taskId = objData.taskId
         taskName = objData.taskName
+        runType = objData.runType
+
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
         minSize = (current - 1) * pageSize
@@ -808,8 +816,9 @@ def executive_logging(request):
             obj_db_ApiTimingTaskRunLog = db_ApiTimingTaskRunLog.objects.filter().order_by('-updateTime')
             if taskName:
                 obj_db_ApiTimingTaskRunLog = obj_db_ApiTimingTaskRunLog.filter(
-                    timingTask__taskName__icontains=taskName
-                ).order_by('-updateTime')
+                    timingTask__taskName__icontains=taskName).order_by('-updateTime')
+            if runType:
+                obj_db_ApiTimingTaskRunLog = obj_db_ApiTimingTaskRunLog.filter(runType=runType).order_by('-updateTime')
         select_db_ApiTimingTask = obj_db_ApiTimingTaskRunLog[minSize: maxSize]
         for i in select_db_ApiTimingTask:
             dataList.append({

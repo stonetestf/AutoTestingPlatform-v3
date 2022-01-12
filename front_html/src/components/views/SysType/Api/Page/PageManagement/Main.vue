@@ -57,11 +57,11 @@
               </el-table-column>   
               <el-table-column
                   align="center"
-                  width="180px">
+                  width="200px">
                 <template slot="header">
                   <el-button-group>
                     <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
-                    <el-button type="warning" @click="OpenHistoryInfoDialog()">历史</el-button>
+                    <el-button type="warning" @click="OpenHistoryInfoDialog()">历史恢复</el-button>
                   </el-button-group>
                 </template>
                 <template slot-scope="scope" style="width:100px">

@@ -26,6 +26,7 @@ from Api_CaseMaintenance.models import CaseApiExtract as db_CaseApiExtract
 from Api_CaseMaintenance.models import CaseApiValidate as db_CaseApiValidate
 from Api_CaseMaintenance.models import CaseApiOperation as db_CaseApiOperation
 from Api_TestReport.models import ApiTestReport as db_ApiTestReport
+from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -1193,65 +1194,70 @@ def delete_data(request):
     else:
         obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=caseId)
         if obj_db_CaseBaseData.exists():
-            try:
-                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    # region 删除关联信息
-                    obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
-                    for item_testSet in obj_db_CaseTestSet:
-                        db_CaseApiBase.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
-                            is_del=1, updateTime=cls_Common.get_date_time()
-                        )
-                        db_CaseApiHeaders.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
-                            is_del=1, updateTime=cls_Common.get_date_time()
-                        )
-                        db_CaseApiParams.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
-                            is_del=1, updateTime=cls_Common.get_date_time()
-                        )
-                        db_CaseApiBody.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
-                            is_del=1, updateTime=cls_Common.get_date_time()
-                        )
-                        db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
-                            is_del=1, updateTime=cls_Common.get_date_time()
-                        )
-                        db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
-                            is_del=1, updateTime=cls_Common.get_date_time()
-                        )
-                        db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
-                            is_del=1, updateTime=cls_Common.get_date_time()
-                        )
-                    obj_db_CaseTestSet.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
-                    obj_db_CaseBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
-                    db_ApiDynamic.objects.filter(is_del=0, case_id=caseId).update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
-                    # endregion
-                    # region 移动File文件到历史目录中
-                    sourcePath = f"{settings.CASEFILE_PATH}{caseId}"
-                    targetPath = f"{settings.BAKDATA_PATH}CaseFile/{caseId}"
-                    newFolder = cls_FileOperations.new_folder(targetPath)
-                    if newFolder['state']:
-                        copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
-                        if copy_dir['state']:
-                            cls_FileOperations.delete_folder(sourcePath)
-                        else:
-                            raise FileExistsError(copy_dir['errorMsg'])
-                    else:
-                        raise FileExistsError(newFolder['errorMsg'])
-                    # endregion
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Delete',
-                        cls_FindTable.get_pro_name(obj_db_CaseBaseData[0].pid_id),
-                        cls_FindTable.get_page_name(obj_db_CaseBaseData[0].page_id),
-                        cls_FindTable.get_fun_name(obj_db_CaseBaseData[0].fun_id),
-                        userId,
-                        f'【删除用例】 ID:{caseId}:{obj_db_CaseBaseData[0].caseName}',
-                        CUFront=json.dumps(request.POST)
-                    )
-                    # endregion
-            except BaseException as e:  # 自动回滚，不需要任何操作
-                response['errorMsg'] = f'数据删除失败:{e}'
+            obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(is_del=0,case_id=caseId)
+            if obj_db_ApiTimingTaskTestSet.exists():
+                taskName = obj_db_ApiTimingTaskTestSet[0].timingTask.taskName
+                response['errorMsg'] = f'当前用例已被定时任务:{taskName},绑定!请解除绑定后在进行删除操作!'
             else:
-                response['statusCode'] = 2003
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region 删除关联信息
+                        obj_db_CaseTestSet = db_CaseTestSet.objects.filter(is_del=0, caseId_id=caseId)
+                        for item_testSet in obj_db_CaseTestSet:
+                            db_CaseApiBase.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
+                            )
+                            db_CaseApiHeaders.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
+                            )
+                            db_CaseApiParams.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
+                            )
+                            db_CaseApiBody.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
+                            )
+                            db_CaseApiExtract.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
+                            )
+                            db_CaseApiValidate.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
+                            )
+                            db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
+                                is_del=1, updateTime=cls_Common.get_date_time()
+                            )
+                        obj_db_CaseTestSet.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                        obj_db_CaseBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                        db_ApiDynamic.objects.filter(is_del=0, case_id=caseId).update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                        # endregion
+                        # region 移动File文件到历史目录中
+                        sourcePath = f"{settings.CASEFILE_PATH}{caseId}"
+                        targetPath = f"{settings.BAKDATA_PATH}CaseFile/{caseId}"
+                        newFolder = cls_FileOperations.new_folder(targetPath)
+                        if newFolder['state']:
+                            copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
+                            if copy_dir['state']:
+                                cls_FileOperations.delete_folder(sourcePath)
+                            else:
+                                raise FileExistsError(copy_dir['errorMsg'])
+                        else:
+                            raise FileExistsError(newFolder['errorMsg'])
+                        # endregion
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Delete',
+                            cls_FindTable.get_pro_name(obj_db_CaseBaseData[0].pid_id),
+                            cls_FindTable.get_page_name(obj_db_CaseBaseData[0].page_id),
+                            cls_FindTable.get_fun_name(obj_db_CaseBaseData[0].fun_id),
+                            userId,
+                            f'【删除用例】 ID:{caseId}:{obj_db_CaseBaseData[0].caseName}',
+                            CUFront=json.dumps(request.POST)
+                        )
+                        # endregion
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'数据删除失败:{e}'
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前用例数据,请刷新后重新尝试!'
     return JsonResponse(response)

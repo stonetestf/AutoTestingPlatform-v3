@@ -241,7 +241,7 @@
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
                                             <el-dropdown-item command="CopyCase">复制用例</el-dropdown-item>
-                                            <el-dropdown-item command="CaseRestore">用例恢复(未开发)</el-dropdown-item>
+                                            <el-dropdown-item command="CaseRestore">历史恢复(勾选/不勾选)(未开发)</el-dropdown-item>
                                         </el-dropdown-menu>
                                     </el-dropdown>
                                 </el-button-group>

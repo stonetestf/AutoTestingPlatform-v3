@@ -32,13 +32,13 @@
                         width="150px"
                         prop="unitTotal"
                         align= "center"
-                        label="单元测试">
+                        label="单元用例">
                       </el-table-column>
                       <el-table-column
                         width="150px"
                         prop="hybridTestTotal"
                         align= "center"
-                        label="混合测试">
+                        label="混合用例">
                       </el-table-column>
                       <el-table-column
                         width="150px"

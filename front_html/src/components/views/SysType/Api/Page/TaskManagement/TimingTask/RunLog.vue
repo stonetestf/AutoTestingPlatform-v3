@@ -10,6 +10,16 @@
                 <el-form-item label="任务名称:">
                     <el-input clearable v-model.trim="SelectRomeData.taskName"></el-input>
                 </el-form-item>
+                <el-form-item label="运行类型:">
+                    <el-select v-model="SelectRomeData.runType" clearable placeholder="请选择" style="width:150px;">
+                        <el-option
+                            v-for="item in SelectRomeData.runTypeOption"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
                 <el-button type="primary" @click="SelectData()">查询</el-button>
                 <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
             </el-form>
@@ -80,6 +90,11 @@ export default {
             tableData:[],
             SelectRomeData:{
                 taskName:'',
+                runType:'',
+                runTypeOption:[
+                    {'label':'手动','value':'Manual'},
+                    {'label':'自动','value':'Auto'},
+                ],
                 disPlay:false,
             },
             RomeData:{
@@ -138,11 +153,13 @@ export default {
             self.RomeData.taskId='';
             self.tableData=[];
             self.SelectRomeData.taskName='';  
+            self.SelectRomeData.runType='';  
         },
         ClearSelectRomeData(){
             let self = this;
             self.tableData=[];
             self.SelectRomeData.taskName='';  
+            self.SelectRomeData.runType='';  
             self.SelectData();
         },
         SelectData(){
@@ -153,6 +170,7 @@ export default {
                 params:{
                     'taskId':self.RomeData.taskId,
                     'taskName':self.SelectRomeData.taskName,
+                    'runType':self.SelectRomeData.runType,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }

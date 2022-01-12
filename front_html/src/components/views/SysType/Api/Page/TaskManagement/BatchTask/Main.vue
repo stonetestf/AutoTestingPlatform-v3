@@ -23,7 +23,7 @@
                                 <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
                             </el-col>
                             <el-col :span="4">
-                                <el-tag style="float:right">钩子接口地址:{{SelectRomeData.hookUrl}}/api/ApiBatchTask/RunHookTask?hookId=***&version=自定义</el-tag>
+                                <el-tag style="float:right">钩子接口地址:{{SelectRomeData.hookUrl}}/api/ApiBatchTask/RunHookTask?hookId=***&versions=自定义</el-tag>
                             </el-col>
                         </el-row>
                     </el-form>
@@ -137,7 +137,7 @@
                                         <el-dropdown-menu slot="dropdown">
                                             <el-dropdown-item command="ExecutiveLogging">执行记录</el-dropdown-item>
                                             <el-dropdown-item command="CopyTask">复制批量任务(未开发)</el-dropdown-item>
-                                            <el-dropdown-item command="TaskRestore">恢复批量任务(未开发)</el-dropdown-item>
+                                            <el-dropdown-item command="TaskRestore">历史恢复(勾选/不勾选)(未开发)</el-dropdown-item>
                                         </el-dropdown-menu>
                                     </el-dropdown>
                                 </el-button-group>

@@ -86,8 +86,8 @@
                                 prop="apiTotal">
                             </el-table-column>
                             <el-table-column
-                                label="用例数量"
-                                width="80px"
+                                label="单元/混合"
+                                width="100px"
                                 align= "center"
                                 prop="caseTotal">
                             </el-table-column>
