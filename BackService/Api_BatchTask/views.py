@@ -1,7 +1,6 @@
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db import transaction
-from dwebsocket.decorators import accept_websocket
 from django.db.models import Q
 from time import sleep
 from django.conf import settings
@@ -17,6 +16,7 @@ from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
 from Api_BatchTask.models import ApiBatchTaskTestSet as db_ApiBatchTaskTestSet
 from Api_BatchTask.models import ApiBatchTaskHistory as db_ApiBatchTaskHistory
 from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
+from Api_BatchTask.models import ApiBatchTaskRunLog as db_ApiBatchTaskRunLog
 
 from Task.tasks import api_asynchronous_run_batch
 
@@ -77,7 +77,7 @@ def select_data(request):
             obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
                 is_del=0, reportType='BATCH', taskId=i.id).order_by('-updateTime')
             if obj_db_ApiTestReport.exists():
-                lastReportTime = obj_db_ApiTestReport[0].runningTime
+                lastReportTime = str(obj_db_ApiTestReport[0].updateTime.strftime('%Y-%m-%d %H:%M:%S'))
                 lastReportStatus = obj_db_ApiTestReport[0].reportStatus
             else:
                 lastReportTime = ''
@@ -534,6 +534,7 @@ def execute_batch_task(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         batchId = request.POST['batchId']
+        versions = request.POST['versions']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -563,9 +564,12 @@ def execute_batch_task(request):
                         # region 创建1级主报告
                         # 批量任务的报告是不同的有4层! 接口,用例,定时任务只有3层,
                         # 1级主报告>定时任务报告>用例报告>接口报告
+                        if versions:
+                            reportName = f"{versions}-{obj_db_ApiBatchTask[0].batchName}"
+                        else:
+                            reportName = obj_db_ApiBatchTask[0].batchName
                         createTestReport = cls_ApiReport.create_test_report(
-                            obj_db_ApiBatchTask[0].pid_id,
-                            obj_db_ApiBatchTask[0].batchName,
+                            obj_db_ApiBatchTask[0].pid_id,reportName,
                             'BATCH', batchId, total, userId
                         )
                         # endregion
@@ -575,6 +579,15 @@ def execute_batch_task(request):
                             queueId = cls_ApiReport.create_queue(
                                 obj_db_ApiBatchTask[0].pid_id, None, None,
                                 'BATCH', batchId, testReportId, userId)  # 创建队列
+                            # endregion
+                            # region 创建运行记录
+                            db_ApiBatchTaskRunLog.objects.create(
+                                batchTask_id=batchId,
+                                versions=versions,
+                                runType="Manual",
+                                testReport_id=testReportId,
+                                uid_id=userId
+                            )
                             # endregion
                         else:
                             raise ValueError(f'创建主测试报告失败:{createTestReport["errorMsg"]}')
@@ -591,3 +604,58 @@ def execute_batch_task(request):
         else:
             response['errorMsg'] = '当前选择的批量任务不存在,请刷新后在重新尝试!'
     return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 执行记录
+def executive_logging(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        batchId = objData.batchId
+        batchName = objData.batchName
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_BatchTask', 'executive_logging', errorMsg)
+    else:
+        if batchId:
+            obj_db_ApiBatchTaskRunLog = db_ApiBatchTaskRunLog.objects.filter(
+                batchTask_id=batchId).order_by('-updateTime')
+        else:
+            obj_db_ApiBatchTaskRunLog = db_ApiBatchTaskRunLog.objects.filter().order_by('-updateTime')
+            if batchName:
+                obj_db_ApiBatchTaskRunLog = obj_db_ApiBatchTaskRunLog.filter(
+                    batchTask__batchName__icontains=batchName
+                ).order_by('-updateTime')
+        select_db_ApiBatchTaskRunLog = obj_db_ApiBatchTaskRunLog[minSize: maxSize]
+        for i in select_db_ApiBatchTaskRunLog:
+            dataList.append({
+                'id': i.id,
+                'batchName': i.batchTask.batchName,
+                'versions':i.versions,
+                'runType': i.runType,
+                'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
+            })
+
+        response['TableData'] = dataList
+        response['Total'] = obj_db_ApiBatchTaskRunLog.count()
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 钩子运行
+def run_hook_task(request):
+    pass

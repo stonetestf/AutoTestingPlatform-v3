@@ -81,7 +81,7 @@
                                 width="160px"
                                 align= "center">
                                 <template slot-scope="scope">
-                                    <span type="success" v-if="scope.row.lastReportTime" >{{scope.row.lastReportTime}} ms</span>
+                                    <span type="success" v-if="scope.row.lastReportTime" >{{scope.row.lastReportTime}}</span>
                                     <el-tag v-else>无最新数据</el-tag>
                                 </template>
                             </el-table-column>

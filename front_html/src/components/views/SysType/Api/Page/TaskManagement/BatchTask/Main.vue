@@ -82,7 +82,7 @@
                                 width="160px"
                                 align= "center">
                                 <template slot-scope="scope">
-                                    <span type="success" v-if="scope.row.lastReportTime" >{{scope.row.lastReportTime}} ms</span>
+                                    <span type="success" v-if="scope.row.lastReportTime" >{{scope.row.lastReportTime}}</span>
                                     <el-tag v-else>无最新数据</el-tag>
                                 </template>
                             </el-table-column>
@@ -135,7 +135,7 @@
                                             更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
-                                            <el-dropdown-item command="ExecutiveLogging">执行记录(未开发)</el-dropdown-item>
+                                            <el-dropdown-item command="ExecutiveLogging">执行记录</el-dropdown-item>
                                             <el-dropdown-item command="CopyTask">复制批量任务(未开发)</el-dropdown-item>
                                             <el-dropdown-item command="TaskRestore">恢复批量任务(未开发)</el-dropdown-item>
                                         </el-dropdown-menu>
@@ -145,10 +145,9 @@
                             <template slot-scope="scope" style="width:100px">
                                 <el-button-group>
                                     <el-button
-                                        :loading="buttonLoading"
                                         size="mini"
                                         type="success"
-                                        @click="RunBatch(scope.$index, scope.row)">RunBatch
+                                        @click="OpenVersionsDialog(scope.$index, scope.row)">RunBatch
                                     </el-button>
                                     <el-button
                                         size="mini"
@@ -185,6 +184,22 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+            <dialog-run-log
+                @closeDialog="closeRunLogDialog" 
+                :isVisible="dialog.runLog.dialogVisible" 
+                :dialogPara="dialog.runLog.dialogPara"
+                @Succeed="SelectData">
+            </dialog-run-log>
+        </template>
+        <template>
+            <dialog-versions
+                @closeDialog="closeVersionsDialog" 
+                :isVisible="dialog.versions.dialogVisible" 
+                :dialogPara="dialog.versions.dialogPara"
+                @Succeed="SelectData">
+            </dialog-versions>
+        </template>
     </div>
 </template>
 
@@ -194,15 +209,16 @@ import store from '../../../../../../../store/index';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import DialogEditor from "./Editor.vue";
+import DialogRunLog from "./RunLog.vue"
+import DialogVersions from "./Versions.vue"
 
 export default {
     components: {
-        DialogEditor
+        DialogEditor,DialogRunLog,DialogVersions
     },
     data() {
         return {
             loading:false,
-            buttonLoading:false,
             multipleSelection:[],
             SelectRomeData:{
                 batchName:'',
@@ -224,6 +240,20 @@ export default {
             },
             dialog:{
                 editor:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                runLog:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                versions:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -288,6 +318,9 @@ export default {
         },
         handleCommand(command){
             PrintConsole(command);
+            if(command=='ExecutiveLogging'){
+                this.OpenRunLogDialog();
+            }
            
         },
         ClearSelectRomeData(){
@@ -364,24 +397,31 @@ export default {
             self.page.current=val;
             self.SelectData();
         },
-        RunBatch(index,row){
+      
+        //执行记录
+        closeRunLogDialog(){
+            this.dialog.runLog.dialogVisible =false;
+        },
+        OpenRunLogDialog(){
             let self = this;
-            self.buttonLoading=true;
-            self.$axios.post('/api/ApiBatchTask/ExecuteBatchTask',Qs.stringify({
-                'batchId':row.id,
-            })).then(res => {
-            if(res.data.statusCode ==2001){
-                self.$message.success('批量任务已启动,任务ID:'+res.data.celeryTaskId+',请稍后在测试报告页面查看结果!');
-                self.buttonLoading=false;
+            self.dialog.runLog.dialogPara={
+                dialogTitle:"执行记录",//初始化标题
+                batchId:self.multipleSelection[0],
             }
-            else{
-                self.$message.error('批量任务启动失败:'+ res.data.errorMsg);
-                self.buttonLoading=false;
+            self.dialog.runLog.dialogVisible=true;
+        },
+
+        //版本
+        closeVersionsDialog(){
+            this.dialog.versions.dialogVisible =false;
+        },
+        OpenVersionsDialog(index,row){
+            let self = this;
+            self.dialog.versions.dialogPara={
+                dialogTitle:"运行版本",//初始化标题
+                batchId:row.id,
             }
-            }).catch(function (error) {
-                console.log(error);
-                self.buttonLoading=false;
-            })
+            self.dialog.versions.dialogVisible=true;
         },
     }
 };

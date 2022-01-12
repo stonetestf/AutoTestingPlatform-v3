@@ -70,7 +70,7 @@ def select_data(request):
             obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
                 is_del=0, reportType='TASK', taskId=i.id).order_by('-updateTime')
             if obj_db_ApiTestReport.exists():
-                lastReportTime = obj_db_ApiTestReport[0].runningTime
+                lastReportTime = str(obj_db_ApiTestReport[0].updateTime.strftime('%Y-%m-%d %H:%M:%S'))
                 lastReportStatus = obj_db_ApiTestReport[0].reportStatus
             else:
                 lastReportTime = ''
@@ -782,7 +782,7 @@ def execute_task(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])
+@require_http_methods(["GET"])  # 执行记录
 def executive_logging(request):
     response = {}
     dataList = []
@@ -807,7 +807,7 @@ def executive_logging(request):
         else:
             obj_db_ApiTimingTaskRunLog = db_ApiTimingTaskRunLog.objects.filter().order_by('-updateTime')
             if taskName:
-                obj_db_ApiTimingTaskRunLog = db_ApiTimingTaskRunLog.objects.filter(
+                obj_db_ApiTimingTaskRunLog = obj_db_ApiTimingTaskRunLog.filter(
                     timingTask__taskName__icontains=taskName
                 ).order_by('-updateTime')
         select_db_ApiTimingTask = obj_db_ApiTimingTaskRunLog[minSize: maxSize]

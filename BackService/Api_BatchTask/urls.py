@@ -11,6 +11,8 @@ urlpatterns = [
     url(r'EditData', views.edit_data, name='EditData'),
     url(r'DeleteData', views.delete_data, name='DeleteData'),
     url(r'ExecuteBatchTask', views.execute_batch_task, name='ExecuteBatchTask'),
+    url(r'ExecutiveLogging', views.executive_logging, name='ExecutiveLogging'),
+    url(r'RunHookTask', views.run_hook_task, name='RunHookTask'),
 
 
 ]

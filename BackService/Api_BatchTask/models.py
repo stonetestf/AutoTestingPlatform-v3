@@ -37,3 +37,12 @@ class ApiBatchTaskHistory(models.Model):  # 历史记录，恢复使用
     restoreData = models.TextField('恢复数据,用来存放基础数据', null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+
+
+class ApiBatchTaskRunLog(models.Model):  # 运行记录
+    batchTask = models.ForeignKey(to='ApiBatchTask', to_field='id', on_delete=models.CASCADE)
+    versions = models.CharField('版本号', max_length=20, null=True)
+    runType = models.CharField('运行类型(手动(Manual)/自动(Hook))', max_length=10, null=False)
+    testReport = models.ForeignKey(to='Api_TestReport.ApiTestReport', to_field='id', on_delete=models.CASCADE)
+    updateTime = models.DateTimeField('修改时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
