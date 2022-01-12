@@ -83,7 +83,7 @@ def save_data(request):
         proId = request.POST['proId']
         pageName = request.POST['pageName']
         remarks = request.POST['remarks']
-        # getDateTime = cls_Common.get_date_time()
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -104,7 +104,8 @@ def save_data(request):
                         remarks=remarks,
                         is_del=0,
                         uid_id=userId,
-                        cuid=userId
+                        cuid=userId,
+                        onlyCode=onlyCode,
                     )
                     # endregion
                     # region 添加操作信息
@@ -122,7 +123,7 @@ def save_data(request):
                         pageName=pageName,
                         onlyCode=cls_Common.generate_only_code(),
                         operationType='Add',
-                        restoreData=None,
+                        restoreData=json.dumps(request.POST),
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -145,6 +146,7 @@ def edit_data(request):
         pageId = int(request.POST['pageId'])
         pageName = request.POST['pageName']
         remarks = request.POST['remarks']
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -180,18 +182,19 @@ def edit_data(request):
                             pageName=pageName,
                             uid_id=userId,
                             remarks=remarks,
-                            updateTime=cls_Common.get_date_time())
+                            updateTime=cls_Common.get_date_time(),
+                            onlyCode=onlyCode)
                         # endregion
                         # region 添加历史恢复
-                        oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                        oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        restoreData = json.loads(json.dumps(request.POST))
+                        restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
                         db_PageHistory.objects.create(
                             pid_id=proId,
                             page_id=pageId,
                             pageName=pageName,
-                            onlyCode=cls_Common.generate_only_code(),
+                            onlyCode=onlyCode,
                             operationType='Edit',
-                            restoreData=oldData[0]
+                            restoreData=restoreData
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -211,6 +214,7 @@ def delete_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         pageId = request.POST['pageId']
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -228,6 +232,7 @@ def delete_data(request):
                             is_del=1,
                             updateTime=cls_Common.get_date_time(),
                             uid_id=userId,
+                            onlyCode=onlyCode,
                         )
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
@@ -364,38 +369,37 @@ def restor_data(request):
                         obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0,id=obj_db_PageHistory[0].pid_id)
                         if obj_db_ProManagement.exists():
                             restoreData = obj_db_PageHistory[0].restoreData
-                            if obj_db_PageHistory[0].operationType == "Edit":
-                                restoreData = ast.literal_eval(restoreData)
-                                db_PageManagement.objects.filter(id=obj_db_PageHistory[0].page_id).update(
-                                    pid_id=restoreData['pid_id'],
-                                    pageName=restoreData['pageName'],
-                                    remarks=restoreData['remarks'],
-                                    updateTime=cls_Common.get_date_time(),
-                                    createTime=restoreData['createTime'],
-                                    uid=userId,
-                                    is_del=0
-                                )
-                            else:  # Delete
+                            if obj_db_PageHistory[0].operationType == "Add":
                                 obj_db_PageManagement = db_PageManagement.objects.filter(
                                     id=obj_db_PageHistory[0].page_id)
                                 if obj_db_PageManagement.exists():
+                                    restoreData = ast.literal_eval(restoreData)
                                     obj_db_PageManagement.update(
-                                        uid_id=userId, updateTime=cls_Common.get_date_time(), is_del=0
+                                        pid_id=restoreData['proId'],
+                                        pageName=restoreData['pageName'],
+                                        remarks=restoreData['remarks'],
+                                        is_del=0
                                     )
                                 else:
-                                    response['errorMsg'] = "未找到当前可恢复的数据!"
-                                # restoreData = ast.literal_eval(obj_db_PageHistory[0].restoreData)
-                                # db_PageManagement.objects.create(
-                                #     sysType=restoreData['sysType'],
-                                #     pid_id=restoreData['pid_id'],
-                                #     pageName=restoreData['pageName'],
-                                #     remarks=restoreData['remarks'],
-                                #     updateTime=cls_Common.get_date_time(),
-                                #     createTime=restoreData['createTime'],
-                                #     uid_id=userId,
-                                #     cuid=restoreData['cuid'],
-                                #     is_del=0
-                                # )
+                                    raise ValueError('此数据原始数据在库中无法查询到!')
+                            elif obj_db_PageHistory[0].operationType == "Edit":
+                                restoreData = ast.literal_eval(restoreData)
+                                obj_db_PageManagement = db_PageManagement.objects.filter(
+                                    id=obj_db_PageHistory[0].page_id)
+                                if obj_db_PageManagement.exists:
+                                    obj_db_PageManagement.update(
+                                        pid_id=restoreData['proId'],
+                                        pageName=restoreData['pageName'],
+                                        remarks=restoreData['remarks'],
+                                        updateTime=cls_Common.get_date_time(),
+                                        createTime=restoreData['createTime'],
+                                        uid_id=userId,
+                                        is_del=0
+                                    )
+                                else:
+                                    raise ValueError('此数据原始数据在库中无法查询到!')
+                            else:
+                                raise ValueError('使用了未录入的操作类型!')
                         else:
                             response['errorMsg'] = f"当前恢复的页面上级所属项目不存在,恢复失败!"
                 except BaseException as e:  # 自动回滚，不需要任何操作

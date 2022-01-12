@@ -240,12 +240,7 @@ export default {
             })
         },
         handleRestor(index,row){
-            let message = ""
-            if(row.operationType=='Delete'){
-                message = "注意:此恢复会自动找当前选择的恢复数据的上一条操作的数据进行恢复,如上一条无操作时将会恢复失败!项目恢复时并不会恢复关联的成员,请确定是否恢复?"
-            }else{
-                message = "注意:项目恢复时并不会恢复关联的成员,请确定是否恢复?"
-            }
+            let message =  "注意:此恢复会查询原库中的被删除数据,如原库中无此关联数据时将会恢复失败!项目恢复时并不会恢复关联的成员,请确定是否恢复?";
             this.$confirm(message, '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',

@@ -92,7 +92,7 @@ def save_data(request):
         pageId = request.POST['pageId']
         funName = request.POST['funName']
         remarks = request.POST['remarks']
-        getDateTime = cls_Common.get_date_time()
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -114,7 +114,8 @@ def save_data(request):
                         remarks=remarks,
                         is_del=0,
                         uid_id=userId,
-                        cuid=userId
+                        cuid=userId,
+                        onlyCode=onlyCode
                     )
                     # endregion
                     # region 添加操作信息
@@ -127,25 +128,14 @@ def save_data(request):
                     )
                     # endregion
                     # region 添加历史恢复
-                    # restoreData = {
-                    #     'sysType': sysType,
-                    #     'pid_id': proId,
-                    #     'page_id': pageId,
-                    #     'funName': funName,
-                    #     'remarks': remarks,
-                    #     'is_del': 0,
-                    #     'uid_id': userId,
-                    #     'cuid': userId,
-                    #     'createTime': getDateTime,
-                    # }
                     db_FunHistory.objects.create(
                         pid_id=proId,
                         page_id=pageId,
                         fun_id=save_db_FunManagement.id,
                         funName=funName,
-                        onlyCode=cls_Common.generate_only_code(),
+                        onlyCode=onlyCode,
                         operationType='Add',
-                        restoreData=None,
+                        restoreData=json.dumps(request.POST),
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -169,6 +159,7 @@ def edit_data(request):
         pageId = request.POST['pageId']
         funName = request.POST['funName']
         remarks = request.POST['remarks']
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -206,11 +197,12 @@ def edit_data(request):
                             funName=funName,
                             uid_id=userId,
                             remarks=remarks,
-                            updateTime=cls_Common.get_date_time())
+                            updateTime=cls_Common.get_date_time(),
+                            onlyCode=onlyCode)
                         # endregion
                         # region 添加历史恢复
-                        oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                        oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        restoreData = json.loads(json.dumps(request.POST))
+                        restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
                         db_FunHistory.objects.create(
                             pid_id=proId,
                             page_id=pageId,
@@ -218,7 +210,7 @@ def edit_data(request):
                             funName=funName,
                             onlyCode=cls_Common.generate_only_code(),
                             operationType='Edit',
-                            restoreData=oldData[0]
+                            restoreData=restoreData
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -238,6 +230,7 @@ def delete_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         funId = request.POST['funId']
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -254,7 +247,8 @@ def delete_data(request):
                 obj_db_FunManagement.update(
                     is_del=1,
                     updateTime=cls_Common.get_date_time(),
-                    uid_id=userId
+                    uid_id=userId,
+                    onlyCode=onlyCode
                 )
                 # endregion
                 # region 添加操作信息
@@ -268,29 +262,13 @@ def delete_data(request):
                 )
                 # endregion
                 # region 添加历史恢复
-                # oldData = list(obj_db_FunManagement.values())
-                # oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                # restoreData = {
-                #     'sysType': oldData[0]['sysType'],
-                #     'pid_id': oldData[0]['pid_id'],
-                #     'page_id': oldData[0]['page_id'],
-                #     'funName': oldData[0]['funName'],
-                #     'remarks': oldData[0]['remarks'],
-                #     'is_del': oldData[0]['is_del'],
-                #     'uid_id': oldData[0]['uid_id'],
-                #     'cuid': oldData[0]['cuid'],
-                #     'createTime': oldData[0]['createTime'],
-                #     'updateTime': oldData[0]['updateTime'],
-                # }
                 db_FunHistory.objects.create(
                     pid_id=obj_db_FunManagement[0].pid_id,
                     page_id=obj_db_FunManagement[0].page_id,
                     fun_id=funId,
                     funName=obj_db_FunManagement[0].funName,
-                    onlyCode=cls_Common.generate_only_code(),
+                    onlyCode=onlyCode,
                     operationType='Delete',
-                    restoreData=None,
                 )
                 # endregion
                 response['statusCode'] = 2003
@@ -411,27 +389,39 @@ def restor_data(request):
                                 is_del=0,id=obj_db_FunHistory[0].page_id)
                             if obj_db_PageManagement.exists():
                                 restoreData = obj_db_FunHistory[0].restoreData
-                                if obj_db_FunHistory[0].operationType == "Edit":
-                                    restoreData = ast.literal_eval(restoreData)
-                                    db_FunManagement.objects.filter(id=obj_db_FunHistory[0].fun_id).update(
-                                        pid_id=restoreData['pid_id'],
-                                        page_id=restoreData['page_id'],
-                                        funName=restoreData['funName'],
-                                        remarks=restoreData['remarks'],
-                                        updateTime=cls_Common.get_date_time(),
-                                        createTime=restoreData['createTime'],
-                                        uid=userId,
-                                        is_del=0
-                                    )
-                                else:  # Delete
+                                if obj_db_FunHistory[0].operationType == "Add":
                                     obj_db_FunManagement = db_FunManagement.objects.filter(
                                         id=obj_db_FunHistory[0].fun_id)
                                     if obj_db_FunManagement.exists():
+                                        restoreData = ast.literal_eval(restoreData)
                                         obj_db_FunManagement.update(
-                                            uid_id=userId, updateTime=cls_Common.get_date_time(), is_del=0
+                                            pid_id=restoreData['proId'],
+                                            page_id=restoreData['pageId'],
+                                            funName=restoreData['funName'],
+                                            remarks=restoreData['remarks'],
+                                            is_del=0
                                         )
                                     else:
-                                        response['errorMsg'] = "未找到当前可恢复的数据!"
+                                        raise ValueError('此数据原始数据在库中无法查询到!')
+                                elif obj_db_FunHistory[0].operationType == "Edit":
+                                    obj_db_FunManagement = db_FunManagement.objects.filter(
+                                        id=obj_db_FunHistory[0].fun_id)
+                                    if obj_db_FunManagement.exists():
+                                        restoreData = ast.literal_eval(restoreData)
+                                        obj_db_FunManagement.update(
+                                            pid_id=restoreData['proId'],
+                                            page_id=restoreData['pageId'],
+                                            funName=restoreData['funName'],
+                                            remarks=restoreData['remarks'],
+                                            updateTime=cls_Common.get_date_time(),
+                                            createTime=restoreData['createTime'],
+                                            uid=userId,
+                                            is_del=0
+                                        )
+                                    else:
+                                        raise ValueError('此数据原始数据在库中无法查询到!')
+                                else:
+                                    raise ValueError('使用了未录入的操作类型!')
                             else:
                                 response['errorMsg'] = f"当前恢复的数据上级所属页面不存在,恢复失败!"
                         else:

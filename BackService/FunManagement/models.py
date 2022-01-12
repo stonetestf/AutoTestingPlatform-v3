@@ -13,6 +13,7 @@ class FunManagement(models.Model):  # 功能管理
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     cuid = models.IntegerField("创建者用户", null=False)
     is_del = models.IntegerField("是否删除(0:删除,1:不删除)", null=False)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
 
 
 class FunHistory(models.Model):  # 历史记录，恢复使用

@@ -282,14 +282,14 @@ def edit_data(request):
                                 )
                                 # endregion
                                 # region 添加历史恢复
-                                oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                                oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                                restoreData = json.loads(json.dumps(request.POST))
+                                restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
                                 db_ProHistory.objects.create(
                                     pid_id=proId,
                                     proName=proName,
                                     onlyCode=onlyCode,
                                     operationType='Edit',
-                                    restoreData=oldData[0]
+                                    restoreData=restoreData
                                 )
                                 # endregion
                         except BaseException as e:  # 自动回滚，不需要任何操作
@@ -318,14 +318,16 @@ def edit_data(request):
                                 updateTime=cls_Common.get_date_time(),
                                 onlyCode=onlyCode)
                             # region 添加历史恢复
-                            oldData[0]['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
-                            oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+
+                            # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            restoreData = json.loads(json.dumps(request.POST))
+                            restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
                             db_ProHistory.objects.create(
                                 pid_id=proId,
                                 proName=proName,
                                 onlyCode=onlyCode,
                                 operationType='Edit',
-                                restoreData=oldData[0]
+                                restoreData=restoreData
                             )
                             # endregion
                     except BaseException as e:  # 自动回滚，不需要任何操作
@@ -645,7 +647,6 @@ def restor_data(request):
                                 obj_db_ProManagement.update(
                                     proName=restoreData['proName'],
                                     remarks=restoreData['remarks'],
-                                    updateTime=cls_Common.get_date_time(),
                                     is_del=0
                                 )
                             else:
@@ -659,7 +660,7 @@ def restor_data(request):
                                     remarks=restoreData['remarks'],
                                     updateTime=cls_Common.get_date_time(),
                                     createTime=restoreData['createTime'],
-                                    uid=userId,
+                                    uid_id=userId,
                                     is_del=0
                                 )
                             else:
