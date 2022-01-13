@@ -238,7 +238,7 @@ def save_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
         basicInfo = objData.BasicInfo
         testSet = objData.TestSet
-        historyCode = cls_Common.generate_only_code()
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -273,15 +273,24 @@ def save_data(request):
                             timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,
                             remarks=basicInfo.remarks,
                             pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, periodicTask_id=createTask['id'],
-                            cuid=userId, uid_id=userId, is_del=0, historyCode=historyCode
+                            cuid=userId, uid_id=userId, is_del=0, onlyCode=onlyCode
                         )
                         # endregion
                         # region 历史记录
+                        restoreData = responseData
+                        restoreData['BasicInfo']['updateTime'] = save_db_ApiTimingTask.updateTime.strftime(
+                            '%Y-%m-%d %H:%M:%S')
+                        restoreData['BasicInfo']['createTime'] = save_db_ApiTimingTask.createTime.strftime(
+                            '%Y-%m-%d %H:%M:%S')
+                        restoreData['BasicInfo']['uid_id'] = save_db_ApiTimingTask.uid_id
+                        restoreData['BasicInfo']['cuid'] = save_db_ApiTimingTask.cuid
+                        restoreData['onlyCode'] = onlyCode
                         db_ApiTimingTaskHistory.objects.create(
                             timingTask_id=save_db_ApiTimingTask.id,
+                            taskName=basicInfo.taskName,
                             operationType='Add',
-                            restoreData=responseData,
-                            historyCode=historyCode,
+                            restoreData=restoreData,
+                            onlyCode=onlyCode,
                             uid_id=userId
                         )
                         # endregion
@@ -295,7 +304,7 @@ def save_data(request):
                                 state=1 if item_testSet.state else 0,
                                 uid_id=userId,
                                 is_del=0,
-                                historyCode=historyCode)
+                                onlyCode=onlyCode)
                             )
                         db_ApiTimingTaskTestSet.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -372,7 +381,7 @@ def edit_data(request):
         basicInfo = objData.BasicInfo
         testSet = objData.TestSet
         taskId = basicInfo.taskId
-        historyCode = cls_Common.generate_only_code()  # 生成历史记录唯一码
+        onlyCode = cls_Common.generate_only_code()  # 生成历史记录唯一码
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -430,17 +439,26 @@ def edit_data(request):
                         # endregion
                         # endregion
                         # region 历史记录
+                        restoreData = responseData
+                        restoreData['BasicInfo']['updateTime'] = obj_db_ApiTimingTask[0].updateTime.strftime(
+                            '%Y-%m-%d %H:%M:%S')
+                        restoreData['BasicInfo']['createTime'] = obj_db_ApiTimingTask[0].createTime.strftime(
+                            '%Y-%m-%d %H:%M:%S')
+                        restoreData['BasicInfo']['uid_id'] = obj_db_ApiTimingTask[0].uid_id
+                        restoreData['BasicInfo']['cuid'] = obj_db_ApiTimingTask[0].cuid
+                        restoreData['onlyCode'] = onlyCode
                         db_ApiTimingTaskHistory.objects.create(
                             timingTask_id=taskId,
-                            historyCode=historyCode,
+                            taskName=basicInfo.taskName,
+                            onlyCode=onlyCode,
                             operationType='Edit',
-                            restoreData=oldData,
+                            restoreData=restoreData,
                             uid_id=userId
                         )
                         # endregion
                         # region 删除测试集数据
                         db_ApiTimingTaskTestSet.objects.filter(
-                            is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                            is_del=0, timingTask_id=taskId, onlyCode=obj_db_ApiTimingTask[0].onlyCode).update(
                             is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                         )
                         # endregion
@@ -450,7 +468,7 @@ def edit_data(request):
                             taskName=basicInfo.taskName, environment_id=basicInfo.environmentId,
                             timingConfig=basicInfo.timingConfig, priority=basicInfo.priorityId,
                             pushTo=basicInfo.pushTo, taskStatus=basicInfo.taskStatus, remarks=basicInfo.remarks,
-                            historyCode=historyCode, uid_id=userId, updateTime=cls_Common.get_date_time()
+                            onlyCode=onlyCode, uid_id=userId, updateTime=cls_Common.get_date_time()
                         )
                         # endregion
                         # region 新增测试集数据
@@ -462,7 +480,7 @@ def edit_data(request):
                                 state=1 if item_testSet.state else 0,
                                 uid_id=userId,
                                 is_del=0,
-                                historyCode=historyCode,
+                                onlyCode=onlyCode,
                             )
                         # endregion
                     else:
@@ -484,6 +502,7 @@ def delete_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         taskId = request.POST['taskId']
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -491,7 +510,7 @@ def delete_data(request):
     else:
         obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId, is_del=0)
         if obj_db_ApiTimingTask.exists():
-            obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(is_del=0,task_id=taskId)
+            obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(is_del=0, task_id=taskId)
             if obj_db_ApiBatchTaskTestSet.exists():
                 batchName = obj_db_ApiBatchTaskTestSet[0].batchTask.batchName
                 response['errorMsg'] = f'当前定时任务已被批量任务:{batchName},绑定!请解除绑定后在进行删除操作!'
@@ -504,7 +523,6 @@ def delete_data(request):
                             db_ApiTimingTaskHistory.objects.create(
                                 timingTask_id=taskId,
                                 operationType='Delete',
-                                restoreData=None,
                                 uid_id=userId,
                             )
                             # endregion
@@ -519,13 +537,12 @@ def delete_data(request):
                             )
                             # endregion
                             # region 删除关联信息
-                            db_ApiTimingTaskTestSet.objects.filter(
-                                is_del=0, timingTask_id=taskId, historyCode=obj_db_ApiTimingTask[0].historyCode).update(
+                            db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=taskId).update(
                                 is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                             )
                             obj_db_ApiTimingTask.update(
                                 is_del=1, updateTime=cls_Common.get_date_time(),
-                                periodicTask_id=None, uid_id=userId
+                                periodicTask_id=None, uid_id=userId, onlyCode=onlyCode
                             )
                             # endregion
                         else:
@@ -612,7 +629,7 @@ def restor_data(request):
     else:
         obj_db_ApiTimingTaskHistory = db_ApiTimingTaskHistory.objects.filter(id=id)
         if obj_db_ApiTimingTaskHistory.exists():
-            historyCode = obj_db_ApiTimingTaskHistory[0].historyCode  # 当前选择的历史恢复 历史ID
+            onlyCode = obj_db_ApiTimingTaskHistory[0].onlyCode  # 当前选择的历史恢复 历史ID
             # 恢复时是管理员或是 当前创建人时才可恢复
             if is_admin or obj_db_ApiTimingTaskHistory[0].timingTask.cuid == userId:
                 try:
@@ -628,84 +645,66 @@ def restor_data(request):
                             f'【恢复定时任务】 ID:{taskId}:{obj_db_ApiTimingTaskHistory[0].timingTask.taskName}',
                         )
                         # endregion
-                        if obj_db_ApiTimingTaskHistory[0].operationType == "Edit":  # 编辑的恢复,通过Json恢复
+                        if obj_db_ApiTimingTaskHistory[0].operationType in ["Edit", "Add"]:
                             restoreData = ast.literal_eval(restoreData)
                             obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId)
-                            if obj_db_ApiTimingTask:
+                            if obj_db_ApiTimingTask.exists():
+                                # region 删除原来的测试集数据
+                                db_ApiTimingTaskTestSet.objects.filter(
+                                    timingTask_id=taskId, onlyCode=obj_db_ApiTimingTask[0].onlyCode).update(
+                                    is_del=1, updateTime=cls_Common.get_date_time()
+                                )
+                                # endregion
                                 # region 基本数据
                                 obj_db_ApiTimingTask.update(
-                                    taskName=restoreData['basicInfo']['taskName'],
-                                    environment_id=restoreData['basicInfo']['environmentId'],
-                                    priority=restoreData['basicInfo']['priorityId'],
-                                    pushTo=restoreData['basicInfo']['pushTo'],
-                                    remarks=restoreData['basicInfo']['remarks'],
-                                    taskStatus=restoreData['basicInfo']['taskStatus'],
-                                    timingConfig=restoreData['basicInfo']['timingConfig'],
-                                    historyCode=historyCode,
-                                    uid_id=userId,
+                                    taskName=restoreData['BasicInfo']['taskName'],
+                                    environment_id=restoreData['BasicInfo']['environmentId'],
+                                    priority=restoreData['BasicInfo']['priorityId'],
+                                    pushTo=restoreData['BasicInfo']['pushTo'],
+                                    remarks=restoreData['BasicInfo']['remarks'],
+                                    taskStatus=restoreData['BasicInfo']['taskStatus'],
+                                    timingConfig=restoreData['BasicInfo']['timingConfig'],
+                                    uid_id=restoreData['BasicInfo']['uid_id'],
+                                    cuid=restoreData['BasicInfo']['cuid'],
+                                    createTime=restoreData['BasicInfo']['createTime'],
+                                    updateTime=restoreData['BasicInfo']['updateTime'],
                                     is_del=0,
-                                    updateTime=cls_Common.get_date_time()
+                                    onlyCode=restoreData['onlyCode'],
                                 )
                                 # endregion
                                 # region 测试集
-                                for item_index, item_testSet in enumerate(restoreData['testSet'], 0):
-                                    obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_testSet['id'])
-                                    if obj_db_CaseBaseData.exists() or obj_db_CaseBaseData[0].is_del == 0:
-                                        db_ApiTimingTaskTestSet.objects.filter(
-                                            is_del=0, timingTask_id=taskId,
-                                            historyCode=obj_db_ApiTimingTask[0].historyCode).update(
-                                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
-                                        )
-                                        db_ApiTimingTaskTestSet.objects.create(
-                                            timingTask_id=taskId,
-                                            index=item_index,
-                                            case_id=item_testSet['id'],
-                                            state=item_testSet['state'],
-                                            uid_id=userId,
-                                            is_del=0,
-                                            historyCode=historyCode,
-                                        )
+                                db_ApiTimingTaskTestSet.objects.filter(
+                                    timingTask_id=taskId, onlyCode=onlyCode).update(is_del=0)
+                                # endregion
+                                # region 内置定时任务
+                                periodicTaskId = obj_db_ApiTimingTask[0].periodicTask_id
+                                if periodicTaskId:  # 更新
+                                    editTask = cls_TimingTask.edit_task(
+                                        periodicTaskId,
+                                        restoreData['BasicInfo']['taskName'],
+                                        restoreData['BasicInfo']['timingConfig'],
+                                        restoreData['BasicInfo']['taskStatus'])
+                                    if editTask['state']:
+                                        pass
+                                    else:
+                                        raise ValueError(f'内置定时任务修改失败:{editTask["errorMsg"]}')
+                                else:  # 新增进去
+                                    createTask = cls_TimingTask.create_task(
+                                        restoreData['BasicInfo']['taskName'], 'Task.tasks.api_daily_run_tasks',
+                                        {},
+                                        restoreData['BasicInfo']['timingConfig'],
+                                        restoreData['BasicInfo']['taskStatus'])
+                                    # endregion
+                                    if createTask['state']:
+                                        obj_db_ApiTimingTask.update(periodicTask_id=createTask['id'])
+                                    else:
+                                        raise ValueError(f'内置定时新增修改失败:{createTask["errorMsg"]}')
+
                                 # endregion
                             else:
-                                response['errorMsg'] = f"当前定时任务基础数据缺失,请联系管理人员进行恢复!"
-                        else:  # Delete 通过 原数据恢复
-                            select_db_ApiTimingTaskHistory = db_ApiTimingTaskHistory.objects.filter(
-                                timingTask_id=taskId).order_by('-createTime')
-                            if len(select_db_ApiTimingTaskHistory) < 2:
-                                response['errorMsg'] = f"当前选择的定时任务恢复没有上层可恢复的数据"
-                            else:
-                                # 倒数第二条数据
-                                penultimateData = select_db_ApiTimingTaskHistory[
-                                    len(select_db_ApiTimingTaskHistory) - 1]
-                                restoreData = ast.literal_eval(penultimateData.restoreData)
-                                obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId)
-                                if obj_db_ApiTimingTask.exists():
-                                    # region 基本数据
-                                    obj_db_ApiTimingTask.update(
-                                        taskName=restoreData['BasicInfo']['taskName'],
-                                        environment_id=restoreData['BasicInfo']['environmentId'],
-                                        priority=restoreData['BasicInfo']['priorityId'],
-                                        pushTo=restoreData['BasicInfo']['pushTo'],
-                                        remarks=restoreData['BasicInfo']['remarks'],
-                                        taskStatus=restoreData['BasicInfo']['taskStatus'],
-                                        timingConfig=restoreData['BasicInfo']['timingConfig'],
-                                        historyCode=penultimateData.historyCode,
-                                        uid_id=userId,
-                                        is_del=0,
-                                        updateTime=cls_Common.get_date_time()
-                                    )
-                                    # endregion
-                                    # region 测试集
-                                    obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
-                                        is_del=1, timingTask_id=taskId, historyCode=penultimateData.historyCode)
-                                    for item_testSet in obj_db_ApiTimingTaskTestSet:
-                                        if item_testSet.case.is_del == 0:
-                                            db_ApiTimingTaskTestSet.objects.filter(id=item_testSet.id).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time(), uid_id=userId
-                                            )
-                                    # endregion
-                                else:
-                                    response['errorMsg'] = f"当前定时任务基础数据缺失,请联系管理人员进行恢复!"
+                                raise ValueError('此数据原始数据在库中无法查询到!')
+                        else:
+                            raise ValueError('使用了未录入的操作类型!')
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f"数据恢复失败:{e}"
                 else:

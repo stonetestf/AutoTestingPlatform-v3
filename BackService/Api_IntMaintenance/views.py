@@ -477,6 +477,7 @@ def save_data(request):
                         operationType='Add',
                         restoreData=restoreData,
                         onlyCode=onlyCode,
+                        uid_id=userId,
                     )
                     # endregion
                     # region Headers
@@ -919,11 +920,12 @@ def edit_data(request):
                         page_id=basicInfo.pageId,
                         fun_id=basicInfo.funId,
                         api_id=basicInfo.apiId,
-                        apiName=oldData['BasicInfo']['apiName'],
+                        apiName=basicInfo.apiName,
                         operationType='Edit',
                         restoreData=restoreData,
                         textInfo=apiEditDfif,
                         onlyCode=onlyCode,
+                        uid_id=userId,
                     )
                     # endregion
                     # region Headers
@@ -1178,6 +1180,7 @@ def delete_data(request):
                             apiName=obj_db_ApiBaseData[0].apiName,
                             operationType='Delete',
                             onlyCode=onlyCode,
+                            uid_id=userId,
                         )
                         # endregion
                         # region 删除关联信息
@@ -1767,7 +1770,7 @@ def select_history(request):
                 'operationType': i.operationType,
                 'tableItem': tableItem,
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-                'userName': i.pid.uid.userName,
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
             })
         response['TableData'] = dataList
         response['Total'] = obj_db_ApiHistory.count()

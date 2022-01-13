@@ -216,6 +216,7 @@ def save_data(request):
                             onlyCode=onlyCode,
                             operationType='Add',
                             restoreData=restoreData,
+                            uid_id=userId,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -344,7 +345,8 @@ def edit_data(request):
                                 proName=proName,
                                 onlyCode=onlyCode,
                                 operationType='Edit',
-                                restoreData=restoreData
+                                restoreData=restoreData,
+                                uid_id=userId,
                             )
                             # endregion
                     except BaseException as e:  # 自动回滚，不需要任何操作
@@ -416,6 +418,7 @@ def delete_data(request):
                                 proName=obj_db_ProManagement[0].proName,
                                 onlyCode=cls_Common.generate_only_code(),
                                 operationType='Delete',
+                                uid_id=userId,
                             )
                             # endregion
                     except BaseException as e:  # 自动回滚，不需要任何操作
@@ -626,7 +629,7 @@ def select_history(request):
                 'operationType': i.operationType,
                 'tableItem': tableItem,
                 'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
-                'userName': i.pid.uid.userName,
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
             })
         response['TableData'] = dataList
         response['Total'] = obj_db_ProHistory.count()

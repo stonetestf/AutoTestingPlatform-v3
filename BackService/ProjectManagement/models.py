@@ -32,3 +32,4 @@ class ProHistory(models.Model):  # 历史记录，恢复使用
     restoreData = models.TextField('恢复数据,此数据主要保存基础数据', null=True)
     # textInfo = models.TextField('保存变动的文本信息', null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
