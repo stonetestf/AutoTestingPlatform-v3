@@ -4,11 +4,18 @@
             <el-card class="MainCard">
                 <template>
                     <el-form :inline="true"  method="post">
-                        <el-form-item label="参数名称:">
-                            <el-input clearable v-model.trim="SelectRomeData.paramsName"></el-input>
-                        </el-form-item>
-                        <el-button type="primary" @click="SelectData()">查询</el-button>
-                        <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+                        <el-row>
+                            <el-col :span="22">
+                                <el-form-item label="参数名称:">
+                                    <el-input clearable v-model.trim="SelectRomeData.paramsName"></el-input>
+                                </el-form-item>
+                                <el-button type="primary" @click="SelectData()">查询</el-button>
+                                <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+                            </el-col>
+                            <el-col :span="2">
+                                <el-tag type="danger" style="float:right">注意:此页面数据为核心系统参数,请不要随意修改!</el-tag>
+                            </el-col>
+                        </el-row>
                     </el-form>
                 </template>
                 <template>
@@ -24,22 +31,29 @@
                                 prop="id">
                             </el-table-column>
                             <el-table-column
+                                label="标识"
+                                width="150px"
+                                align= "center"
+                                prop="label">
+                            </el-table-column>
+                            <el-table-column
                                 label="参数名称"
                                 align= "center"
-                                prop="paramsName">
+                                prop="keyName">
                             </el-table-column>
                             <el-table-column
                                 label="参数类型"
                                 width="150px"
                                 align= "center"
-                                prop="paramsType">
+                                prop="valueType">
                             </el-table-column>
                             <el-table-column
                                 label="参数值"
                                 align= "center">
                                 <template slot-scope="scope">
-                                    <el-input v-if="scope.row.whetherValue" v-model.trim="RomeData.paramsValue"></el-input>
-                                    <span v-else>{{scope.row.paramsValue}}</span>
+                                    <el-input v-if="scope.row.whetherValue" v-model.trim="RomeData.value"></el-input>
+                                    <span v-else>{{scope.row.value}}</span>
+                                      <!-- <span>{{scope.row.paramsValue}}</span> -->
                                 </template>
                             </el-table-column>
                             <el-table-column
@@ -48,6 +62,7 @@
                                 <template slot-scope="scope">
                                     <el-input v-if="scope.row.whetherRemarks" v-model="RomeData.remarks"></el-input>
                                     <span v-else>{{scope.row.remarks}}</span>
+                                    <!-- <span>{{scope.row.remarks}}</span> -->
                                 </template>
                             </el-table-column>         
                             <el-table-column
@@ -97,6 +112,7 @@
 </template>
 
 <script>
+import Qs from 'qs';
 
 export default {
     components: {
@@ -107,14 +123,14 @@ export default {
                 {}
             ],
             SelectRomeData:{
-                paramsName:'',
+                keyName:'',
             },
             RomeData:{
-                paramsName:'',
-                paramsValue:'',
+                keyName:'',
+                value:'',
                 remarks:'',
-                whetherEdit:false,
-                whetherRemarks:false,
+                // whetherEdit:false,
+                // whetherRemarks:false,
     
             },
             page: { 
@@ -125,28 +141,29 @@ export default {
         };
     },
     mounted(){
-        // this.SelectData();
+        this.SelectData();
     },
     methods: {
         SelectData(){//刷新列表数据
             let self = this;
             self.tableData= [];
-            self.$axios.get('/api/Int_GlobalParams/SelectData',{
+            self.$axios.get('/api/SystemParams/SelectData',{
                 params:{
-                    'data':{
-                        'paramsName':self.SelectRomeData.paramsName,
-                        'current':self.page.current,
-                        'pageSize':self.page.pageSize
-                    }
+                    'sysType':'API',
+                    'keyName':self.SelectRomeData.keyName,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
                 }
             }).then(res => {
                 res.data.TableData.forEach(d => {
                     let obj = {};
                     obj.id =d.id;
-                    obj.paramsName = d.paramsName;
+                    obj.label=d.label;
+                    obj.keyName = d.keyName;
                     obj.whetherValue = false;
-                    obj.paramsValue = d.paramsValue;
+                    obj.value = d.value;
                     obj.whetherRemarks = false;
+                    obj.valueType = d.valueType;
                     obj.remarks = d.remarks;
                     obj.updateTime = d.updateTime;
                     obj.userName = d.userName;
@@ -165,7 +182,6 @@ export default {
             })
         },
         handleEdit(index,row){
-            console.log('row',row)
             let self = this;
             if(self.RomeData.whetherEdit){
                 self.$message.warning('请完成:'+row.paramsName +',的设置的编辑后在进后其他操作！');
@@ -173,7 +189,7 @@ export default {
                 self.RomeData.whetherEdit = true;
                 // self.RomeData.id = row.id;
                 self.tableData[index].whetherValue=true;
-                self.RomeData.paramsValue = row.paramsValue;
+                self.RomeData.value = row.value;
                 self.tableData[index].whetherRemarks=true;
                 self.RomeData.remarks = row.remarks;
 
@@ -185,20 +201,17 @@ export default {
             self.tableData[index].whetherValue=false;
             self.tableData[index].whetherSave=false;
             self.tableData[index].whetherRemarks=false;
-            self.$axios.post('/api/Int_GlobalParams/DataEdit',{
-                "userId":store.state.userId,
-                "data":{
-                    'paramsId':row.id,
-                    'paramsValue':self.RomeData.paramsValue,
-                    'remarks':self.RomeData.remarks
-                    }
-            }).then(res => {
+            self.$axios.post('/api/SystemParams/EditData',Qs.stringify({
+                'paramsId':row.id,
+                'value':self.RomeData.value,
+                'remarks':self.RomeData.remarks
+            })).then(res => {
                 if(res.data.statusCode==2002){
-                    self.$message.success('全局参数修改完成!');
+                    self.$message.success('系统参数修改完成!');
                     self.SelectData();
                 }
                 else{
-                    self.$message.error('全局参数修改失败:'+res.data.errorMsg);
+                    self.$message.error('系统参数修改失败:'+res.data.errorMsg);
                 }
                 }).catch(function (error) {
                     console.log(error);
@@ -207,7 +220,7 @@ export default {
         },
         ClearSelectRomeData(){
             let self = this;
-            self.SelectRomeData.paramsName='';
+            self.SelectRomeData.keyName='';
             self.RomeData.whetherEdit = false;
 
             self.SelectData();
@@ -222,6 +235,7 @@ export default {
             let self = this;
             // 改变默认的页数
             self.page.current=val
+            self.SelectData();
         },
     }
 };

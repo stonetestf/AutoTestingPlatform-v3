@@ -24,6 +24,7 @@ from Api_CaseMaintenance.models import CaseApiOperation as db_CaseApiOperation
 
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_BatchTask.models import ApiBatchTaskTestSet as db_ApiBatchTaskTestSet
+from SystemParams.models import SystemParams as db_SystemParams
 
 # Create reference here.
 from ClassData.Common import Common as cls_Common
@@ -506,7 +507,14 @@ class RequstOperation(cls_Logging, cls_Common):
         :param files:
         :return:执行返回的数据结果
         """
-        timeout = 10
+        obj_db_SystemParams = db_SystemParams.objects.filter(keyName='RequestTimeOut')
+        if obj_db_SystemParams.exists():
+            timeout = int(obj_db_SystemParams[0].value)
+        else:
+            timeout = 10
+            errorMsg = "系统参数:RequestTimeOut,丢失!目前使用默认超时时间:10"
+            cls_Logging.print_log(self,'error', 'requests_api', errorMsg)
+            cls_Logging.record_error_info(self,'API', 'ClassData', 'requests_api', errorMsg)
         r = {}
         results = {
             'state': True

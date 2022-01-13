@@ -31,6 +31,7 @@ import WorkorderManagement.urls
 import PageEnvironment.urls
 import DebugTalk.urls
 import GlobalVariable.urls
+import SystemParams.urls
 
 import Api_IntMaintenance.urls
 import Api_TestReport.urls
@@ -60,5 +61,6 @@ urlpatterns = [
     url('api/ApiCaseMaintenance/', include(Api_CaseMaintenance.urls)),
     url('api/ApiTimingTask/', include(Api_TimingTask.urls)),
     url('api/ApiBatchTask/', include(Api_BatchTask.urls)),
+    url('api/SystemParams/', include(SystemParams.urls)),
 
 ]

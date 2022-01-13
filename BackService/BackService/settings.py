@@ -123,6 +123,7 @@ INSTALLED_APPS = [
     'Api_CaseMaintenance',
     'Api_TimingTask',
     'Api_BatchTask',
+    'SystemParams',
 ]
 # endregion
 

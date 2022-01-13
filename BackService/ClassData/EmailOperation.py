@@ -3,6 +3,9 @@ from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+# db here
+from SystemParams.models import SystemParams as db_SystemParams
+
 # Create reference here.
 from ClassData.Logger import Logging
 from ClassData.Common import Common
@@ -19,9 +22,39 @@ class Email(object):
         :param msgs:
         :return:
         """
-        smtpserver = "smtp.163.com"
-        sender = "lipenglo@163.com"
-        password = "li123123"
+        # region EmailUser
+        obj_db_SystemParams = db_SystemParams.objects.filter(keyName='EmailUser')
+        if obj_db_SystemParams.exists():
+            sender = obj_db_SystemParams[0].value
+        else:
+            sender = ''
+            errorMsg = f"系统参数:EmailUser,缺失"
+            cls_Logging.print_log('error', 'send_email', errorMsg)
+            cls_Logging.record_error_info('API', 'ClassData', 'send_email', errorMsg)
+        # endregion
+        # region password
+        obj_db_SystemParams = db_SystemParams.objects.filter(keyName='EmailPwd')
+        if obj_db_SystemParams.exists():
+            password = obj_db_SystemParams[0].value
+        else:
+            password = ''
+            errorMsg = f"系统参数:EmailPwd,缺失"
+            cls_Logging.print_log('error', 'send_email', errorMsg)
+            cls_Logging.record_error_info('API', 'ClassData', 'send_email', errorMsg)
+        # endregion
+        # region SmtpServer
+        obj_db_SystemParams = db_SystemParams.objects.filter(keyName='SmtpServer')
+        if obj_db_SystemParams.exists():
+            smtpserver = obj_db_SystemParams[0].value
+        else:
+            smtpserver = ''
+            errorMsg = f"系统参数:SmtpServer,缺失"
+            cls_Logging.print_log('error', 'send_email', errorMsg)
+            cls_Logging.record_error_info('API', 'ClassData', 'send_email', errorMsg)
+        # endregion
+        # smtpserver = "smtp.163.com"
+        # sender = "lipenglo@163.com"
+        # password = "li123123"
         receiver = receiver  # 接收者
 
         msg = MIMEText(msgs, "html", "utf-8")
