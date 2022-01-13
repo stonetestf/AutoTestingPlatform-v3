@@ -249,7 +249,7 @@
                                         </el-button>
                                         <el-dropdown-menu slot="dropdown">
                                             <el-dropdown-item command="CopyCase">复制用例</el-dropdown-item>
-                                            <el-dropdown-item command="CaseRestore">历史恢复(勾选/不勾选)(未开发)</el-dropdown-item>
+                                            <el-dropdown-item command="CaseRestore">历史恢复(勾选/不勾选)</el-dropdown-item>
                                         </el-dropdown-menu>
                                     </el-dropdown>
                                 </el-button-group>
@@ -306,6 +306,14 @@
                 @Succeed="SelectData">
             </dialog-run-type>
         </template>
+        <template>
+            <dialog-history-info
+                @closeDialog="closeHistoryInfoDialog" 
+                :isVisible="dialog.historyInfo.dialogVisible" 
+                :dialogPara="dialog.historyInfo.dialogPara"
+                @Succeed="SelectData">
+            </dialog-history-info>
+        </template>
     </div>
 </template>
 
@@ -317,10 +325,11 @@ import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 
 import DialogEditor from "./Editor.vue";
 import DialogRunType from "./RunType.vue";
+import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-        DialogEditor,DialogRunType
+        DialogEditor,DialogRunType,DialogHistoryInfo
     },
     data() {
         return {
@@ -375,6 +384,13 @@ export default {
                     },
                 },
                 runType:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                historyInfo:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -491,6 +507,8 @@ export default {
             PrintConsole(command);
             if(command=='CopyCase'){
                 this.copyCase();
+            }else if(command=='CaseRestore'){
+                this.OpenHistoryInfoDialog();
             }
         },
         pageSizeChange(pageSize) {
@@ -586,6 +604,22 @@ export default {
                     console.log(error);
                     self.loading=false;
                 })
+            }
+        },
+        //历史恢复
+        closeHistoryInfoDialog(){
+            this.dialog.historyInfo.dialogVisible =false;
+        },
+        OpenHistoryInfoDialog(){
+            let self = this;
+            if(self.multipleSelection.length>1){
+                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
+            }else{
+                self.dialog.historyInfo.dialogPara={
+                    dialogTitle:"历史恢复",//初始化标题
+                    caseId:self.multipleSelection[0],
+                }
+                self.dialog.historyInfo.dialogVisible=true;
             }
         },
        
