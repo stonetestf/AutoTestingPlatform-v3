@@ -102,7 +102,7 @@
                                         :src="IconImg.api"
                                         fit="cover">
                                     </el-image>
-                                    <div class="btn-text">接口测试(开发中)</div>
+                                    <div class="btn-text">接口测试</div>
                                 </el-card>
                             </el-col>
                             <el-col :span="4">
