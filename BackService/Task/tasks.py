@@ -10,6 +10,7 @@ from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_TimingTask.models import ApiTimingTaskTestSet as db_ApiTimingTaskTestSet
 from Api_CaseMaintenance.models import CaseTestSet as db_CaseTestSet
 from Api_TimingTask.models import ApiTimingTaskRunLog as db_ApiTimingTaskRunLog
+from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -20,6 +21,7 @@ from ClassData.ImageProcessing import ImageProcessing
 from ClassData.Request import RequstOperation
 from ClassData.TestReport import ApiReport
 from ClassData.TimingTask import TimingTask
+from ClassData.EmailOperation import Email
 
 # Create info here.
 cls_Logging = Logging()
@@ -30,6 +32,7 @@ cls_ImageProcessing = ImageProcessing()
 cls_RequstOperation = RequstOperation()
 cls_ApiReport = ApiReport()
 cls_TimingTask = TimingTask()
+cls_Email = Email()
 
 
 @shared_task  # 异步任务-测试用例运行
@@ -58,10 +61,21 @@ def api_asynchronous_run_case(remindLabel, redisKey, testReportId, queueId, case
 @shared_task  # 异步任务-定时任务运行
 def api_asynchronous_run_task(testReportId, queueId, taskId, label, environmentId, userId):
     cls_ApiReport.update_queue(queueId, 1, userId)  # 更新队列-执行中
-
     executeTask = cls_RequstOperation.excute_task(testReportId, taskId, label, environmentId, userId)
-    # cls_ApiReport.get_report_top_data(testReportId)  # 更新主测试报告
     cls_ApiReport.update_queue(queueId, 2, userId)  # 更新队列-完成
+    # region 发送邮件信息
+    obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId)
+    if obj_db_ApiTimingTask.exists():
+        pushTo = obj_db_ApiTimingTask[0].pushTo
+        if pushTo:
+            getReportTopData = cls_ApiReport.get_report_top_data(testReportId)
+            userList = [item_userId for item_roleId,item_userId in ast.literal_eval(pushTo)]
+            userEmailList = cls_FindTable.user_email_list(userList)
+            emailReport = cls_Email.email_report(getReportTopData['topData'])
+            cls_Email.send_email(userEmailList,emailReport[0],emailReport[1])
+        else:
+            pass
+    # endregion
     if executeTask['state']:
         return "int_asynchronous_run_case-定时任务运行完成"
     else:
@@ -73,6 +87,19 @@ def api_asynchronous_run_batch(testReportId, queueId, batchId, label, userId):
     cls_ApiReport.update_queue(queueId, 1, userId)  # 更新队列-执行中
     executeBatch = cls_RequstOperation.excute_batch(testReportId, batchId, label, userId)
     cls_ApiReport.update_queue(queueId, 2, userId)  # 更新队列-完成
+    # region 发送邮件信息
+    obj_db_ApiBatchTask = db_ApiBatchTask.objects.filter(id=batchId)
+    if obj_db_ApiBatchTask.exists():
+        pushTo = obj_db_ApiBatchTask[0].pushTo
+        if pushTo:
+            getReportTopData = cls_ApiReport.get_report_top_data(testReportId)
+            userList = [item_userId for item_roleId, item_userId in ast.literal_eval(pushTo)]
+            userEmailList = cls_FindTable.user_email_list(userList)
+            emailReport = cls_Email.email_report(getReportTopData['topData'])
+            cls_Email.send_email(userEmailList, emailReport[0], emailReport[1])
+        else:
+            pass
+    # endregion
     if executeBatch['state']:
         return "int_asynchronous_run_case-批量任务运行完成"
     else:

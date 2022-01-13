@@ -714,7 +714,6 @@ export default {
           }
         });
 
-
         //过去7天内Top10
         retData.pastSevenDaysTop.dataTable.forEach(d=>{
           let tempTable = self.RomeData.formerlyTableData.find(item=>

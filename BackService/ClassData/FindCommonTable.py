@@ -362,3 +362,13 @@ class FindTable(cls_Logging):
             })
         results['dataTable'] = dataTable
         return results
+
+    # 获取用户的email
+    def user_email_list(self,userList):
+        dataList = []
+        for userId in userList:
+            obj_db_UserTable = db_UserTable.objects.filter(id=userId)
+            if obj_db_UserTable.exists():
+                dataList.append(str(obj_db_UserTable[0].emails))
+
+        return dataList

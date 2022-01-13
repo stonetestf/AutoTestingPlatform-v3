@@ -229,6 +229,7 @@ class ApiReport(cls_Logging):
             'errorMsg': '',
             'topData': {
                 'reportName': None,
+                'reportType': None,
                 'createTime': '',
                 'runningTime': 0,
                 'reportStatus': None,
@@ -242,6 +243,7 @@ class ApiReport(cls_Logging):
 
         obj_db_ApiTestReport = db_ApiTestReport.objects.filter(id=testReportId, is_del=0)
         if obj_db_ApiTestReport.exists():
+            reportType = obj_db_ApiTestReport[0].reportType
             reportName = obj_db_ApiTestReport[0].reportName
             createTime = str(obj_db_ApiTestReport[0].updateTime.strftime('%Y-%m-%d %H:%M:%S'))
             reportStatus = obj_db_ApiTestReport[0].reportStatus
@@ -249,6 +251,8 @@ class ApiReport(cls_Logging):
             results['topData']['reportName'] = reportName
             results['topData']['createTime'] = createTime
             results['topData']['reportStatus'] = reportStatus
+            results['topData']['reportType'] = reportType
+
 
             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId)
             passTotal = 0
