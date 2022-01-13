@@ -4,7 +4,7 @@
         :visible.sync="dialogVisible"
         :close-on-click-modal=false
         :before-close="dialogClose"
-        width="1300px">
+        width="1500px">
             <template>
                 <el-form :inline="true"  method="post">
                     <el-form-item label="所属页面:">
@@ -72,6 +72,12 @@
                         prop="funName">
                     </el-table-column>
                     <el-table-column
+                        label="接口数量"
+                        width="100px"
+                        align= "center"
+                        prop="apiTotal">
+                    </el-table-column>
+                    <el-table-column
                         label="接口状态"
                         align= "center"
                         width="100">
@@ -80,6 +86,12 @@
                             <el-tag type="success" v-else-if="scope.row.caseState=='Completed'" >已完成</el-tag>
                             <el-tag type="info" v-else>弃用</el-tag>
                         </template>
+                    </el-table-column>
+                     <el-table-column
+                        label="通过率"
+                        width="100px"
+                        align= "center"
+                        prop="passRate">
                     </el-table-column>
                     <el-table-column
                         label="修改者"
@@ -210,7 +222,9 @@ export default {
                         obj.pageName =d.pageName;
                         obj.funName =d.funName;
                         obj.caseName = d.caseName;
+                        obj.apiTotal=d.apiTotal;
                         obj.caseState = d.caseState;
+                        obj.passRate=d.passRate+'%';
                         obj.userName = d.userName;   
                         obj.updateTime=d.updateTime;
 

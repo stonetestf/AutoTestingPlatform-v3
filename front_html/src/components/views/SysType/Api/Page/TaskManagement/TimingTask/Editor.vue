@@ -3,7 +3,7 @@
         <template>
             <el-drawer
             :title="dialogTitle"
-            size="1200px"
+            size="1300px"
             :wrapperClosable="false"
             :visible.sync="dialogVisible"
             direction='rtl'
@@ -133,6 +133,12 @@
                                 prop="funName">
                             </el-table-column>
                             <el-table-column
+                                label="接口数量"
+                                width="100px"
+                                align= "center"
+                                prop="apiTotal">
+                            </el-table-column>
+                            <el-table-column
                                 label="用例状态"
                                 align= "center"
                                 width="100px">
@@ -143,6 +149,12 @@
                                     <el-tag type="info" v-else>弃用</el-tag>
                                 </template>
                             </el-table-column>
+                            <el-table-column
+                                label="通过率"
+                                width="100px"
+                                align= "center"
+                                prop="passRate">
+                            </el-table-column> 
                             <el-table-column
                                 label="启用"
                                 align= "center"
