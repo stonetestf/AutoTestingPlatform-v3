@@ -15,7 +15,7 @@ class ApiBatchTask(models.Model):
     cuid = models.IntegerField("创建人", null=False)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     is_del = models.IntegerField("是否删除(0:删除,1:不删除)", null=False)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
 
 
 class ApiBatchTaskTestSet(models.Model):  # 任务排序数据
@@ -26,12 +26,13 @@ class ApiBatchTaskTestSet(models.Model):  # 任务排序数据
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     is_del = models.IntegerField("是否删除(0:删除,1:不删除)", null=False)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
 
 
 class ApiBatchTaskHistory(models.Model):  # 历史记录，恢复使用
     batchTask = models.ForeignKey(to='ApiBatchTask', to_field='id', on_delete=models.CASCADE)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=True)
+    batchName = models.CharField('任务名称', max_length=20, null=False)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
     # 如果是删除的话，在恢复数据时取上一个操作的数据
     operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)
     restoreData = models.TextField('恢复数据,用来存放基础数据', null=True)

@@ -13,6 +13,8 @@ urlpatterns = [
     url(r'ExecuteBatchTask', views.execute_batch_task, name='ExecuteBatchTask'),
     url(r'ExecutiveLogging', views.executive_logging, name='ExecutiveLogging'),
     url(r'RunHookTask', views.run_hook_task, name='RunHookTask'),
+    url(r'SelectHistory', views.select_history, name='SelectHistory'),
+    url(r'RestorData', views.restor_data, name='RestorData'),
 
 
 ]

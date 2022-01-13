@@ -522,6 +522,7 @@ def delete_data(request):
                             # region 添加历史恢复
                             db_ApiTimingTaskHistory.objects.create(
                                 timingTask_id=taskId,
+                                taskName=obj_db_ApiTimingTask[0].taskName,
                                 operationType='Delete',
                                 uid_id=userId,
                             )
@@ -537,7 +538,8 @@ def delete_data(request):
                             )
                             # endregion
                             # region 删除关联信息
-                            db_ApiTimingTaskTestSet.objects.filter(is_del=0, timingTask_id=taskId).update(
+                            db_ApiTimingTaskTestSet.objects.filter(
+                                is_del=0, timingTask_id=taskId,onlyCode=obj_db_ApiTimingTask[0].onlyCode).update(
                                 is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                             )
                             obj_db_ApiTimingTask.update(
@@ -636,15 +638,15 @@ def restor_data(request):
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         taskId = obj_db_ApiTimingTaskHistory[0].timingTask_id
                         restoreData = obj_db_ApiTimingTaskHistory[0].restoreData
-                        # region 操作记录
-                        cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Update',
-                            cls_FindTable.get_pro_name(obj_db_ApiTimingTaskHistory[0].timingTask.pid_id),
-                            None, None,
-                            userId,
-                            f'【恢复定时任务】 ID:{taskId}:{obj_db_ApiTimingTaskHistory[0].timingTask.taskName}',
-                        )
-                        # endregion
+                        # # region 操作记录
+                        # cls_Logging.record_operation_info(
+                        #     'API', 'Manual', 3, 'Update',
+                        #     cls_FindTable.get_pro_name(obj_db_ApiTimingTaskHistory[0].timingTask.pid_id),
+                        #     None, None,
+                        #     userId,
+                        #     f'【恢复定时任务】 ID:{taskId}:{obj_db_ApiTimingTaskHistory[0].timingTask.taskName}',
+                        # )
+                        # # endregion
                         if obj_db_ApiTimingTaskHistory[0].operationType in ["Edit", "Add"]:
                             restoreData = ast.literal_eval(restoreData)
                             obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId)

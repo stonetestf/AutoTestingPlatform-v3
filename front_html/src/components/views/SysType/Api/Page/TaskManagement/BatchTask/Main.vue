@@ -137,7 +137,7 @@
                                         <el-dropdown-menu slot="dropdown">
                                             <el-dropdown-item command="ExecutiveLogging">执行记录</el-dropdown-item>
                                             <el-dropdown-item command="CopyTask">复制批量任务(未开发)</el-dropdown-item>
-                                            <el-dropdown-item command="TaskRestore">历史恢复(勾选/不勾选)(未开发)</el-dropdown-item>
+                                            <el-dropdown-item command="TaskRestore">历史恢复(勾选/不勾选)</el-dropdown-item>
                                         </el-dropdown-menu>
                                     </el-dropdown>
                                 </el-button-group>
@@ -200,6 +200,14 @@
                 @Succeed="SelectData">
             </dialog-versions>
         </template>
+        <template>
+            <dialog-history-info
+                @closeDialog="closeHistoryInfoDialog" 
+                :isVisible="dialog.historyInfo.dialogVisible" 
+                :dialogPara="dialog.historyInfo.dialogPara"
+                @Succeed="SelectData">
+            </dialog-history-info>
+        </template>
     </div>
 </template>
 
@@ -211,10 +219,11 @@ import {PrintConsole} from "../../../../../../js/Logger.js";
 import DialogEditor from "./Editor.vue";
 import DialogRunLog from "./RunLog.vue"
 import DialogVersions from "./Versions.vue"
+import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-        DialogEditor,DialogRunLog,DialogVersions
+        DialogEditor,DialogRunLog,DialogVersions,DialogHistoryInfo
     },
     data() {
         return {
@@ -254,6 +263,13 @@ export default {
                     },
                 },
                 versions:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                historyInfo:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -320,6 +336,8 @@ export default {
             PrintConsole(command);
             if(command=='ExecutiveLogging'){
                 this.OpenRunLogDialog();
+            }else if(command=="TaskRestore"){
+                this.OpenHistoryInfoDialog();
             }
            
         },
@@ -422,6 +440,23 @@ export default {
                 batchId:row.id,
             }
             self.dialog.versions.dialogVisible=true;
+        },
+
+        //历史恢复
+        closeHistoryInfoDialog(){
+            this.dialog.historyInfo.dialogVisible =false;
+        },
+        OpenHistoryInfoDialog(){
+            let self = this;
+            if(self.multipleSelection.length>1){
+                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
+            }else{
+                self.dialog.historyInfo.dialogPara={
+                    dialogTitle:"历史恢复",//初始化标题
+                    batchId:self.multipleSelection[0],
+                }
+                self.dialog.historyInfo.dialogVisible=true;
+            }
         },
     }
 };

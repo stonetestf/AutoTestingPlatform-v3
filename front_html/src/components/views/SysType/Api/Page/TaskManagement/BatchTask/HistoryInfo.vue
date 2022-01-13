@@ -8,7 +8,7 @@
         <div>
             <el-form :inline="true" v-if="SelectRomeData.disPlay"  method="post">
                 <el-form-item label="任务名称:">
-                    <el-input clearable v-model.trim="SelectRomeData.taskName"></el-input>
+                    <el-input clearable v-model.trim="SelectRomeData.batchName"></el-input>
                 </el-form-item>
                 <el-form-item label="操作类型:">
                     <el-select v-model="SelectRomeData.operationType" clearable placeholder="请选择" style="width:150px;">
@@ -64,7 +64,7 @@
                 <el-table-column
                     label="任务名称"
                     align= "center"
-                    prop="taskName">
+                    prop="batchName">
                 </el-table-column>
                 <el-table-column
                     label="操作过程"
@@ -129,7 +129,7 @@ export default {
             dialogVisible:false,
             tableData:[],
             SelectRomeData:{
-                taskName:'',
+                batchName:'',
                 disPlay:false,
                 operationType:'',
                 operationTypeOption:[
@@ -139,7 +139,7 @@ export default {
                 ],
             },
             RomeData:{
-                taskId:'',
+                batchId:'',
             },
             page: { 
                 current: 1,// 默认显示第几页
@@ -172,9 +172,9 @@ export default {
                 PrintConsole(newval);
                 this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
-                if(newval.taskId){//有id时就隐藏查询框
+                if(newval.batchId){//有id时就隐藏查询框
                     this.SelectRomeData.disPlay=false;
-                    this.RomeData.taskId = newval.taskId;
+                    this.RomeData.batchId = newval.batchId;
                    
                 }else{
                     this.SelectRomeData.disPlay=true;
@@ -191,14 +191,14 @@ export default {
         ClearRomeData(){
             let self = this;
             self.tableData=[];
-            self.RomeData.taskId='';
-            self.SelectRomeData.taskName='';  
+            self.RomeData.batchId='';
+            self.SelectRomeData.batchName='';  
             self.SelectRomeData.operationType='';
         },
         ClearSelectRomeData(){
             let self = this;
             self.tableData=[];
-            self.SelectRomeData.taskName='';  
+            self.SelectRomeData.batchName='';  
             self.SelectRomeData.operationType='';
             self.SelectData();
         },
@@ -206,10 +206,10 @@ export default {
             let self = this;
             self.loading=true;
             self.tableData= [];
-            self.$axios.get('/api/ApiTimingTask/SelectHistory',{
+            self.$axios.get('/api/ApiBatchTask/SelectHistory',{
                 params:{
-                    'taskId':self.RomeData.taskId,
-                    'taskName':self.SelectRomeData.taskName,
+                    'batchId':self.RomeData.batchId,
+                    'batchName':self.SelectRomeData.batchName,
                     'operationType':self.SelectRomeData.operationType,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
@@ -219,7 +219,7 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
-                        obj.taskName = d.taskName;
+                        obj.batchName = d.batchName;
                         obj.operationType=d.operationType;
                         obj.tableItem=d.tableItem;
                         obj.createTime = d.createTime;
@@ -259,7 +259,7 @@ export default {
         RestorData(id){//恢复数据
             let self = this;
             self.loading=true;
-            self.$axios.post('/api/ApiTimingTask/RestorData',Qs.stringify({
+            self.$axios.post('/api/ApiBatchTask/RestorData',Qs.stringify({
                 "id":id,
             })).then(res => {
                 if(res.data.statusCode==2002){
