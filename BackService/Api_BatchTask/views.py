@@ -836,14 +836,16 @@ def restor_data(request):
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         batchId = obj_db_ApiBatchTaskHistory[0].batchTask_id
                         restoreData = obj_db_ApiBatchTaskHistory[0].restoreData
-                        # # region 操作记录
-                        # cls_Logging.record_operation_info(
-                        #     'API', 'Manual', 3, 'Update',
-                        #     cls_FindTable.get_pro_name(obj_db_ApiTimingTaskHistory[0].timingTask.pid_id),
-                        #     None, None,
-                        #     userId,
-                        #     f'【恢复定时任务】 ID:{taskId}:{obj_db_ApiTimingTaskHistory[0].timingTask.taskName}',
-                        # )
+                        # region 操作记录
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Update',
+                            cls_FindTable.get_pro_name(obj_db_ApiBatchTaskHistory[0].batchTask.pid_id),
+                            None, None,
+                            userId,
+                            f'【恢复批量任务】 '
+                            f'ID:{obj_db_ApiBatchTaskHistory[0].batchTask_id}:'
+                            f"{obj_db_ApiBatchTaskHistory[0].batchName}",
+                        )
                         # endregion
                         if obj_db_ApiBatchTaskHistory[0].operationType in ["Edit", "Add"]:
                             restoreData = ast.literal_eval(restoreData)

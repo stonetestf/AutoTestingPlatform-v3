@@ -658,15 +658,17 @@ def restor_data(request):
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         taskId = obj_db_ApiTimingTaskHistory[0].timingTask_id
                         restoreData = obj_db_ApiTimingTaskHistory[0].restoreData
-                        # # region 操作记录
-                        # cls_Logging.record_operation_info(
-                        #     'API', 'Manual', 3, 'Update',
-                        #     cls_FindTable.get_pro_name(obj_db_ApiTimingTaskHistory[0].timingTask.pid_id),
-                        #     None, None,
-                        #     userId,
-                        #     f'【恢复定时任务】 ID:{taskId}:{obj_db_ApiTimingTaskHistory[0].timingTask.taskName}',
-                        # )
-                        # # endregion
+                        # region 操作记录
+                        cls_Logging.record_operation_info(
+                            'API', 'Manual', 3, 'Update',
+                            cls_FindTable.get_pro_name(obj_db_ApiTimingTaskHistory[0].timingTask.pid_id),
+                            None,None,
+                            userId,
+                            f'【恢复定时任务】 '
+                            f'ID:{obj_db_ApiTimingTaskHistory[0].timingTask_id}:'
+                            f"{obj_db_ApiTimingTaskHistory[0].taskName}",
+                        )
+                        # endregion
                         if obj_db_ApiTimingTaskHistory[0].operationType in ["Edit", "Add"]:
                             restoreData = ast.literal_eval(restoreData)
                             obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(id=taskId)

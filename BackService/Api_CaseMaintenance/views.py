@@ -1938,6 +1938,18 @@ def restor_data(request):
                                     if obj_db_ApiCaseHistory[0].operationType in ["Add", "Edit"]:
                                         obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=caseId)
                                         if obj_db_CaseBaseData.exists():
+                                            # region 操作记录
+                                            cls_Logging.record_operation_info(
+                                                'API', 'Manual', 3, 'Update',
+                                                cls_FindTable.get_pro_name(obj_db_ApiCaseHistory[0].pid_id),
+                                                cls_FindTable.get_page_name(obj_db_ApiCaseHistory[0].page_id),
+                                                cls_FindTable.get_fun_name(obj_db_ApiCaseHistory[0].fun_id),
+                                                userId,
+                                                f'【恢复用例维护】 '
+                                                f'ID:{obj_db_ApiCaseHistory[0].case_id}:'
+                                                f"{obj_db_ApiCaseHistory[0].caseName}",
+                                            )
+                                            # endregion
                                             restoreData = ast.literal_eval(restoreData)
                                             # region 需要删除原附属数据，不会恢复时会出现原数据还在
                                             db_CaseTestSet.objects.filter(

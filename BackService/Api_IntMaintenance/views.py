@@ -1813,6 +1813,18 @@ def restor_data(request):
                                     if obj_db_ApiHistory[0].operationType in ["Add", "Edit"]:
                                         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
                                         if obj_db_ApiBaseData.exists():
+                                            # region 操作记录
+                                            cls_Logging.record_operation_info(
+                                                'API', 'Manual', 3, 'Update',
+                                                cls_FindTable.get_pro_name(obj_db_ApiHistory[0].pid_id),
+                                                cls_FindTable.get_page_name(obj_db_ApiHistory[0].page_id),
+                                                cls_FindTable.get_fun_name(obj_db_ApiHistory[0].fun_id),
+                                                userId,
+                                                f'【恢复接口维护】 '
+                                                f'ID:{obj_db_ApiHistory[0].api_id}:'
+                                                f"{obj_db_ApiHistory[0].apiName}",
+                                            )
+                                            # endregion
                                             restoreData = ast.literal_eval(restoreData)
                                             # region 需要删除原附属数据，不会恢复时会出现原数据还在
                                             db_ApiAssociatedUser.objects.filter(

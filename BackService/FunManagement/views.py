@@ -406,6 +406,18 @@ def restor_data(request):
                                     obj_db_FunManagement = db_FunManagement.objects.filter(
                                         id=obj_db_FunHistory[0].fun_id)
                                     if obj_db_FunManagement.exists():
+                                        # region 操作记录
+                                        cls_Logging.record_operation_info(
+                                            'API', 'Manual', 3, 'Update',
+                                            cls_FindTable.get_pro_name(obj_db_FunHistory[0].pid_id),
+                                            cls_FindTable.get_page_name(obj_db_FunHistory[0].page_id),
+                                            cls_FindTable.get_fun_name(obj_db_FunHistory[0].fun_id),
+                                            userId,
+                                            f'【恢复所属功能】 '
+                                            f'ID:{obj_db_FunHistory[0].fun_id}:'
+                                            f"{obj_db_FunHistory[0].funName}",
+                                        )
+                                        # endregion
                                         restoreData = ast.literal_eval(restoreData)
                                         obj_db_FunManagement.update(
                                             pid_id=restoreData['proId'],

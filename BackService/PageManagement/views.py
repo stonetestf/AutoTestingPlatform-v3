@@ -386,6 +386,18 @@ def restor_data(request):
                                 obj_db_PageManagement = db_PageManagement.objects.filter(
                                     id=obj_db_PageHistory[0].page_id)
                                 if obj_db_PageManagement.exists:
+                                    # region 操作记录
+                                    cls_Logging.record_operation_info(
+                                        'API', 'Manual', 3, 'Update',
+                                        cls_FindTable.get_pro_name(obj_db_PageHistory[0].pid_id),
+                                        cls_FindTable.get_page_name(obj_db_PageHistory[0].page_id),
+                                        None,
+                                        userId,
+                                        f'【恢复所属页面】 '
+                                        f'ID:{obj_db_PageHistory[0].page_id}:'
+                                        f"{obj_db_PageHistory[0].pageName}",
+                                    )
+                                    # endregion
                                     obj_db_PageManagement.update(
                                         pid_id=restoreData['proId'],
                                         pageName=restoreData['pageName'],

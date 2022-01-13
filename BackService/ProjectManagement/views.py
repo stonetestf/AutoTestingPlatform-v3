@@ -662,6 +662,17 @@ def restor_data(request):
                         if obj_db_ProHistory[0].operationType in ["Add","Edit"]:
                             obj_db_ProManagement = db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id)
                             if obj_db_ProManagement.exists():
+                                # region 操作记录
+                                cls_Logging.record_operation_info(
+                                    'API', 'Manual', 3, 'Update',
+                                    cls_FindTable.get_pro_name(obj_db_ProHistory[0].pid_id),
+                                    None, None,
+                                    userId,
+                                    f'【恢复所属项目】 '
+                                    f'ID:{obj_db_ProHistory[0].pid_id}:'
+                                    f"{obj_db_ProHistory[0].proName}",
+                                )
+                                # endregion
                                 restoreData = ast.literal_eval(restoreData)
                                 obj_db_ProManagement.update(
                                     proName=restoreData['proName'],
