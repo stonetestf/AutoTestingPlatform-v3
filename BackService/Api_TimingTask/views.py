@@ -136,12 +136,22 @@ def select_case_data(request):
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(fun_id=funId)
 
         for i in obj_db_CaseBaseData:
+            # region 通过率
+            obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, taskId=i.id)
+            passTotal = obj_db_ApiTestReport.filter(reportStatus='Pass').count()
+            if obj_db_ApiTestReport.count() == 0:
+                passRate = 0
+            else:
+                passRate = round(passTotal / obj_db_ApiTestReport.count() * 100, 2)
+            # endregion
             dataList.append({
                 'id': i.id,
                 'pageName': i.page.pageName,
                 'funName': i.fun.funName,
                 'caseName': i.caseName,
+                'apiTotal':db_CaseTestSet.objects.filter(is_del=0,caseId_id=i.id).count(),
                 'caseState': i.caseState,
+                'passRate': passRate,
                 'testType': i.testType,
                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                 'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
@@ -349,6 +359,14 @@ def load_task_data(request):
             obj_db_ApiTimingTaskTestSet = db_ApiTimingTaskTestSet.objects.filter(
                 is_del=0, timingTask_id=taskId).order_by('index')
             for item_testSet in obj_db_ApiTimingTaskTestSet:
+                # region 通过率
+                obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, taskId=item_testSet.case_id)
+                passTotal = obj_db_ApiTestReport.filter(reportStatus='Pass').count()
+                if obj_db_ApiTestReport.count() == 0:
+                    passRate = 0
+                else:
+                    passRate = round(passTotal / obj_db_ApiTestReport.count() * 100, 2)
+                # endregion
                 testSet.append({
                     'id': item_testSet.case_id,
                     'testType': item_testSet.case.testType,
@@ -356,6 +374,8 @@ def load_task_data(request):
                     'pageName': item_testSet.case.page.pageName,
                     'funName': item_testSet.case.fun.funName,
                     'caseState': item_testSet.case.caseState,
+                    'apiTotal':db_CaseTestSet.objects.filter(is_del=0,caseId_id=item_testSet.case_id).count(),
+                    'passRate':f'{passRate}%',
                     'state': True if item_testSet.state == 1 else False
                 })
             # endregion

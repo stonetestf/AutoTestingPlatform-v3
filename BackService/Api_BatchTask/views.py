@@ -365,8 +365,8 @@ def load_batch_data(request):
                 testSet.append({
                     'id': item_testSet.task_id,
                     'taskName': item_testSet.task.taskName,
-                    'caseTotal': db_ApiTimingTaskTestSet.objects.filter(is_del=0,
-                                                                        timingTask_id=item_testSet.task_id).count(),
+                    'caseTotal': db_ApiTimingTaskTestSet.objects.filter(
+                        is_del=0,timingTask_id=item_testSet.task_id).count(),
                     'taskState': True if item_testSet.task.taskStatus == 1 else False,
                     'passRate': f"{passRate}%",
                     'state': True if item_testSet.state == 1 else False,
