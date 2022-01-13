@@ -95,7 +95,7 @@
                     width="100px">
                     <template slot-scope="scope" style="width:100px">
                         <el-button
-                            v-if="scope.row.operationType!='Add'"
+                            v-if="scope.row.operationType!='Delete'"
                             size="mini"
                             type="warning"
                             @click="handleRestor(scope.$index, scope.row)">恢复
