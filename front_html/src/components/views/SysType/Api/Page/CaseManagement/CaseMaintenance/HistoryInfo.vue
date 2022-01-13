@@ -82,6 +82,11 @@
                     </template>
                 </el-table-column>
                 <el-table-column
+                    label="用例名称"
+                    align= "center"
+                    prop="caseName">
+                </el-table-column>
+                <el-table-column
                     label="所属页面"
                     align= "center"
                     prop="pageName">
@@ -90,11 +95,6 @@
                     label="所属功能"
                     align= "center"
                     prop="funName">
-                </el-table-column>
-                <el-table-column
-                    label="用例名称"
-                    align= "center"
-                    prop="caseName">
                 </el-table-column>
                 <el-table-column
                     label="操作过程"
@@ -312,7 +312,7 @@ export default {
             })
         },
         handleRestor(index,row){
-            let message =  "注意:此恢复会查询原库中的被删除数据,如原库中无此关联数据时将会恢复失败!请确定是否恢复?";
+            let message =  "注意:如当前恢复的用例中包含上传类型时,并不会恢复此上传文件!此恢复会查询原库中的被删除数据,如原库中无此关联数据时将会恢复失败,请确定是否恢复?";
             this.$confirm(message, '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
