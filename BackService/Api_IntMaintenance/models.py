@@ -21,7 +21,7 @@ class ApiBaseData(models.Model):
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiHeaders(models.Model):  # 头部参数
@@ -33,7 +33,7 @@ class ApiHeaders(models.Model):  # 头部参数
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiParams(models.Model):
@@ -45,7 +45,7 @@ class ApiParams(models.Model):
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiBody(models.Model):
@@ -60,7 +60,7 @@ class ApiBody(models.Model):
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiExtract(models.Model):  # 提取
@@ -72,7 +72,7 @@ class ApiExtract(models.Model):  # 提取
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiValidate(models.Model):  # 断言参数
@@ -86,7 +86,7 @@ class ApiValidate(models.Model):  # 断言参数
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiOperation(models.Model):  # 前后置操作
@@ -101,7 +101,7 @@ class ApiOperation(models.Model):  # 前后置操作
     state = models.IntegerField("是否启用(0:禁用,1:启用)", null=False)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiAssociatedUser(models.Model):  # 接口关联用户表，接口创建时，修改时，被关联者会收到消息提醒
@@ -111,7 +111,7 @@ class ApiAssociatedUser(models.Model):  # 接口关联用户表，接口创建�
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('更新时间', auto_now=True)
-    historyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
+    onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
 class ApiHistory(models.Model):  # 历史记录，恢复使用

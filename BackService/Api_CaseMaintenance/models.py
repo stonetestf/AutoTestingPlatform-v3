@@ -18,6 +18,7 @@ class CaseBaseData(models.Model):
     cuid = models.IntegerField("创建者用户", null=False)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
 
 
 class CaseTestSet(models.Model):  # 用例的测试集
@@ -138,3 +139,4 @@ class ApiCaseHistory(models.Model):  # 历史记录，恢复使用
     restoreData = models.TextField('恢复数据', null=True)
     # textInfo = models.TextField('保存变动的文本信息', null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id

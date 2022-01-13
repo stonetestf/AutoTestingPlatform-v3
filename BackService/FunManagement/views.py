@@ -128,6 +128,12 @@ def save_data(request):
                     )
                     # endregion
                     # region 添加历史恢复
+                    restoreData = json.loads(json.dumps(request.POST))
+                    restoreData['updateTime'] = save_db_FunManagement.updateTime.strftime('%Y-%m-%d %H:%M:%S')
+                    restoreData['createTime'] = save_db_FunManagement.createTime.strftime('%Y-%m-%d %H:%M:%S')
+                    restoreData['uid_id'] = save_db_FunManagement.uid_id
+                    restoreData['cuid'] = save_db_FunManagement.cuid
+                    restoreData['onlyCode'] = onlyCode
                     db_FunHistory.objects.create(
                         pid_id=proId,
                         page_id=pageId,
@@ -135,7 +141,7 @@ def save_data(request):
                         funName=funName,
                         onlyCode=onlyCode,
                         operationType='Add',
-                        restoreData=json.dumps(request.POST),
+                        restoreData=restoreData,
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -202,13 +208,17 @@ def edit_data(request):
                         # endregion
                         # region 添加历史恢复
                         restoreData = json.loads(json.dumps(request.POST))
-                        restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        restoreData['updateTime'] = obj_db_FunManagement[0].updateTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['createTime'] = obj_db_FunManagement[0].createTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['uid_id'] = obj_db_FunManagement[0].uid_id
+                        restoreData['cuid'] = obj_db_FunManagement[0].cuid
+                        restoreData['onlyCode'] = onlyCode
                         db_FunHistory.objects.create(
                             pid_id=proId,
                             page_id=pageId,
                             fun_id=funId,
                             funName=funName,
-                            onlyCode=cls_Common.generate_only_code(),
+                            onlyCode=onlyCode,
                             operationType='Edit',
                             restoreData=restoreData
                         )
@@ -389,7 +399,7 @@ def restor_data(request):
                                 is_del=0,id=obj_db_FunHistory[0].page_id)
                             if obj_db_PageManagement.exists():
                                 restoreData = obj_db_FunHistory[0].restoreData
-                                if obj_db_FunHistory[0].operationType == "Add":
+                                if obj_db_FunHistory[0].operationType in ["Add","Edit"]:
                                     obj_db_FunManagement = db_FunManagement.objects.filter(
                                         id=obj_db_FunHistory[0].fun_id)
                                     if obj_db_FunManagement.exists():
@@ -399,24 +409,12 @@ def restor_data(request):
                                             page_id=restoreData['pageId'],
                                             funName=restoreData['funName'],
                                             remarks=restoreData['remarks'],
-                                            is_del=0
-                                        )
-                                    else:
-                                        raise ValueError('此数据原始数据在库中无法查询到!')
-                                elif obj_db_FunHistory[0].operationType == "Edit":
-                                    obj_db_FunManagement = db_FunManagement.objects.filter(
-                                        id=obj_db_FunHistory[0].fun_id)
-                                    if obj_db_FunManagement.exists():
-                                        restoreData = ast.literal_eval(restoreData)
-                                        obj_db_FunManagement.update(
-                                            pid_id=restoreData['proId'],
-                                            page_id=restoreData['pageId'],
-                                            funName=restoreData['funName'],
-                                            remarks=restoreData['remarks'],
-                                            updateTime=cls_Common.get_date_time(),
+                                            updateTime=restoreData['updateTime'],
                                             createTime=restoreData['createTime'],
-                                            uid=userId,
-                                            is_del=0
+                                            uid_id=restoreData['uid_id'],
+                                            cuid=restoreData['cuid'],
+                                            is_del=0,
+                                            onlyCode=restoreData['onlyCode'],
                                         )
                                     else:
                                         raise ValueError('此数据原始数据在库中无法查询到!')

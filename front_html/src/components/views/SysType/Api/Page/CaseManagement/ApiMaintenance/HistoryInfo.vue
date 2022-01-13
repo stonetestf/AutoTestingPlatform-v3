@@ -132,7 +132,7 @@
                     width="100px">
                     <template slot-scope="scope" style="width:100px">
                         <el-button
-                            v-if="scope.row.operationType!='Add'"
+                            v-if="scope.row.operationType!='Delete'"
                             size="mini"
                             type="warning"
                             @click="handleRestor(scope.$index, scope.row)">恢复
@@ -320,12 +320,7 @@ export default {
             })
         },
         handleRestor(index,row){
-            let message = ""
-            if(row.operationType=='Delete'){
-                message = "注意:此恢复会自动找最后一次操作的数据进行恢复,如最后一次无操作时将会恢复失败!恢复时如上级所属项目,页面,功能不存在时,会恢复失败!请确定是否恢复?"
-            }else{
-                message = "注意:恢复时如上级所属项目,页面,功能不存在时,会恢复失败!请确定是否恢复?"
-            }
+            let message =  "注意:此恢复会查询原库中的被删除数据,如原库中无此关联数据时将会恢复失败!请确定是否恢复?";
             this.$confirm(message, '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',

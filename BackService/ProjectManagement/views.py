@@ -203,12 +203,19 @@ def save_data(request):
                         )
                         # endregion
                         # region 添加历史恢复
+                        restoreData = json.loads(json.dumps(request.POST))
+                        restoreData['updateTime'] = save_db_ProManagement.updateTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['createTime'] = save_db_ProManagement.createTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['uid_id'] = save_db_ProManagement.uid_id
+                        restoreData['cuid'] = save_db_ProManagement.cuid
+                        restoreData['onlyCode'] = onlyCode
+
                         db_ProHistory.objects.create(
                             pid_id=save_db_ProManagement.id,
                             proName=proName,
                             onlyCode=onlyCode,
                             operationType='Add',
-                            restoreData=json.dumps(request.POST),
+                            restoreData=restoreData,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -283,7 +290,13 @@ def edit_data(request):
                                 # endregion
                                 # region 添加历史恢复
                                 restoreData = json.loads(json.dumps(request.POST))
-                                restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                                restoreData['updateTime'] = obj_db_ProManagement[0].updateTime.strftime(
+                                    '%Y-%m-%d %H:%M:%S')
+                                restoreData['createTime'] = obj_db_ProManagement[0].createTime.strftime(
+                                    '%Y-%m-%d %H:%M:%S')
+                                restoreData['uid_id'] = obj_db_ProManagement[0].uid_id
+                                restoreData['cuid'] = obj_db_ProManagement[0].cuid
+                                restoreData['onlyCode'] = onlyCode
                                 db_ProHistory.objects.create(
                                     pid_id=proId,
                                     proName=proName,
@@ -318,10 +331,14 @@ def edit_data(request):
                                 updateTime=cls_Common.get_date_time(),
                                 onlyCode=onlyCode)
                             # region 添加历史恢复
-
-                            # oldData[0]['updateTime'] = str(oldData[0]['updateTime'].strftime('%Y-%m-%d %H:%M:%S'))
                             restoreData = json.loads(json.dumps(request.POST))
-                            restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                            restoreData['updateTime'] = obj_db_ProManagement[0].updateTime.strftime(
+                                '%Y-%m-%d %H:%M:%S')
+                            restoreData['createTime'] = obj_db_ProManagement[0].createTime.strftime(
+                                '%Y-%m-%d %H:%M:%S')
+                            restoreData['uid_id'] = obj_db_ProManagement[0].uid_id
+                            restoreData['cuid'] = obj_db_ProManagement[0].cuid
+                            restoreData['onlyCode'] = onlyCode
                             db_ProHistory.objects.create(
                                 pid_id=proId,
                                 proName=proName,
@@ -399,7 +416,6 @@ def delete_data(request):
                                 proName=obj_db_ProManagement[0].proName,
                                 onlyCode=cls_Common.generate_only_code(),
                                 operationType='Delete',
-                                restoreData=None,
                             )
                             # endregion
                     except BaseException as e:  # 自动回滚，不需要任何操作
@@ -640,28 +656,19 @@ def restor_data(request):
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         restoreData = obj_db_ProHistory[0].restoreData
-                        if obj_db_ProHistory[0].operationType == "Add":
+                        if obj_db_ProHistory[0].operationType in ["Add","Edit"]:
                             obj_db_ProManagement = db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id)
                             if obj_db_ProManagement.exists():
                                 restoreData = ast.literal_eval(restoreData)
                                 obj_db_ProManagement.update(
                                     proName=restoreData['proName'],
                                     remarks=restoreData['remarks'],
-                                    is_del=0
-                                )
-                            else:
-                                raise ValueError('此数据原始数据在库中无法查询到!')
-                        elif obj_db_ProHistory[0].operationType == "Edit":
-                            obj_db_ProManagement = db_ProManagement.objects.filter(id=obj_db_ProHistory[0].pid_id)
-                            if obj_db_ProManagement.exists():
-                                restoreData = ast.literal_eval(restoreData)
-                                obj_db_ProManagement.update(
-                                    proName=restoreData['proName'],
-                                    remarks=restoreData['remarks'],
-                                    updateTime=cls_Common.get_date_time(),
+                                    updateTime=restoreData['updateTime'],
                                     createTime=restoreData['createTime'],
-                                    uid_id=userId,
-                                    is_del=0
+                                    uid_id=restoreData['uid_id'],
+                                    cuid=restoreData['cuid'],
+                                    is_del=0,
+                                    onlyCode=restoreData['onlyCode'],
                                 )
                             else:
                                 raise ValueError('此数据原始数据在库中无法查询到!')

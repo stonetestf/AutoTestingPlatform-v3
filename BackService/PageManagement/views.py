@@ -117,13 +117,19 @@ def save_data(request):
                     )
                     # endregion
                     # region 添加历史恢复
+                    restoreData = json.loads(json.dumps(request.POST))
+                    restoreData['updateTime'] = save_db_PageManagement.updateTime.strftime('%Y-%m-%d %H:%M:%S')
+                    restoreData['createTime'] = save_db_PageManagement.createTime.strftime('%Y-%m-%d %H:%M:%S')
+                    restoreData['uid_id'] = save_db_PageManagement.uid_id
+                    restoreData['cuid'] = save_db_PageManagement.cuid
+                    restoreData['onlyCode'] = onlyCode
                     db_PageHistory.objects.create(
                         pid_id=proId,
                         page_id=save_db_PageManagement.id,
                         pageName=pageName,
                         onlyCode=cls_Common.generate_only_code(),
                         operationType='Add',
-                        restoreData=json.dumps(request.POST),
+                        restoreData=restoreData,
                     )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
@@ -187,7 +193,11 @@ def edit_data(request):
                         # endregion
                         # region 添加历史恢复
                         restoreData = json.loads(json.dumps(request.POST))
-                        restoreData['createTime'] = str(oldData[0]['createTime'].strftime('%Y-%m-%d %H:%M:%S'))
+                        restoreData['updateTime'] = obj_db_PageManagement[0].updateTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['createTime'] = obj_db_PageManagement[0].createTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['uid_id'] = obj_db_PageManagement[0].uid_id
+                        restoreData['cuid'] = obj_db_PageManagement[0].cuid
+                        restoreData['onlyCode'] = onlyCode
                         db_PageHistory.objects.create(
                             pid_id=proId,
                             page_id=pageId,
@@ -250,7 +260,6 @@ def delete_data(request):
                             pageName=obj_db_PageManagement[0].pageName,
                             onlyCode=cls_Common.generate_only_code(),
                             operationType='Delete',
-                            restoreData=None,
                         )
                         # endregion
                 except BaseException as e:  # 自动回滚，不需要任何操作
@@ -369,20 +378,7 @@ def restor_data(request):
                         obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0,id=obj_db_PageHistory[0].pid_id)
                         if obj_db_ProManagement.exists():
                             restoreData = obj_db_PageHistory[0].restoreData
-                            if obj_db_PageHistory[0].operationType == "Add":
-                                obj_db_PageManagement = db_PageManagement.objects.filter(
-                                    id=obj_db_PageHistory[0].page_id)
-                                if obj_db_PageManagement.exists():
-                                    restoreData = ast.literal_eval(restoreData)
-                                    obj_db_PageManagement.update(
-                                        pid_id=restoreData['proId'],
-                                        pageName=restoreData['pageName'],
-                                        remarks=restoreData['remarks'],
-                                        is_del=0
-                                    )
-                                else:
-                                    raise ValueError('此数据原始数据在库中无法查询到!')
-                            elif obj_db_PageHistory[0].operationType == "Edit":
+                            if obj_db_PageHistory[0].operationType in ["Add","Edit"]:
                                 restoreData = ast.literal_eval(restoreData)
                                 obj_db_PageManagement = db_PageManagement.objects.filter(
                                     id=obj_db_PageHistory[0].page_id)
@@ -391,10 +387,12 @@ def restor_data(request):
                                         pid_id=restoreData['proId'],
                                         pageName=restoreData['pageName'],
                                         remarks=restoreData['remarks'],
-                                        updateTime=cls_Common.get_date_time(),
+                                        updateTime=restoreData['updateTime'],
                                         createTime=restoreData['createTime'],
-                                        uid_id=userId,
-                                        is_del=0
+                                        uid_id=restoreData['uid_id'],
+                                        cuid=restoreData['cuid'],
+                                        is_del=0,
+                                        onlyCode=restoreData['onlyCode'],
                                     )
                                 else:
                                     raise ValueError('此数据原始数据在库中无法查询到!')

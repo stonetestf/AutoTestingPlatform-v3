@@ -10,6 +10,9 @@ import json
 import ast
 
 # Create your db here.
+from ProjectManagement.models import ProManagement as db_ProManagement
+from PageManagement.models import PageManagement as db_PageManagement
+from FunManagement.models import FunManagement as db_FunManagement
 from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from Api_IntMaintenance.models import ApiHeaders as db_ApiHeaders
 from Api_IntMaintenance.models import ApiParams as db_ApiParams
@@ -519,10 +522,18 @@ def save_data(request):
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                         environmentId_id=basicInfo.environmentId, testType=basicInfo.testType,
                         label=basicInfo.labelId, priority=basicInfo.priorityId, caseName=basicInfo.caseName,
-                        caseState=basicInfo.caseState, cuid=userId, uid_id=userId, is_del=0
+                        caseState=basicInfo.caseState, cuid=userId, uid_id=userId, is_del=0,onlyCode=onlyCode
                     )
                     # endregion
                     # region 历史恢复
+                    restoreData = responseData
+                    restoreData['BasicInfo']['updateTime'] = save_db_CaseBaseData.updateTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['createTime'] = save_db_CaseBaseData.createTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['uid_id'] = save_db_CaseBaseData.uid_id
+                    restoreData['BasicInfo']['cuid'] = save_db_CaseBaseData.cuid
+                    restoreData['onlyCode'] = onlyCode
                     db_ApiCaseHistory.objects.create(
                         pid_id=basicInfo.proId,
                         page_id=basicInfo.pageId,
@@ -531,6 +542,8 @@ def save_data(request):
                         caseName=basicInfo.caseName,
                         onlyCode=onlyCode,
                         operationType='Add',
+                        restoreData=restoreData,
+                        uid_id=userId
                     )
                     # endregion
                     # region 测试集
@@ -546,7 +559,8 @@ def save_data(request):
                             is_synchronous=1 if item_testSet.is_synchronous else 0,
                             state=1 if item_testSet.state else 0,
                             uid_id=userId,
-                            is_del=0
+                            is_del=0,
+                            onlyCode=onlyCode
                         )
                         # region 请求基本数据
                         headers = item_testSet.request.headers
@@ -569,7 +583,7 @@ def save_data(request):
                             requestUrl=item_testSet.request.requestUrl,
                             requestParamsType=requestParamsType,
                             bodyRequestSaveType=bodyRequestSaveType,
-                            is_del=0
+                            is_del=0,onlyCode=onlyCode
                         )
                         # endregion
                         # region Headers
@@ -582,7 +596,7 @@ def save_data(request):
                                 value=item_headers.value,
                                 remarks=item_headers.remarks,
                                 state=1 if item_headers.state else 0,
-                                is_del=0)
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiHeaders.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -596,7 +610,7 @@ def save_data(request):
                                 value=item_params.value,
                                 remarks=item_params.remarks,
                                 state=1 if item_params.state else 0,
-                                is_del=0)
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiParams.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -646,7 +660,7 @@ def save_data(request):
                                     filePath=filePath,
                                     remarks=item_body.remarks,
                                     state=1 if item_body.state else 0,
-                                    is_del=0)
+                                    is_del=0,onlyCode=onlyCode)
                                 )
                             db_CaseApiBody.objects.bulk_create(product_list_to_insert)
                         elif bodyRequestSaveType in ['raw', 'json']:
@@ -662,7 +676,7 @@ def save_data(request):
                                 key=None,
                                 value=value,
                                 state=1,
-                                is_del=0
+                                is_del=0,onlyCode=onlyCode
                             )
                         # file 之后在做
                         # endregion
@@ -676,7 +690,7 @@ def save_data(request):
                                 value=item_extract.value,
                                 remarks=item_extract.remarks,
                                 state=1 if item_extract.state else 0,
-                                is_del=0, )
+                                is_del=0,onlyCode=onlyCode )
                             )
                         db_CaseApiExtract.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -692,7 +706,7 @@ def save_data(request):
                                 expectedResults=item_validate.expectedResults,
                                 remarks=item_validate.remarks,
                                 state=1 if item_validate.state else 0,
-                                is_del=0, )
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiValidate.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -709,7 +723,7 @@ def save_data(request):
                                 sql=item_preOperation.sql,
                                 remarks=item_preOperation.remarks,
                                 state=1 if item_preOperation.state else 0,
-                                is_del=0)
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiOperation.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -726,7 +740,7 @@ def save_data(request):
                                 sql=item_rearOperation.sql,
                                 remarks=item_rearOperation.remarks,
                                 state=1 if item_rearOperation.state else 0,
-                                is_del=0, )
+                                is_del=0,onlyCode=onlyCode )
                             )
                         db_CaseApiOperation.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -925,6 +939,14 @@ def edit_data(request):
                     # endregion
                     # endregion
                     # region 历史恢复
+                    restoreData = responseData
+                    restoreData['BasicInfo']['updateTime'] = obj_db_CaseBaseData[0].updateTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['createTime'] = obj_db_CaseBaseData[0].createTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['uid_id'] = obj_db_CaseBaseData[0].uid_id
+                    restoreData['BasicInfo']['cuid'] = obj_db_CaseBaseData[0].cuid
+                    restoreData['onlyCode'] = onlyCode
                     db_ApiCaseHistory.objects.create(
                         pid_id=basicInfo.proId,
                         page_id=basicInfo.pageId,
@@ -933,7 +955,8 @@ def edit_data(request):
                         caseName=basicInfo.caseName,
                         onlyCode=onlyCode,
                         operationType='Edit',
-                        restoreData=oldData,
+                        restoreData=restoreData,
+                        uid_id=userId
                     )
                     # endregion
                     # region 删除 各类原数据
@@ -967,7 +990,8 @@ def edit_data(request):
                         pid_id=basicInfo.proId, page_id=basicInfo.pageId, fun_id=basicInfo.funId,
                         environmentId_id=basicInfo.environmentId, testType=basicInfo.testType,
                         label=basicInfo.labelId, priority=basicInfo.priorityId, caseName=basicInfo.caseName,
-                        caseState=basicInfo.caseState, uid_id=userId, updateTime=cls_Common.get_date_time()
+                        caseState=basicInfo.caseState, uid_id=userId, updateTime=cls_Common.get_date_time(),
+                        onlyCode=onlyCode
                     )
                     # endregion
                     # region 测试集
@@ -983,7 +1007,8 @@ def edit_data(request):
                             is_synchronous=1 if item_testSet.is_synchronous else 0,
                             state=1 if item_testSet.state else 0,
                             uid_id=userId,
-                            is_del=0
+                            is_del=0,
+                            onlyCode=onlyCode
                         )
                         # region 请求基本数据
                         headers = item_testSet.request.headers
@@ -1007,7 +1032,7 @@ def edit_data(request):
                             requestUrl=item_testSet.request.requestUrl,
                             requestParamsType=requestParamsType,
                             bodyRequestSaveType=bodyRequestSaveType,
-                            is_del=0
+                            is_del=0,onlyCode=onlyCode
                         )
                         # endregion
                         # region Headers
@@ -1020,7 +1045,7 @@ def edit_data(request):
                                 value=item_headers.value,
                                 remarks=item_headers.remarks,
                                 state=1 if item_headers.state else 0,
-                                is_del=0)
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiHeaders.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -1034,7 +1059,7 @@ def edit_data(request):
                                 value=item_params.value,
                                 remarks=item_params.remarks,
                                 state=1 if item_params.state else 0,
-                                is_del=0)
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiParams.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -1105,7 +1130,7 @@ def edit_data(request):
                                     filePath=filePath,
                                     remarks=item_body.remarks,
                                     state=1 if item_body.state else 0,
-                                    is_del=0)
+                                    is_del=0,onlyCode=onlyCode)
                                 )
                             db_CaseApiBody.objects.bulk_create(product_list_to_insert)
                         elif bodyRequestSaveType in ['raw', 'json']:
@@ -1121,7 +1146,7 @@ def edit_data(request):
                                 key=None,
                                 value=value,
                                 state=1,
-                                is_del=0
+                                is_del=0,onlyCode=onlyCode
                             )
                         # endregion
                         # region Extract
@@ -1134,7 +1159,7 @@ def edit_data(request):
                                 value=item_extract.value,
                                 remarks=item_extract.remarks,
                                 state=1 if item_extract.state else 0,
-                                is_del=0, )
+                                is_del=0,onlyCode=onlyCode )
                             )
                         db_CaseApiExtract.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -1150,7 +1175,7 @@ def edit_data(request):
                                 expectedResults=item_validate.expectedResults,
                                 remarks=item_validate.remarks,
                                 state=1 if item_validate.state else 0,
-                                is_del=0, )
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiValidate.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -1167,7 +1192,7 @@ def edit_data(request):
                                 sql=item_preOperation.sql,
                                 remarks=item_preOperation.remarks,
                                 state=1 if item_preOperation.state else 0,
-                                is_del=0)
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiOperation.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -1184,7 +1209,7 @@ def edit_data(request):
                                 sql=item_rearOperation.sql,
                                 remarks=item_rearOperation.remarks,
                                 state=1 if item_rearOperation.state else 0,
-                                is_del=0, )
+                                is_del=0,onlyCode=onlyCode)
                             )
                         db_CaseApiOperation.objects.bulk_create(product_list_to_insert)
                         # endregion
@@ -1228,13 +1253,14 @@ def delete_data(request):
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         # region 历史恢复
                         db_ApiCaseHistory.objects.create(
-                            pid_id=obj_db_ApiTimingTaskTestSet[0].pid_id,
-                            page_id=obj_db_ApiTimingTaskTestSet[0].page_id,
-                            fun_id=obj_db_ApiTimingTaskTestSet[0].fun_id,
+                            pid_id=obj_db_CaseBaseData[0].pid_id,
+                            page_id=obj_db_CaseBaseData[0].page_id,
+                            fun_id=obj_db_CaseBaseData[0].fun_id,
                             case_id=caseId,
-                            caseName=obj_db_ApiTimingTaskTestSet[0].caseName,
+                            caseName=obj_db_CaseBaseData[0].caseName,
                             onlyCode=onlyCode,
                             operationType='Delete',
+                            uid_id=userId
                         )
                         # endregion
                         # region 删除关联信息
@@ -1261,8 +1287,10 @@ def delete_data(request):
                             db_CaseApiOperation.objects.filter(is_del=0, testSet_id=item_testSet.id).update(
                                 is_del=1, updateTime=cls_Common.get_date_time()
                             )
-                        obj_db_CaseTestSet.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
-                        obj_db_CaseBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                        obj_db_CaseTestSet.update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                        obj_db_CaseBaseData.update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId,onlyCode=onlyCode)
                         db_ApiDynamic.objects.filter(is_del=0, case_id=caseId).update(
                             is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                         # endregion
@@ -1805,4 +1833,198 @@ def copy_case(request):
                 response['statusCode'] = 2000
         else:
             response['errorMsg'] = "当前选择的数据不存在,请刷新后在重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询历史恢复
+def select_history(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        caseId = objData.caseId
+        pageId = objData.pageId
+        funId = objData.funId
+        caseName = objData.caseName
+        operationType = objData.operationType
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_CaseMaintenance', 'select_history', errorMsg)
+    else:
+        if caseId:
+            obj_db_ApiCaseHistory = db_ApiCaseHistory.objects.filter(case_id=caseId).order_by('-createTime')
+        else:
+            obj_db_ApiCaseHistory = db_ApiCaseHistory.objects.filter().order_by('-createTime')
+            if pageId:
+                obj_db_ApiCaseHistory = obj_db_ApiCaseHistory.filter(page_id=pageId).order_by('-createTime')
+            if funId:
+                obj_db_ApiCaseHistory = obj_db_ApiCaseHistory.filter(fun_id=funId).order_by('-createTime')
+            if caseName:
+                obj_db_ApiCaseHistory = obj_db_ApiCaseHistory.filter(
+                    caseName__icontains=caseName).order_by('-createTime')
+            if operationType:
+                obj_db_ApiCaseHistory = obj_db_ApiCaseHistory.filter(
+                    operationType=operationType).order_by('-createTime')
+        select_obj_db_ApiCaseHistory = obj_db_ApiCaseHistory[minSize: maxSize]
+        for i in select_obj_db_ApiCaseHistory:
+            if i.restoreData:
+                restoreData = json.dumps(
+                    ast.literal_eval(i.restoreData),sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+            else:
+                restoreData = None
+            if restoreData:
+                tableItem = [{'restoreData': restoreData}]
+            else:
+                tableItem = []
+            dataList.append({
+                'id': i.id,
+                'pageName': i.page.pageName,
+                'funName': i.fun.funName,
+                'caseName': i.caseName,
+                'operationType': i.operationType,
+                'tableItem': tableItem,
+                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
+            })
+        response['TableData'] = dataList
+        response['Total'] = obj_db_ApiCaseHistory.count()
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
+def restor_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        is_admin = cls_FindTable.get_role_is_admin(roleId)
+        historyId = request.POST['historyId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_CaseMaintenance', 'restor_data', errorMsg)
+    else:
+        obj_db_ApiCaseHistory = db_ApiCaseHistory.objects.filter(id=historyId)
+        if obj_db_ApiCaseHistory.exists():
+            onlyCode = obj_db_ApiCaseHistory[0].onlyCode
+            # 恢复时是管理员或是 当前项目的创建人时才可恢复
+            if is_admin or obj_db_ApiCaseHistory[0].case.cuid == userId:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        obj_db_ProManagement = db_ProManagement.objects.filter(
+                            is_del=0, id=obj_db_ApiCaseHistory[0].pid_id)
+                        if obj_db_ProManagement.exists():
+                            obj_db_PageManagement = db_PageManagement.objects.filter(
+                                is_del=0, id=obj_db_ApiCaseHistory[0].page_id)
+                            if obj_db_PageManagement.exists():
+                                obj_db_FunManagement = db_FunManagement.objects.filter(
+                                    is_del=0, id=obj_db_ApiCaseHistory[0].fun_id)
+                                if obj_db_FunManagement.exists():
+                                    caseId = obj_db_ApiCaseHistory[0].case_id
+                                    restoreData = obj_db_ApiCaseHistory[0].restoreData
+                                    if obj_db_ApiCaseHistory[0].operationType in ["Add", "Edit"]:
+                                        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=caseId)
+                                        if obj_db_CaseBaseData.exists():
+                                            restoreData = ast.literal_eval(restoreData)
+                                            # region 需要删除原附属数据，不会恢复时会出现原数据还在
+                                            db_CaseTestSet.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            db_CaseApiBase.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            db_CaseApiHeaders.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            db_CaseApiParams.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            db_CaseApiBody.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            db_CaseApiExtract.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            db_CaseApiValidate.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            db_CaseApiOperation.objects.filter(
+                                                onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            # endregion
+                                            # region 基础数据
+                                            obj_db_CaseBaseData.update(
+                                                pid_id=restoreData['BasicInfo']['proId'],
+                                                page_id=restoreData['BasicInfo']['pageId'],
+                                                fun_id=restoreData['BasicInfo']['funId'],
+                                                environmentId_id=restoreData['BasicInfo']['environmentId'],
+                                                testType=restoreData['BasicInfo']['testType'],
+                                                label=restoreData['BasicInfo']['labelId'],
+                                                priority=restoreData['BasicInfo']['priorityId'],
+                                                caseName=restoreData['BasicInfo']['caseName'],
+                                                caseState=restoreData['BasicInfo']['caseState'],
+                                                createTime=restoreData['BasicInfo']['createTime'],
+                                                updateTime=restoreData['BasicInfo']['updateTime'],
+                                                cuid=restoreData['BasicInfo']['cuid'],
+                                                uid_id=restoreData['BasicInfo']['uid_id'],
+                                                is_del=0,
+                                                onlyCode=restoreData['onlyCode'],
+                                            )
+                                            # endregion
+                                            obj_db_CaseTestSet = db_CaseTestSet.objects.filter(onlyCode=onlyCode)
+                                            obj_db_CaseTestSet.update(is_del=0)
+                                            for item_testSet in obj_db_CaseTestSet:
+                                                db_CaseApiBase.objects.filter(
+                                                    is_del=1,testSet_id=item_testSet.id,onlyCode=onlyCode).update(
+                                                    is_del=0)
+                                                db_CaseApiHeaders.objects.filter(
+                                                    is_del=1,testSet_id=item_testSet.id,onlyCode=onlyCode).update(
+                                                    is_del=0)
+                                                db_CaseApiParams.objects.filter(
+                                                    is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
+                                                    is_del=0)
+                                                # 用例的FILE文件恢复还没有写
+                                                db_CaseApiBody.objects.filter(
+                                                    is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
+                                                    is_del=0)
+                                                db_CaseApiExtract.objects.filter(
+                                                    is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
+                                                    is_del=0)
+                                                db_CaseApiValidate.objects.filter(
+                                                    is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
+                                                    is_del=0)
+                                                db_CaseApiOperation.objects.filter(
+                                                    is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
+                                                    is_del=0)
+                                        else:
+                                            raise ValueError('此数据原始数据在库中无法查询到!')
+                                    else:
+                                        raise ValueError('使用了未录入的操作类型!')
+                                else:
+                                    raise ValueError(f"当前恢复的数据上级所属功能不存在,恢复失败!")
+                            else:
+                                raise ValueError(f"当前恢复的数据上级所属页面不存在,恢复失败!")
+                        else:
+                            raise ValueError(f"当前恢复的数据上级所属项目不存在,恢复失败!")
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"数据恢复失败:{e}"
+                else:
+                    response['statusCode'] = 2002
+            else:
+                response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
+        else:
+            response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
     return JsonResponse(response)

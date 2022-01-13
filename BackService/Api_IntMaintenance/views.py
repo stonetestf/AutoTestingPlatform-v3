@@ -114,11 +114,11 @@ def select_data(request):
                 passTotal += item.successTotal
                 failTotal += item.failTotal
                 errorTotal += item.errorTotal
-            allTotal = passTotal+failTotal+errorTotal
+            allTotal = passTotal + failTotal + errorTotal
             if allTotal == 0:
                 passRate = 0
             else:
-                passRate = round(passTotal / allTotal * 100,2)
+                passRate = round(passTotal / allTotal * 100, 2)
             # endregion
             if associations == 'My':
                 if associationMy:
@@ -405,12 +405,7 @@ def save_data(request):
             assignedUserId = basicInfo.assignedUserId[1]
         else:
             assignedUserId = userId
-        requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-            apiInfo.request.params,
-            apiInfo.request.body.formData,
-            apiInfo.request.body.raw,
-            apiInfo.request.body.json)
-        historyCode = cls_Common.generate_only_code()
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -425,6 +420,13 @@ def save_data(request):
         else:
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 获取请求参数类型
+                    requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
+                        apiInfo.request.params,
+                        apiInfo.request.body.formData,
+                        apiInfo.request.body.raw,
+                        apiInfo.request.body.json)
+                    # endregion
                     # region 添加操作信息
                     operationInfoId = cls_Logging.record_operation_info(
                         'API', 'Manual', 3, 'Add',
@@ -443,7 +445,7 @@ def save_data(request):
                         requestUrlRadio=apiInfo.requestUrlRadio,
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
-                        uid_id=userId, cuid=userId, assignedToUser=assignedUserId, is_del=0,
+                        uid_id=userId, cuid=userId, assignedToUser=assignedUserId, is_del=0, onlyCode=onlyCode,
                     )
                     # 接口关联用户
                     product_list_to_insert = list()
@@ -452,11 +454,20 @@ def save_data(request):
                             apiId_id=save_db_ApiBaseData.id,
                             opertateInfo_id=operationInfoId,
                             uid_id=item_userId[1],
-                            is_del=0)
+                            is_del=0,
+                            onlyCode=onlyCode)
                         )
                     db_ApiAssociatedUser.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region 添加历史恢复
+                    restoreData = responseData
+                    restoreData['BasicInfo']['updateTime'] = save_db_ApiBaseData.updateTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['createTime'] = save_db_ApiBaseData.createTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['uid_id'] = save_db_ApiBaseData.uid_id
+                    restoreData['BasicInfo']['cuid'] = save_db_ApiBaseData.cuid
+                    restoreData['onlyCode'] = onlyCode
                     db_ApiHistory.objects.create(
                         pid_id=basicInfo.proId,
                         page_id=basicInfo.pageId,
@@ -464,9 +475,8 @@ def save_data(request):
                         api_id=save_db_ApiBaseData.id,
                         apiName=basicInfo.apiName,
                         operationType='Add',
-                        restoreData=None,
-                        textInfo=None,
-                        onlyCode=historyCode,
+                        restoreData=restoreData,
+                        onlyCode=onlyCode,
                     )
                     # endregion
                     # region Headers
@@ -480,7 +490,7 @@ def save_data(request):
                             remarks=item_headers.remarks,
                             state=1 if item_headers.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiHeaders.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -495,7 +505,7 @@ def save_data(request):
                             remarks=item_params.remarks,
                             state=1 if item_params.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiParams.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -551,7 +561,7 @@ def save_data(request):
                                 remarks=item_body.remarks,
                                 state=1 if item_body.state else 0,
                                 is_del=0,
-                                historyCode=historyCode)
+                                onlyCode=onlyCode)
                             )
                         db_ApiBody.objects.bulk_create(product_list_to_insert)
                     elif apiInfo.request.body.requestSaveType in ['raw', 'json']:
@@ -568,7 +578,7 @@ def save_data(request):
                             value=value,
                             state=1,
                             is_del=0,
-                            historyCode=historyCode
+                            onlyCode=onlyCode
                         )
                     # file 之后在做
                     # endregion
@@ -583,7 +593,7 @@ def save_data(request):
                             remarks=item_extract.remarks,
                             state=1 if item_extract.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiExtract.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -600,7 +610,7 @@ def save_data(request):
                             remarks=item_validate.remarks,
                             state=1 if item_validate.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiValidate.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -618,7 +628,7 @@ def save_data(request):
                             remarks=item_preOperation.remarks,
                             state=1 if item_preOperation.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -636,13 +646,13 @@ def save_data(request):
                             remarks=item_rearOperation.remarks,
                             state=1 if item_rearOperation.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region 创建被关联用户的新增提醒
                     obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(
-                        is_del=0, apiId_id=save_db_ApiBaseData.id, historyCode=historyCode)
+                        is_del=0, apiId_id=save_db_ApiBaseData.id, onlyCode=onlyCode)
                     for item_associatedUser in obj_db_ApiAssociatedUser:
                         cls_Logging.push_to_user(operationInfoId, item_associatedUser.uid_id)
                     # endregion
@@ -669,7 +679,7 @@ def edit_data(request):
             assignedUserId = basicInfo.assignedUserId[1]
         else:
             assignedUserId = userId
-        historyCode = cls_Common.generate_only_code()
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -680,8 +690,8 @@ def edit_data(request):
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     requestParamsType = cls_RequstOperation.for_data_get_requset_params_type(
-                        apiInfo.request.params,apiInfo.request.body.formData,
-                        apiInfo.request.body.raw,apiInfo.request.body.json)
+                        apiInfo.request.params, apiInfo.request.body.formData,
+                        apiInfo.request.body.raw, apiInfo.request.body.json)
                     # region 添加操作信息
                     # region 查询以前的数据
                     headers = []
@@ -881,7 +891,7 @@ def edit_data(request):
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
                         uid_id=userId, assignedToUser=assignedUserId,
-                        is_del=0, updateTime=cls_Common.get_date_time()
+                        is_del=0, updateTime=cls_Common.get_date_time(),onlyCode=onlyCode
                     )
                     product_list_to_insert = list()
                     for item_userId in basicInfo.pushTo:
@@ -890,12 +900,20 @@ def edit_data(request):
                             opertateInfo_id=operationInfoId,
                             uid_id=item_userId[1],
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiAssociatedUser.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region 添加历史恢复
                     apiEditDfif = cls_RequstOperation.api_edit_dfif(oldData, responseData)
+                    restoreData = responseData
+                    restoreData['BasicInfo']['updateTime'] = obj_db_ApiBaseData[0].updateTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['createTime'] = obj_db_ApiBaseData[0].createTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['BasicInfo']['uid_id'] = obj_db_ApiBaseData[0].uid_id
+                    restoreData['BasicInfo']['cuid'] = obj_db_ApiBaseData[0].cuid
+                    restoreData['onlyCode'] = onlyCode
                     db_ApiHistory.objects.create(
                         pid_id=basicInfo.proId,
                         page_id=basicInfo.pageId,
@@ -903,9 +921,9 @@ def edit_data(request):
                         api_id=basicInfo.apiId,
                         apiName=oldData['BasicInfo']['apiName'],
                         operationType='Edit',
-                        restoreData=oldData,
+                        restoreData=restoreData,
                         textInfo=apiEditDfif,
-                        onlyCode=historyCode,
+                        onlyCode=onlyCode,
                     )
                     # endregion
                     # region Headers
@@ -919,7 +937,7 @@ def edit_data(request):
                             remarks=item_headers.remarks,
                             state=1 if item_headers.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiHeaders.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -934,7 +952,7 @@ def edit_data(request):
                             remarks=item_params.remarks,
                             state=1 if item_params.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiParams.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -994,7 +1012,7 @@ def edit_data(request):
                                 remarks=item_body.remarks,
                                 state=1 if item_body.state else 0,
                                 is_del=0,
-                                historyCode=historyCode)
+                                onlyCode=onlyCode)
                             )
                         db_ApiBody.objects.bulk_create(product_list_to_insert)
                     elif apiInfo.request.body.requestSaveType in ['raw', 'json']:
@@ -1014,7 +1032,7 @@ def edit_data(request):
                             value=value,
                             state=1,
                             is_del=0,
-                            historyCode=historyCode
+                            onlyCode=onlyCode
                         )
                     # endregion
                     # region Extract
@@ -1028,7 +1046,7 @@ def edit_data(request):
                             remarks=item_extract.remarks,
                             state=1 if item_extract.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiExtract.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -1045,7 +1063,7 @@ def edit_data(request):
                             remarks=item_validate.remarks,
                             state=1 if item_validate.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiValidate.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -1063,7 +1081,7 @@ def edit_data(request):
                             remarks=item_preOperation.remarks,
                             state=1 if item_preOperation.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -1081,7 +1099,7 @@ def edit_data(request):
                             remarks=item_rearOperation.remarks,
                             state=1 if item_rearOperation.state else 0,
                             is_del=0,
-                            historyCode=historyCode)
+                            onlyCode=onlyCode)
                         )
                     db_ApiOperation.objects.bulk_create(product_list_to_insert)
                     # endregion
@@ -1134,7 +1152,7 @@ def delete_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         apiId = request.POST['apiId']
-        historyCode = cls_Common.generate_only_code()
+        onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -1159,39 +1177,41 @@ def delete_data(request):
                             api_id=apiId,
                             apiName=obj_db_ApiBaseData[0].apiName,
                             operationType='Delete',
-                            restoreData=None,
-                            onlyCode=historyCode,
+                            onlyCode=onlyCode,
                         )
                         # endregion
                         # region 删除关联信息
-                        obj_db_ApiBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
+                        obj_db_ApiBaseData.update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                         db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=apiId).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                            is_del=1, updateTime=cls_Common.get_date_time())
                         db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                            is_del=1, updateTime=cls_Common.get_date_time())
                         db_ApiParams.objects.filter(is_del=0, apiId_id=apiId).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                            is_del=1, updateTime=cls_Common.get_date_time())
                         db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                            is_del=1, updateTime=cls_Common.get_date_time())
                         db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                            is_del=1, updateTime=cls_Common.get_date_time())
                         db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                            is_del=1, updateTime=cls_Common.get_date_time())
                         db_ApiOperation.objects.filter(is_del=0, apiId_id=apiId).update(
-                            is_del=1, updateTime=cls_Common.get_date_time(), historyCode=historyCode)
+                            is_del=1, updateTime=cls_Common.get_date_time())
                         # endregion
                         # region 移动File文件到历史目录中
                         sourcePath = f"{settings.APIFILE_PATH}{apiId}"
                         targetPath = f"{settings.BAKDATA_PATH}ApiFile/{apiId}"
-                        newFolder = cls_FileOperations.new_folder(targetPath)
-                        if newFolder['state']:
-                            copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
-                            if copy_dir['state']:
-                                cls_FileOperations.delete_folder(sourcePath)
+                        is_folder = cls_FileOperations.is_folder(sourcePath)
+                        if is_folder:
+                            newFolder = cls_FileOperations.new_folder(targetPath)
+                            if newFolder['state']:
+                                copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
+                                if copy_dir['state']:
+                                    cls_FileOperations.delete_folder(sourcePath)
+                                else:
+                                    raise FileExistsError(copy_dir['errorMsg'])
                             else:
-                                raise FileExistsError(copy_dir['errorMsg'])
-                        else:
-                            raise FileExistsError(newFolder['errorMsg'])
+                                raise FileExistsError(newFolder['errorMsg'])
                         # endregion
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
@@ -1736,7 +1756,7 @@ def select_history(request):
             else:
                 restoreData = None
             if restoreData:
-                tableItem = [{'restoreData': restoreData,'textInfo':i.textInfo}]
+                tableItem = [{'restoreData': restoreData, 'textInfo': i.textInfo}]
             else:
                 tableItem = []
             dataList.append({
@@ -1772,10 +1792,9 @@ def restor_data(request):
     else:
         obj_db_ApiHistory = db_ApiHistory.objects.filter(id=historyId)
         if obj_db_ApiHistory.exists():
-            historyCode = obj_db_ApiHistory[0].onlyCode
+            onlyCode = obj_db_ApiHistory[0].onlyCode
             # 恢复时是管理员或是 当前项目的创建人时才可恢复
             if is_admin or obj_db_ApiHistory[0].api.cuid == userId:
-            # if is_admin or obj_db_ApiHistory[0].pid.cuid == userId:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=obj_db_ApiHistory[0].pid_id)
@@ -1788,262 +1807,103 @@ def restor_data(request):
                                 if obj_db_FunManagement.exists():
                                     apiId = obj_db_ApiHistory[0].api_id
                                     restoreData = obj_db_ApiHistory[0].restoreData
-                                    if obj_db_ApiHistory[0].operationType == "Edit":
-                                        # 编辑的恢复 历史ID不起作用因为用json格式恢复的
-                                        restoreData = ast.literal_eval(restoreData)
-                                        # region 操作记录
-                                        operationInfoId = cls_Logging.record_operation_info(
-                                            'API', 'Manual', 3, 'Edit',
-                                            cls_FindTable.get_pro_name(obj_db_ApiHistory[0].pid_id),
-                                            cls_FindTable.get_page_name(obj_db_ApiHistory[0].page_id),
-                                            cls_FindTable.get_fun_name(obj_db_ApiHistory[0].fun_id),
-                                            userId,
-                                            f'【恢复接口】 ID:{obj_db_ApiHistory[0].api_id}:'
-                                            f'{obj_db_ApiHistory[0].apiName}',
-                                        )
-                                        # endregion
-                                        # region 基本数据
-                                        if restoreData['apiInfo']['request']['params']:
-                                            requestParamsType = 'Params'
-                                        else:
-                                            requestParamsType = 'Body'
-                                        requestSaveType = restoreData['apiInfo']['request']['body']['requestSaveType']
-                                        db_ApiBaseData.objects.filter(id=apiId).update(
-                                            pid_id=restoreData['basicInfo']['proId'],
-                                            page_id=restoreData['basicInfo']['pageId'],
-                                            fun_id=restoreData['basicInfo']['funId'],
-                                            apiName=restoreData['basicInfo']['apiName'],
-                                            environment_id=restoreData['basicInfo']['environmentId'],
-                                            apiState=restoreData['basicInfo']['apiState'],
-                                            requestType=restoreData['apiInfo']['requestType'],
-                                            requestUrl=restoreData['apiInfo']['requestUrl'],
-                                            requestParamsType='Body' if requestSaveType == 'none' else requestParamsType,
-                                            bodyRequestSaveType=requestSaveType,
-                                            uid_id=userId, cuid=restoreData['cuid'], is_del=0,
-                                            updateTime=cls_Common.get_date_time()
-                                        )
-                                        # 添加关联to
-                                        product_list_to_insert = list()
-                                        for item_userId in restoreData['basicInfo']['pushTo']:
-                                            product_list_to_insert.append(db_ApiAssociatedUser(
-                                                apiId_id=apiId,
-                                                opertateInfo_id=operationInfoId,
-                                                uid_id=item_userId,
-                                                is_del=0)
-                                            )
-                                        db_ApiAssociatedUser.objects.bulk_create(product_list_to_insert)
-                                        # endregion
-                                        # region Headers
-                                        db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId).update(
-                                            is_del=1, updateTime=cls_Common.get_date_time()
-                                        )
-                                        product_list_to_insert = list()
-                                        for item_headers in restoreData['apiInfo']['request']['headers']:
-                                            product_list_to_insert.append(db_ApiHeaders(
-                                                apiId_id=apiId,
-                                                index=item_headers['index'],
-                                                key=item_headers['key'],
-                                                value=item_headers['value'],
-                                                remarks=item_headers['remarks'],
-                                                state=1 if item_headers['state'] else 0,
-                                                is_del=0,
-                                                historyCode=historyCode)
-                                            )
-                                        db_ApiHeaders.objects.bulk_create(product_list_to_insert)
-                                        # endregion
-                                        # region Params
-                                        db_ApiParams.objects.filter(is_del=0, apiId_id=apiId).update(
-                                            is_del=1, updateTime=cls_Common.get_date_time()
-                                        )
-                                        product_list_to_insert = list()
-                                        for item_params in restoreData['apiInfo']['request']['params']:
-                                            product_list_to_insert.append(db_ApiParams(
-                                                apiId_id=apiId,
-                                                index=item_params['index'],
-                                                key=item_params['key'],
-                                                value=item_params['value'],
-                                                remarks=item_params['remarks'],
-                                                state=1 if item_params['state'] else 0,
-                                                is_del=0,
-                                                historyCode=historyCode)
-                                            )
-                                        db_ApiParams.objects.bulk_create(product_list_to_insert)
-                                        # endregion
-                                        # region Body
-                                        db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).update(
-                                            is_del=1, updateTime=cls_Common.get_date_time()
-                                        )
-                                        if requestSaveType == 'form-data':
-                                            product_list_to_insert = list()
-                                            for item_body in restoreData['apiInfo']['request']['body']['bodyData']:
-                                                product_list_to_insert.append(db_ApiBody(
-                                                    apiId_id=apiId,
-                                                    index=item_body['index'],
-                                                    key=item_body['key'],
-                                                    value=item_body['value'],
-                                                    remarks=item_body['remarks'],
-                                                    state=1 if item_body['state'] else 0,
-                                                    is_del=0, historyCode=historyCode)
-                                                )
-                                            db_ApiBody.objects.bulk_create(product_list_to_insert)
-                                        elif requestSaveType == 'raw':
-                                            db_ApiBody.objects.create(
-                                                apiId_id=apiId,
-                                                index=0,
-                                                key=None,
-                                                value=restoreData['apiInfo']['request']['body']['bodyData'],
-                                                state=1,
-                                                is_del=0, historyCode=historyCode
-                                            )
-                                        # file 之后在做
-                                        # endregion
-                                        # region Extract
-                                        db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId).update(
-                                            is_del=1, updateTime=cls_Common.get_date_time()
-                                        )
-                                        product_list_to_insert = list()
-                                        for item_extract in restoreData['apiInfo']['request']['extract']:
-                                            product_list_to_insert.append(db_ApiExtract(
-                                                apiId_id=apiId,
-                                                index=item_extract['index'],
-                                                key=item_extract['key'],
-                                                value=item_extract['value'],
-                                                remarks=item_extract['remarks'],
-                                                state=1 if item_extract['state'] else 0,
-                                                is_del=0, historyCode=historyCode)
-                                            )
-                                        db_ApiExtract.objects.bulk_create(product_list_to_insert)
-                                        # endregion
-                                        # region Validate
-                                        db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId).update(
-                                            is_del=1, updateTime=cls_Common.get_date_time()
-                                        )
-                                        product_list_to_insert = list()
-                                        for item_validate in restoreData['apiInfo']['request']['validate']:
-                                            product_list_to_insert.append(db_ApiValidate(
-                                                apiId_id=apiId,
-                                                index=item_validate['index'],
-                                                checkName=item_validate['checkName'],
-                                                validateType=item_validate['validateType'],
-                                                valueType=item_validate['valueType'],
-                                                expectedResults=item_validate['expectedResults'],
-                                                remarks=item_validate['remarks'],
-                                                state=1 if item_validate['state'] else 0,
-                                                is_del=0, historyCode=historyCode)
-                                            )
-                                        db_ApiValidate.objects.bulk_create(product_list_to_insert)
-                                        # endregion
-                                        # region 前置
-                                        db_ApiOperation.objects.filter(is_del=0, apiId_id=apiId).update(
-                                            is_del=1, updateTime=cls_Common.get_date_time()
-                                        )
-                                        product_list_to_insert = list()
-                                        for item_preOperation in restoreData['apiInfo']['request']['preOperation']:
-                                            product_list_to_insert.append(db_ApiOperation(
-                                                apiId_id=apiId,
-                                                index=item_preOperation['index'],
-                                                location='Pre',
-                                                operationType=item_preOperation['operationType'],
-                                                methodsName=item_preOperation['methodsName'],
-                                                dataBaseId=item_preOperation['dataBase'],
-                                                sql=item_preOperation['sql'],
-                                                remarks=item_preOperation['remarks'],
-                                                state=1 if item_preOperation['state'] else 0,
-                                                is_del=0, historyCode=historyCode)
-                                            )
-                                        db_ApiOperation.objects.bulk_create(product_list_to_insert)
-                                        # endregion
-                                        # region 后置
-                                        product_list_to_insert = list()
-                                        for item_rearOperation in restoreData['apiInfo']['request']['rearOperation']:
-                                            product_list_to_insert.append(db_ApiOperation(
-                                                apiId_id=apiId,
-                                                index=item_rearOperation['index'],
-                                                location='Rear',
-                                                operationType=item_rearOperation['operationType'],
-                                                methodsName=item_rearOperation['methodsName'],
-                                                dataBaseId=item_rearOperation['dataBase'],
-                                                sql=item_rearOperation['sql'],
-                                                remarks=item_rearOperation['remarks'],
-                                                state=1 if item_rearOperation['state'] else 0,
-                                                is_del=0, historyCode=historyCode)
-                                            )
-                                        db_ApiOperation.objects.bulk_create(product_list_to_insert)
-                                        # endregion
-                                    else:  # Delete
-                                        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(
-                                            id=obj_db_ApiHistory[0].api_id)
+                                    if obj_db_ApiHistory[0].operationType in ["Add", "Edit"]:
+                                        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(id=apiId)
                                         if obj_db_ApiBaseData.exists():
-                                            obj_db_ApiBaseData.update(
-                                                is_del=0, updateTime=cls_Common.get_date_time(), uid_id=userId
-                                            )
-                                            # region 删除关联信息
-                                            db_ApiHeaders.objects.filter(is_del=0, apiId_id=apiId).update(
-                                                is_del=1, updateTime=cls_Common.get_date_time())
-                                            db_ApiParams.objects.filter(is_del=0, apiId_id=apiId).update(
-                                                is_del=1, updateTime=cls_Common.get_date_time())
-                                            db_ApiBody.objects.filter(is_del=0, apiId_id=apiId).update(
-                                                is_del=1, updateTime=cls_Common.get_date_time())
-                                            db_ApiExtract.objects.filter(is_del=0, apiId_id=apiId).update(
-                                                is_del=1, updateTime=cls_Common.get_date_time())
-                                            db_ApiValidate.objects.filter(is_del=0, apiId_id=apiId).update(
-                                                is_del=1, updateTime=cls_Common.get_date_time())
-                                            db_ApiOperation.objects.filter(is_del=0, apiId_id=apiId).update(
-                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            restoreData = ast.literal_eval(restoreData)
+                                            # region 需要删除原附属数据，不会恢复时会出现原数据还在
+                                            db_ApiAssociatedUser.objects.filter(
+                                                apiId_id=apiId,
+                                                onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
+                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                            db_ApiHeaders.objects.filter(
+                                                apiId_id=apiId,
+                                                onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
+                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                            db_ApiParams.objects.filter(
+                                                apiId_id=apiId,
+                                                onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
+                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                            db_ApiBody.objects.filter(
+                                                apiId_id=apiId,
+                                                onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
+                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                            db_ApiExtract.objects.filter(
+                                                apiId_id=apiId,
+                                                onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
+                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                            db_ApiValidate.objects.filter(
+                                                apiId_id=apiId,
+                                                onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
+                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                            db_ApiOperation.objects.filter(
+                                                apiId_id=apiId,
+                                                onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
+                                                is_del=1,updateTime=cls_Common.get_date_time())
                                             # endregion
-                                            # region 恢复数据
-                                            db_ApiAssociatedUser.objects.filter(historyCode=historyCode).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time())
-                                            db_ApiHeaders.objects.filter(historyCode=historyCode).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time())
-                                            db_ApiParams.objects.filter(historyCode=historyCode).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time())
-                                            db_ApiBody.objects.filter(historyCode=historyCode).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time())
-                                            db_ApiExtract.objects.filter(historyCode=historyCode).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time())
-                                            db_ApiValidate.objects.filter(historyCode=historyCode).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time())
-                                            db_ApiOperation.objects.filter(historyCode=historyCode).update(
-                                                is_del=0, updateTime=cls_Common.get_date_time())
-                                            # endregion
-                                            # region 恢复文件数据
-                                            targetPath = f"{settings.APIFILE_PATH}{apiId}"
-                                            sourcePath = f"{settings.BAKDATA_PATH}ApiFile/{apiId}"
-                                            # 判断有没有此接口数据的文件根包
-                                            isFolder = cls_FileOperations.is_folder(sourcePath)
-                                            if isFolder:
-                                                newFolder = cls_FileOperations.new_folder(targetPath)
-                                                if newFolder['state']:
-                                                    copy_dir = cls_FileOperations.copy_dir(sourcePath, targetPath)
-                                                    if copy_dir['state']:
-                                                        cls_FileOperations.delete_folder(sourcePath)
-                                                    else:
-                                                        raise FileExistsError(copy_dir['errorMsg'])
-                                                else:
-                                                    raise FileExistsError(newFolder['errorMsg'])
+                                            # region 基本数据
+                                            if restoreData['ApiInfo']['request']['params']:
+                                                requestParamsType = 'Params'
                                             else:
-                                                pass
-                                            # endregion
-                                            # region 操作记录
-                                            cls_Logging.record_operation_info(
-                                                'API', 'Manual', 3, 'Update',
-                                                cls_FindTable.get_pro_name(obj_db_ApiHistory[0].pid_id),
-                                                cls_FindTable.get_page_name(obj_db_ApiHistory[0].page_id),
-                                                cls_FindTable.get_fun_name(obj_db_ApiHistory[0].fun_id),
-                                                userId,
-                                                f'【恢复接口】 ID:{obj_db_ApiHistory[0].api_id}:'
-                                                f'{obj_db_ApiHistory[0].apiName}',
+                                                requestParamsType = 'Body'
+                                            requestSaveType = restoreData['ApiInfo']['request']['body'][
+                                                'requestSaveType']
+                                            obj_db_ApiBaseData.update(
+                                                pid_id=restoreData['BasicInfo']['proId'],
+                                                page_id=restoreData['BasicInfo']['pageId'],
+                                                fun_id=restoreData['BasicInfo']['funId'],
+                                                apiName=restoreData['BasicInfo']['apiName'],
+                                                environment_id=restoreData['BasicInfo']['environmentId'],
+                                                apiState=restoreData['BasicInfo']['apiState'],
+                                                requestType=restoreData['ApiInfo']['requestType'],
+                                                requestUrl=restoreData['ApiInfo']['requestUrl'],
+                                                requestParamsType='Body' if requestSaveType == 'none' else requestParamsType,
+                                                bodyRequestSaveType=requestSaveType,
+                                                updateTime=restoreData['BasicInfo']['updateTime'],
+                                                createTime=restoreData['BasicInfo']['createTime'],
+                                                uid_id=restoreData['BasicInfo']['uid_id'],
+                                                cuid=restoreData['BasicInfo']['cuid'],
+                                                is_del=0,
+                                                onlyCode=restoreData['onlyCode'],
                                             )
+                                            # 添加关联to
+                                            db_ApiAssociatedUser.objects.filter(
+                                                apiId_id=apiId, onlyCode=onlyCode, is_del=1).update(is_del=0)
+                                            # endregion
+                                            # region Headers
+                                            db_ApiHeaders.objects.filter(
+                                                is_del=1, onlyCode=onlyCode, apiId_id=apiId).update(is_del=0)
+                                            # endregion
+                                            # region Params
+                                            db_ApiParams.objects.filter(
+                                                is_del=1, onlyCode=onlyCode, apiId_id=apiId).update(is_del=0)
+                                            # endregion
+                                            # region Body 还有File没写，现在不想写
+                                            db_ApiBody.objects.filter(
+                                                is_del=1, onlyCode=onlyCode, apiId_id=apiId).update(is_del=0)
+                                            # endregion
+                                            # region Extract
+                                            db_ApiExtract.objects.filter(
+                                                is_del=1, onlyCode=onlyCode, apiId_id=apiId).update(is_del=0)
+                                            # endregion
+                                            # region Validate
+                                            db_ApiValidate.objects.filter(
+                                                is_del=1, onlyCode=onlyCode, apiId_id=apiId).update(is_del=0)
+                                            # endregion
+                                            # region 前后置
+                                            db_ApiOperation.objects.filter(
+                                                is_del=1, onlyCode=onlyCode, apiId_id=apiId).update(is_del=0)
                                             # endregion
                                         else:
-                                            response['errorMsg'] = "未找到当前可恢复的数据!"
+                                            raise ValueError('此数据原始数据在库中无法查询到!')
+                                    else:
+                                        raise ValueError('使用了未录入的操作类型!')
                                 else:
-                                    response['errorMsg'] = f"当前恢复的数据上级所属功能不存在,恢复失败!"
+                                    raise ValueError(f"当前恢复的数据上级所属功能不存在,恢复失败!")
                             else:
-                                response['errorMsg'] = f"当前恢复的数据上级所属页面不存在,恢复失败!"
+                                raise ValueError(f"当前恢复的数据上级所属页面不存在,恢复失败!")
                         else:
-                            response['errorMsg'] = f"当前恢复的数据上级所属项目不存在,恢复失败!"
+                            raise ValueError(f"当前恢复的数据上级所属项目不存在,恢复失败!")
                 except BaseException as e:  # 自动回滚，不需要任何操作
                     response['errorMsg'] = f"数据恢复失败:{e}"
                 else:
