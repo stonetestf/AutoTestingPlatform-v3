@@ -18,6 +18,7 @@ class ApiTestReport(models.Model):  # 一级主报告列表
     apiTotal = models.IntegerField("统计总需要执行的接口数量", null=False)
     reportStatus = models.CharField("测试报告状态(Pass,Fail,Error)", max_length=10, null=False)
     runningTime = models.FloatField("运行总时间", null=True)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)

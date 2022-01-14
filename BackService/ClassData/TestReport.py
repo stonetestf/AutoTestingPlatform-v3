@@ -223,7 +223,7 @@ class ApiReport(cls_Logging):
         """
         db_ApiQueue.objects.filter(id=queueId).update(queueStatus=queueStatus, uid_id=userId)
 
-    # 测试报告-返回顶部数据
+    # 测试报告-返回顶部详细数据
     def get_report_top_data(self, testReportId):
         results = {
             'errorMsg': '',
@@ -327,217 +327,217 @@ class ApiReport(cls_Logging):
             results['errorMsg'] = "当前选择测试报告不存在,请刷新后在重新尝试!"
         return results
 
-    # 测试报告-返回一级列表数据
-    def get_report_first_list(self, testReportId):
-        # 根据报告的类型 展示第1层列表是 接口 用例 定时任务 批量任务
-        results = {}
-        firstList = []
-        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(id=testReportId)
-        if obj_db_ApiTestReport.exists():
-            reportType = obj_db_ApiTestReport[0].reportType
-            if reportType == "API" or reportType == "CASE":
-                obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId)
-                for i in obj_db_ApiReportItem:
-                    passTotal = i.successTotal
-                    failTotal = i.failTotal
-                    errorTotal = i.errorTotal
-                    if passTotal + failTotal + errorTotal == 0:
-                        reportStatus = 'Error'
-                    elif errorTotal >= 1:
-                        reportStatus = 'Error'
-                    elif failTotal >= 1:
-                        reportStatus = 'Fail'
-                    else:
-                        reportStatus = 'Pass'
-
-                    firstList.append({
-                        'id': i.id,
-                        'name': i.apiName,
-                        'reportStatus': reportStatus,
-                    })
-            elif reportType == "TASK":
-                obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
-                    is_del=0, testReport_id=testReportId).order_by('updateTime')
-                # 先筛选出当前报告的用例ID列表
-                caseList = [i.case_id for i in obj_db_ApiReportItem]
-                setCaseList = list(set(caseList))
-                setCaseList.sort(key=caseList.index)
-                for item_caseId in setCaseList:
-                    select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
-                    passTotal = 0
-                    failTotal = 0
-                    errorTotal = 0
-                    for i in select_db_ApiReportItem:
-                        passTotal += i.successTotal
-                        failTotal += i.failTotal
-                        errorTotal += i.errorTotal
-                    if passTotal + failTotal + errorTotal == 0:
-                        reportStatus = 'Error'
-                    elif errorTotal >= 1:
-                        reportStatus = 'Error'
-                    elif failTotal >= 1:
-                        reportStatus = 'Fail'
-                    else:
-                        reportStatus = 'Pass'
-                    obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_caseId)
-                    if obj_db_CaseBaseData.exists():
-                        caseName = obj_db_CaseBaseData[0].caseName
-                    else:
-                        caseName = ""
-                    firstList.append({
-                        'id': item_caseId,
-                        'name': caseName,
-                        'reportStatus': reportStatus,
-                    })
-            else:
-                obj_db_ApiReportTaskItem = db_ApiReportTaskItem.objects.filter(
-                    is_del=0, testReport_id=testReportId).order_by('updateTime')
-                for item_reportTaskItem in obj_db_ApiReportTaskItem:
-                    obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
-                        is_del=0, testReport_id=testReportId, batchItem_id=item_reportTaskItem.id).order_by(
-                        'updateTime')
-                    # 先筛选出当前报告的用例ID列表
-                    caseList = [i.case_id for i in obj_db_ApiReportItem]
-                    setCaseList = list(set(caseList))
-                    setCaseList.sort(key=caseList.index)
-                    reportItemList = []
-                    for item_caseId in setCaseList:
-                        select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
-                        passTotal = 0
-                        failTotal = 0
-                        errorTotal = 0
-                        for i in select_db_ApiReportItem:
-                            passTotal += i.successTotal
-                            failTotal += i.failTotal
-                            errorTotal += i.errorTotal
-                        if passTotal + failTotal + errorTotal == 0:
-                            reportItemList.append('Error')
-                        elif errorTotal >= 1:
-                            reportItemList.append('Error')
-                        elif failTotal >= 1:
-                            reportItemList.append('Fail')
-                        else:
-                            reportItemList.append('Pass')
-                    if 'Error' in reportItemList:
-                        reportStatus = 'Error'
-                    elif 'Fail' in reportItemList:
-                        reportStatus = 'Fail'
-                    else:
-                        reportStatus = 'Pass'
-                    firstList.append({
-                        'id': item_reportTaskItem.id,
-                        'name': item_reportTaskItem.taskName,
-                        'reportStatus': reportStatus,
-                    })
-            results['state'] = True
-            results['firstList'] = firstList
-        else:
-            results['state'] = False
-            results['errorMsg'] = "当前选择的报告数据缺失!"
-        return results
-
-    def get_report_api(self, reportItemId):
-        results = {}
-        obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, id=reportItemId)
-        if obj_db_ApiReportItem.exists():
-            obj_db_ApiReport = db_ApiReport.objects.filter(is_del=0, reportItem_id=obj_db_ApiReportItem[0].id)
-            if obj_db_ApiReport.exists():
-                general = []  # 基本信息
-                requestHeaders = []
-                requestData = []
-                operationData = []  # 包含前置和后置
-                # region 保存基本信息
-                general.append({'key': 'Request URL:', 'value': obj_db_ApiReport[0].requestUrl})
-                general.append({'key': 'Request Type:', 'value': obj_db_ApiReport[0].requestType})
-                general.append({'key': 'Status Code:', 'value': obj_db_ApiReport[0].statusCode})
-                # endregion
-                # region 保存请求头
-                ret_requestHeaders = ast.literal_eval(obj_db_ApiReport[0].requestHeaders)
-                for item_header in ret_requestHeaders:
-                    requestHeaders.append({'key': item_header, 'value': ret_requestHeaders[item_header]})
-                # endregion
-                # region 反回求头
-                if obj_db_ApiReport[0].responseHeaders:
-                    responseHeaders = ast.literal_eval(obj_db_ApiReport[0].responseHeaders)
-                else:
-                    responseHeaders = []
-                # endregion
-                # region 保存请求主体
-                ret_requestData = ast.literal_eval(obj_db_ApiReport[0].requestData)
-                for item_body in ret_requestData:
-                    requestData.append({'key': item_body, 'value': ret_requestData[item_body]})
-                # endregion
-                # region 返回主体信息
-                try:
-                    ret_responseInfo = eval(obj_db_ApiReport[0].responseInfo)
-                    responseInfo = json.dumps(ret_responseInfo, indent=4, separators=(',', ':'), ensure_ascii=False)
-                except BaseException as e:
-                    responseInfo = obj_db_ApiReport[0].responseInfo
-                # endregion
-                # region  提取
-                if obj_db_ApiReport[0].requestExtract:
-                    extract = ast.literal_eval(obj_db_ApiReport[0].requestExtract)
-                else:
-                    extract = []
-                # endregion
-                # region 断言
-                if obj_db_ApiReport[0].responseValidate:
-                    validateResults = ast.literal_eval(obj_db_ApiReport[0].responseValidate)  # 断言结果
-                else:
-                    validateResults = []
-                # endregion
-                # region 前后置操作
-                if obj_db_ApiReport[0].preOperationInfo:
-                    preOperationInfo = ast.literal_eval(obj_db_ApiReport[0].preOperationInfo)
-                else:
-                    preOperationInfo = []
-
-                if obj_db_ApiReport[0].rearOperationInfo:
-                    rearOperationInfo = ast.literal_eval(obj_db_ApiReport[0].rearOperationInfo)
-                else:
-                    rearOperationInfo = []
-
-                for item_pre in preOperationInfo:
-                    operationData.append({
-                        'operatingPosition': 'Pre',
-                        'operationType': item_pre['operationType'],
-                        'callName': item_pre['callName'],
-                        'callResults': item_pre['callResults'],
-                        'resultsState': item_pre['resultsState']
-                    })
-                for item_rear in rearOperationInfo:
-                    operationData.append({
-                        'operatingPosition': 'Rear',
-                        'operationType': item_rear['operationType'],
-                        'callName': item_rear['callName'],
-                        'callResults': item_rear['callResults'],
-                        'resultsState': item_rear['resultsState']
-                    })
-                # endregion
-                # region 错误信息
-                if obj_db_ApiReport[0].errorInfo:
-                    errorTableData = ast.literal_eval(obj_db_ApiReport[0].errorInfo)
-                else:
-                    errorTableData = []
-                # endregion
-                dataDict = {
-                    'general': general,
-                    'requestHeaders': requestHeaders,
-                    'requestData': requestData,
-                    'responseHeaders': responseHeaders,
-                    'responseInfo': responseInfo,
-                    'extract': extract,
-                    'validateResults': validateResults,
-                    'operationData': operationData,
-                    'errorTableData': errorTableData,
-                }
-                results['state'] = True
-                results['dataDict'] = dataDict
-        else:
-            results['state'] = False
-            results['errorMsg'] = '未找到当前选择的接口数据!'
-
-        return results
+    # # 测试报告-返回一级列表数据
+    # def get_report_first_list(self, testReportId):
+    #     # 根据报告的类型 展示第1层列表是 接口 用例 定时任务 批量任务
+    #     results = {}
+    #     firstList = []
+    #     obj_db_ApiTestReport = db_ApiTestReport.objects.filter(id=testReportId)
+    #     if obj_db_ApiTestReport.exists():
+    #         reportType = obj_db_ApiTestReport[0].reportType
+    #         if reportType == "API" or reportType == "CASE":
+    #             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=testReportId)
+    #             for i in obj_db_ApiReportItem:
+    #                 passTotal = i.successTotal
+    #                 failTotal = i.failTotal
+    #                 errorTotal = i.errorTotal
+    #                 if passTotal + failTotal + errorTotal == 0:
+    #                     reportStatus = 'Error'
+    #                 elif errorTotal >= 1:
+    #                     reportStatus = 'Error'
+    #                 elif failTotal >= 1:
+    #                     reportStatus = 'Fail'
+    #                 else:
+    #                     reportStatus = 'Pass'
+    #
+    #                 firstList.append({
+    #                     'id': i.id,
+    #                     'name': i.apiName,
+    #                     'reportStatus': reportStatus,
+    #                 })
+    #         elif reportType == "TASK":
+    #             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+    #                 is_del=0, testReport_id=testReportId).order_by('updateTime')
+    #             # 先筛选出当前报告的用例ID列表
+    #             caseList = [i.case_id for i in obj_db_ApiReportItem]
+    #             setCaseList = list(set(caseList))
+    #             setCaseList.sort(key=caseList.index)
+    #             for item_caseId in setCaseList:
+    #                 select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
+    #                 passTotal = 0
+    #                 failTotal = 0
+    #                 errorTotal = 0
+    #                 for i in select_db_ApiReportItem:
+    #                     passTotal += i.successTotal
+    #                     failTotal += i.failTotal
+    #                     errorTotal += i.errorTotal
+    #                 if passTotal + failTotal + errorTotal == 0:
+    #                     reportStatus = 'Error'
+    #                 elif errorTotal >= 1:
+    #                     reportStatus = 'Error'
+    #                 elif failTotal >= 1:
+    #                     reportStatus = 'Fail'
+    #                 else:
+    #                     reportStatus = 'Pass'
+    #                 obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_caseId)
+    #                 if obj_db_CaseBaseData.exists():
+    #                     caseName = obj_db_CaseBaseData[0].caseName
+    #                 else:
+    #                     caseName = ""
+    #                 firstList.append({
+    #                     'id': item_caseId,
+    #                     'name': caseName,
+    #                     'reportStatus': reportStatus,
+    #                 })
+    #         else:
+    #             obj_db_ApiReportTaskItem = db_ApiReportTaskItem.objects.filter(
+    #                 is_del=0, testReport_id=testReportId).order_by('updateTime')
+    #             for item_reportTaskItem in obj_db_ApiReportTaskItem:
+    #                 obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+    #                     is_del=0, testReport_id=testReportId, batchItem_id=item_reportTaskItem.id).order_by(
+    #                     'updateTime')
+    #                 # 先筛选出当前报告的用例ID列表
+    #                 caseList = [i.case_id for i in obj_db_ApiReportItem]
+    #                 setCaseList = list(set(caseList))
+    #                 setCaseList.sort(key=caseList.index)
+    #                 reportItemList = []
+    #                 for item_caseId in setCaseList:
+    #                     select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
+    #                     passTotal = 0
+    #                     failTotal = 0
+    #                     errorTotal = 0
+    #                     for i in select_db_ApiReportItem:
+    #                         passTotal += i.successTotal
+    #                         failTotal += i.failTotal
+    #                         errorTotal += i.errorTotal
+    #                     if passTotal + failTotal + errorTotal == 0:
+    #                         reportItemList.append('Error')
+    #                     elif errorTotal >= 1:
+    #                         reportItemList.append('Error')
+    #                     elif failTotal >= 1:
+    #                         reportItemList.append('Fail')
+    #                     else:
+    #                         reportItemList.append('Pass')
+    #                 if 'Error' in reportItemList:
+    #                     reportStatus = 'Error'
+    #                 elif 'Fail' in reportItemList:
+    #                     reportStatus = 'Fail'
+    #                 else:
+    #                     reportStatus = 'Pass'
+    #                 firstList.append({
+    #                     'id': item_reportTaskItem.id,
+    #                     'name': item_reportTaskItem.taskName,
+    #                     'reportStatus': reportStatus,
+    #                 })
+    #         results['state'] = True
+    #         results['firstList'] = firstList
+    #     else:
+    #         results['state'] = False
+    #         results['errorMsg'] = "当前选择的报告数据缺失!"
+    #     return results
+    #
+    # def get_report_api(self, reportItemId):
+    #     results = {}
+    #     obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, id=reportItemId)
+    #     if obj_db_ApiReportItem.exists():
+    #         obj_db_ApiReport = db_ApiReport.objects.filter(is_del=0, reportItem_id=obj_db_ApiReportItem[0].id)
+    #         if obj_db_ApiReport.exists():
+    #             general = []  # 基本信息
+    #             requestHeaders = []
+    #             requestData = []
+    #             operationData = []  # 包含前置和后置
+    #             # region 保存基本信息
+    #             general.append({'key': 'Request URL:', 'value': obj_db_ApiReport[0].requestUrl})
+    #             general.append({'key': 'Request Type:', 'value': obj_db_ApiReport[0].requestType})
+    #             general.append({'key': 'Status Code:', 'value': obj_db_ApiReport[0].statusCode})
+    #             # endregion
+    #             # region 保存请求头
+    #             ret_requestHeaders = ast.literal_eval(obj_db_ApiReport[0].requestHeaders)
+    #             for item_header in ret_requestHeaders:
+    #                 requestHeaders.append({'key': item_header, 'value': ret_requestHeaders[item_header]})
+    #             # endregion
+    #             # region 反回求头
+    #             if obj_db_ApiReport[0].responseHeaders:
+    #                 responseHeaders = ast.literal_eval(obj_db_ApiReport[0].responseHeaders)
+    #             else:
+    #                 responseHeaders = []
+    #             # endregion
+    #             # region 保存请求主体
+    #             ret_requestData = ast.literal_eval(obj_db_ApiReport[0].requestData)
+    #             for item_body in ret_requestData:
+    #                 requestData.append({'key': item_body, 'value': ret_requestData[item_body]})
+    #             # endregion
+    #             # region 返回主体信息
+    #             try:
+    #                 ret_responseInfo = eval(obj_db_ApiReport[0].responseInfo)
+    #                 responseInfo = json.dumps(ret_responseInfo, indent=4, separators=(',', ':'), ensure_ascii=False)
+    #             except BaseException as e:
+    #                 responseInfo = obj_db_ApiReport[0].responseInfo
+    #             # endregion
+    #             # region  提取
+    #             if obj_db_ApiReport[0].requestExtract:
+    #                 extract = ast.literal_eval(obj_db_ApiReport[0].requestExtract)
+    #             else:
+    #                 extract = []
+    #             # endregion
+    #             # region 断言
+    #             if obj_db_ApiReport[0].responseValidate:
+    #                 validateResults = ast.literal_eval(obj_db_ApiReport[0].responseValidate)  # 断言结果
+    #             else:
+    #                 validateResults = []
+    #             # endregion
+    #             # region 前后置操作
+    #             if obj_db_ApiReport[0].preOperationInfo:
+    #                 preOperationInfo = ast.literal_eval(obj_db_ApiReport[0].preOperationInfo)
+    #             else:
+    #                 preOperationInfo = []
+    #
+    #             if obj_db_ApiReport[0].rearOperationInfo:
+    #                 rearOperationInfo = ast.literal_eval(obj_db_ApiReport[0].rearOperationInfo)
+    #             else:
+    #                 rearOperationInfo = []
+    #
+    #             for item_pre in preOperationInfo:
+    #                 operationData.append({
+    #                     'operatingPosition': 'Pre',
+    #                     'operationType': item_pre['operationType'],
+    #                     'callName': item_pre['callName'],
+    #                     'callResults': item_pre['callResults'],
+    #                     'resultsState': item_pre['resultsState']
+    #                 })
+    #             for item_rear in rearOperationInfo:
+    #                 operationData.append({
+    #                     'operatingPosition': 'Rear',
+    #                     'operationType': item_rear['operationType'],
+    #                     'callName': item_rear['callName'],
+    #                     'callResults': item_rear['callResults'],
+    #                     'resultsState': item_rear['resultsState']
+    #                 })
+    #             # endregion
+    #             # region 错误信息
+    #             if obj_db_ApiReport[0].errorInfo:
+    #                 errorTableData = ast.literal_eval(obj_db_ApiReport[0].errorInfo)
+    #             else:
+    #                 errorTableData = []
+    #             # endregion
+    #             dataDict = {
+    #                 'general': general,
+    #                 'requestHeaders': requestHeaders,
+    #                 'requestData': requestData,
+    #                 'responseHeaders': responseHeaders,
+    #                 'responseInfo': responseInfo,
+    #                 'extract': extract,
+    #                 'validateResults': validateResults,
+    #                 'operationData': operationData,
+    #                 'errorTableData': errorTableData,
+    #             }
+    #             results['state'] = True
+    #             results['dataDict'] = dataDict
+    #     else:
+    #         results['state'] = False
+    #         results['errorMsg'] = '未找到当前选择的接口数据!'
+    #
+    #     return results
 
 
 class UiReport(cls_Logging):

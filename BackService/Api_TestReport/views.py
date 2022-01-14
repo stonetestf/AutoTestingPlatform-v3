@@ -123,129 +123,129 @@ def delete_data(request):
     return JsonResponse(response)
 
 
-@cls_Logging.log
-@cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])  # 加载报告数据并返回第1层列表
-def load_report_data(request):
-    response = {}
-    try:
-        responseData = json.loads(json.dumps(request.GET))
-        objData = cls_object_maker(responseData)
-        testReportId = objData.testReportId
-    except BaseException as e:
-        errorMsg = f"入参错误:{e}"
-        response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_data', errorMsg)
-    else:
-        reportTopData = cls_ApiReport.get_report_top_data(testReportId)
-        if reportTopData['state']:
-            reportFirstList = cls_ApiReport.get_report_first_list(testReportId)
-            if reportFirstList['state']:
-                response['topData'] = reportTopData['topData']
-                response['firstList'] = reportFirstList['firstList']
-            else:
-                response['errorMsg'] = reportFirstList['errorMsg']
-        else:
-            response['errorMsg'] = reportTopData['errorMsg']
-        if 'errorMsg' not in response:
-            response['statusCode'] = 2000
-    return JsonResponse(response)
-
-
-@cls_Logging.log
-@cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])  # 点击1层列表加载2层列表
-def load_report_case(request):
-    response = {}
-    secondList = []
-    try:
-        responseData = json.loads(json.dumps(request.GET))
-        objData = cls_object_maker(responseData)
-        reportType = objData.reportType
-        testReportId = objData.testReportId
-        id = objData.id  # 定时任务时:caseId,批量任务时:batchItemId
-    except BaseException as e:
-        errorMsg = f"入参错误:{e}"
-        response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_case', errorMsg)
-    else:
-        if reportType == 'TASK':
-            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
-                is_del=0, testReport_id=testReportId, case_id=id).order_by('updateTime')
-            for i in obj_db_ApiReportItem:
-                passTotal = i.successTotal
-                failTotal = i.failTotal
-                errorTotal = i.errorTotal
-                if passTotal + failTotal + errorTotal == 0:
-                    reportStatus = 'Error'
-                elif errorTotal >= 1:
-                    reportStatus = 'Error'
-                elif failTotal >= 1:
-                    reportStatus = 'Fail'
-                else:
-                    reportStatus = 'Pass'
-                secondList.append({
-                    'id': i.id,
-                    'name': i.apiName,
-                    'reportStatus': reportStatus
-                })
-        else:
-            obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
-                is_del=0, testReport_id=testReportId, batchItem_id=id).order_by('updateTime')
-            # 先筛选出当前报告的用例ID列表
-            caseList = [i.case_id for i in obj_db_ApiReportItem]
-            setCaseList = list(set(caseList))
-            setCaseList.sort(key=caseList.index)
-            for item_caseId in setCaseList:
-                select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
-                passTotal = 0
-                failTotal = 0
-                errorTotal = 0
-                for i in select_db_ApiReportItem:
-                    passTotal += i.successTotal
-                    failTotal += i.failTotal
-                    errorTotal += i.errorTotal
-                if passTotal + failTotal + errorTotal == 0:
-                    reportStatus = 'Error'
-                elif errorTotal >= 1:
-                    reportStatus = 'Error'
-                elif failTotal >= 1:
-                    reportStatus = 'Fail'
-                else:
-                    reportStatus = 'Pass'
-                obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_caseId)
-                if obj_db_CaseBaseData.exists():
-                    caseName = obj_db_CaseBaseData[0].caseName
-                else:
-                    caseName = ""
-                secondList.append({
-                    'id': item_caseId,
-                    'name': caseName,
-                    'reportStatus': reportStatus,
-                })
-        response['secondList'] = secondList
-        response['statusCode'] = 2000
-    return JsonResponse(response)
-
-
-@cls_Logging.log
-@cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])
-def load_report_api(request):
-    response = {}
-    try:
-        responseData = json.loads(json.dumps(request.GET))
-        objData = cls_object_maker(responseData)
-        reportItemId = objData.reportItemId
-    except BaseException as e:
-        errorMsg = f"入参错误:{e}"
-        response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_api', errorMsg)
-    else:
-        getReportApi = cls_ApiReport.get_report_api(reportItemId)
-        if getReportApi['state']:
-            response['statusCode'] = 2000
-            response['TableData'] = getReportApi['dataDict']
-        else:
-            response['errorMsg'] = getReportApi['errorMsg']
-    return JsonResponse(response)
+# @cls_Logging.log
+# @cls_GlobalDer.foo_isToken
+# @require_http_methods(["GET"])  # 加载报告数据并返回第1层列表
+# def load_report_data(request):
+#     response = {}
+#     try:
+#         responseData = json.loads(json.dumps(request.GET))
+#         objData = cls_object_maker(responseData)
+#         testReportId = objData.testReportId
+#     except BaseException as e:
+#         errorMsg = f"入参错误:{e}"
+#         response['errorMsg'] = errorMsg
+#         cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_data', errorMsg)
+#     else:
+#         reportTopData = cls_ApiReport.get_report_top_data(testReportId)
+#         if reportTopData['state']:
+#             reportFirstList = cls_ApiReport.get_report_first_list(testReportId)
+#             if reportFirstList['state']:
+#                 response['topData'] = reportTopData['topData']
+#                 response['firstList'] = reportFirstList['firstList']
+#             else:
+#                 response['errorMsg'] = reportFirstList['errorMsg']
+#         else:
+#             response['errorMsg'] = reportTopData['errorMsg']
+#         if 'errorMsg' not in response:
+#             response['statusCode'] = 2000
+#     return JsonResponse(response)
+#
+#
+# @cls_Logging.log
+# @cls_GlobalDer.foo_isToken
+# @require_http_methods(["GET"])  # 点击1层列表加载2层列表
+# def load_report_case(request):
+#     response = {}
+#     secondList = []
+#     try:
+#         responseData = json.loads(json.dumps(request.GET))
+#         objData = cls_object_maker(responseData)
+#         reportType = objData.reportType
+#         testReportId = objData.testReportId
+#         id = objData.id  # 定时任务时:caseId,批量任务时:batchItemId
+#     except BaseException as e:
+#         errorMsg = f"入参错误:{e}"
+#         response['errorMsg'] = errorMsg
+#         cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_case', errorMsg)
+#     else:
+#         if reportType == 'TASK':
+#             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+#                 is_del=0, testReport_id=testReportId, case_id=id).order_by('updateTime')
+#             for i in obj_db_ApiReportItem:
+#                 passTotal = i.successTotal
+#                 failTotal = i.failTotal
+#                 errorTotal = i.errorTotal
+#                 if passTotal + failTotal + errorTotal == 0:
+#                     reportStatus = 'Error'
+#                 elif errorTotal >= 1:
+#                     reportStatus = 'Error'
+#                 elif failTotal >= 1:
+#                     reportStatus = 'Fail'
+#                 else:
+#                     reportStatus = 'Pass'
+#                 secondList.append({
+#                     'id': i.id,
+#                     'name': i.apiName,
+#                     'reportStatus': reportStatus
+#                 })
+#         else:
+#             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
+#                 is_del=0, testReport_id=testReportId, batchItem_id=id).order_by('updateTime')
+#             # 先筛选出当前报告的用例ID列表
+#             caseList = [i.case_id for i in obj_db_ApiReportItem]
+#             setCaseList = list(set(caseList))
+#             setCaseList.sort(key=caseList.index)
+#             for item_caseId in setCaseList:
+#                 select_db_ApiReportItem = obj_db_ApiReportItem.filter(case_id=item_caseId)
+#                 passTotal = 0
+#                 failTotal = 0
+#                 errorTotal = 0
+#                 for i in select_db_ApiReportItem:
+#                     passTotal += i.successTotal
+#                     failTotal += i.failTotal
+#                     errorTotal += i.errorTotal
+#                 if passTotal + failTotal + errorTotal == 0:
+#                     reportStatus = 'Error'
+#                 elif errorTotal >= 1:
+#                     reportStatus = 'Error'
+#                 elif failTotal >= 1:
+#                     reportStatus = 'Fail'
+#                 else:
+#                     reportStatus = 'Pass'
+#                 obj_db_CaseBaseData = db_CaseBaseData.objects.filter(id=item_caseId)
+#                 if obj_db_CaseBaseData.exists():
+#                     caseName = obj_db_CaseBaseData[0].caseName
+#                 else:
+#                     caseName = ""
+#                 secondList.append({
+#                     'id': item_caseId,
+#                     'name': caseName,
+#                     'reportStatus': reportStatus,
+#                 })
+#         response['secondList'] = secondList
+#         response['statusCode'] = 2000
+#     return JsonResponse(response)
+#
+#
+# @cls_Logging.log
+# @cls_GlobalDer.foo_isToken
+# @require_http_methods(["GET"])
+# def load_report_api(request):
+#     response = {}
+#     try:
+#         responseData = json.loads(json.dumps(request.GET))
+#         objData = cls_object_maker(responseData)
+#         reportItemId = objData.reportItemId
+#     except BaseException as e:
+#         errorMsg = f"入参错误:{e}"
+#         response['errorMsg'] = errorMsg
+#         cls_Logging.record_error_info('API', 'Api_TestReport', 'load_report_api', errorMsg)
+#     else:
+#         getReportApi = cls_ApiReport.get_report_api(reportItemId)
+#         if getReportApi['state']:
+#             response['statusCode'] = 2000
+#             response['TableData'] = getReportApi['dataDict']
+#         else:
+#             response['errorMsg'] = getReportApi['errorMsg']
+#     return JsonResponse(response)
