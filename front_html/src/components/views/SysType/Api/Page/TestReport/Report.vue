@@ -1,11 +1,15 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <div style="">
+            <div
+            v-loading="loading"
+            element-loading-text="拼命加载中"
+            element-loading-spinner="el-icon-loading"
+            element-loading-background="rgba(0, 0, 0, 0.8)">
                 <el-row>
                     <el-col :span="2">
                         <el-menu
-                            default-active="2"
+                            default-active="0"
                             class="MainMenu"
                             @select="handleSelect"
                             @open="handleOpen"
@@ -223,17 +227,50 @@
                                                 v-model="SuiteRomeData.leftRomeData.filterText">
                                             </el-input>
                                             <el-tree 
+                                                @node-click="handleNodeClick"
                                                 :data="SuiteRomeData.leftRomeData.tableData" 
                                                 :props="SuiteRomeData.leftRomeData.defaultProps">
-                                                <span class="custom-tree-node" slot-scope="{ node }">
-                                                    <span>{{ node.label }}</span>
-                                                
-
-                                                    <span style="margin-left:200px">
-                                                        <el-tag type="success" size="mini">1</el-tag>
-                                                        <el-tag type="warning" size="mini">2</el-tag>
-                                                        <el-tag type="danger" size="mini">3</el-tag>
-                                                    </span>
+                                                <span class="custom-tree-node" slot-scope="{ node ,data }">
+                                                    <el-row :gutter="20">
+                                                        <el-col :span="18">
+                                                            <div style="width:600px;">
+                                                                <el-row>
+                                                                    <el-col :span="2">
+                                                                        <div v-if="data.layerType=='API'">
+                                                                            <el-tag size="mini" type='success' v-if="data.reportStatus=='Pass'"><i class="el-icon-check"></i></el-tag>
+                                                                            <el-tag size="mini" type='warning' v-else-if="data.reportStatus=='Fail'"><i class="el-icon-close"></i></el-tag>
+                                                                            <el-tag size="mini" type='danger' v-else><i class="el-icon-close"></i></el-tag>
+                                                                        </div>
+                                                                    </el-col>
+                                                                    <el-col :span="12">
+                                                                        <div style="float:left">
+                                                                            <span v-if="data.layerType=='API'">接口:{{ node.label }}</span>
+                                                                            <span v-else-if="data.layerType=='CASE'">测试用例:{{ node.label }}</span>
+                                                                            <span v-else-if="data.layerType=='TASK'">定时任务:{{ node.label }}</span>
+                                                                        </div>
+                                                                    </el-col>
+                                                                    <el-col :span="5">
+                                                                        <div v-if="data.layerType=='API'">
+                                                                            <el-tag size="mini" type='success' v-if="data.code=='200'">{{data.code}}</el-tag>
+                                                                            <el-tag size="mini" type='danger' v-else>{{data.code}}</el-tag>
+                                                                        </div>
+                                                                    </el-col>
+                                                                    <el-col :span="5">
+                                                                        <div v-if="data.layerType=='API'" style="float:left">
+                                                                            <el-tag size="mini" type='info'>{{data.time}} ms</el-tag>
+                                                                        </div>
+                                                                    </el-col>
+                                                                </el-row>
+                                                            </div>
+                                                        </el-col>
+                                                        <el-col :span="6">
+                                                            <div style="float:right" v-if="data.layerType!='API'">
+                                                                <el-tag type="success" size="mini">{{data.passTotal}}</el-tag>
+                                                                <el-tag type="warning" size="mini">{{data.failTotal}}</el-tag>
+                                                                <el-tag type="danger" size="mini">{{data.errorTotal}}</el-tag>
+                                                            </div>
+                                                        </el-col>
+                                                    </el-row>
                                                 </span>
                                             </el-tree>
                                         </div>
@@ -241,6 +278,224 @@
                                 </el-col>
                                 <el-col :span="14">
                                     <el-card shadow="never" style="height:890px">
+                                        <div 
+                                        v-if="SuiteRomeData.rightRomeData.disPlay"
+                                        v-loading="SuiteRomeData.rightRomeData.loading"
+                                        element-loading-text="拼命加载中"
+                                        element-loading-spinner="el-icon-loading"
+                                        element-loading-background="rgba(0, 0, 0, 0.8)">
+                                            <el-tabs v-model="SuiteRomeData.rightRomeData.activeName">
+                                                <el-tab-pane label="返回主体" name="ResponseInfo">
+                                                    <el-input type="textarea" 
+                                                        readonly
+                                                        resize="none"
+                                                        v-model="SuiteRomeData.rightRomeData.ApiInfo.responseInfo"
+                                                        :autosize="{ minRows:37, maxRows: 37}"
+                                                        >
+                                                    </el-input>
+                                                </el-tab-pane>
+                                                <el-tab-pane label="Headers" name="Headers">
+                                                    <el-collapse v-model="SuiteRomeData.rightRomeData.ApiInfo.headersActiveNames">
+                                                        <el-collapse-item  name="General">
+                                                            <template slot="title"><b>General</b></template>
+                                                            <el-table
+                                                            :data="SuiteRomeData.rightRomeData.ApiInfo.generalTableData"
+                                                            style="width: 1000px">
+                                                            <el-table-column
+                                                                prop="key"
+                                                                width="180">
+                                                            </el-table-column>
+                                                            <el-table-column>
+                                                                <template slot-scope="scope">
+                                                                    <div v-if="scope.row.key=='Status Code:'">
+                                                                        <el-tag v-if="scope.row.value==200" type="success">{{scope.row.value}}</el-tag>
+                                                                        <el-tag v-else type="danger">{{scope.row.value}}</el-tag>
+                                                                    </div>
+                                                                    <div v-else>
+                                                                        <span>{{scope.row.value}}</span>
+                                                                    </div>
+                                                                </template>
+                                                            </el-table-column>
+                                                            </el-table>
+                                                        </el-collapse-item>
+                                                        <el-collapse-item name="responseHeaders">
+                                                            <template slot="title"><b>response Headers</b></template>
+                                                            <el-table
+                                                            :data="SuiteRomeData.rightRomeData.ApiInfo.responseHeaders" 
+                                                            style="width: 1000px">
+                                                            <el-table-column
+                                                                prop="key"
+                                                                width="180">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                prop="value">
+                                                            </el-table-column>
+                                                            </el-table>
+                                                        </el-collapse-item>
+                                                        <el-collapse-item name="RequestHeaders" v-if="SuiteRomeData.rightRomeData.ApiInfo.requestHeaders.length!=0">
+                                                            <template slot="title"><b>Request Headers</b></template>
+                                                            <el-table
+                                                            :data="SuiteRomeData.rightRomeData.ApiInfo.requestHeaders" 
+                                                            style="width: 1000px">
+                                                            <el-table-column
+                                                                prop="key"
+                                                                label=""
+                                                                width="180">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                prop="value">
+                                                            </el-table-column>
+                                                            </el-table>
+                                                        </el-collapse-item>
+                                                        <el-collapse-item name="RequestParameters" v-if="SuiteRomeData.rightRomeData.ApiInfo.requestData.length!=0">
+                                                            <template slot="title"><b>Request Parameters</b></template>
+                                                            <el-table
+                                                            :data="SuiteRomeData.rightRomeData.ApiInfo.requestData"
+                                                            style="width: 1000px">
+                                                            <el-table-column
+                                                                prop="key"
+                                                                width="180">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                prop="value">
+                                                            </el-table-column>
+                                                            </el-table>
+                                                        </el-collapse-item>
+                                                    </el-collapse>
+                                                </el-tab-pane>
+                                                <el-tab-pane label="前/后置操作" name="operation" v-if="SuiteRomeData.rightRomeData.TestResults.operationTabelData.length!=0">
+                                                    <div>
+                                                        <el-table
+                                                        :data="SuiteRomeData.rightRomeData.TestResults.operationTabelData"
+                                                        >
+                                                        <el-table-column
+                                                            align="center"
+                                                            label="操作位置"
+                                                            width="150px">
+                                                            <template slot-scope="scope">
+                                                                <el-tag type="success" v-if="scope.row.operatingPosition=='Pre'">前置操作</el-tag>
+                                                                <el-tag type="danger" v-else>后置操作</el-tag>
+                                                            </template>
+                                                        </el-table-column>
+                                                        <el-table-column
+                                                            label="操作类型"
+                                                            width="150px"
+                                                            align= "center">
+                                                            <template slot-scope="scope">
+                                                                <el-tag type="info">{{scope.row.operationType}}</el-tag>
+                                                            </template>
+                                                        </el-table-column>
+                                                        <el-table-column
+                                                            align="center"
+                                                            width='200px'
+                                                            label="调用名称"
+                                                            prop="callName">
+                                                        </el-table-column>
+                                                        <el-table-column
+                                                            align="center"
+                                                            label="调用结果"
+                                                            prop="callResults">
+                                                        </el-table-column>
+                                                        <el-table-column
+                                                            align="center"
+                                                            width="100px"
+                                                            label="结果">
+                                                            <template slot-scope="scope">
+                                                                <el-tag type="success" v-if="scope.row.resultsState">通过</el-tag>
+                                                                <el-tag type="warning" v-else >失败</el-tag>
+                                                            </template>
+                                                        </el-table-column>
+                                                        </el-table>
+                                                    </div>
+                                                </el-tab-pane>
+                                                <el-tab-pane label="测试结果" name="Results" v-if="SuiteRomeData.rightRomeData.TestResults.extractTabelData.length!=0">
+                                                    <el-collapse v-model="SuiteRomeData.rightRomeData.TestResults.testResultsActiveNames">
+                                                        <el-collapse-item  name="提取结果">
+                                                            <template slot="title"><b>提取结果</b></template>
+                                                            <el-table
+                                                            :data="SuiteRomeData.rightRomeData.TestResults.extractTabelData">
+                                                            <el-table-column
+                                                                align="center"
+                                                                prop="key"
+                                                                label="变量名称"
+                                                                width="180">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                align="center"
+                                                                width='100px'
+                                                                label="提取值类型"
+                                                                prop="valueType">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                align="center"
+                                                                label="提取值"
+                                                                prop="value">
+                                                            </el-table-column>
+                                                            </el-table>
+                                                        </el-collapse-item>
+                                                        <el-collapse-item  name="断言结果">
+                                                            <template slot="title"><b>断言结果</b></template>
+                                                            <el-table
+                                                            :data="SuiteRomeData.rightRomeData.TestResults.validateResults">
+                                                            <el-table-column
+                                                                align="center"
+                                                                prop="checkName"
+                                                                label="检查值"
+                                                                width="180">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                align="center"
+                                                                label="期望结果"
+                                                                prop="retCheckOut">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                align="center"
+                                                                width="150px"
+                                                                label="比较类型"
+                                                                prop="validateType">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                align="center"
+                                                                label="实际返回"
+                                                                prop="retExtractorOut">
+                                                            </el-table-column>
+                                                            <el-table-column
+                                                                align="center"
+                                                                label="测试结果"
+                                                                width="100px">
+                                                                <template slot-scope="scope">
+                                                                    <el-tag type="success" v-if="scope.row.results">通过</el-tag>
+                                                                    <el-tag type="warning" v-else>失败</el-tag>
+                                                                </template>
+                                                            </el-table-column>
+                                                            </el-table>
+                                                        </el-collapse-item>
+                                                    </el-collapse>
+                                                </el-tab-pane>
+                                                <el-tab-pane label="错误信息" name="ErrorMsg" v-if="SuiteRomeData.rightRomeData.TestResults.errorTableData.length!=0">
+                                                    <el-table
+                                                        :data="SuiteRomeData.rightRomeData.TestResults.errorTableData">
+                                                        <el-table-column
+                                                            label="触发时间"
+                                                            width="160px"
+                                                            align= "center"
+                                                            prop="createTime">
+                                                        </el-table-column>
+                                                        <el-table-column
+                                                            label="错误名称"
+                                                            width="200px"
+                                                            align= "center"
+                                                            prop="errorName">
+                                                        </el-table-column>
+                                                        <el-table-column
+                                                            label="错误信息"
+                                                            align= "center"
+                                                            prop="errorInfo">
+                                                        </el-table-column>
+                                                    </el-table>
+                                                </el-tab-pane>
+                                            </el-tabs>
+                                        </div>
                                     </el-card>
                                 </el-col>
                             </el-row>
@@ -262,71 +517,131 @@ export default {
             // isCollapse: true,
             RomeData:{
                 testReportId:'',
-                reportType:'API',
+                reportType:'',
+                // reportType:'API',
             },
             OverviewRomeData:{//总览
                 disPlay:true,
                 //标题类
                 titleClass:{
-                    reportName:'测试接口报告',
-                    reportStatus:'Pass',
-                    createTime:'2020-01-01 12:22:33',
-                    runningTime:'20',
-                    total:'100',
-                    createUserName:'lipenglo',
-                    passTotal:1,
-                    failTotal:2,
-                    errorTotal:3,
-                    allTotal:10,
-                    passRate:'33',
+                    // reportName:'测试接口报告',
+                    // reportStatus:'Pass',
+                    // createTime:'2020-01-01 12:22:33',
+                    // runningTime:'20',
+                    // total:'100',
+                    // createUserName:'lipenglo',
+                    // passTotal:1,
+                    // failTotal:2,
+                    // errorTotal:3,
+                    // allTotal:10,
+                    // passRate:'33',
+
+                    reportName:'',
+                    reportStatus:'',
+                    createTime:'',
+                    runningTime:'',
+                    total:0,
+                    createUserName:'',
+                    passTotal:0,
+                    failTotal:0,
+                    errorTotal:0,
+                    allTotal:0,
+                    // passRate:0,
                 },
                 trendChart:{//趋势图
-                    reportIdList:['#1', '#12', '#33', '#34', '#35', '#36', '#40'],
-                    passList:[120, 132, 101, 134, 90, 230, 210],
-                    failList:[220, 182, 191, 234, 290, 330, 310],
-                    errorList:[150, 232, 201, 154, 190, 330, 410],
+                    // reportIdList:['#1', '#12', '#33', '#34', '#35', '#36', '#40'],
+                    // passList:[120, 132, 101, 134, 90, 230, 210],
+                    // failList:[220, 182, 191, 234, 290, 330, 310],
+                    // errorList:[150, 232, 201, 154, 190, 330, 410],
+
+                    reportIdList:[],//这里的ID以当前reportId的类型来查询
+                    passList:[],
+                    failList:[],
+                    errorList:[],
                 },
-                dataTable:[
-                    {'id':1,'name':'测试登录接口','passTotal':1,'failTotal':2,'errorTotal':3,'passRate':'30%'},
-                ],//当前接口，用例，定时任务，批量任务的简要列表
-                warningDataTable:[
-                    {'id':1,'triggerType':'Fail','name':'测试登录接口','info':'我警告你','updateTime':'2020-22-11 12:22:32'},
-                    {'id':1,'triggerType':'Error','name':'测试登录接口','info':'我出错误了你大爷的','updateTime':'2020-22-11 12:22:32'},
+                dataTable:[//当前接口，用例，定时任务，批量任务的简要列表,Id为接口或用例的ID
+                    // {'id':1,'name':'测试登录接口','passTotal':1,'failTotal':2,'errorTotal':3,'passRate':'30%'},
+                ],
+                warningDataTable:[//警示信息
+                    // {'id':1,'triggerType':'Fail','name':'测试登录接口','info':'我警告你','updateTime':'2020-22-11 12:22:32'},
+                    // {'id':1,'triggerType':'Error','name':'测试登录接口','info':'我出错误了你大爷的','updateTime':'2020-22-11 12:22:32'},
                 ],
             },
             SuiteRomeData:{//套件
                 disPlay:false,
                 leftRomeData:{
                     filterText:'',
+                    //这里的ID为item的ID
                     tableData:[
-                        {label: '测试定时任务',id:'1',layerType:'TASK',children: [
-                            {label: '测试登录',id:'1',layerType:'CASE',children: 
-                            [
-                                {label: '登录',layerType:'API',id:'1',reportStatus:'Pass'},
-                                {label: '查询',layerType:'API',id:'2',reportStatus:'Fail'},
-                            ]}
-                        ]}, 
+                        // {label: '测试定时任务',id:'1',layerType:'TASK',children: [
+                        //     {label: '测试登录',id:'1',layerType:'CASE',children: 
+                        //     [
+                        //         {label: '登录登录登录登录登录登录登',layerType:'API',id:'1',reportStatus:'Pass','code':200,'time':3},
+                        //         {label: '查询',layerType:'API',id:'2',reportStatus:'Fail','code':400,'time':4},
+                        //         {label: '删除',layerType:'API',id:'3',reportStatus:'Error','code':500,'time':20},
+                        //     ]}
+                        // ]}, 
+                        // {label: '测试登录',id:'1',layerType:'CASE',children: [
+                        //     {label: '查询',layerType:'API',id:'2',reportStatus:'Fail','code':400,'time':4},
+                        // ]},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
+                        // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
                     ],
                     defaultProps:{
                         children: 'children',
                         label: 'label'
                     }
-                }
-                
+                },
+                rightRomeData:{
+                    loading:false,
+                    disPlay:false,
+                    activeName:'ResponseInfo',
+                    ApiInfo:{//接口的信息
+                        generalTableData:[],
+                        headersActiveNames: [],//如果需要全部展开，就把name放在这里
+                        requestHeaders:[],
+                        requestData:[],
+                        // requestFile:[],
+                        responseHeaders:[],
+                        responseInfo:'',
+                    },
+                    TestResults:{
+                        testResultsActiveNames: ['提取结果','断言结果'],//如果需要全部展开，就把name放在这里
+                        extractTabelData:[],//请求提取
+                        validateResults:[],
+                        operationTabelData:[],
+                        errorTableData:[],
+                    },
 
+                }
             }
         };
     },
     mounted(){
         PrintConsole('query',this.$route.query);
-        // this.RomeData.testReportId = this.$route.query.testReportId;
-        // this.RomeData.reportType = this.$route.query.reportType;
+        this.clearRomeData();
+        this.clearOverviewRomeData();
+        this.clearSuiteRomeData();
+        this.clearApiRomeData();
+        
 
-        this.PieChart(this.OverviewRomeData.titleClass.passRate);
-        this.TrendChart();
+        this.RomeData.testReportId = this.$route.query.testReportId;
+        this.RomeData.reportType = this.$route.query.reportType;
+        this.loadReportData(this.RomeData.testReportId);
+
+
+        // this.PieChart(this.OverviewRomeData.titleClass.passRate);
+        // this.TrendChart();
 
     },
     methods: {
+        //菜单 固定值
         handleOpen(key, keyPath) {
             PrintConsole(key, keyPath);
         },
@@ -344,8 +659,144 @@ export default {
             }
         },
 
+        // 初始化
+        clearRomeData(){
+            let self = this;
+            self.RomeData.testReportId='';
+            self.RomeData.reportType='';
+        },
+        clearOverviewRomeData(){
+            let self = this;
+            self.OverviewRomeData.titleClass.reportName='';
+            self.OverviewRomeData.titleClass.reportStatus='';
+            self.OverviewRomeData.titleClass.createTime='';
+            self.OverviewRomeData.titleClass.runningTime='';
+            self.OverviewRomeData.titleClass.createUserName='';
+            self.OverviewRomeData.titleClass.total=0;
+            self.OverviewRomeData.titleClass.passTotal=0;
+            self.OverviewRomeData.titleClass.failTotal=0;
+            self.OverviewRomeData.titleClass.errorTotal=0;
+            self.OverviewRomeData.titleClass.allTotal=0;
+            self.OverviewRomeData.titleClass.passRate=0;
+
+            self.OverviewRomeData.trendChart.reportIdList=[];
+            self.OverviewRomeData.trendChart.passList=[];
+            self.OverviewRomeData.trendChart.failList=[];
+            self.OverviewRomeData.trendChart.errorList=[];
+
+            self.OverviewRomeData.trendChart.dataTable=[];
+            self.OverviewRomeData.trendChart.warningDataTable=[];
+        },
+        clearSuiteRomeData(){
+            let self = this;
+            self.SuiteRomeData.leftRomeData.filterText='';
+            self.SuiteRomeData.leftRomeData.tableData=[];
+        },
+        clearApiRomeData(){
+            let self = this;
+            self.SuiteRomeData.rightRomeData.activeName='ResponseInfo';
+            self.SuiteRomeData.rightRomeData.loading=false;
+
+            self.SuiteRomeData.rightRomeData.ApiInfo.generalTableData = [];
+            self.SuiteRomeData.rightRomeData.ApiInfo.requestHeaders = [];
+            self.SuiteRomeData.rightRomeData.ApiInfo.requestData = [];
+            self.SuiteRomeData.rightRomeData.ApiInfo.requestFile= [];
+            self.SuiteRomeData.rightRomeData.ApiInfo.responseHeaders=[];
+            self.SuiteRomeData.rightRomeData.ApiInfo.responseInfo='';
+
+            self.SuiteRomeData.rightRomeData.TestResults.extractTabelData =[];
+            self.SuiteRomeData.rightRomeData.TestResults.validateResults = [];
+            self.SuiteRomeData.rightRomeData.TestResults.operationTabelData = [];
+            self.SuiteRomeData.rightRomeData.TestResults.errorTableData =[];
+        },
+
+        //点击节点
+        handleNodeClick(data){
+            PrintConsole(data);
+            let self = this;
+            self.SuiteRomeData.rightRomeData.disPlay=true;
+            if(data.layerType=="API"){
+                self.clearApiRomeData();
+                self.SuiteRomeData.rightRomeData.loading=true;
+                self.$axios.get('/api/ApiTestReport/LoadReportApi',{//请求接口数据
+                    params:{
+                        'reportItemId':data.id
+                    }
+                }).then(res => {
+                    if(res.data.statusCode==2000){
+                        self.SuiteRomeData.rightRomeData.ApiInfo.generalTableData = res.data.TableData.general;
+                        self.SuiteRomeData.rightRomeData.ApiInfo.requestHeaders = res.data.TableData.requestHeaders;
+                        self.SuiteRomeData.rightRomeData.ApiInfo.requestData = res.data.TableData.requestData;
+                        self.SuiteRomeData.rightRomeData.ApiInfo.responseHeaders = res.data.TableData.responseHeaders;
+                        self.SuiteRomeData.rightRomeData.ApiInfo.responseInfo = res.data.TableData.responseInfo;
+
+                        self.SuiteRomeData.rightRomeData.TestResults.extractTabelData= res.data.TableData.extract;
+                        self.SuiteRomeData.rightRomeData.TestResults.validateResults = res.data.TableData.validateResults;
+                        self.SuiteRomeData.rightRomeData.TestResults.operationTabelData = res.data.TableData.operationData;
+                        self.SuiteRomeData.rightRomeData.TestResults.errorTableData = res.data.TableData.errorTableData;
+
+                        self.SuiteRomeData.rightRomeData.loading = false;
+                    }
+                    else{
+                        self.$message.error('接口步骤获取失败:'+ res.data.errorMsg);
+                        self.SuiteRomeData.rightRomeData.loading = false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.SuiteRomeData.rightRomeData.loading = false;
+                })
+            }     
+        },
+
+        loadReportData(testReportId){
+            let self = this;
+            self.loading=true;
+            self.$axios.get('/api/ApiTestReport/loadReportData',{//请求接口数据
+                params:{
+                    'testReportId':testReportId
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    //总览
+                    //左上角
+                    self.OverviewRomeData.titleClass.reportName = res.data.overview.titleClass.reportName;
+                    self.OverviewRomeData.titleClass.reportStatus = res.data.overview.titleClass.reportStatus;
+                    self.OverviewRomeData.titleClass.createTime = res.data.overview.titleClass.createTime;
+                    self.OverviewRomeData.titleClass.runningTime = res.data.overview.titleClass.runningTime;
+                    self.OverviewRomeData.titleClass.createUserName = res.data.overview.titleClass.createUserName;
+                    self.OverviewRomeData.titleClass.total = res.data.overview.titleClass.allTotal;
+                    self.OverviewRomeData.titleClass.passTotal = res.data.overview.titleClass.passTotal;
+                    self.OverviewRomeData.titleClass.failTotal = res.data.overview.titleClass.failTotal;
+                    self.OverviewRomeData.titleClass.errorTotal = res.data.overview.titleClass.errorTotal;
+
+                    self.PieChart(res.data.overview.titleClass.passRate);
+
+                    //右上角
+                    self.OverviewRomeData.trendChart.reportIdList= res.data.overview.trendChart.reportIdList;
+                    self.OverviewRomeData.trendChart.passList= res.data.overview.trendChart.passList;
+                    self.OverviewRomeData.trendChart.failList= res.data.overview.trendChart.failList;
+                    self.OverviewRomeData.trendChart.errorList= res.data.overview.trendChart.errorList;
+                    self.TrendChart();
+
+                    //左下角列表
+                    self.OverviewRomeData.dataTable = res.data.overview.reportBriefItemData;
+
+                    //套件
+                    self.SuiteRomeData.leftRomeData.tableData = res.data.suite.tableData;
 
 
+                    self.loading = false;
+                }
+                else{
+                    self.$message.error('报告骤获取失败:'+ res.data.errorMsg);
+                    self.loading = false;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                // self.loading = false;
+            })
+
+        },
         PieChart(passRate){//通过率
             let self = this;
             var MyChart_pie = echarts.init(document.getElementById('EchartContainer-pie'));//初始化
@@ -392,7 +843,7 @@ export default {
             var MyChart_trend = echarts.init(document.getElementById('EchartContainer-trend'));//初始化
             var option = {
                 title: {
-                    text: '历史趋势图'
+                    text: '历史趋势图:近100条数据'
                 },
                 tooltip: {
                     trigger: 'axis',
@@ -492,5 +943,7 @@ export default {
     width:900px; 
     height:280px;
     /* color: darkgray; */
+    
+    
 }
 </style>
