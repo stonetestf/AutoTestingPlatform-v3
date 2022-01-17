@@ -72,6 +72,16 @@ class ApiReport(models.Model):  # 三级用例报告
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
 
 
+class WarningInfo(models.Model):  # 用于测试报告显示
+    testReport = models.ForeignKey("ApiTestReport", to_field='id', on_delete=models.CASCADE)  # 主报告ID
+    triggerType = models.CharField("触发类型(Warning,Error)", max_length=20, null=False)
+    taskId = models.CharField("ApiId/CaseId/TaskId/BatchId,根据任务类型来取", max_length=10, null=False)
+    taskName = models.CharField("接口/用例/定时任务的名称", max_length=50, null=False)
+    info = models.TextField('信息', null=True)
+    updateTime = models.DateTimeField('修改时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+
+
 class ApiQueue(models.Model):  # 队列信息
     pid = models.ForeignKey("ProjectManagement.ProManagement", to_field='id', on_delete=models.CASCADE)
     page_id = models.IntegerField("所属页面", null=True)

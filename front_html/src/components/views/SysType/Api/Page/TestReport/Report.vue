@@ -184,7 +184,7 @@
                                                             width="100px"
                                                             align= "center">
                                                             <template slot-scope="scope">
-                                                                <el-tag type="warning" v-if="scope.row.triggerType=='Fail'">Fail</el-tag>
+                                                                <el-tag type="info" v-if="scope.row.triggerType=='Warning'">Warning</el-tag>
                                                                 <el-tag type="danger" v-else-if="scope.row.triggerType=='Error'">Error</el-tag>
                                                             </template>
                                                         </el-table-column>
@@ -192,7 +192,7 @@
                                                             label="名称"
                                                             width="300px"
                                                             align= "center"
-                                                            prop="name">
+                                                            prop="taskName">
                                                         </el-table-column>
                                                         <el-table-column
                                                             show-overflow-tooltip
@@ -222,14 +222,16 @@
                                             </el-button-group>
                                         </div>
                                         <div style="margin-top:10px">
-                                            <el-input
-                                                placeholder="输入关键字进行过滤"
-                                                v-model="SuiteRomeData.leftRomeData.filterText">
+                                            <el-input placeholder="输入关键字进行过滤" v-model="filterText" clearable>
                                             </el-input>
                                             <el-tree 
+                                                ref="tree"
+                                                node-key="id"
                                                 @node-click="handleNodeClick"
+                                                :filter-node-method="filterNode"
                                                 :data="SuiteRomeData.leftRomeData.tableData" 
-                                                :props="SuiteRomeData.leftRomeData.defaultProps">
+                                                :props="SuiteRomeData.leftRomeData.defaultProps"
+                                                :default-expanded-keys="SuiteRomeData.leftRomeData.expandedList">
                                                 <span class="custom-tree-node" slot-scope="{ node ,data }">
                                                     <el-row :gutter="20">
                                                         <el-col :span="18">
@@ -472,7 +474,7 @@
                                                         </el-collapse-item>
                                                     </el-collapse>
                                                 </el-tab-pane>
-                                                <el-tab-pane label="错误信息" name="ErrorMsg" v-if="SuiteRomeData.rightRomeData.TestResults.errorTableData.length!=0">
+                                                <el-tab-pane label="警告信息" name="ErrorMsg" v-if="SuiteRomeData.rightRomeData.TestResults.errorTableData.length!=0">
                                                     <el-table
                                                         :data="SuiteRomeData.rightRomeData.TestResults.errorTableData">
                                                         <el-table-column
@@ -482,13 +484,13 @@
                                                             prop="createTime">
                                                         </el-table-column>
                                                         <el-table-column
-                                                            label="错误名称"
+                                                            label="名称"
                                                             width="200px"
                                                             align= "center"
                                                             prop="errorName">
                                                         </el-table-column>
                                                         <el-table-column
-                                                            label="错误信息"
+                                                            label="信息"
                                                             align= "center"
                                                             prop="errorInfo">
                                                         </el-table-column>
@@ -514,7 +516,7 @@ export default {
     data() {
         return {
             loading:false,
-            // isCollapse: true,
+            filterText:'',
             RomeData:{
                 testReportId:'',
                 reportType:'',
@@ -540,13 +542,13 @@ export default {
                     reportStatus:'',
                     createTime:'',
                     runningTime:'',
-                    total:0,
+                    total:0,//这里的为主页的总数显示
                     createUserName:'',
                     passTotal:0,
                     failTotal:0,
                     errorTotal:0,
-                    allTotal:0,
-                    // passRate:0,
+                    allTotal:0,//这里的为按钮所有的显示
+                    passRate:0,
                 },
                 trendChart:{//趋势图
                     // reportIdList:['#1', '#12', '#33', '#34', '#35', '#36', '#40'],
@@ -563,14 +565,14 @@ export default {
                     // {'id':1,'name':'测试登录接口','passTotal':1,'failTotal':2,'errorTotal':3,'passRate':'30%'},
                 ],
                 warningDataTable:[//警示信息
-                    // {'id':1,'triggerType':'Fail','name':'测试登录接口','info':'我警告你','updateTime':'2020-22-11 12:22:32'},
+                    // {'id':1,'triggerType':'Warning','name':'测试登录接口','info':'我警告你','updateTime':'2020-22-11 12:22:32'},
                     // {'id':1,'triggerType':'Error','name':'测试登录接口','info':'我出错误了你大爷的','updateTime':'2020-22-11 12:22:32'},
                 ],
             },
             SuiteRomeData:{//套件
                 disPlay:false,
                 leftRomeData:{
-                    filterText:'',
+                    // filterText:'',
                     //这里的ID为item的ID
                     tableData:[
                         // {label: '测试定时任务',id:'1',layerType:'TASK',children: [
@@ -593,6 +595,7 @@ export default {
                         // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
                         // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
                     ],
+                    expandedList:[],//展开列表
                     defaultProps:{
                         children: 'children',
                         label: 'label'
@@ -622,6 +625,11 @@ export default {
                 }
             }
         };
+    },
+    watch:{
+        filterText(val) {
+            this.$refs.tree.filter(val);
+        }
     },
     mounted(){
         PrintConsole('query',this.$route.query);
@@ -689,7 +697,7 @@ export default {
         },
         clearSuiteRomeData(){
             let self = this;
-            self.SuiteRomeData.leftRomeData.filterText='';
+            self.filterText='';
             self.SuiteRomeData.leftRomeData.tableData=[];
         },
         clearApiRomeData(){
@@ -747,6 +755,34 @@ export default {
                 })
             }     
         },
+        filterNode(value, data){//查询使用
+            if (!value) return true;
+                return data.label.indexOf(value) !== -1;
+        },
+        //按钮组
+        AllExpand(){//展开
+            let self = this;
+            self.SuiteRomeData.leftRomeData.tableData.forEach(d=>{
+                d.children.forEach(item=>{
+                    PrintConsole(item)
+                    self.SuiteRomeData.leftRomeData.expandedList.push(item.id);
+                })
+            });
+        },
+        AllShrink(){//收缩
+            let self = this;
+            PrintConsole(this.$refs.tree);
+            if(self.RomeData.reportType=="BATCH"){
+                this.$refs.tree.$children[0].node.parent.childNodes[0].expanded=false;
+            }else if(self.RomeData.reportType=="TASK"){
+                this.$refs.tree.$children[0].node.parent.childNodes.forEach(d=>{
+                    d.expanded=false;
+                });
+
+            }
+
+        },
+
 
         loadReportData(testReportId){
             let self = this;
@@ -765,11 +801,16 @@ export default {
                     self.OverviewRomeData.titleClass.runningTime = res.data.overview.titleClass.runningTime;
                     self.OverviewRomeData.titleClass.createUserName = res.data.overview.titleClass.createUserName;
                     self.OverviewRomeData.titleClass.total = res.data.overview.titleClass.allTotal;
-                    self.OverviewRomeData.titleClass.passTotal = res.data.overview.titleClass.passTotal;
-                    self.OverviewRomeData.titleClass.failTotal = res.data.overview.titleClass.failTotal;
-                    self.OverviewRomeData.titleClass.errorTotal = res.data.overview.titleClass.errorTotal;
+                    let passTotal = res.data.overview.titleClass.passTotal;
+                    let failTotal = res.data.overview.titleClass.failTotal;
+                    let errorTotal = res.data.overview.titleClass.errorTotal;
+                    self.OverviewRomeData.titleClass.passTotal = passTotal;
+                    self.OverviewRomeData.titleClass.failTotal = failTotal;
+                    self.OverviewRomeData.titleClass.errorTotal = errorTotal;
+                    self.OverviewRomeData.titleClass.passRate = res.data.overview.titleClass.passRate;
+                    self.OverviewRomeData.titleClass.allTotal = passTotal+failTotal+errorTotal;
 
-                    self.PieChart(res.data.overview.titleClass.passRate);
+                    self.PieChart(self.OverviewRomeData.titleClass.passRate);
 
                     //右上角
                     self.OverviewRomeData.trendChart.reportIdList= res.data.overview.trendChart.reportIdList;
@@ -780,6 +821,9 @@ export default {
 
                     //左下角列表
                     self.OverviewRomeData.dataTable = res.data.overview.reportBriefItemData;
+                    
+                    //右下角列表
+                    self.OverviewRomeData.warningDataTable = res.data.overview.warngigInfo;
 
                     //套件
                     self.SuiteRomeData.leftRomeData.tableData = res.data.suite.tableData;

@@ -1456,7 +1456,8 @@ def send_request(request):
                         # 请求运行
                         response = cls_RequstOperation.execute_api(
                             False, onlyCode, userId,
-                            apiId=apiId, environmentId=environmentId, reportItemId=reportItemId, labelName=remindLabel)
+                            apiId=apiId, environmentId=environmentId,
+                            testReportId=testReportId, reportItemId=reportItemId, labelName=remindLabel)
                         if response['state']:
                             response['statusCode'] = 2000
                         else:

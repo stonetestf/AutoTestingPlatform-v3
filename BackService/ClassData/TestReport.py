@@ -5,6 +5,7 @@ from Api_TestReport.models import ApiReport as db_ApiReport
 from Api_TestReport.models import ApiQueue as db_ApiQueue
 from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
 from Api_TestReport.models import ApiReportTaskItem as db_ApiReportTaskItem
+from Api_TestReport.models import WarningInfo as db_WarningInfo
 
 import ast
 import json
@@ -214,6 +215,17 @@ class ApiReport(cls_Logging):
         :return:
         """
         db_ApiQueue.objects.filter(id=queueId).update(queueStatus=queueStatus, uid_id=userId)
+
+    # 警示信息
+    def create_warning_info(self,testReportId,triggerType,taskId,taskName,info,userId):
+        db_WarningInfo.objects.create(
+            testReport_id=testReportId,
+            triggerType=triggerType,
+            taskId=taskId,
+            taskName=taskName,
+            info=info,
+            uid_id=userId,
+        )
 
     # 测试报告-返回顶部详细数据
     def get_report_top_data(self, testReportId):
@@ -439,6 +451,19 @@ class ApiReport(cls_Logging):
             results['errorMsg'] = '当前查询的报告不存在!'
         return results
 
+    # 测试报告-警示信息
+    def get_warngig_info(self,testReportId):
+        dataList = []
+        obj_db_WarningInfo = db_WarningInfo.objects.filter(testReport_id=testReportId)
+        for i in obj_db_WarningInfo:
+            dataList.append({
+                'id':i.id,
+                'triggerType':i.triggerType,
+                'taskName':i.taskName,
+                'info':i.info,
+            })
+
+        return dataList
     # 测试报告-获取测试套件
     def get_report_suite_data(self, testReportId):
         results = {

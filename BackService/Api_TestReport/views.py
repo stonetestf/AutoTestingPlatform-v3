@@ -163,7 +163,8 @@ def load_report_data(request):
                                     'passRate': reportTopData['topData']['passRate'],
                                 },
                                 'trendChart': trendChart['dataDict'],
-                                'reportBriefItemData': reportBriefItemData['dataList']
+                                'reportBriefItemData': reportBriefItemData['dataList'],
+                                'warngigInfo':cls_ApiReport.get_warngig_info(testReportId)
                             }
                             suite = {
                                 'tableData':reportSuiteData['dataList']

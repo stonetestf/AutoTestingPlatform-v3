@@ -434,6 +434,7 @@ class RequstOperation(cls_Logging, cls_Common):
             requestUrlRadio = obj_db_ApiBaseData[0].requestUrlRadio
             requestUrl = ast.literal_eval(obj_db_ApiBaseData[0].requestUrl)[f'url{requestUrlRadio}']
             results['proId'] = obj_db_ApiBaseData[0].pid_id
+            results['apiName'] = obj_db_ApiBaseData[0].apiName
             results['requestType'] = obj_db_ApiBaseData[0].requestType
             results['requestUrl'] = f"{environmentUrl}{requestUrl}"
             results['environmentUrl'] = environmentUrl
@@ -586,7 +587,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
     # 核心-执行api
     def execute_api(self, is_test, onlyCode, userId, apiId=None, environmentId=None, requestData=None,
-                    reportItemId=None, labelName=''):
+                    testReportId=None,reportItemId=None, labelName=''):
         """
         :param is_test:
         :param onlyCode:
@@ -680,17 +681,21 @@ class RequstOperation(cls_Logging, cls_Common):
                     # 创建3级测试报告
                     if not is_test:
                         cls_ApiReport.create_api_report(reportItemId, results)
+                        # region 添加报告版本的警示信息
+                        if results['errorMsg']:
+                            cls_ApiReport.create_warning_info(
+                                testReportId,'Error',apiId,getRequestData['apiName'],results['errorMsg'],userId)
+                        for item_error in results['response']['errorInfoTable']:
+                            cls_ApiReport.create_warning_info(
+                                testReportId, 'Warning',
+                                apiId, getRequestData['apiName'], item_error['errorInfo'], userId)
+                        # endregion
                 else:
                     results['errorMsg'] = resultOfExecution['errorMsg']
                     results['state'] = False
             else:
                 results['errorMsg'] = conversionDataToRequestData['errorMsg']
                 results['state'] = False
-                # results['response']['errorInfoTable'].append({
-                #     'createTime': cls_Common.get_date_time(self),
-                #     'errorName': '请求参数转换',
-                #     'errorInfo': conversionDataToRequestData['errorMsg'],
-                # })
         else:
             results['errorMsg'] = getRequestData['errorMsg']
             results['state'] = False
@@ -1060,7 +1065,8 @@ class RequstOperation(cls_Logging, cls_Common):
                         'preOperationTable': [],
                         'rearOperationTable': [],
                         'errorInfoTable:': [],
-                    }
+                    },
+                    'errorMsg':''
                 }
                 # 创建2级测试报告
                 createReportItems = cls_ApiReport.create_report_items(
@@ -1110,6 +1116,16 @@ class RequstOperation(cls_Logging, cls_Common):
                             itemResults['response']['errorInfoTable'] = resultOfExecution['errorInfoTable']
                             # 创建3级测试报告
                             cls_ApiReport.create_api_report(reportItemId, itemResults)
+                            # region 创建警示信息
+                            if itemResults['errorMsg']:
+                                cls_ApiReport.create_warning_info(
+                                    testReportId, 'Error', item_request['apiId'], item_request['testName'],
+                                    itemResults['errorMsg'],userId)
+                            for item_error in itemResults['response']['errorInfoTable']:
+                                cls_ApiReport.create_warning_info(
+                                    testReportId, 'Warning',
+                                    item_request['apiId'], item_request['testName'], item_error['errorInfo'], userId)
+                            # endregion
                             # 更新2级测试报告
                             cls_ApiReport.update_report_items(testReportId, reportItemId)
                             # region 创建Redis 数据
