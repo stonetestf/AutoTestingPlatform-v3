@@ -94,13 +94,11 @@ function GetUserNameItems(){
     })
 }
 
-function GetConnectBaseItems(ip,port,userName,pwd){
+//加载数据库环境的IP及以下可用的库名
+function GetConnectBaseItems(sysType){
     return Vue.prototype.$axios.get('/api/DataBaseEnvironment/GetConnectBaseItems',{
         params:{
-            'ip':ip,
-            'port':port,
-            'userName':userName,
-            'passWord':pwd,
+            'sysType':sysType
         }
     }).then(res => {
         return res.data;

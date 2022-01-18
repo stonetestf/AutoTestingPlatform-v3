@@ -334,7 +334,6 @@ def charm_api_data(request):
                                 'stepsName': '接口信息-前置操作',
                                 'errorMsg': f'第{index}行:函数方法名称未检测到 ()',
                                 'updateTime': cls_Common.get_date_time()})
-
                     elif item_preOperation.operationType == 'DataBase':
                         if not item_preOperation.dataBase:
                             dataList.append({
@@ -1356,7 +1355,7 @@ def load_data(request):
                     'index': item_preOperation.index,
                     'operationType': item_preOperation.operationType,
                     'methodsName': item_preOperation.methodsName,
-                    'dataBase': item_preOperation.dataBaseId,
+                    'dataBase': ast.literal_eval(item_preOperation.dataBaseId) if item_preOperation.dataBaseId else None,
                     'sql': item_preOperation.sql,
                     'remarks': item_preOperation.remarks,
                     'state': True if item_preOperation.state else False,

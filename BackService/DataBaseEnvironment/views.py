@@ -282,3 +282,35 @@ def delete_data(request):
         else:
             response['errorMsg'] = '未找到当前系统下的全局变量,请刷新后重新尝试!'
     return JsonResponse(response)
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def get_connect_base_items(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        sysType = objData.sysType
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'DataBaseEnvironment', 'select_data', errorMsg)
+    else:
+        obj_db_DataBase = db_DataBase.objects.filter(is_del=0, sysType=sysType).order_by('-updateTime')
+        for i in obj_db_DataBase:
+            children = []
+            connectTest = cls_DataBase.connect_test(
+                'MySql', i.dataBaseIp, i.port, i.userName, cls_DataSecurity.aes_decode(ast.literal_eval(i.passWord)))
+            if connectTest['state']:
+                dataBaseList = connectTest['dataBaseList']
+            else:
+                dataBaseList = []
+            for item in dataBaseList:
+                children.append({'label':item,'value':item})
+            dataList.append({'label':i.dataBaseIp,'value':i.id,'children':children})
+
+        response['statusCode'] = 2000
+        response['dataList'] = dataList
+    return JsonResponse(response)
