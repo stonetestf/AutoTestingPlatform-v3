@@ -1445,9 +1445,11 @@ def send_request(request):
                 if createTestReport['state']:
                     # region  创建2级报告
                     testReportId = createTestReport['testReportId']
+                    # region 创建队列
                     queueId = cls_ApiReport.create_queue(
                         obj_db_ApiBaseData[0].pid_id, obj_db_ApiBaseData[0].page_id, obj_db_ApiBaseData[0].fun_id
-                        , 'API', apiId, testReportId, userId)  # 创建队列
+                        , 'API', apiId, testReportId, userId)
+                    # endregion
                     apiName = obj_db_ApiBaseData[0].apiName
                     createReportItems = cls_ApiReport.create_report_items(testReportId, apiId, apiName)
                     if createReportItems['state']:
@@ -1462,9 +1464,8 @@ def send_request(request):
                             response['statusCode'] = 2000
                         else:
                             response['errorMsg'] = response['errorMsg']
-                        # 更新2级报告
-                        cls_ApiReport.update_report_items(testReportId, reportItemId)
-                        cls_ApiReport.update_queue(queueId, 2, userId)
+                        cls_ApiReport.update_report_items(testReportId, reportItemId)  # 更新2级报告
+                        cls_ApiReport.update_queue(queueId, 2, userId)  # 更新队列
                     else:
                         response['errorMsg'] = createReportItems['errorMsg']
                     # endregion
@@ -2165,6 +2166,3 @@ def import_api_data(request):
         else:
             response['errorMsg'] = apiTable['errorMsg']
     return JsonResponse(response)
-
-
-

@@ -93,7 +93,24 @@ function GetUserNameItems(){
         console.log(error);
     })
 }
+
+function GetConnectBaseItems(ip,port,userName,pwd){
+    return Vue.prototype.$axios.get('/api/DataBaseEnvironment/GetConnectBaseItems',{
+        params:{
+            'ip':ip,
+            'port':port,
+            'userName':userName,
+            'passWord':pwd,
+        }
+    }).then(res => {
+        return res.data;
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
+
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,
+    GetConnectBaseItems
   };
   

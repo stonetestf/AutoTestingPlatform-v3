@@ -589,6 +589,7 @@ class RequstOperation(cls_Logging, cls_Common):
     def execute_api(self, is_test, onlyCode, userId, apiId=None, environmentId=None, requestData=None,
                     testReportId=None,reportItemId=None, labelName=''):
         """
+        :param testReportId:
         :param is_test:
         :param onlyCode:
         :param userId:
@@ -636,7 +637,6 @@ class RequstOperation(cls_Logging, cls_Common):
         if getRequestData['state']:
             results['request']['environmentUrl'] = getRequestData['environmentUrl']
             results['request']['apiUrl'] = getRequestData['apiUrl']
-            # results['request']['headersList'] = getRequestData['headersData']
             results['request']['requestType'] = getRequestData['requestType']
 
             # 转换参数为最后请求的数据
@@ -656,7 +656,6 @@ class RequstOperation(cls_Logging, cls_Common):
                     value = requestFile['url'].split('/')[-1]
                     conversionRequestData[key] = value
                 results['request']['requestDataList'] = cls_Common.conversion_dict_to_kv(self, conversionRequestData)
-                # results['request']['requestDataList'] = conversionDataToRequestData['requestData']
 
                 resultOfExecution = self.request_operation_extract_validate(labelName, onlyCode, getRequestData,
                                                                             conversionRequestUrl,

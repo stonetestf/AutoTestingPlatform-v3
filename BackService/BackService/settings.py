@@ -12,17 +12,19 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import djcelery
+
 # import django_redis
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# region localHost PATH'
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMP_PATH = f"{BASE_DIR}/_DataFiles/Temp/"
 APIFILE_PATH = f"{BASE_DIR}/_DataFiles/ApiFile/"
 CASEFILE_PATH = f"{BASE_DIR}/_DataFiles/CaseFile/"
 BAKDATA_PATH = f"{BASE_DIR}/_DataFiles/BakData/"
+# endregion
 
 # NginxServer
 NGINX_SERVER = 'http://192.168.2.12:9092/'
@@ -62,10 +64,10 @@ SESSION_CACHE_ALIAS = "default"
 
 # dwebsocket使用 必须要 不然异步启动报错,为所有的URL提供websocket，如果只是单独的视图需要可以不选
 MIDDLEWARE_CLASSES = ['dwebsocket.middleware.WebSocketMiddleware']
-WEBSOCKET_ACCEPT_ALL=True   # 可以允许每一个单独的视图使用websockets
+WEBSOCKET_ACCEPT_ALL = True  # 可以允许每一个单独的视图使用websockets
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b@-_njx8ks!#*p=dtcuf+_gwq7v6oi_3^2a^05nyjt*n7hm&_k'
+SECRET_KEY = 'hbwj@123'
 
 # region Request 跨域
 CORS_ORIGIN_ALLOW_ALL = True
@@ -125,6 +127,7 @@ INSTALLED_APPS = [
     'Api_BatchTask',
     'SystemParams',
     'Notice',
+    'DataBaseEnvironment',
 ]
 # endregion
 
@@ -215,4 +218,3 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-

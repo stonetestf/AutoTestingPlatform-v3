@@ -30,6 +30,7 @@ import Api_CaseMaintenance from '@/components/views/SysType/Api/Page/CaseManagem
 import Api_TimingTask from '@/components/views/SysType/Api/Page/TaskManagement/TimingTask/Main';//定时任务
 import Api_BatchTask from '@/components/views/SysType/Api/Page/TaskManagement/BatchTask/Main';//批量任务
 import Api_SystemParams from '@/components/views/SysType/Api/Page/Setting/SystemParams/Main';//系统参数
+import Api_DataBase from '@/components/views/SysType/Api/Page/EnvironmentalManagement/DataBase/Main';//数据库环境
 
 import Router from 'vue-router'
 Vue.use(Router)
@@ -107,6 +108,9 @@ export default new Router({
         },
         {path: '/SysType/Api/Page/Setting/SystemParams/Main',name: 'Api_SystemParams',component: Api_SystemParams,
           meta:{name: '系统参数',url:'/SysType/Api/Page/Setting/SystemParams/Main',comp:'Api_SystemParams'}
+        },
+        {path: '/SysType/Api/Page/EnvironmentalManagement/DataBase/Main',name: 'Api_DataBase',component: Api_DataBase,
+          meta:{name: '数据库环境',url:'/SysType/Api/Page/EnvironmentalManagement/DataBase/Main',comp:'Api_DataBase'}
         },
       ]
     }
