@@ -124,6 +124,7 @@ INSTALLED_APPS = [
     'Api_TimingTask',
     'Api_BatchTask',
     'SystemParams',
+    'Notice',
 ]
 # endregion
 

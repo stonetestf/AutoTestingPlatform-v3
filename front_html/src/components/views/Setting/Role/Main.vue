@@ -229,6 +229,7 @@ export default {
             let self = this;
             // 改变默认的页数
             self.page.current=val
+            self.SelectData();
         },
 
         //Dialog

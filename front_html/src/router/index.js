@@ -7,6 +7,7 @@ import RouterPar from '@/components/views/Setting/Router/Main'//路由管理
 import Role from '@/components/views/Setting/Role/Main'//角色管理
 import UserTable from '@/components/views/Setting/UserTable/Main'//用户管理
 import OperationalInfo from '@/components/views/Setting/OperationalInfo/Main'//登录日志
+import Notice from '@/components/views/Setting/Notice/Main'//公告
 
 //API 接口
 import ApiHome from '@/components/views/SysType/Api/Home'
@@ -52,6 +53,7 @@ export default new Router({
         {path: '/Setting/Role/Main',name: 'Main',component: Role},
         {path: '/Setting/UserTable/Main',name: 'Main',component: UserTable},
         {path: '/Setting/OperationalInfo/Main',name: 'Main',component: OperationalInfo},
+        {path: '/Setting/Notice/Main',name: 'Main',component: Notice},
       ]
     },
     //API入口

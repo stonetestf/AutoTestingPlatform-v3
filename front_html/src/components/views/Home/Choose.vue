@@ -82,9 +82,10 @@
                     </div>
                     <div style="margin-top:10px">
                         <el-card style="height:350px" shadow="never">
-                            <span>公告</span>
-                            <div style="margin-top:10px">
-                                <span v-html="RomeData.affiche"></span>
+                            <span v-if="RomeData.noticeTime">公告:【{{RomeData.noticeTime}}】</span>
+                            <span v-else>公告</span>
+                            <div style="margin-top:10px;text-align:left;overflow:auto;height:290px;">
+                                <span style="white-space: pre-line;" v-html="RomeData.notice"></span>
                             </div>
                         </el-card>
                     </div>
@@ -155,7 +156,8 @@ var echarts = require('echarts');
             pts:pts,
         },
         RomeData:{
-            affiche:'',//公告
+            notice:'',//公告
+            noticeTime:'',
         },
         ServerPerformance:{
             socket:'',
@@ -176,6 +178,7 @@ var echarts = require('echarts');
         this.CpuIndicators(0);
         this.MemIndicators(0);
         this.CreateSocket();
+        this.SelectNoticeInfo();
 
     },
     methods: {
@@ -297,13 +300,13 @@ var echarts = require('echarts');
             };
             self.ServerPerformance.myChartMEM.setOption(option,true);//加载属性后显示 true自动每次清除数据
         },
-        CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据
+        CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器
             let self = this;
             var socket = new WebSocket(store.state.WebSock+'/api/home/GetServerIndicators');
             self.ServerPerformance.socket = socket;
             
             socket.onopen = function () {
-                PrintConsole('WebSocket open');//成功连接上Websocket
+                // PrintConsole('WebSocket open');//成功连接上Websocket
                 var data ={};
                 data.Message = 'Start';
                 data.Params = {
@@ -346,6 +349,23 @@ var echarts = require('echarts');
             };
             if (socket.readyState == WebSocket.OPEN) socket.onopen();       
         },
+        SelectNoticeInfo(){
+            let self = this;
+            self.$axios.get('/api/Notice/SelectNewNotice',{
+                params:{
+
+                }
+            }).then(res => {
+               if(res.data.statusCode==2000){
+                   self.RomeData.noticeTime = res.data.noticeTime;
+                   self.RomeData.notice = res.data.notice;
+               }else{
+                   self.$message.error('公告信息获取失败:'+res.data.errorMsg);
+               }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
 
         handleClick(val){//跳转类
             if(val=='API'){
@@ -371,6 +391,6 @@ var echarts = require('echarts');
     }
     .btn-div{
        margin-top: 15%;
-   
+       
     }
 </style>

@@ -32,6 +32,7 @@ import PageEnvironment.urls
 import DebugTalk.urls
 import GlobalVariable.urls
 import SystemParams.urls
+import Notice.urls
 
 import Api_IntMaintenance.urls
 import Api_TestReport.urls
@@ -62,5 +63,6 @@ urlpatterns = [
     url('api/ApiTimingTask/', include(Api_TimingTask.urls)),
     url('api/ApiBatchTask/', include(Api_BatchTask.urls)),
     url('api/SystemParams/', include(SystemParams.urls)),
+    url('api/Notice/', include(Notice.urls)),
 
 ]
