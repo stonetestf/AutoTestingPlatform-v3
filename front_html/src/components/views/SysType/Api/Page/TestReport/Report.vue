@@ -215,9 +215,9 @@
                                         <div>
                                             <el-button-group>
                                                 <el-button type="info" @click="AllShrink()">概要&nbsp;{{OverviewRomeData.titleClass.passRate}}%</el-button>
-                                                <el-button type="danger" @click="SelectCase('error')">错误&nbsp;{{OverviewRomeData.titleClass.errorTotal}}</el-button>
-                                                <el-button type="warning">失败&nbsp;{{OverviewRomeData.titleClass.failTotal}}</el-button>
-                                                <el-button type="success">成功&nbsp;{{OverviewRomeData.titleClass.passTotal}}</el-button>
+                                                <el-button type="danger" @click="AllSelect('Error')">错误&nbsp;{{OverviewRomeData.titleClass.errorTotal}}</el-button>
+                                                <el-button type="warning" @click="AllSelect('Fail')">失败&nbsp;{{OverviewRomeData.titleClass.failTotal}}</el-button>
+                                                <el-button type="success" @click="AllSelect('Pass')">成功&nbsp;{{OverviewRomeData.titleClass.passTotal}}</el-button>
                                                 <el-button type="primary" @click="AllExpand()">所有&nbsp;{{OverviewRomeData.titleClass.allTotal}}</el-button>
                                             </el-button-group>
                                         </div>
@@ -595,6 +595,7 @@ export default {
                         // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
                         // {label: '查询1',layerType:'API',id:'2',reportStatus:'Pass','code':400,'time':4},
                     ],
+                    tempTableData:[],//在按钮查询时用来保存查询前的数据保存
                     expandedList:[],//展开列表
                     defaultProps:{
                         children: 'children',
@@ -756,22 +757,30 @@ export default {
             }     
         },
         filterNode(value, data){//查询使用
+            PrintConsole(data)
             if (!value) return true;
                 return data.label.indexOf(value) !== -1;
         },
         //按钮组
         AllExpand(){//展开
             let self = this;
+            //复原数据
+            self.SuiteRomeData.leftRomeData.tableData = self.SuiteRomeData.leftRomeData.tempTableData;
             self.SuiteRomeData.leftRomeData.tableData.forEach(d=>{
-                d.children.forEach(item=>{
-                    PrintConsole(item)
-                    self.SuiteRomeData.leftRomeData.expandedList.push(item.id);
-                })
+                if(self.RomeData.reportType=="API"){
+                    self.SuiteRomeData.leftRomeData.expandedList.push(d.id);
+                }else{
+                    d.children.forEach(item=>{
+                        // PrintConsole(item)
+                        self.SuiteRomeData.leftRomeData.expandedList.push(item.id);
+                    })
+                }
             });
         },
         AllShrink(){//收缩
             let self = this;
-            PrintConsole(this.$refs.tree);
+            //复原数据
+            self.SuiteRomeData.leftRomeData.tableData = self.SuiteRomeData.leftRomeData.tempTableData;
             if(self.RomeData.reportType=="BATCH"){
                 this.$refs.tree.$children[0].node.parent.childNodes[0].expanded=false;
             }else if(self.RomeData.reportType=="TASK"){
@@ -781,6 +790,21 @@ export default {
 
             }
 
+        },
+        AllSelect(value){
+            let self = this;
+            let tempData = [];
+            // PrintConsole('tempTableData',self.SuiteRomeData.leftRomeData.tempTableData)
+            //复原数据
+            self.SuiteRomeData.leftRomeData.tableData = self.SuiteRomeData.leftRomeData.tempTableData;
+
+            self.SuiteRomeData.leftRomeData.tableData.forEach(item=>{
+                PrintConsole(item)
+                if(item.reportStatus == value){
+                    tempData.push(item)
+                }
+            });
+            self.SuiteRomeData.leftRomeData.tableData = tempData;
         },
 
 
@@ -827,6 +851,7 @@ export default {
 
                     //套件
                     self.SuiteRomeData.leftRomeData.tableData = res.data.suite.tableData;
+                    self.SuiteRomeData.leftRomeData.tempTableData = res.data.suite.tableData;
 
 
                     self.loading = false;

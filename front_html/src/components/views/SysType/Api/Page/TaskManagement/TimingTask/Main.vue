@@ -99,8 +99,10 @@
                             <el-table-column
                                 label="通过率"
                                 width="80px"
-                                align= "center"
-                                prop="passRate">
+                                align= "center">
+                                <template slot-scope="scope">
+                                    <el-button type="text" @click="openReport(scope.row.id)">{{scope.row.passRate}}</el-button>
+                                </template>
                             </el-table-column> 
                             <el-table-column
                                 label="更新时间"
@@ -402,6 +404,39 @@ export default {
             // 改变默认的页数
             self.page.current=val;
             self.SelectData();
+        },
+        SelectLastReport(taskId){
+            let self = this;
+            return self.$axios.get('/api/ApiTestReport/SelectLastReport',{
+                params:{
+                    "taskId":taskId,
+                    'reportType':'TASK'
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    return res.data.testReportId;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    return null;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                return null;
+            })
+        },
+        openReport(taskId){
+            this.SelectLastReport(taskId).then(testReportId=>{
+                PrintConsole(testReportId)
+                if(testReportId){
+                    let routeUrl = this.$router.resolve({
+                        name: "Api_Report",
+                        query: {
+                            testReportId:testReportId,
+                        }
+                    });
+                    window.open(routeUrl.href, '_blank');
+                }
+            });
         },
 
         //历史恢复

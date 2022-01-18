@@ -297,13 +297,11 @@ export default {
             })
         },
         handleReport(index,row){
-            let self = this;
             let routeUrl = this.$router.resolve({
                 name: "Api_Report",
                 query: {
                     testReportId:row.id,
-                    reportType:row.reportType,
-                    // token:self.$cookies.get('token'),
+                    // reportType:row.reportType,
                 }
             });
             window.open(routeUrl.href, '_blank');

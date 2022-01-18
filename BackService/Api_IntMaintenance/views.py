@@ -892,7 +892,7 @@ def edit_data(request):
                         requestParamsType='Body' if apiInfo.request.body.requestSaveType == 'none' else requestParamsType,
                         bodyRequestSaveType=apiInfo.request.body.requestSaveType,
                         uid_id=userId, assignedToUser=assignedUserId,
-                        is_del=0, updateTime=cls_Common.get_date_time(),onlyCode=onlyCode
+                        is_del=0, updateTime=cls_Common.get_date_time(), onlyCode=onlyCode
                     )
                     product_list_to_insert = list()
                     for item_userId in basicInfo.pushTo:
@@ -1831,31 +1831,31 @@ def restor_data(request):
                                             db_ApiAssociatedUser.objects.filter(
                                                 apiId_id=apiId,
                                                 onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
-                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                                is_del=1, updateTime=cls_Common.get_date_time())
                                             db_ApiHeaders.objects.filter(
                                                 apiId_id=apiId,
                                                 onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
-                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                                is_del=1, updateTime=cls_Common.get_date_time())
                                             db_ApiParams.objects.filter(
                                                 apiId_id=apiId,
                                                 onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
-                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                                is_del=1, updateTime=cls_Common.get_date_time())
                                             db_ApiBody.objects.filter(
                                                 apiId_id=apiId,
                                                 onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
-                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                                is_del=1, updateTime=cls_Common.get_date_time())
                                             db_ApiExtract.objects.filter(
                                                 apiId_id=apiId,
                                                 onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
-                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                                is_del=1, updateTime=cls_Common.get_date_time())
                                             db_ApiValidate.objects.filter(
                                                 apiId_id=apiId,
                                                 onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
-                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                                is_del=1, updateTime=cls_Common.get_date_time())
                                             db_ApiOperation.objects.filter(
                                                 apiId_id=apiId,
                                                 onlyCode=obj_db_ApiBaseData[0].onlyCode).update(
-                                                is_del=1,updateTime=cls_Common.get_date_time())
+                                                is_del=1, updateTime=cls_Common.get_date_time())
                                             # endregion
                                             # region 基本数据
                                             if restoreData['ApiInfo']['request']['params']:
@@ -2165,3 +2165,6 @@ def import_api_data(request):
         else:
             response['errorMsg'] = apiTable['errorMsg']
     return JsonResponse(response)
+
+
+

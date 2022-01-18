@@ -217,7 +217,7 @@ class ApiReport(cls_Logging):
         db_ApiQueue.objects.filter(id=queueId).update(queueStatus=queueStatus, uid_id=userId)
 
     # 警示信息
-    def create_warning_info(self,testReportId,triggerType,taskId,taskName,info,userId):
+    def create_warning_info(self, testReportId, triggerType, taskId, taskName, info, userId):
         db_WarningInfo.objects.create(
             testReport_id=testReportId,
             triggerType=triggerType,
@@ -331,7 +331,10 @@ class ApiReport(cls_Logging):
             results['topData']['allTotal'] = allTotal
 
             allTotal = passTotal + failTotal + errorTotal
-            passRate = passTotal / allTotal * 100
+            if passTotal == 0 and failTotal == 0 and errorTotal == 0:
+                passRate = 0
+            else:
+                passRate = passTotal / allTotal * 100
             results['topData']['passRate'] = int(passRate)
 
             results['topData']['prePassTotal'] = prePassTotal
@@ -401,8 +404,14 @@ class ApiReport(cls_Logging):
             reportType = obj_db_ApiTestReport[0].reportType
             if reportType in ["API", "CASE"]:
                 for item_reportItem in obj_db_ApiReportItem:
-                    allTotal = item_reportItem.successTotal + item_reportItem.failTotal + item_reportItem.errorTotal
-                    passRate = item_reportItem.successTotal / allTotal * 100
+                    successTotal = item_reportItem.successTotal
+                    failTotal = item_reportItem.failTotal
+                    errorTotal = item_reportItem.errorTotal
+                    allTotal = successTotal + failTotal + errorTotal
+                    if successTotal == 0 and failTotal == 0 and errorTotal == 0:
+                        passRate = 0
+                    else:
+                        passRate = successTotal / allTotal * 100
                     dataList.append({
                         'id': item_reportItem.apiId_id,
                         'name': item_reportItem.apiName,
@@ -452,18 +461,19 @@ class ApiReport(cls_Logging):
         return results
 
     # 测试报告-警示信息
-    def get_warngig_info(self,testReportId):
+    def get_warngig_info(self, testReportId):
         dataList = []
         obj_db_WarningInfo = db_WarningInfo.objects.filter(testReport_id=testReportId)
         for i in obj_db_WarningInfo:
             dataList.append({
-                'id':i.id,
-                'triggerType':i.triggerType,
-                'taskName':i.taskName,
-                'info':i.info,
+                'id': i.id,
+                'triggerType': i.triggerType,
+                'taskName': i.taskName,
+                'info': i.info,
             })
 
         return dataList
+
     # 测试报告-获取测试套件
     def get_report_suite_data(self, testReportId):
         results = {
@@ -528,6 +538,8 @@ class ApiReport(cls_Logging):
                         'passTotal': caseStatistical['passTotal'],
                         'failTotal': caseStatistical['failTotal'],
                         'errorTotal': caseStatistical['errorTotal'],
+                        'reportStatus': self.get_report_status(
+                            caseStatistical['failTotal'], caseStatistical['errorTotal']),
                         'children': children
                     })
                     # endregion
@@ -536,7 +548,7 @@ class ApiReport(cls_Logging):
                 for item_taskItem in obj_db_ApiReportTaskItem:
                     childrenCase = []  # 用例层
                     obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
-                        is_del=0, testReport_id=testReportId,batchItem_id=item_taskItem.id)
+                        is_del=0, testReport_id=testReportId, batchItem_id=item_taskItem.id)
 
                     caseList = [i.case_id for i in obj_db_ApiReportItem]
                     setCaseList = list(set(caseList))
@@ -557,7 +569,7 @@ class ApiReport(cls_Logging):
                                 'label': item_reportItem.apiName,
                                 'time': item_reportItem.runningTime,
                                 'reportStatus': self.get_report_status(
-                                    item_reportItem.failTotal,item_reportItem.errorTotal),
+                                    item_reportItem.failTotal, item_reportItem.errorTotal),
                                 'code': code
                             })
                         # endregion
@@ -586,6 +598,8 @@ class ApiReport(cls_Logging):
                         'passTotal': taskStatistical['passTotal'],
                         'failTotal': taskStatistical['failTotal'],
                         'errorTotal': taskStatistical['errorTotal'],
+                        'reportStatus': self.get_report_status(
+                            taskStatistical['failTotal'], taskStatistical['errorTotal']),
                         'children': childrenCase
                     })
             results['dataList'] = dataList
@@ -837,13 +851,14 @@ class ApiReport(cls_Logging):
         results['allTotal'] = allTotal
         return results
 
-    def get_report_task_statistical(self, testReportId,taskId):
+    def get_report_task_statistical(self, testReportId, taskId):
         results = {}
         passTotal = 0
         failTotal = 0
         errorTotal = 0
         allTotal = 0
-        obj_db_ApiReportTaskItem = db_ApiReportTaskItem.objects.filter(is_del=0,testReport_id=testReportId,task_id=taskId)
+        obj_db_ApiReportTaskItem = db_ApiReportTaskItem.objects.filter(is_del=0, testReport_id=testReportId,
+                                                                       task_id=taskId)
         for item_taskItem in obj_db_ApiReportTaskItem:
             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(
                 is_del=0, testReport_id=testReportId, batchItem_id=item_taskItem.id)
@@ -862,6 +877,7 @@ class ApiReport(cls_Logging):
         results['errorTotal'] = errorTotal
         results['allTotal'] = allTotal
         return results
+
 
 class UiReport(cls_Logging):
     pass

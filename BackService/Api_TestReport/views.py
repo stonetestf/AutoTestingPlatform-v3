@@ -310,3 +310,28 @@ def load_report_api(request):
         else:
             response['errorMsg'] = getReportApi['errorMsg']
     return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询当前最后一份报告
+def select_last_report(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        taskId = objData.taskId
+        reportType = objData.reportType
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Api_TestReport', 'select_last_report', errorMsg)
+    else:
+        obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
+            is_del=0,reportType=reportType,taskId=taskId).order_by('-updateTime')
+        if obj_db_ApiTestReport.exists():
+            response['statusCode'] = 2000
+            response['testReportId'] = obj_db_ApiTestReport[0].id
+        else:
+            response['errorMsg'] = '当前无最新报告'
+    return JsonResponse(response)

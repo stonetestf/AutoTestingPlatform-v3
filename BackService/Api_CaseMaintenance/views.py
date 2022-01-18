@@ -2008,10 +2008,9 @@ def restor_data(request):
                                                 db_CaseApiParams.objects.filter(
                                                     is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
                                                     is_del=0)
-                                                # 用例的FILE文件恢复还没有写
                                                 db_CaseApiBody.objects.filter(
                                                     is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
-                                                    is_del=0)
+                                                    is_del=0,filePath=None) # 用例的FILE文件恢复时直接清空
                                                 db_CaseApiExtract.objects.filter(
                                                     is_del=1, testSet_id=item_testSet.id, onlyCode=onlyCode).update(
                                                     is_del=0)
