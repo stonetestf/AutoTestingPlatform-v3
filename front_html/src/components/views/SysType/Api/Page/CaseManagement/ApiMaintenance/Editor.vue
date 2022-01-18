@@ -643,14 +643,31 @@
                                                 <div v-else-if="scope.row.operationType=='DataBase'">
                                                     <el-form ref="preOperationRomeData" :model="EditApiRomeData.preOperationRomeData" label-width="80px">
                                                         <el-form-item label="数据库:">
-                                                            <el-select v-model="scope.row.dataBase" placeholder="请选择连接的数据库" style="float:left;width:437px">
+                                                            <el-cascader
+                                                                style="float:left;width:437px"
+                                                                clearable
+                                                                placeholder="请选择连接的数据库" 
+                                                                v-model="scope.row.dataBase"
+                                                                :options="EditApiRomeData.preOperationRomeData.dataBaseOptions"
+                                                                @change="handleChange_preOperation"
+                                                                @click.native="getDataBaseOption()">
+                                                                <template slot-scope="{ node, data }">
+                                                                    <span>{{ data.label }}</span>
+                                                                    <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                                                                </template>
+                                                            </el-cascader>
+                                                            <!-- <el-cascader 
+                                                            v-model="scope.row.dataBase" 
+                                                            placeholder="请选择连接的数据库" 
+                                                            style="float:left;width:437px"
+                                                            >
                                                                 <el-option
                                                                     v-for="item in EditApiRomeData.preOperationRomeData.dataBaseOptions"
                                                                     :key="item.value"
                                                                     :label="item.label"
                                                                     :value="item.value">
                                                                 </el-option>
-                                                            </el-select>
+                                                            </el-cascader> -->
                                                         </el-form-item>
                                                         <el-form-item label="SQL:">
                                                             <el-input
@@ -846,6 +863,7 @@ import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetUserNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetConnectBaseItems} from "../../../../../../js/GetSelectTable.js";
 import DialogTestReport from "./TestReport.vue";
 
 export default {
@@ -1120,6 +1138,7 @@ export default {
                                                 self.EditApiRomeData.validateRomeData.index=d.apiInfo.request.validate.length+1;
 
                                                 //preOperation
+                                                self.getDataBaseOption()
                                                 d.apiInfo.request.preOperation.forEach(item_preOperation=>{
                                                     let obj = {};
                                                     obj.index = item_preOperation.index;
@@ -1847,6 +1866,18 @@ export default {
                 self.EditApiRomeData.preOperationRomeData.tableData[index].rowNum = index;
             });
             PrintConsole('SortPreOperation:重新排序',self.EditApiRomeData.preOperationRomeData.tableData);
+        },
+        handleChange_preOperation(value){
+            PrintConsole(value)
+        },
+        getDataBaseOption(){//加载数据库环境的IP及以下可用的库名
+            GetConnectBaseItems('API').then(d=>{
+                if(d.statusCode==2000){
+                    this.EditApiRomeData.preOperationRomeData.dataBaseOptions = d.dataList;
+                }else{
+                    this.$message.error('数据库环境加载失败:'+d.errorMsg);
+                }
+            });
         },
 
         //后置操作
