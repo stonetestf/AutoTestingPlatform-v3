@@ -9,7 +9,7 @@
                             <el-col :span="22">
                                 <div style="text-align: center;">
                                     <!-- <sapn>lipenglo(古雨辰) 最后更新时间:2021-21-12 14:22:22</sapn> -->
-                                    <sapn>{{RomeData.titleInfo}}</sapn>
+                                    <span>{{RomeData.titleInfo}}</span>
                                 </div>
                             </el-col>
                             <el-col :span="2">

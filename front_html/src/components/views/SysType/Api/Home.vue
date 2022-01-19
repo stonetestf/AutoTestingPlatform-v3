@@ -487,7 +487,7 @@ export default {
       // PrintConsole(store.state)
       self.RomeData.nickName = self.$cookies.get('nickName');
       self.RomeData.userImage = 'data:image/png;base64,'+store.state.userImage;
-      self.$router.push('/SysType/Api/Main');
+      self.$router.push('/SysType/Api/ProjectManagement/Main');
     },
     GetApiPermissions(){//加载用户菜单和权限信息
       let self = this;
@@ -506,13 +506,6 @@ export default {
               self.RomeData.menuTable.push(obj);
             }
           });
-          // self.RomeData.menuTable = res.data.menuTable;
-          // res.data.menuTable.forEach(d => {
-          //   if(d.menuName=='Setting'){
-          //     self.MenuDisPlay.Setting = d.disPlay;
-          //     self.MenuTable.Setting = d.children;
-          //   }
-          // });
         }else{
           self.$message.error('API权限获取失败:'+res.data.errorMsg);
         }

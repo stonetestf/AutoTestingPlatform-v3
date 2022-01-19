@@ -11,7 +11,6 @@ import Notice from '@/components/views/Setting/Notice/Main'//公告
 
 //API 接口
 import ApiHome from '@/components/views/SysType/Api/Home'
-import ApiMain from '@/components/views/SysType/Api/Main'
 import Api_ProjectManagement from '@/components/views/SysType/Api/ProjectManagement/Main'
 
 import ApiPageHome from '@/components/views/SysType/Api/Page/Home'
@@ -60,9 +59,7 @@ export default new Router({
     //API入口
     {path: '/SysType/Api/Home',name: 'ApiHome',component: ApiHome,
       children:[
-        {path: '/SysType/Api/Main',name: 'ApiMain',component: ApiMain},
         {path: '/SysType/Api/ProjectManagement/Main',name: 'Api_ProjectManagement',component: Api_ProjectManagement,
-          // meta:{name: '项目维护',url:'/SysType/Api/ProjectManagement/Main',comp:'Api_ProjectManagement'}
         },
       ]
     },
