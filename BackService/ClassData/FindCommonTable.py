@@ -17,19 +17,19 @@ from WorkorderManagement.models import HistoryInfo as db_HistoryInfo
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
+from DataBaseEnvironment.models import DataBase as db_DataBase
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
 from ClassData.Common import Common
+from ClassData.DataSecurity import DataSecurity
 
 import operator
 import time
+import ast
 
 cls_Common = Common()
-
-
-# Create info here.
-# cls_Logging = Logging()
+cls_DataSecurity = DataSecurity()
 
 
 # Create your views here.
@@ -364,7 +364,7 @@ class FindTable(cls_Logging):
         return results
 
     # 获取用户的email
-    def user_email_list(self,userList):
+    def user_email_list(self, userList):
         dataList = []
         for userId in userList:
             obj_db_UserTable = db_UserTable.objects.filter(id=userId)
@@ -372,3 +372,21 @@ class FindTable(cls_Logging):
                 dataList.append(str(obj_db_UserTable[0].emails))
 
         return dataList
+
+    # 查询数据库环境
+    def get_data_base_data(self, dbId):
+        results = {}
+        obj_db_DataBase = db_DataBase.objects.filter(is_del=0, id=dbId)
+        if obj_db_DataBase.exists():
+            results['state'] = True
+            results['dbData'] = {
+                'dbType': obj_db_DataBase[0].dbType,
+                'dataBaseIp': obj_db_DataBase[0].dataBaseIp,
+                'port': obj_db_DataBase[0].port,
+                'userName': obj_db_DataBase[0].userName,
+                'passWord': cls_DataSecurity.aes_decode(ast.literal_eval(obj_db_DataBase[0].passWord)),
+            }
+        else:
+            results['state'] = False
+            results['errorMsg'] = '未找到当前数据库环境'
+        return results

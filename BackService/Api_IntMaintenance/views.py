@@ -1355,7 +1355,8 @@ def load_data(request):
                     'index': item_preOperation.index,
                     'operationType': item_preOperation.operationType,
                     'methodsName': item_preOperation.methodsName,
-                    'dataBase': ast.literal_eval(item_preOperation.dataBaseId) if item_preOperation.dataBaseId else None,
+                    'dataBase': ast.literal_eval(
+                        item_preOperation.dataBaseId) if item_preOperation.dataBaseId else None,
                     'sql': item_preOperation.sql,
                     'remarks': item_preOperation.remarks,
                     'state': True if item_preOperation.state else False,
@@ -1369,7 +1370,8 @@ def load_data(request):
                     'index': item_rearOperation.index,
                     'operationType': item_rearOperation.operationType,
                     'methodsName': item_rearOperation.methodsName,
-                    'dataBase': item_rearOperation.dataBaseId,
+                    'dataBase': ast.literal_eval(
+                        item_rearOperation.dataBaseId) if item_rearOperation.dataBaseId else None,
                     'sql': item_rearOperation.sql,
                     'remarks': item_rearOperation.remarks,
                     'state': True if item_rearOperation.state else False,

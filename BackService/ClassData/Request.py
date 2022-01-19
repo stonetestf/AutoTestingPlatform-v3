@@ -31,6 +31,8 @@ from ClassData.Common import Common as cls_Common
 from ClassData.Logger import Logging as cls_Logging
 from ClassData.TestReport import ApiReport
 from ClassData.Redis import RedisHandle
+from ClassData.FindCommonTable import FindTable
+from ClassData.DataBase import DataBase
 
 import requests
 import os
@@ -39,6 +41,8 @@ import json
 
 cls_ApiReport = ApiReport()
 cls_RedisHandle = RedisHandle()
+cls_FindTable = FindTable()
+cls_DataBase = DataBase()
 
 
 class RequstOperation(cls_Logging, cls_Common):
@@ -479,14 +483,14 @@ class RequstOperation(cls_Logging, cls_Common):
             obj_db_PreOperation = obj_db_ApiOperation.filter(location='Pre')
             results['PreOperation'] = [{'operationType': i.operationType,
                                         'methodsName': i.methodsName,
-                                        'dataBaseId': i.dataBaseId,
+                                        'dataBase': i.dataBaseId,
                                         'sql': i.sql} for i in obj_db_PreOperation if i.state]
 
             # 获取后置数据
             obj_db_RearOperation = obj_db_ApiOperation.filter(location='Rear')
             results['RearOperation'] = [{'operationType': i.operationType,
                                          'methodsName': i.methodsName,
-                                         'dataBaseId': i.dataBaseId,
+                                         'dataBase': i.dataBaseId,
                                          'sql': i.sql} for i in obj_db_RearOperation if i.state]
 
             # endregion
@@ -514,8 +518,8 @@ class RequstOperation(cls_Logging, cls_Common):
         else:
             timeout = 10
             errorMsg = "系统参数:RequestTimeOut,丢失!目前使用默认超时时间:10"
-            cls_Logging.print_log(self,'error', 'requests_api', errorMsg)
-            cls_Logging.record_error_info(self,'API', 'ClassData', 'requests_api', errorMsg)
+            cls_Logging.print_log(self, 'error', 'requests_api', errorMsg)
+            cls_Logging.record_error_info(self, 'API', 'ClassData', 'requests_api', errorMsg)
         r = {}
         results = {
             'state': True
@@ -587,7 +591,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
     # 核心-执行api
     def execute_api(self, is_test, onlyCode, userId, apiId=None, environmentId=None, requestData=None,
-                    testReportId=None,reportItemId=None, labelName=''):
+                    testReportId=None, reportItemId=None, labelName=''):
         """
         :param testReportId:
         :param is_test:
@@ -657,12 +661,13 @@ class RequstOperation(cls_Logging, cls_Common):
                     conversionRequestData[key] = value
                 results['request']['requestDataList'] = cls_Common.conversion_dict_to_kv(self, conversionRequestData)
 
-                resultOfExecution = self.request_operation_extract_validate(labelName, onlyCode, getRequestData,
-                                                                            conversionRequestUrl,
-                                                                            conversionHeadersData,
-                                                                            conversionRequestData,
-                                                                            requestFile,
-                                                                            userId)
+                resultOfExecution = self.request_operation_extract_validate(
+                    labelName, onlyCode, getRequestData,
+                    conversionRequestUrl,
+                    conversionHeadersData,
+                    conversionRequestData,
+                    requestFile,
+                    userId)
                 if resultOfExecution['state']:
                     results['response']['responseCode'] = resultOfExecution['responseCode']
                     results['response']['time'] = resultOfExecution['time']
@@ -683,7 +688,7 @@ class RequstOperation(cls_Logging, cls_Common):
                         # region 添加报告版本的警示信息
                         if results['errorMsg']:
                             cls_ApiReport.create_warning_info(
-                                testReportId,'Error',apiId,getRequestData['apiName'],results['errorMsg'],userId)
+                                testReportId, 'Error', apiId, getRequestData['apiName'], results['errorMsg'], userId)
                         for item_error in results['response']['errorInfoTable']:
                             cls_ApiReport.create_warning_info(
                                 testReportId, 'Warning',
@@ -703,7 +708,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
     def request_operation_extract_validate(self, labelName, onlyCode, getRequestData,
                                            conversionRequestUrl, conversionHeadersData, conversionRequestData,
-                                           requestFile,userId):
+                                           requestFile, userId):
         results = {
             'responseCode': 0,
             'time': 0,
@@ -756,9 +761,53 @@ class RequstOperation(cls_Logging, cls_Common):
                      'resultsState': resultsState
                      }
                 )
+            elif item_pre['operationType'] == 'DataBase':
+                if type(item_pre['dataBase']) == list:
+                    dbId, dbName = item_pre['dataBase']
+                else:
+                    dbId, dbName = ast.literal_eval(item_pre['dataBase'])
+                dataBaseData = cls_FindTable.get_data_base_data(dbId)
+                if dataBaseData['state']:
+                    dbType = dataBaseData['dbData']['dbType']
+                    ip = dataBaseData['dbData']['dataBaseIp']
+                    port = dataBaseData['dbData']['port']
+                    userName = dataBaseData['dbData']['userName']
+                    passWord = dataBaseData['dbData']['passWord']
+                    sql = item_pre['sql']
+                    executeType = sql.split(' ')[0]
+                    executeMysql = cls_DataBase.execute_sql(dbType, executeType, ip, port, userName, passWord, dbName,
+                                                            sql)
+                    if executeMysql['state']:
+                        callResults = f"SQL:{sql}\n" \
+                                      f"结果:{executeMysql['resultsData']}"
+                        resultsState = True
+                    else:
+                        callResults = f"数据库:{dbName},SQL:{sql},执行错误:{executeMysql['errorMsg']}"
+                        resultsState = False
+                        reportState.append('Error')
+                        errorInfoTable.append({
+                            'createTime': cls_Common.get_date_time(self),
+                            'errorName': '前置操作',
+                            'errorInfo': callResults,
+                        })
+                else:
+                    callResults = f"数据库:{dbName} 错误:{dataBaseData['errorMsg']}"
+                    resultsState = False
+                    reportState.append('Error')
+                    errorInfoTable.append({
+                        'createTime': cls_Common.get_date_time(self),
+                        'errorName': '前置操作',
+                        'errorInfo': callResults,
+                    })
+                preOperationTable.append(
+                    {'operationType': item_pre['operationType'],  # 操作类型
+                     'callName': f"数据库:{dbName} ",  # 调用名称
+                     'callResults': str(callResults),  # 调用结果
+                     'resultsState': resultsState
+                     }
+                )
             else:
                 pass
-
         # endregion
 
         # region 发送请求
@@ -828,6 +877,51 @@ class RequstOperation(cls_Logging, cls_Common):
                     {'operationType': item_rear['operationType'],  # 操作类型
                      'callName': callName,  # 调用名称
                      'callResults': callResults,  # 调用结果
+                     'resultsState': resultsState
+                     }
+                )
+            elif item_rear['operationType'] == 'DataBase':
+                if type(item_rear['dataBase']) == list:
+                    dbId, dbName = item_rear['dataBase']
+                else:
+                    dbId, dbName = ast.literal_eval(item_rear['dataBase'])
+                dataBaseData = cls_FindTable.get_data_base_data(dbId)
+                if dataBaseData['state']:
+                    dbType = dataBaseData['dbData']['dbType']
+                    ip = dataBaseData['dbData']['dataBaseIp']
+                    port = dataBaseData['dbData']['port']
+                    userName = dataBaseData['dbData']['userName']
+                    passWord = dataBaseData['dbData']['passWord']
+                    sql = item_rear['sql']
+                    executeType = sql.split(' ')[0]
+                    executeMysql = cls_DataBase.execute_sql(dbType, executeType, ip, port, userName, passWord, dbName,
+                                                            sql)
+                    if executeMysql['state']:
+                        callResults = f"SQL:{sql}\n" \
+                                      f"结果:{executeMysql['resultsData']}"
+                        resultsState = True
+                    else:
+                        callResults = f"数据库:{dbName},SQL:{sql},执行错误:{executeMysql['errorMsg']}"
+                        resultsState = False
+                        reportState.append('Error')
+                        errorInfoTable.append({
+                            'createTime': cls_Common.get_date_time(self),
+                            'errorName': '后置操作',
+                            'errorInfo': callResults,
+                        })
+                else:
+                    callResults = f"数据库:{dbName} 错误:{dataBaseData['errorMsg']}"
+                    resultsState = False
+                    reportState.append('Error')
+                    errorInfoTable.append({
+                        'createTime': cls_Common.get_date_time(self),
+                        'errorName': '后置操作',
+                        'errorInfo': callResults,
+                    })
+                rearOperationTable.append(
+                    {'operationType': item_rear['operationType'],  # 操作类型
+                     'callName': f"数据库:{dbName} ",  # 调用名称
+                     'callResults': str(callResults),  # 调用结果
                      'resultsState': resultsState
                      }
                 )
@@ -1030,7 +1124,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-用例执行
-    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId,reportTaskItemId=None):
+    def execute_case(self, remindLabel, redisKey, testReportId, caseId, environmentId, userId, reportTaskItemId=None):
         results = {
             'state': True,
             'itemResults': []
@@ -1065,12 +1159,12 @@ class RequstOperation(cls_Logging, cls_Common):
                         'rearOperationTable': [],
                         'errorInfoTable:': [],
                     },
-                    'errorMsg':''
+                    'errorMsg': ''
                 }
                 # 创建2级测试报告
                 createReportItems = cls_ApiReport.create_report_items(
                     testReportId, item_request['apiId'], item_request['testName'],
-                    caseId=caseId,reportTaskItemId=reportTaskItemId)
+                    caseId=caseId, reportTaskItemId=reportTaskItemId)
                 if createReportItems['state']:
                     reportItemId = createReportItems['reportItemId']
                     itemResults['request']['environmentUrl'] = environmentUrl
@@ -1119,7 +1213,7 @@ class RequstOperation(cls_Logging, cls_Common):
                             if itemResults['errorMsg']:
                                 cls_ApiReport.create_warning_info(
                                     testReportId, 'Error', item_request['apiId'], item_request['testName'],
-                                    itemResults['errorMsg'],userId)
+                                    itemResults['errorMsg'], userId)
                             for item_error in itemResults['response']['errorInfoTable']:
                                 cls_ApiReport.create_warning_info(
                                     testReportId, 'Warning',
@@ -1222,7 +1316,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-定时任务执行
-    def excute_task(self, testReportId, taskId, label, environmentId, userId,reportTaskItemId=None):
+    def excute_task(self, testReportId, taskId, label, environmentId, userId, reportTaskItemId=None):
         results = {
             'state': True,
             'itemResults': []
@@ -1235,7 +1329,7 @@ class RequstOperation(cls_Logging, cls_Common):
             label = label + caseText
             caseId = item_taskTestSet.case_id
             executeCase = self.execute_case(
-                label, redisKey, testReportId, caseId, environmentId, userId,reportTaskItemId=reportTaskItemId)
+                label, redisKey, testReportId, caseId, environmentId, userId, reportTaskItemId=reportTaskItemId)
             if executeCase['state']:
                 results['itemResults'].append(executeCase['itemResults'])
             else:
@@ -1244,23 +1338,23 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 核心-批量任务执行
-    def excute_batch(self,testReportId,batchId,label, userId):
+    def excute_batch(self, testReportId, batchId, label, userId):
         results = {
             'state': True,
             'itemResults': []
         }
         obj_db_ApiBatchTaskTestSet = db_ApiBatchTaskTestSet.objects.filter(
-            is_del=0,batchTask_id=batchId).order_by('index')
+            is_del=0, batchTask_id=batchId).order_by('index')
         for item_task in obj_db_ApiBatchTaskTestSet:
             createReportTaskItems = cls_ApiReport.create_report_task_items(
-                testReportId,item_task.task_id,item_task.task.taskName)
+                testReportId, item_task.task_id, item_task.task.taskName)
             if createReportTaskItems['state']:
                 taskText = f"定时任务:{item_task.task.taskName}>:"
                 label = label + taskText
                 environmentId = item_task.task.environment_id
                 reportTaskItemId = createReportTaskItems['reportTaskItemId']
                 excuteTask = self.excute_task(
-                    testReportId, item_task.task_id, label, environmentId, userId,reportTaskItemId=reportTaskItemId)
+                    testReportId, item_task.task_id, label, environmentId, userId, reportTaskItemId=reportTaskItemId)
                 if excuteTask['state']:
                     results['itemResults'].append(excuteTask['itemResults'])
                 else:
