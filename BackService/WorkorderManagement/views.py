@@ -57,13 +57,11 @@ def select_data(request):
     else:
         obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
-        select_db_WorkorderManagement = obj_db_WorkorderManagement[minSize: maxSize]
         if pageId:
             obj_db_WorkorderManagement = obj_db_WorkorderManagement.filter(page_id=pageId)
-            select_db_WorkorderManagement = obj_db_WorkorderManagement[minSize: maxSize]
         if funId:
             obj_db_WorkorderManagement = obj_db_WorkorderManagement.filter(fun_id=funId)
-            select_db_WorkorderManagement = obj_db_WorkorderManagement[minSize: maxSize]
+        select_db_WorkorderManagement = obj_db_WorkorderManagement[minSize: maxSize]
         for i in select_db_WorkorderManagement:
             timeArray = time.strptime(i.updateTime.strftime('%Y-%m-%d %H:%M:%S'), "%Y-%m-%d %H:%M:%S")
             obj_db_HistoryInfo = db_HistoryInfo.objects.filter(work_id=i.id).order_by('-createTime')

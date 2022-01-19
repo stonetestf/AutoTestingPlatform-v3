@@ -68,11 +68,9 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'Api_BatchTask', 'select_data', errorMsg)
     else:
         obj_db_ApiBatchTask = db_ApiBatchTask.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
-        select_db_ApiBatchTask = obj_db_ApiBatchTask[minSize: maxSize]
         if batchName:
             obj_db_ApiBatchTask = obj_db_ApiBatchTask.filter(batchName__icontains=batchName)
-            select_db_ApiBatchTask = obj_db_ApiBatchTask[minSize: maxSize]
-
+        select_db_ApiBatchTask = obj_db_ApiBatchTask[minSize: maxSize]
         for i in select_db_ApiBatchTask:
             obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
                 is_del=0, reportType='BATCH', taskId=i.id).order_by('-updateTime')

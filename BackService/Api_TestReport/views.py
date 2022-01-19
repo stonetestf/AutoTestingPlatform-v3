@@ -56,16 +56,13 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'Api_TestReport', 'select_data', errorMsg)
     else:
         obj_db_ApiTestReport = db_ApiTestReport.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
-        select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         if reportName:
             obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportName__icontains=reportName)
-            select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         if reportStatus:
             obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportStatus=reportStatus)
-            select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         if reportType:
             obj_db_ApiTestReport = obj_db_ApiTestReport.filter(reportType=reportType)
-            select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
+        select_db_ApiTestReport = obj_db_ApiTestReport[minSize: maxSize]
         for i in select_db_ApiTestReport:
             obj_db_ApiReportItem = db_ApiReportItem.objects.filter(is_del=0, testReport_id=i.id)
             obj_db_ApiQueue = db_ApiQueue.objects.filter(testReport_id=i.id)

@@ -52,10 +52,9 @@ def select_data(request):
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
-        select_db_PageManagement = obj_db_PageManagement[minSize: maxSize]
         if pageName:
             obj_db_PageManagement = obj_db_PageManagement.filter(pageName__icontains=pageName)
-            select_db_PageManagement = obj_db_PageManagement[minSize: maxSize]
+        select_db_PageManagement = obj_db_PageManagement[minSize: maxSize]
         for i in select_db_PageManagement:
             dataList.append(
                 {"id": i.id,

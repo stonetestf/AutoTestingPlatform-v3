@@ -62,11 +62,9 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'Api_TimingTask', 'select_data', errorMsg)
     else:
         obj_db_ApiTimingTask = db_ApiTimingTask.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
-        select_db_ApiTimingTask = obj_db_ApiTimingTask[minSize: maxSize]
         if taskName:
             obj_db_ApiTimingTask = obj_db_ApiTimingTask.filter(taskName__icontains=taskName)
-            select_db_ApiTimingTask = obj_db_ApiTimingTask[minSize: maxSize]
-
+        select_db_ApiTimingTask = obj_db_ApiTimingTask[minSize: maxSize]
         for i in select_db_ApiTimingTask:
             obj_db_ApiTestReport = db_ApiTestReport.objects.filter(
                 is_del=0, reportType='TASK', taskId=i.id).order_by('-updateTime')

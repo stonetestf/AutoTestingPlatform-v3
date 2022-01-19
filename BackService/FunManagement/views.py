@@ -54,13 +54,11 @@ def select_data(request):
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
-        select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
         if pageId:
             obj_db_FunManagement = obj_db_FunManagement.filter(page_id=pageId)
-            select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
         if funName:
             obj_db_FunManagement = obj_db_FunManagement.filter(funName__icontains=funName)
-            select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
+        select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
         for i in select_db_FunManagement:
             dataList.append(
                 {"id": i.id,

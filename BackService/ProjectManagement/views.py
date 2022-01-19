@@ -59,10 +59,9 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'ProjectManagement', 'select_data', errorMsg)
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0, sysType=sysType).order_by('-updateTime')
-        select_db_ProManagement = obj_db_ProManagement[minSize: maxSize]
         if proName:
             obj_db_ProManagement = obj_db_ProManagement.filter(proName__icontains=proName)
-            select_db_ProManagement = obj_db_ProManagement[minSize: maxSize]
+        select_db_ProManagement = obj_db_ProManagement[minSize: maxSize]
         for i in select_db_ProManagement:
             bindMembers = []
             tableItem = []  # 详情

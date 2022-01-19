@@ -49,13 +49,11 @@ def select_data(request):
     else:
         obj_db_PageEnvironment = db_PageEnvironment.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
-        select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
         if environmentName:
             obj_db_PageEnvironment = obj_db_PageEnvironment.filter(environmentName__icontains=environmentName)
-            select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
         if environmentUrl:
             obj_db_PageEnvironment = obj_db_PageEnvironment.filter(environmentUrl__icontains=environmentUrl)
-            select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
+        select_db_PageEnvironment = obj_db_PageEnvironment[minSize: maxSize]
         for i in select_db_PageEnvironment:
             dataList.append(
                 {"id": i.id,

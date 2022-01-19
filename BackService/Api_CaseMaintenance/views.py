@@ -89,26 +89,19 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'Api_CaseMaintenance', 'select_data', errorMsg)
     else:
         obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
-        select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if pageId:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(page_id=pageId)
-            select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if funId:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(fun_id=funId)
-            select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if testType:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(testType=testType)
-            select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if labelId:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(label=labelId)
-            select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if caseState:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(caseState=caseState)
-            select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         if caseName:
             obj_db_CaseBaseData = obj_db_CaseBaseData.filter(caseName__icontains=caseName)
-            select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
-
+        select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
         for i in select_db_CaseBaseData:
             obj_db_ApiDynamic = db_ApiDynamic.objects.filter(is_del=0, case_id=i.id, is_read=0)
             if obj_db_ApiDynamic.exists():

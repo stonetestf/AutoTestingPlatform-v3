@@ -49,13 +49,11 @@ def select_data(request):
     else:
         obj_db_GlobalVariable = db_GlobalVariable.objects.filter(
             is_del=0, sysType=sysType,pid_id=proId).order_by('-updateTime')
-        select_db_GlobalVariable = obj_db_GlobalVariable[minSize: maxSize]
         if globalType:
             obj_db_GlobalVariable = obj_db_GlobalVariable.filter(globalType=globalType)
-            select_db_GlobalVariable = obj_db_GlobalVariable[minSize: maxSize]
         if globalName:
             obj_db_GlobalVariable = obj_db_GlobalVariable.filter(globalName__icontains=globalName)
-            select_db_GlobalVariable = obj_db_GlobalVariable[minSize: maxSize]
+        select_db_GlobalVariable = obj_db_GlobalVariable[minSize: maxSize]
         for i in select_db_GlobalVariable:
             dataList.append(
                 {"id": i.id,

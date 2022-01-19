@@ -80,23 +80,17 @@ def select_data(request):
         cls_Logging.record_error_info('API', 'Api_IntMaintenance', 'select_data', errorMsg)
     else:
         obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
-        select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
         if pageId:
             obj_db_ApiBaseData = obj_db_ApiBaseData.filter(page_id=pageId)
-            select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
         if funId:
             obj_db_ApiBaseData = obj_db_ApiBaseData.filter(fun_id=funId)
-            select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
         if apiName:
             obj_db_ApiBaseData = obj_db_ApiBaseData.filter(apiName__icontains=apiName)
-            select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
         if requestUrl:
             obj_db_ApiBaseData = obj_db_ApiBaseData.filter(requestUrl__icontains=requestUrl)
-            select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
         if apiState:
             obj_db_ApiBaseData = obj_db_ApiBaseData.filter(apiState=apiState)
-            select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
-
+        select_db_ApiBaseData = obj_db_ApiBaseData[minSize: maxSize]
         for i in select_db_ApiBaseData:
             obj_db_ApiAssociatedUser = db_ApiAssociatedUser.objects.filter(is_del=0, apiId_id=i.id, uid_id=userId)
             if obj_db_ApiAssociatedUser or userId == i.cuid:
