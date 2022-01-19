@@ -367,7 +367,7 @@
                                         label="变量名称"
                                         align= "center">
                                         <template slot-scope="scope">
-                                            <el-input v-model="scope.row.key" placeholder="注意:同一页面不要使用相同变量名称,会冲突!"></el-input>
+                                            <el-input v-model="scope.row.key" placeholder="注意:同一接口不要使用相同变量名称,会冲突!"></el-input>
                                         </template>
                                     </el-table-column>
                                     <el-table-column
