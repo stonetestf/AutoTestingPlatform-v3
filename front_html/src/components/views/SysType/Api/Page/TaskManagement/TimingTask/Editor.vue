@@ -487,7 +487,9 @@ export default {
                 obj.pageName = d.pageName;
                 obj.funName = d.funName;
                 obj.caseName = d.caseName;
+                obj.apiTotal = d.apiTotal;
                 obj.caseState = d.caseState;
+                obj.passRate=d.passRate;
                 obj.state = true;
 
                 self.SortCaseRomeData.tableData.push(obj);
