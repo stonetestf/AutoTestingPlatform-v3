@@ -367,7 +367,7 @@
                                         label="变量名称"
                                         align= "center">
                                         <template slot-scope="scope">
-                                            <el-input v-model="scope.row.key" placeholder="变量名称"></el-input>
+                                            <el-input v-model="scope.row.key" placeholder="注意:同一页面不要使用相同变量名称,会冲突!"></el-input>
                                         </template>
                                     </el-table-column>
                                     <el-table-column
@@ -1159,7 +1159,9 @@ export default {
                                 obj.index = item_body.index;
                                 obj.state =item_body.state;
                                 obj.key =item_body.key;
+                                obj.paramsType=item_body.paramsType;
                                 obj.value='';
+                                obj.fileList=item_body.fileList;
                                 obj.remarks=item_body.remarks;
 
                                 self.RomeData.bodyRomeData.tableData.push(obj);

@@ -353,6 +353,7 @@
                                                             <template slot="title"><b>Request Parameters</b></template>
                                                             <el-table
                                                             :data="SuiteRomeData.rightRomeData.ApiInfo.requestData"
+                                                            height="665px"
                                                             style="width: 1000px">
                                                             <el-table-column
                                                                 prop="key"

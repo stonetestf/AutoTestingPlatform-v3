@@ -202,7 +202,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 提取并推送给当前执行的用户提取失败的信息
-    def request_extract(self, userId, labelName, onlyCode, content, statuscode, extract):
+    def request_extract(self,userId, labelName, onlyCode, content, statuscode, extract):
         results = {
             'state': True,
             'errorInfoTable': []
@@ -385,7 +385,7 @@ class RequstOperation(cls_Logging, cls_Common):
         return results
 
     # 执行提取和断言操作
-    def perform_extract_and_validate(self, labelName, onlyCode, extractData, validateData, requestsApi, userId):
+    def perform_extract_and_validate(self,labelName, onlyCode, extractData, validateData, requestsApi, userId):
         results = {
             'extractTable': [],
             'assertionTable': [],
@@ -705,7 +705,7 @@ class RequstOperation(cls_Logging, cls_Common):
 
         return results
 
-    def request_operation_extract_validate(self, labelName, onlyCode, getRequestData,
+    def request_operation_extract_validate(self,labelName, onlyCode, getRequestData,
                                            conversionRequestUrl, conversionHeadersData, conversionRequestData,
                                            requestFile, userId):
         results = {
