@@ -225,8 +225,10 @@
                             </el-table-column>
                             <el-table-column
                                 label="调用结果"
-                                align= "center"
-                                prop="callResults">
+                                align= "center">
+                                <template slot-scope="scope">
+                                    <div style="text-align:left;white-space:pre-line;">{{scope.row.callResults}}</div>
+                                </template>
                             </el-table-column>
                             <el-table-column
                                 align="center"
@@ -260,8 +262,10 @@
                             </el-table-column>
                             <el-table-column
                                 label="调用结果"
-                                align= "center"
-                                prop="callResults">
+                                align= "center">
+                                <template slot-scope="scope">
+                                    <div style="text-align:left;white-space:pre-line;">{{scope.row.callResults}}</div>
+                                </template>
                             </el-table-column>
                             <el-table-column
                                 align="center"
