@@ -123,7 +123,7 @@
                                         :src="IconImg.pts"
                                         fit="cover">
                                     </el-image>
-                                    <div class="btn-text">性能测试(建设中)</div>
+                                    <div class="btn-text">梯度测试(建设中)</div>
                                 </el-card>
                             </el-col>
                             <!-- <el-col :span="5">
