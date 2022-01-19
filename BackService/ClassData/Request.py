@@ -148,7 +148,7 @@ class RequstOperation(cls_Logging, cls_Common):
         else:
             bodyDict = {}
 
-        results['state'] = True
+        # results['state'] = True
         results['headersDict'] = headersDict
         results['paramsDict'] = paramsDict
         results['bodyDict'] = bodyDict
@@ -170,35 +170,35 @@ class RequstOperation(cls_Logging, cls_Common):
         # 转换请求数据为JSON格式
         conversionToJson = self.conversion_params_to_json(
             headersData, paramsData, bodyRequestType, bodyData)
-        if conversionToJson['state']:
-            requestHeaders = conversionToJson['headersDict']
-            requestParams = conversionToJson['paramsDict']
-            requestBody = conversionToJson['bodyDict']
-            requestFile = conversionToJson['bodyFile']
-            if requestParamsType == "Body":
-                requestData = requestBody
-                results['requestData'] = bodyData
-            else:
-                requestData = requestParams
-                results['requestData'] = paramsData
-            results['requestFile'] = requestFile
-
-            # 转换参数中带有引用的数据
-            conversionImportData = self.conversion_params_import_data(
-                onlyCode, proId, requestUrl, requestHeaders, requestData)
-            if conversionImportData['state']:
-                conversionRequestUrl = conversionImportData['requestUrl']
-                conversionHeadersData = conversionImportData['headersData']
-                conversionRequestData = conversionImportData['requestData']
-                results['state'] = True
-                results['conversionRequestUrl'] = conversionRequestUrl
-                results['conversionHeadersData'] = conversionHeadersData
-                results['conversionRequestData'] = conversionRequestData
-            else:
-                results['errorMsg'] = conversionImportData['errorMsg']
+        # if conversionToJson['state']:
+        requestHeaders = conversionToJson['headersDict']
+        requestParams = conversionToJson['paramsDict']
+        requestBody = conversionToJson['bodyDict']
+        requestFile = conversionToJson['bodyFile']
+        if requestParamsType == "Body":
+            requestData = requestBody
+            results['requestData'] = bodyData
         else:
-            # 这里目前没有可获取到的错误，以后在需求中添加
-            results['errorMsg'] = ""
+            requestData = requestParams
+            results['requestData'] = paramsData
+        results['requestFile'] = requestFile
+
+        # 转换参数中带有引用的数据
+        conversionImportData = self.conversion_params_import_data(
+            onlyCode, proId, requestUrl, requestHeaders, requestData)
+        if conversionImportData['state']:
+            conversionRequestUrl = conversionImportData['requestUrl']
+            conversionHeadersData = conversionImportData['headersData']
+            conversionRequestData = conversionImportData['requestData']
+            results['state'] = True
+            results['conversionRequestUrl'] = conversionRequestUrl
+            results['conversionHeadersData'] = conversionHeadersData
+            results['conversionRequestData'] = conversionRequestData
+        else:
+            results['errorMsg'] = conversionImportData['errorMsg']
+        # else:
+        #     # 这里目前没有可获取到的错误，以后在需求中添加
+        #     results['errorMsg'] = ""
         return results
 
     # 提取并推送给当前执行的用户提取失败的信息

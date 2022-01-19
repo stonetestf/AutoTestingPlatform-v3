@@ -50,7 +50,6 @@ def api_asynchronous_run_case(remindLabel, redisKey, testReportId, queueId, case
     cls_ApiReport.update_queue(queueId, 1, userId)  # 更新队列-执行中
     # 组合成Case执行的用例
     executeCase = cls_RequstOperation.execute_case(remindLabel, redisKey, testReportId, caseId, environmentId, userId)
-    # cls_ApiReport.get_report_top_data(testReportId)  # 更新主测试报告
     cls_ApiReport.update_queue(queueId, 2, userId)  # 更新队列-完成
     if executeCase['state']:
         return "int_asynchronous_run_case-测试用例运行完成"

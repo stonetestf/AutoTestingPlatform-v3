@@ -1429,7 +1429,6 @@ def send_request(request):
                                        '如遇错误可取消该项目队列后重新运行!'
             else:
                 remindLabel = f"【接口:{obj_db_ApiBaseData[0].apiName}】:"  # 推送的标识
-
                 # region 创建1级主报告
                 createTestReport = cls_ApiReport.create_test_report(
                     obj_db_ApiBaseData[0].pid_id,
