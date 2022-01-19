@@ -18,10 +18,9 @@ from login.models import UserBindRole as db_UserBindRole
 from role.models import RoleBindMenu as db_RoleBindMenu
 from info.models import OperateInfo as db_OperateInfo
 from info.models import PushInfo as db_PushInfo
-# from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 from Api_TestReport.models import ApiQueue as db_ApiQueue
-# from Api_TestReport.models import ApiReportItem as db_ApiReportItem
-# from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
+from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
+from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -260,6 +259,8 @@ def get_user_statistics_info(request):
     response = {}
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        isAdmin = cls_FindTable.get_role_is_admin(roleId)
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -269,16 +270,27 @@ def get_user_statistics_info(request):
         if obj_db_UserBindRole.exists():
             pushCount = db_PushInfo.objects.filter(~Q(oinfo__uid_id=userId), uid_id=userId, is_read=0).count()
             errorCount = db_OperateInfo.objects.filter(remindType='Error', is_read=0).count()
-            # warningCount = db_OperateInfo.objects.filter(uid_id=userId, remindType='Warning').count()
             warningCount = db_PushInfo.objects.filter(uid_id=userId, oinfo__remindType='Warning', is_read=0).count()
+            obj_db_WorkorderManagement = db_WorkorderManagement.objects.filter(~Q(workState=3), is_del=0)
+            unfinishedWorkOrder = 0  # 未完成的工作订单
+            for i in obj_db_WorkorderManagement:
+                obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(
+                    is_del=0, work_id=i.id,uid_id=userId)
+                if obj_db_WorkBindPushToUsers.exists():
+                    unfinishedWorkOrder += 1
 
-            if obj_db_UserBindRole[0].role.is_admin == 1:
+            if isAdmin:
                 message = f"当前您的信息: <br>" \
-                          f"错误信息({errorCount}),警告信息({warningCount}),推送信息({pushCount}),<br>" \
+                          f"错误信息({errorCount})," \
+                          f"警告信息({warningCount})," \
+                          f"推送信息({pushCount}),<br>" \
+                          f"未完成工单信息({unfinishedWorkOrder}),<br>" \
                           f"请注意查收!"
             else:
                 message = f"当前您的信息: <br>" \
-                          f"警告信息({warningCount}),推送信息({pushCount}),<br>" \
+                          f"警告信息({warningCount})," \
+                          f"推送信息({pushCount}),<br>" \
+                          f"未完成工单信息({unfinishedWorkOrder}),<br>" \
                           f"请注意查收!"
             response['statusCode'] = 2000
             response['message'] = message
@@ -356,7 +368,7 @@ def api_page_get_main_data(request):
                             'proStatistical': cls_FindTable.get_pro_under_statistical_data(proId),
                             'pastSevenDaysTop': cls_FindTable.get_past_seven_days_top_ten_data(proId),  # 过去7天内Top10
                             'proQueue': cls_FindTable.get_pro_queue(proId),  # 获取项目队列
-                            'myWork':cls_FindTable.get_my_work('API',proId,userId),
+                            'myWork': cls_FindTable.get_my_work('API', proId, userId),
                         }
 
                         request.websocket.send(json.dumps(sendText, ensure_ascii=False).encode('utf-8'))
