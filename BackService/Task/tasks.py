@@ -182,7 +182,7 @@ def api_daily_run_tasks():
                                 'API', 'ClassData>TimingTask', 'api_daily_run_tasks', errorMsg)
                         else:
                             environmentId = obj_db_ApiTimingTask[0].environment_id
-                            remindLabel = f"定时任务:{obj_db_ApiTimingTask[0].taskName}>"  # 推送的标识
+                            remindLabel = f"【定时任务:{obj_db_ApiTimingTask[0].taskName}】>"  # 推送的标识
                             result = api_asynchronous_run_task.delay(testReportId, queueId, taskId, remindLabel,
                                                                      environmentId, userId)
                             itemResults['celeryTaskId'] = result.task_id

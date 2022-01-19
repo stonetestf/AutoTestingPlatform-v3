@@ -401,8 +401,7 @@ class RequstOperation(cls_Logging, cls_Common):
                 results['errorInfoTable'] = requestExtract['errorInfoTable']
 
                 # 断言数据
-                requestValidate = self.request_validate(requestExtract['extractList'],
-                                                        validateData)
+                requestValidate = self.request_validate(requestExtract['extractList'], validateData)
                 if requestValidate['state']:
                     results['assertionTable'] = requestValidate['validateReport']
                     results['reportState'] = 'Pass' if requestValidate['reportState'] else 'Fail'
@@ -1106,14 +1105,14 @@ class RequstOperation(cls_Logging, cls_Common):
                     obj_db_PreOperation = obj_db_CaseApiOperation.filter(location='Pre')
                     itemApi['PreOperation'] = [{'operationType': i.operationType,
                                                 'methodsName': i.methodsName,
-                                                'dataBaseId': i.dataBaseId,
+                                                'dataBase': i.dataBaseId,
                                                 'sql': i.sql} for i in obj_db_PreOperation if i.state]
 
                     # 获取后置数据
                     obj_db_RearOperation = obj_db_CaseApiOperation.filter(location='Rear')
                     itemApi['RearOperation'] = [{'operationType': i.operationType,
                                                  'methodsName': i.methodsName,
-                                                 'dataBaseId': i.dataBaseId,
+                                                 'dataBase': i.dataBaseId,
                                                  'sql': i.sql} for i in obj_db_RearOperation if i.state]
                     # endregion
                     results['request'].append(itemApi)
@@ -1188,12 +1187,11 @@ class RequstOperation(cls_Logging, cls_Common):
                             value = requestFile['url'].split('/')[-1]
                             itemResults['request']['requestDataDict'][key] = value
                         itemResults['request']['requestDataList'] = conversionDataToRequestData['requestData']
-                        resultOfExecution = self.request_operation_extract_validate(remindLabel, redisKey, item_request,
-                                                                                    conversionRequestUrl,
-                                                                                    conversionHeadersData,
-                                                                                    conversionRequestData,
-                                                                                    requestFile,
-                                                                                    userId)
+                        resultOfExecution = self.request_operation_extract_validate(
+                            f"{remindLabel}【接口:{item_request['testName']}】", redisKey, item_request,
+                            conversionRequestUrl,conversionHeadersData,conversionRequestData,
+                            requestFile,
+                            userId)
                         if resultOfExecution['state']:
                             itemResults['response']['responseCode'] = resultOfExecution['responseCode']
                             itemResults['response']['time'] = resultOfExecution['time']
@@ -1325,11 +1323,11 @@ class RequstOperation(cls_Logging, cls_Common):
             is_del=0, timingTask_id=taskId).order_by('index')
         for item_taskTestSet in obj_db_ApiTimingTaskTestSet:
             redisKey = cls_Common.generate_only_code(self)  # 1个用例1个key
-            caseText = f"用例:{item_taskTestSet.case.caseName}:"
-            label = label + caseText
+            caseText = f"【用例:{item_taskTestSet.case.caseName}】>"
+            remindLabel = label + caseText
             caseId = item_taskTestSet.case_id
             executeCase = self.execute_case(
-                label, redisKey, testReportId, caseId, environmentId, userId, reportTaskItemId=reportTaskItemId)
+                remindLabel, redisKey, testReportId, caseId, environmentId, userId, reportTaskItemId=reportTaskItemId)
             if executeCase['state']:
                 results['itemResults'].append(executeCase['itemResults'])
             else:

@@ -16,10 +16,10 @@ class DataBase(cls_Logging, cls_Common):
         return results
 
     # 执行SQL
-    def execute_sql(self, dbType, executeType, ip, port, user, pwd,dbName, sql):
+    def execute_sql(self, dbType, executeType, ip, port, user, pwd, dbName, sql):
         results = {}
         if dbType == 'MySql':
-            results = self.execute_mysql(executeType, ip, port, user, pwd,dbName, sql)
+            results = self.execute_mysql(executeType, ip, port, user, pwd, dbName, sql)
         return results
 
     # 连接 Mysql
@@ -52,9 +52,9 @@ class DataBase(cls_Logging, cls_Common):
         return results
 
     # 执行 mysql
-    def execute_mysql(self, executeType, ip, port, user, pwd, dbName,sql):
+    def execute_mysql(self, executeType, ip, port, user, pwd, dbName, sql):
         results = {}
-        conn = MySQLdb.connect(host=ip, port=int(port), user=user, passwd=pwd,db=dbName,charset='utf8')
+        conn = MySQLdb.connect(host=ip, port=int(port), user=user, passwd=pwd, db=dbName, charset='utf8')
         try:
             cur = conn.cursor()
         except BaseException as e:

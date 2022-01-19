@@ -798,7 +798,7 @@ def execute_task(request):
                     response['errorMsg'] = f"失败:{e}"
                 else:
                     environmentId = obj_db_ApiTimingTask[0].environment_id
-                    remindLabel = f"定时任务:{obj_db_ApiTimingTask[0].taskName}>"  # 推送的标识
+                    remindLabel = f"【定时任务:{obj_db_ApiTimingTask[0].taskName}】>"  # 推送的标识
                     result = api_asynchronous_run_task.delay(
                         testReportId, queueId, taskId, remindLabel, environmentId, userId)
                     if result.task_id:

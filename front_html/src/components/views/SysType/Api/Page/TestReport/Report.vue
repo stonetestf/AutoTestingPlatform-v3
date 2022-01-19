@@ -369,7 +369,7 @@
                                                     <div>
                                                         <el-table
                                                         :data="SuiteRomeData.rightRomeData.TestResults.operationTabelData"
-                                                        >
+                                                        height="800px">
                                                         <el-table-column
                                                             align="center"
                                                             label="操作位置"

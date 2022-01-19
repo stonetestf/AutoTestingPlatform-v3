@@ -1469,13 +1469,17 @@ def load_case_data(request):
                     obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(
                         is_del=0, testSet_id=item_testSet.id, location='Pre').order_by('index')
                     for item_preOperation in obj_db_CaseApiOperation:
+                        if item_preOperation.dataBaseId:
+                            dataBase = ast.literal_eval(item_preOperation.dataBaseId)
+                        else:
+                            dataBase = []
                         requestData['preOperation'].append({
                             'id': item_preOperation.index,
                             'index': item_preOperation.index,
                             'state': True if item_preOperation.state == 1 else False,
                             'operationType': item_preOperation.operationType,
                             'methodsName': item_preOperation.methodsName,
-                            'dataBase': item_preOperation.dataBaseId,
+                            'dataBase': dataBase,
                             'sql': item_preOperation.sql,
                             'remarks': item_preOperation.remarks,
                         })
@@ -1484,13 +1488,17 @@ def load_case_data(request):
                     obj_db_CaseApiOperation = db_CaseApiOperation.objects.filter(
                         is_del=0, testSet_id=item_testSet.id, location='Rear').order_by('index')
                     for item_rearOperation in obj_db_CaseApiOperation:
+                        if item_rearOperation.dataBaseId:
+                            dataBase = ast.literal_eval(item_rearOperation.dataBaseId)
+                        else:
+                            dataBase = []
                         requestData['rearOperation'].append({
                             'id': item_rearOperation.index,
                             'index': item_rearOperation.index,
                             'state': True if item_rearOperation.state == 1 else False,
                             'operationType': item_rearOperation.operationType,
                             'methodsName': item_rearOperation.methodsName,
-                            'dataBase': item_rearOperation.dataBaseId,
+                            'dataBase': dataBase,
                             'sql': item_rearOperation.sql,
                             'remarks': item_rearOperation.remarks,
                         })
