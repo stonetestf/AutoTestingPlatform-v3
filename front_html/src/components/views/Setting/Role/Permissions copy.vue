@@ -4,7 +4,7 @@
         :visible.sync="dialogVisible"
         :close-on-click-modal=false
         :before-close="dialogClose"
-        width="600px">
+        width="500px">
         <el-card>
             <div slot="header" style="height:20px">
                 <!-- <span>正在设置角色:{{RomeData.title}}</span> -->
@@ -22,10 +22,18 @@
                             </el-option>
                         </el-select>
                     </el-form-item>
-                    <el-form-item  v-for="item in RomeData.menuList" :label="item.label" :key="item.id">
-                        <el-checkbox-group v-model="RomeData.checkedCities">
-                            <el-checkbox style="float: left;" v-for="children in item.children" :label="children.id" :key="children.id">{{children.label}}</el-checkbox>
-                        </el-checkbox-group>
+                    <el-form-item label="菜单列表:" >
+                        <div style=" margin-top: 7px;">
+                            <el-tree
+                                ref="treeData"
+                                :data="RomeData.menuList"
+                                @check-change="handleSelectionChange"
+                                :default-checked-keys="RomeData.defaultChecked"
+                                default-expand-all
+                                show-checkbox
+                                node-key="id">
+                            </el-tree>
+                        </div>
                     </el-form-item>
                 </el-form>
             </div>
@@ -54,9 +62,8 @@ export default {
                     {'label':'性能测试','value':'PTS'},
                 ],
                 menuList:[],
-                checkedCities:[],
-                // menuChecked:[],//勾选完成后数据会保存在这里，用来传到后端
-                // defaultChecked:[],//默认已勾选的存放，放入ID
+                menuChecked:[],//勾选完成后数据会保存在这里，用来传到后端
+                defaultChecked:[],//默认已勾选的存放，放入ID
                 rules: {
                     sysType: [{ required: true, message: '请选择所属系统', trigger: 'change' }],
                 }
@@ -115,7 +122,7 @@ export default {
             }).then(res => {
                if(res.data.statusCode==2000){
                    self.RomeData.menuList = res.data.TreeData;
-                   self.RomeData.checkedCities = res.data.DefaultChecked;
+                   self.RomeData.defaultChecked = res.data.DefaultChecked;
                }else{
                    self.$message.error('菜单数据获取失败:'+res.data.errorMsg);
                }
@@ -126,11 +133,10 @@ export default {
         },
         SaveRolePermissions(){//保存角色权限
             let self = this;
-            PrintConsole(self.RomeData.checkedCities);
             self.$axios.post('/api/role/SaveRolePermissions',{
                 'sysType':self.RomeData.sysType,
                 'roleId':self.RomeData.roleId,
-                'MenuChecked':self.RomeData.checkedCities,
+                'MenuChecked':self.RomeData.menuChecked,
             }).then(res => {
                 if(res.data.statusCode==2001){
                     self.$message.success('新增角色权限成功!');
@@ -155,7 +161,6 @@ export default {
             let self = this;
             self.resetForm('RomeData');
             self.RomeData.sysType = 'Home';
-            self.RomeData.checkedCities=[];
         },
         submitForm(formName) {//保存
             this.$refs[formName].validate((valid) => {
@@ -176,6 +181,6 @@ export default {
 
 <style>
 .test{
-    text-align: left;
+    margin-top: 1;
 }
 </style>
