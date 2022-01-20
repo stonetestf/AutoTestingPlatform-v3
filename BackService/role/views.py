@@ -254,9 +254,12 @@ def get_menu_list(request):
                              'children': children})
 
         # 用角色查询，哪些是已经被勾选的数据
-        obj_db_RoleBindMenu = db_RoleBindMenu.objects.filter(is_del=0, role_id=roleId)
-        defaultChecked = [i.router_id for i in obj_db_RoleBindMenu
-                          if i.router.level == 2 or i.router.menuName == "Home"]
+        obj_db_RoleBindMenu = db_RoleBindMenu.objects.filter(sysType=sysType,is_del=0, role_id=roleId)
+        defaultChecked = [i.router_id for i in obj_db_RoleBindMenu]
+        # for i in obj_db_RoleBindMenu:
+        #     defaultChecked.append(i.router_id)
+        # defaultChecked = [i.router_id for i in obj_db_RoleBindMenu
+        #                   if i.router.level == 2 or i.router.menuName == "Home"]
 
         response['statusCode'] = 2000
         response['TreeData'] = treeData
@@ -288,8 +291,8 @@ def save_role_permissions(request):
                     is_del=1, updateTime=cls_Common.get_date_time())
 
                 # 重新新增新的权限
-                for item_router in menuChecked:
-                    obj_db_RouterPar = db_Router.objects.filter(id=item_router.id)
+                for item_routerId in menuChecked:
+                    obj_db_RouterPar = db_Router.objects.filter(id=item_routerId)
                     if obj_db_RouterPar.exists():
                         routerId = obj_db_RouterPar[0].id
                         db_RoleBindMenu.objects.create(
@@ -300,7 +303,7 @@ def save_role_permissions(request):
                             is_del=0
                         )
                     else:
-                        response['errorMsg'] = f"菜单权限中,{item_router.label} 不存在，请重新刷新后在进行绑定!"
+                        response['errorMsg'] = f"菜单权限中,{item_routerId} 不存在，请重新刷新后在进行绑定!"
                         break
         except BaseException as e:  # 自动回滚，不需要任何操作
             response['errorMsg'] = f"角色权限修改失败:{e}"
