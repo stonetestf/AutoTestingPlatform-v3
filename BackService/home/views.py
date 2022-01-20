@@ -21,6 +21,9 @@ from info.models import PushInfo as db_PushInfo
 from Api_TestReport.models import ApiQueue as db_ApiQueue
 from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToUsers
 from WorkorderManagement.models import WorkorderManagement as db_WorkorderManagement
+from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
+from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
+from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -275,7 +278,7 @@ def get_user_statistics_info(request):
             unfinishedWorkOrder = 0  # 未完成的工作订单
             for i in obj_db_WorkorderManagement:
                 obj_db_WorkBindPushToUsers = db_WorkBindPushToUsers.objects.filter(
-                    is_del=0, work_id=i.id,uid_id=userId)
+                    is_del=0, work_id=i.id, uid_id=userId)
                 if obj_db_WorkBindPushToUsers.exists():
                     unfinishedWorkOrder += 1
 
@@ -519,4 +522,89 @@ def api_pagehome_handle_state(request):
             queueStatus=2, updateTime=cls_Common.get_date_time(), uid_id=userId
         )
         response['statusCode'] = 2002
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 主页系统统计
+def select_sys_total(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = object_maker(responseData)
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'select_sys_total', errorMsg)
+    else:
+        # 用户总数
+        userTotal = db_UserTable.objects.filter(is_del=0, is_activation=1).count()
+        # 会统计3个系统的数量
+        # 用例总数
+        caseTotal = db_CaseBaseData.objects.filter(is_del=0).count()
+
+        # 任务总数
+        taskTotal = db_ApiTimingTask.objects.filter(is_del=0).count()
+
+        # 执行总数
+        executeTotal = db_ApiQueue.objects.filter().count()
+
+        response['statusCode'] = 2000
+        response['userTotal'] = userTotal
+        response['caseTotal'] = caseTotal
+        response['taskTotal'] = taskTotal
+        response['executeTotal'] = executeTotal
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 主页用户Top5统计
+def select_user_total(request):
+    response = {}
+    dataList = []
+    tempStatistical = []  # 临时统计数据
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = object_maker(responseData)
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('HOME', 'home', 'select_user_total', errorMsg)
+    else:
+        obj_db_UserTable = db_UserTable.objects.filter(is_del=0, is_activation=1)
+        for item_user in obj_db_UserTable:
+            apiTotal = db_ApiBaseData.objects.filter(is_del=0, uid_id=item_user.id).count()
+            caseTotal = db_CaseBaseData.objects.filter(is_del=0, uid_id=item_user.id).count()
+            taskTotal = db_ApiTimingTask.objects.filter(is_del=0, uid_id=item_user.id).count()
+            workOrderTotal = db_WorkorderManagement.objects.filter(is_del=0, uid_id=item_user.id).count()
+            executeTotal = db_ApiQueue.objects.filter(uid_id=item_user.id).count()
+
+            allTotal = apiTotal + caseTotal + taskTotal + executeTotal
+            tempStatistical.append({
+                'id': item_user.id,
+                'userName': f"{item_user.userName}({item_user.nickName})",
+                'apiTotal': apiTotal,
+                'caseTotal': caseTotal,
+                'taskTotal': taskTotal,
+                'workOrderTotal': workOrderTotal,
+                'executeTotal': executeTotal,
+                'allTotal': allTotal,
+            })
+        sortList = sorted(tempStatistical, key=operator.itemgetter('allTotal'), reverse=True)  # 倒序排列
+        for index, item in enumerate(sortList[:5], 1):
+            if item['allTotal'] != 0:
+                dataList.append({
+                    'index': index,
+                    'id': item['id'],
+                    'userName': item['userName'],
+                    'apiTotal': item['apiTotal'],
+                    'caseTotal': item['caseTotal'],
+                    'taskTotal': item['taskTotal'],
+                    'workOrderTotal': item['workOrderTotal'],
+                    'executeTotal': item['executeTotal'],
+                })
+        response['statusCode'] = 2000
+        response['tableData'] = dataList
     return JsonResponse(response)

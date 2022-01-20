@@ -16,4 +16,6 @@ urlpatterns = [
     url(r'ApiPageHomeSelectProQueue', views.api_pagehome_select_pro_queue, name='ApiPageHomeSelectProQueue'),
     url(r'ApiPageHomeHandleState', views.api_pagehome_handle_state, name='ApiPageHomeHandleState'),
     url(r'ApiPageMainDataRefresh', views.api_page_get_main_data, name='ApiPageMainDataRefresh'),
+    url(r'SelectSysTotal', views.select_sys_total, name='SelectSysTotal'),
+    url(r'SelectUserTotal', views.select_user_total, name='SelectUserTotal'),
 ]
