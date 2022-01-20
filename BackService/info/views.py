@@ -129,6 +129,7 @@ def user_operational_info(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
+        sysType = objData.sysType
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
 
         current = int(objData.current)  # 当前页数
@@ -142,6 +143,8 @@ def user_operational_info(request):
     else:
         # 加载推送信息
         obj_db_PushInfo = db_PushInfo.objects.filter(uid_id=userId, is_read=0).order_by('-updateTime')
+        if sysType:
+            obj_db_PushInfo = obj_db_PushInfo.filter(oinfo__sysType=sysType)
         select_db_PushInfo = obj_db_PushInfo[minSize: maxSize]
         obj_db_UserTable = db_UserTable.objects.filter(id=userId)
         if obj_db_UserTable.exists():

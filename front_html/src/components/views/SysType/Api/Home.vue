@@ -237,7 +237,7 @@ export default {
   },
   mounted (){
     this.getBreadcrumb();
-    this.GetApiPermissions();
+    // this.GetApiPermissions();
     this.LoadUserInfo();
     this.CreateSocket();
   },

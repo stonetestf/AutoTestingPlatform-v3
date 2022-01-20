@@ -317,7 +317,7 @@ import bronze from '@/assets/images/Choose/bronze.png';
             if(val=='API'){
                 this.$router.push({path:'/SysType/Api/Home'});
             }else if(val=='UI'){
-
+                this.$router.push({path:'/SysType/Ui/Home'});
             }
         },
     }

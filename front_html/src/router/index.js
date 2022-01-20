@@ -31,6 +31,10 @@ import Api_BatchTask from '@/components/views/SysType/Api/Page/TaskManagement/Ba
 import Api_SystemParams from '@/components/views/SysType/Api/Page/Setting/SystemParams/Main';//系统参数
 import Api_DataBase from '@/components/views/SysType/Api/Page/EnvironmentalManagement/DataBase/Main';//数据库环境
 
+//UI 功能
+import UiHome from '@/components/views/SysType/Ui/Home'
+import Ui_ProjectManagement from '@/components/views/SysType/Ui/ProjectManagement/Main'
+
 import Router from 'vue-router'
 Vue.use(Router)
 
@@ -110,6 +114,13 @@ export default new Router({
           meta:{name: '数据库环境',url:'/SysType/Api/Page/EnvironmentalManagement/DataBase/Main',comp:'Api_DataBase'}
         },
       ]
-    }
+    },
+    //UI入口
+    {path: '/SysType/Ui/Home',name: 'UiHome',component: UiHome,
+      children:[
+        {path: '/SysType/Ui/ProjectManagement/Main',name: 'Ui_ProjectManagement',component: Ui_ProjectManagement,
+        },
+      ]
+    },
   ]
 })
