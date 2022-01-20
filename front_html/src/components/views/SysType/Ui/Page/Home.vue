@@ -183,12 +183,13 @@ import DialogRemindInfo from "../../../Home/RemindInfo.vue";
 import UiPageMain from '@/components/views/SysType/Ui/Page/Main';
 import Ui_PageManagement from '@/components/views/SysType/Ui/Page/PageManagement/Main';
 import Ui_FunManagement from '@/components/views/SysType/Ui/Page/FunManagement/Main';//所属功能
+import Ui_ElementMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/ElementMaintenance/Main';//元素维护
 
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
-    Ui_PageManagement,Ui_FunManagement
+    Ui_PageManagement,Ui_FunManagement,Ui_ElementMaintenance
 
   },
   data() {

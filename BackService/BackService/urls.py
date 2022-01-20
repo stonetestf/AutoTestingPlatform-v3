@@ -41,6 +41,8 @@ import Api_CaseMaintenance.urls
 import Api_TimingTask.urls
 import Api_BatchTask.urls
 
+import Ui_ElementMaintenance.urls
+
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
@@ -56,15 +58,18 @@ urlpatterns = [
     url('api/FunManagement/', include(FunManagement.urls)),
     url('api/WorkorderManagement/', include(WorkorderManagement.urls)),
     url('api/PageEnvironment/', include(PageEnvironment.urls)),
-    url('api/ApiIntMaintenance/', include(Api_IntMaintenance.urls)),
     url('api/DebugTalk/', include(DebugTalk.urls)),
     url('api/GlobalVariable/', include(GlobalVariable.urls)),
+    url('api/SystemParams/', include(SystemParams.urls)),
+    url('api/Notice/', include(Notice.urls)),
+    url('api/DataBaseEnvironment/', include(DataBaseEnvironment.urls)),
+
+    url('api/ApiIntMaintenance/', include(Api_IntMaintenance.urls)),
     url('api/ApiTestReport/', include(Api_TestReport.urls)),
     url('api/ApiCaseMaintenance/', include(Api_CaseMaintenance.urls)),
     url('api/ApiTimingTask/', include(Api_TimingTask.urls)),
     url('api/ApiBatchTask/', include(Api_BatchTask.urls)),
-    url('api/SystemParams/', include(SystemParams.urls)),
-    url('api/Notice/', include(Notice.urls)),
-    url('api/DataBaseEnvironment/', include(DataBaseEnvironment.urls)),
+
+    url('api/UiElementMaintenance/', include(Ui_ElementMaintenance.urls)),
 
 ]

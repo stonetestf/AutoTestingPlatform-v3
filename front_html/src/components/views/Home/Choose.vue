@@ -111,10 +111,10 @@
                                     width="150">
                                 </el-table-column>
                                 <el-table-column
-                                    label="接口总数"
-                                    width="100px"
+                                    label="接口/元素"
+                                    width="130px"
                                     align= "center"
-                                    prop="apiTotal">
+                                    prop="apiAndElementTotal">
                                 </el-table-column>
                                 <el-table-column
                                     label="用例总数"

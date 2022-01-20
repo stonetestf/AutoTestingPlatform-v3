@@ -372,7 +372,7 @@ def api_page_get_main_data(request):
                             'testResults': cls_FindTable.get_overview_of_test_results(proId),  # 测试结果概述
                             # 项目下所有数据的统计
                             'pageStatistical': cls_FindTable.get_page_under_statistical_data(proId),
-                            'proStatistical': cls_FindTable.get_pro_under_statistical_data('API',proId),
+                            'proStatistical': cls_FindTable.get_pro_under_statistical_data('API', proId),
                             'pastSevenDaysTop': cls_FindTable.get_past_seven_days_top_ten_data(proId),  # 过去7天内Top10
                             'proQueue': cls_FindTable.get_pro_queue(proId),  # 获取项目队列
                             'myWork': cls_FindTable.get_my_work('API', proId, userId),
@@ -462,7 +462,7 @@ def api_pagehome_select_pro_statistical(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_statistical', errorMsg)
     else:
-        projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data('API',proId)
+        projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data('API', proId)
         dataTable = projectUnderStatisticalData['dataTable']
         response['dataTable'] = dataTable
         response['statusCode'] = 2000
@@ -580,16 +580,17 @@ def select_user_total(request):
         obj_db_UserTable = db_UserTable.objects.filter(is_del=0, is_activation=1)
         for item_user in obj_db_UserTable:
             apiTotal = db_ApiBaseData.objects.filter(is_del=0, uid_id=item_user.id).count()
+            elementTotal = 0
             caseTotal = db_CaseBaseData.objects.filter(is_del=0, uid_id=item_user.id).count()
             taskTotal = db_ApiTimingTask.objects.filter(is_del=0, uid_id=item_user.id).count()
             workOrderTotal = db_WorkorderManagement.objects.filter(is_del=0, uid_id=item_user.id).count()
             executeTotal = db_ApiQueue.objects.filter(uid_id=item_user.id).count()
 
-            allTotal = apiTotal + caseTotal + taskTotal + executeTotal
+            allTotal = apiTotal + elementTotal + caseTotal + taskTotal + executeTotal
             tempStatistical.append({
                 'id': item_user.id,
                 'userName': f"{item_user.userName}({item_user.nickName})",
-                'apiTotal': apiTotal,
+                'apiAndElementTotal': f"{apiTotal}/{elementTotal}",
                 'caseTotal': caseTotal,
                 'taskTotal': taskTotal,
                 'workOrderTotal': workOrderTotal,
@@ -603,7 +604,7 @@ def select_user_total(request):
                     'index': index,
                     'id': item['id'],
                     'userName': item['userName'],
-                    'apiTotal': item['apiTotal'],
+                    'apiAndElementTotal': item['apiAndElementTotal'],
                     'caseTotal': item['caseTotal'],
                     'taskTotal': item['taskTotal'],
                     'workOrderTotal': item['workOrderTotal'],

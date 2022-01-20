@@ -103,7 +103,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'djcelery',
-    # 'django_celery_beat',
     'dwebsocket',
     'login',
     'Task',
@@ -120,14 +119,16 @@ INSTALLED_APPS = [
     'PageEnvironment',
     'DebugTalk',
     'GlobalVariable',
+    'SystemParams',
+    'Notice',
+    'DataBaseEnvironment',
     'Api_IntMaintenance',
     'Api_TestReport',
     'Api_CaseMaintenance',
     'Api_TimingTask',
     'Api_BatchTask',
-    'SystemParams',
-    'Notice',
-    'DataBaseEnvironment',
+
+    'Ui_ElementMaintenance',
 ]
 # endregion
 

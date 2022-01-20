@@ -39,6 +39,7 @@ import UiPageHome from '@/components/views/SysType/Ui/Page/Home'
 import UiPageMain from '@/components/views/SysType/Ui/Page/Main'
 import Ui_PageManagement from '@/components/views/SysType/Ui/Page/PageManagement/Main';//所属页面
 import Ui_FunManagement from '@/components/views/SysType/Ui/Page/FunManagement/Main';//所属功能
+import Ui_ElementMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/ElementMaintenance/Main';//元素维护
 
 
 
@@ -137,6 +138,9 @@ export default new Router({
       },
       {path: '/SysType/Ui/Page/FunManagement/Main',name: 'Ui_FunManagement',component: Ui_FunManagement,
         meta:{name: '功能维护',url:'/SysType/Ui/Page/FunManagement/Main',comp:'Ui_FunManagement'}
+      },
+      {path: '/SysType/Ui/Page/CaseManagement/ElementMaintenance/Main',name: 'Ui_ElementMaintenance',component: Ui_ElementMaintenance,
+        meta:{name: '元素维护',url:'/SysType/Ui/Page/CaseManagement/ElementMaintenance/Main',comp:'Ui_ElementMaintenance'}
       },
     ]
   },
