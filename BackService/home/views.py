@@ -33,6 +33,7 @@ from ClassData.Common import Common
 from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker
 from ClassData.FindServer import FindLocalServer
+from ClassData.ObjectMaker import object_maker as cls_object_maker
 
 # Create info here.
 cls_Logging = Logging()
@@ -186,18 +187,21 @@ def get_home_permissions(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["GET"])  # 获取API页面的菜单权限
-def get_api_permissions(request):
+@require_http_methods(["GET"])  # 获取页面的菜单权限
+def get_permissions(request):
     response = {}
     try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        sysType = objData.sysType
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'home', 'get_api_permissions', errorMsg)
     else:
         obj_db_Router = db_Router.objects.filter(is_del=0)
-        obj_level_1_Menu = obj_db_Router.filter(level=1, sysType='API').order_by('sortNum')  # 1级菜单
+        obj_level_1_Menu = obj_db_Router.filter(level=1, sysType=sysType).order_by('sortNum')  # 1级菜单
         obj_db_UserBindRole = db_UserBindRole.objects.filter(is_del=0, user_id=userId)
         menuTable = []
         if obj_db_UserBindRole.exists():
@@ -206,9 +210,9 @@ def get_api_permissions(request):
                 children = []
                 # 2级菜单
                 obj_level_2_Menu = obj_db_Router.filter(
-                    level=2, belogId=item_level_1.id, sysType='API').order_by('index')
+                    level=2, belogId=item_level_1.id, sysType=sysType).order_by('index')
                 for item_level_2 in obj_level_2_Menu:
-                    obj_db_RoleBindMenu = db_RoleBindMenu.objects.filter(is_del=0, sysType='Api', role_id=roleId)
+                    obj_db_RoleBindMenu = db_RoleBindMenu.objects.filter(is_del=0, sysType=sysType, role_id=roleId)
                     for item_bindMenu in obj_db_RoleBindMenu:
                         if item_bindMenu.router.id == item_level_2.id:
                             children.append({
@@ -368,7 +372,7 @@ def api_page_get_main_data(request):
                             'testResults': cls_FindTable.get_overview_of_test_results(proId),  # 测试结果概述
                             # 项目下所有数据的统计
                             'pageStatistical': cls_FindTable.get_page_under_statistical_data(proId),
-                            'proStatistical': cls_FindTable.get_pro_under_statistical_data(proId),
+                            'proStatistical': cls_FindTable.get_pro_under_statistical_data('API',proId),
                             'pastSevenDaysTop': cls_FindTable.get_past_seven_days_top_ten_data(proId),  # 过去7天内Top10
                             'proQueue': cls_FindTable.get_pro_queue(proId),  # 获取项目队列
                             'myWork': cls_FindTable.get_my_work('API', proId, userId),
@@ -458,7 +462,7 @@ def api_pagehome_select_pro_statistical(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('HOME', 'home', 'api_pagehome_select_pro_statistical', errorMsg)
     else:
-        projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data(proId)
+        projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data('API',proId)
         dataTable = projectUnderStatisticalData['dataTable']
         response['dataTable'] = dataTable
         response['statusCode'] = 2000

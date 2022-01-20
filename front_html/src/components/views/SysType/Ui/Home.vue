@@ -1,10 +1,7 @@
 <template>
   <div ref="tab-main">
     <template>
-      <el-container
-        v-loading="loading"
-        element-loading-text="拼命加载中"
-        element-loading-spinner="el-icon-loading">
+      <el-container>
         <el-header class="top-header">
           <el-row>
             <el-col :span="19">
@@ -14,13 +11,13 @@
                 background-color="#545c64"
                 text-color="#fff"
                 active-text-color="#ffd04b">
-                <el-menu-item index='/SysType/Api/Page/Main' >
+                <el-menu-item index='/SysType/Api/ProjectManagement/Main' >
                   <template slot="title" >
                     <i class="el-icon-s-home"></i>
-                    <a>首页</a>
+                    <a>项目维护</a>
                   </template>
                 </el-menu-item>
-                <el-submenu 
+                <!-- <el-submenu 
                   v-for="itemLevel1 in RomeData.menuTable"
                   :index="itemLevel1.index"
                   :key="itemLevel1.menuName"
@@ -35,7 +32,7 @@
                       :index="item.path" :key="item.menuName"
                       >{{item.menuName}}
                     </el-menu-item>
-                </el-submenu>
+                </el-submenu> -->
               </el-menu>
             </el-col>
             <el-col :span="5">
@@ -157,69 +154,52 @@
     </template>
     <template>
       <dialog-user-info
-          @closeDialog="closeUserInfoDialog" 
+          @closeDialog="closeDialog_UserInfo" 
           :isVisible="dialog.userinfo.dialogVisible" 
           :dialogPara="dialog.userinfo.dialogPara">
       </dialog-user-info>
     </template>
     <template>
       <dialog-remind-info
-        @closeDialog="closeRemindInfoDialog" 
-        :isVisible="dialog.remindInfo.dialogVisible" 
-        :dialogPara="dialog.remindInfo.dialogPara"
-        @getData="updateRemindNum($event)">
+          @closeDialog="closeRemindInfoDialog" 
+          :isVisible="dialog.remindInfo.dialogVisible" 
+          :dialogPara="dialog.remindInfo.dialogPara"
+          @getData="updateRemindNum($event)">
       </dialog-remind-info>
     </template>
   </div>
 </template>
 
 <script>
-import store from '../../../../../store/index';
-import {PrintConsole} from "../../../../js/Logger.js";
-import DialogUserInfo from "../../../Home/UserInfo.vue";
-import DialogRemindInfo from "../../../Home/RemindInfo.vue";
+import store from '../../../../store/index';
+import {PrintConsole} from "../../../js/Logger.js";
+import DialogUserInfo from "../../Home/UserInfo.vue";
+import DialogRemindInfo from "../../Home/RemindInfo.vue";
 
 //所有需要在tabs中显示的页面都必须在这里引用一次
-import ApiPageMain from '@/components/views/SysType/Api/Page/Main';
-import Api_PageManagement from '@/components/views/SysType/Api/Page/PageManagement/Main';
-import Api_FunManagement from '@/components/views/SysType/Api/Page/FunManagement/Main';
-import Api_WorkorderMaintenance from '@/components/views/WorkorderManagement/WorkorderMaintenance/Main';
-import Api_ApiMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/ApiMaintenance/Main';//接口维护
-import Api_PageEnvironment from '@/components/views/SysType/Api/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
-import Api_GlobalVariable from '@/components/views/SysType/Api/Page/EnvironmentalManagement/GlobalVariable/Main';//全局变量
-import Api_DebugTalk from '@/components/views/SysType/Api/Page/Setting/DebugTalk/Main';//DebugTalk.py
-import Api_RemindInfo from '@/components/views/WorkorderManagement/RemindInfo/Main';//提醒消息
-import Api_TestReport from '@/components/views/SysType/Api/Page/TestReport/Main';//测试报告
-import Api_CaseMaintenance from '@/components/views/SysType/Api/Page/CaseManagement/CaseMaintenance/Main';//用例维护
-import Api_TimingTask from '@/components/views/SysType/Api/Page/TaskManagement/TimingTask/Main';//定时任务
-import Api_BatchTask from '@/components/views/SysType/Api/Page/TaskManagement/BatchTask/Main';//批量任务
-import Api_SystemParams from '@/components/views/SysType/Api/Page/Setting/SystemParams/Main';//系统参数
-import Api_DataBase from '@/components/views/SysType/Api/Page/EnvironmentalManagement/DataBase/Main';//数据库环境
-
+import Ui_ProjectManagement from '@/components/views/SysType/Ui/ProjectManagement/Main';
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
-    Api_PageManagement,Api_FunManagement,Api_WorkorderMaintenance,Api_ApiMaintenance,Api_PageEnvironment,Api_DebugTalk,Api_GlobalVariable,
-    Api_RemindInfo,Api_TestReport,Api_CaseMaintenance,Api_TimingTask,Api_BatchTask,Api_SystemParams,Api_DataBase
+    Ui_ProjectManagement
   },
   data() {
     return {
-      loading:false,
       activeTab: '1',
-      tabIndex:1,
+      tabIndex: 1,
       tabsItem: [
         {
-          title: '首页',
+          title: '项目维护',
           name: '1',
           closable: false,
           ref: 'tabs',
-          content: ApiPageMain
+          content: Ui_ProjectManagement
       }],
       tabsPath: [
         {
         name: "1",
-        path: '/SysType/Api/Page/Main'
+        path: '/SysType/Ui/ProjectManagement/Main'
       }
       ],
       levelList: [],//面包屑
@@ -257,15 +237,16 @@ export default {
   },
   mounted (){
     this.getBreadcrumb();
-    this.GetPermissions();
+    // this.GetApiPermissions();
     this.LoadUserInfo();
     this.CreateSocket();
   },
   beforeDestroy(){//生命周期-离开时
-    this.ServerPerformance.socket.close(); //关闭TCP连接
+      this.ServerPerformance.socket.close(); //关闭TCP连接
   },
   watch: {
     $route: function (to) {
+      //刷新时并不会调用此地方
       this.getBreadcrumb();//面包屑
       //监听路由的变化，动态生成tabs
       // console.log('to',to);
@@ -329,17 +310,16 @@ export default {
       PrintConsole(matched);
       matched.forEach(d=>{
         // console.log('d',d)
-        if(d.path=='/SysType/Api/Page/Home'){
-            this.levelList.push({path: '/Choose', meta: { title: '测试系统(接口)'}})
-            this.levelList.push({path: '/SysType/Api/ProjectManagement/Main', meta: {title: '选择项目' }})
-            this.levelList.push({path: '', meta: {title:'项目:'+this.$cookies.get('proName')}})
-          // this.levelList.push({path: '', meta: {title: '项目管理' }})
+        if(d.path=='/SysType/Ui/Home'){
+          this.levelList.push({path: '/Choose', meta: { title: '测试系统(功能)'}})
+          this.levelList.push({path: '', meta: {title: '项目维护' }})
+          // this.levelList.push({path: '/SysType/Api/ProjectManagement/Main', meta: {title: '项目管理' }})
           // this.levelList.push({path: '/TestType_Fun/index', meta: { title: '首页' }})
         }
         else{
-          this.levelList.push({path: d.path, meta: { title: d.meta.name }})
+          this.levelList.push({path: d.path, meta: { title: d.meta.name }});
         }
-      })
+      });
     },
     QuitUser(){
       this.$cookies.remove('token');
@@ -351,7 +331,7 @@ export default {
         self.QuitUser();
       }
       else if(command=="userinfo"){
-        self.OpenUserInfoDialog();
+        self.OpenDialog_UserInfo();
       }
     },
     //选项卡
@@ -384,7 +364,6 @@ export default {
       * 通过当前选中tabs的实例获得当前实例的path 重新定位路由
       * */
       let val = this.tabsPath.filter(item => thisTab.name == item.name)
-      PrintConsole(val)
       this.$router.push({ path: val[0].path})
     },
     CreateSocket(){//创建socket连接 获取数据 这里获取2个服务器和1个错误信息的数据
@@ -393,62 +372,60 @@ export default {
       self.ServerPerformance.socket = socket;
       
       socket.onopen = function () {
-        PrintConsole('WebSocket open');//成功连接上Websocket
-        var data ={};
-        data.Message = 'Start';
-        data.Params = {
-          'token':self.$cookies.get('token')
-        }
-        socket.send(JSON.stringify(data));//发送数据到服务端
+          PrintConsole('WebSocket open');//成功连接上Websocket
+          var data ={};
+          data.Message = 'Start';
+          data.Params = {
+              'token':self.$cookies.get('token')
+          }
+          socket.send(JSON.stringify(data));//发送数据到服务端
       };
       socket.onmessage = function (e) {
-        // PrintConsole('message: ' + e.data);//打印服务端返回的数据
-        let retData = JSON.parse(e.data)
-        self.RomeData.remindNum=retData.pushCount;
+          // PrintConsole('message: ' + e.data);//打印服务端返回的数据
+          let retData = JSON.parse(e.data)
+          self.RomeData.remindNum=retData.pushCount;
+          let cpu = retData.cpu;
+          self.ServerPerformance.cpu=cpu;
+          if(cpu>=80 && cpu<90){
+            self.ServerPerformance.cpuStatus='warning';
+          }
+          else if(cpu>=90){
+            self.ServerPerformance.cpuStatus='exception';
+          }
+          else{
+            self.ServerPerformance.cpuStatus='success';
+          }
 
-        let cpu = retData.cpu;
-        self.ServerPerformance.cpu=cpu;
-        if(cpu>=80 && cpu<90){
-          self.ServerPerformance.cpuStatus='warning';
-        }
-        else if(cpu>=90){
-          self.ServerPerformance.cpuStatus='exception';
-        }
-        else{
-          self.ServerPerformance.cpuStatus='success';
-        }
+          let mem = retData.mem;
+          self.ServerPerformance.mem=mem;
+          if(mem>=80 && mem<90){
+            self.ServerPerformance.memStatus='warning';
+          }
+          else if(mem>=90){
+            self.ServerPerformance.memStatus='exception';
+          }
+          else{
+            self.ServerPerformance.memStatus='success';
+          }
 
-        let mem = retData.mem;
-        self.ServerPerformance.mem=mem;
-        if(mem>=80 && mem<90){
-          self.ServerPerformance.memStatus='warning';
-        }
-        else if(mem>=90){
-          self.ServerPerformance.memStatus='exception';
-        }
-        else{
-          self.ServerPerformance.memStatus='success';
-        }
+          //celery服务
+          if(retData.celery){
+            self.ServerPerformance.celery = 'success';
+          }else{
+            self.ServerPerformance.celery = 'exception';
+          }
+          if(retData.celeryBeat){
+            self.ServerPerformance.celeryBeat = 'success';
+          }else{
+            self.ServerPerformance.celeryBeat = 'exception';
+          }
 
-        //celery服务
-        if(retData.celery){
-          self.ServerPerformance.celery = 'success';
-        }else{
-          self.ServerPerformance.celery = 'exception';
-        }
-        if(retData.celeryBeat){
-          self.ServerPerformance.celeryBeat = 'success';
-        }else{
-          self.ServerPerformance.celeryBeat = 'exception';
-        }
-
-        var data ={};
-        data.Message = 'Heartbeat';
-        data.Params = {
-          'time':'Date()'
-        }
-        socket.send(JSON.stringify(data));//发送数据到服务端
-          
+          var data ={};
+          data.Message = 'Heartbeat';
+          data.Params = {
+              'time':'Date()'
+          }
+          socket.send(JSON.stringify(data));//发送数据到服务端
       };
       socket.onclose=function(e){
           PrintConsole("关闭TCP连接onclose",e);
@@ -462,10 +439,10 @@ export default {
       if (socket.readyState == WebSocket.OPEN) socket.onopen();       
     },
 
-    closeUserInfoDialog(){
+    closeDialog_UserInfo(){
       this.dialog.userinfo.dialogVisible =false;
     },
-    OpenUserInfoDialog(){
+    OpenDialog_UserInfo(){
       let self = this;
       self.dialog.userinfo.dialogPara={
         dialogTitle:"个人信息",//初始化标题
@@ -474,40 +451,10 @@ export default {
     },
     LoadUserInfo(){//基本信息
       let self = this;
-      PrintConsole(store.state)
+      // PrintConsole(store.state)
       self.RomeData.nickName = self.$cookies.get('nickName');
       self.RomeData.userImage = 'data:image/png;base64,'+store.state.userImage;
-      self.$router.push('/SysType/Api/Page/Main');
-    },
-    GetPermissions(){//加载用户菜单和权限信息
-      let self = this;
-      self.loading=true;
-      self.$axios.get('/api/home/GetPermissions', {
-        params:{
-          'sysType':'API'
-        }
-      }).then(res => {
-        if(res.data.statusCode==2000){
-          res.data.menuTable.forEach(d=>{
-            if(d.menuName!='所属项目'){
-              let obj = {};
-              obj.index = d.index;
-              obj.menuName = d.menuName;
-              obj.disPlay = d.disPlay;
-              obj.icon = d.icon;
-              obj.children = d.children;
-              self.RomeData.menuTable.push(obj);
-            }
-          });
-          self.loading=false;
-        }else{
-          self.$message.error('API权限获取失败:'+res.data.errorMsg);
-          self.loading=false;
-        }
-      }).catch(function (error) {
-        console.log(error);
-        self.loading=false;
-      })
+      self.$router.push('/SysType/Ui/ProjectManagement/Main');
     },
     OpenRemindInfo(){
       let self = this;

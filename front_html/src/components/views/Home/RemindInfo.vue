@@ -5,118 +5,126 @@
         :close-on-click-modal=false
         :before-close="dialogClose"
         width="1600px">
-        <!-- <div style="margin-top:-20px;margin-left:1600px;">
-          <el-button type="info" @click="ReadErrorMsg(0)">已读</el-button>
-        </div>
-        <div>
-          <el-divider></el-divider>
-        </div> -->
-        <div>
-          <template>
-            <el-table
-              :data="RomeData.tableData"
-              height="550px"
-              border>
-                <el-table-column
-                    label="系统类型"
-                    width="100px"
-                    align= "center"
-                    prop="sysType">
-                </el-table-column>
-                <el-table-column
-                    label="触发类型"
-                    align= "center"
-                    width="100px">
-                    <template slot-scope="scope">
-                        <el-tag type="success" v-if="scope.row.triggerType=='Manual'">手动</el-tag>
-                        <el-tag type="info" v-else>系统</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column
-                    label="提醒类别"
-                    width="100px"
-                    align= "center">
-                    <template slot-scope="scope">
-                        <el-tag type="danger" v-if="scope.row.level==1">{{scope.row.remindType}}</el-tag>
-                        <el-tag type="warning" v-else-if="scope.row.level==2">{{scope.row.remindType}}</el-tag>
-                        <el-tag type="success" v-else-if="scope.row.level==3">{{scope.row.remindType}}</el-tag>
-                    </template>
-                </el-table-column>  
-                <el-table-column
-                    label="所属来源"
-                    align= "center"
-                    prop="sourcePath">
-                </el-table-column>
-                <!-- <el-table-column
-                    label="所属项目"
-                    width="150px"
-                    align= "center"
-                    prop="toPro">
-                </el-table-column>  
-                <el-table-column
-                    label="所属页面"
-                    width="150px"
-                    align= "center"
-                    prop="toPage">
-                </el-table-column>  
-                <el-table-column
-                    label="所属功能"
-                    width="200px"
-                    align= "center"
-                    prop="toFun">
-                </el-table-column> -->
-                <el-table-column
-                    label="系统:(信息)/推送:(编号:工单名称)"
-                    align= "center"
-                    prop="info">
-                </el-table-column>
-                <!-- <el-table-column
-                    label="修改信息"
-                    align= "center"
-                    prop="editInfo">
-                </el-table-column> -->
-                <el-table-column
-                    show-overflow-tooltip
-                    label="推送者"
-                    align= "center"
-                    width="150px"
-                    prop="userName">
-                </el-table-column>   
-                <el-table-column
-                    label="创建时间"
-                    align= "center"
-                    width="200px"
-                    prop="createTime">
-                </el-table-column>   
-                <el-table-column
-                    align="center"
-                    width="100px">
-                    <template slot="header">
-                        <el-button type="primary" @click="handleIsRead('','','ALL')">全读</el-button>
-                    </template>
-                    <template slot-scope="scope" style="width:100px">
-                        <el-button
-                            v-if="scope.row.is_read==0"
-                            size="mini"
-                            type="warning"
-                            @click="handleIsRead(scope.$index, scope.row,'1')">已读
-                        </el-button>
-                        <el-button v-else size="mini" type="info" disabled>已读</el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-          </template>
-          <template>
-              <el-pagination background layout="total, sizes, prev, pager, next, jumper"
-                  @size-change="pageSizeChange"
-                  @current-change="handleCurrentChange"
-                  :current-page="page.current" 
-                  :total="page.total"
-                  :page-sizes = [10,30,50,100]
-                  style="margin: 20px auto auto auto;">
-              </el-pagination>
-          </template>
-        </div>
+        <template>
+            <el-form :inline="true" class="demo-form-inline" method="post">
+                <el-form-item label="系统类型:">
+                    <el-select v-model="SelectRomeData.sysType" clearable placeholder="请选择" style="width:150px;float:left;">
+                        <el-option
+                            v-for="item in SelectRomeData.sysTypeOption"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-button type="primary" @click="SelectData()">查询</el-button>
+                <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+            </el-form>
+        </template>
+        <template>
+        <el-table
+            :data="RomeData.tableData"
+            height="550px"
+            border>
+            <el-table-column
+                label="系统类型"
+                width="100px"
+                align= "center"
+                prop="sysType">
+            </el-table-column>
+            <el-table-column
+                label="触发类型"
+                align= "center"
+                width="100px">
+                <template slot-scope="scope">
+                    <el-tag type="success" v-if="scope.row.triggerType=='Manual'">手动</el-tag>
+                    <el-tag type="info" v-else>系统</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column
+                label="提醒类别"
+                width="100px"
+                align= "center">
+                <template slot-scope="scope">
+                    <el-tag type="danger" v-if="scope.row.level==1">{{scope.row.remindType}}</el-tag>
+                    <el-tag type="warning" v-else-if="scope.row.level==2">{{scope.row.remindType}}</el-tag>
+                    <el-tag type="success" v-else-if="scope.row.level==3">{{scope.row.remindType}}</el-tag>
+                </template>
+            </el-table-column>  
+            <el-table-column
+                label="所属来源"
+                align= "center"
+                prop="sourcePath">
+            </el-table-column>
+            <!-- <el-table-column
+                label="所属项目"
+                width="150px"
+                align= "center"
+                prop="toPro">
+            </el-table-column>  
+            <el-table-column
+                label="所属页面"
+                width="150px"
+                align= "center"
+                prop="toPage">
+            </el-table-column>  
+            <el-table-column
+                label="所属功能"
+                width="200px"
+                align= "center"
+                prop="toFun">
+            </el-table-column> -->
+            <el-table-column
+                label="系统:(信息)/推送:(编号:工单名称)"
+                align= "center"
+                prop="info">
+            </el-table-column>
+            <!-- <el-table-column
+                label="修改信息"
+                align= "center"
+                prop="editInfo">
+            </el-table-column> -->
+            <el-table-column
+                show-overflow-tooltip
+                label="推送者"
+                align= "center"
+                width="150px"
+                prop="userName">
+            </el-table-column>   
+            <el-table-column
+                label="创建时间"
+                align= "center"
+                width="200px"
+                prop="createTime">
+            </el-table-column>   
+            <el-table-column
+                align="center"
+                width="100px">
+                <template slot="header">
+                    <el-button type="primary" @click="handleIsRead('','','ALL')">全读</el-button>
+                </template>
+                <template slot-scope="scope" style="width:100px">
+                    <el-button
+                        v-if="scope.row.is_read==0"
+                        size="mini"
+                        type="warning"
+                        @click="handleIsRead(scope.$index, scope.row,'1')">已读
+                    </el-button>
+                    <el-button v-else size="mini" type="info" disabled>已读</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        </template>
+        <template>
+            <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                @size-change="pageSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="page.current" 
+                :total="page.total"
+                :page-sizes = [10,30,50,100]
+                style="margin: 20px auto auto auto;">
+            </el-pagination>
+        </template>
     </el-dialog>
 </template>
 
@@ -128,6 +136,14 @@ export default {
         return {
             dialogTitle:"",
             dialogVisible:false,
+            SelectRomeData:{
+                sysType:'',
+                sysTypeOption:[
+                    {'label':'API','value':'API'},
+                    {'label':'UI','value':'UI'},
+                    {'label':'PTS','value':'PTS'},
+                ],
+            },
             RomeData:{
                 tableData:[]
             },
@@ -168,11 +184,17 @@ export default {
             this.$emit('closeDialog');
             this.$emit('getData',this.RomeData.tableData.length);
         },
+        ClearSelectRomeData(){
+            let self = this;
+            self.SelectRomeData.sysType='';
+            self.SelectData();
+        },
         SelectData(){//刷新列表数据
             let self = this;
             self.RomeData.tableData= [];
             self.$axios.get('/api/info/UserOperationalInfo',{
                 params:{
+                    'sysType':self.SelectRomeData.sysType,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }

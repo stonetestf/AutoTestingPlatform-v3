@@ -35,6 +35,13 @@ import Api_DataBase from '@/components/views/SysType/Api/Page/EnvironmentalManag
 import UiHome from '@/components/views/SysType/Ui/Home'
 import Ui_ProjectManagement from '@/components/views/SysType/Ui/ProjectManagement/Main'
 
+import UiPageHome from '@/components/views/SysType/Ui/Page/Home'
+import UiPageMain from '@/components/views/SysType/Ui/Page/Main'
+import Ui_PageManagement from '@/components/views/SysType/Ui/Page/PageManagement/Main';//所属页面
+import Ui_FunManagement from '@/components/views/SysType/Ui/Page/FunManagement/Main';//所属功能
+
+
+
 import Router from 'vue-router'
 Vue.use(Router)
 
@@ -122,5 +129,16 @@ export default new Router({
         },
       ]
     },
+    {path: '/SysType/Ui/Page/Home',name: 'UiPageHome',component: UiPageHome,
+    children:[
+      {path: '/SysType/Ui/Page/Main',name: 'UiPageMain',component: UiPageMain},
+      {path: '/SysType/Ui/Page/PageManagement/Main',name: 'Ui_PageManagement',component: Ui_PageManagement,
+        meta:{name: '页面维护',url:'/SysType/Ui/Page/PageManagement/Main',comp:'Ui_PageManagement'}
+      },
+      {path: '/SysType/Ui/Page/FunManagement/Main',name: 'Ui_FunManagement',component: Ui_FunManagement,
+        meta:{name: '功能维护',url:'/SysType/Ui/Page/FunManagement/Main',comp:'Ui_FunManagement'}
+      },
+    ]
+  },
   ]
 })

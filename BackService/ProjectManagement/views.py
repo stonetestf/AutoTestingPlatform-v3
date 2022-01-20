@@ -13,7 +13,7 @@ from ProjectManagement.models import ProBindMembers as db_ProBindMembers
 from PageManagement.models import PageManagement as db_PageManagement
 from ProjectManagement.models import ProHistory as db_ProHistory
 from Api_IntMaintenance.models import ApiBaseData as db_ApiBaseData
-from Api_CaseMaintenance.models import CaseBaseData as db_CaseBaseData
+from Api_CaseMaintenance.models import CaseBaseData as db_ApiCaseBaseData
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
 
@@ -117,32 +117,33 @@ def select_data(request):
                 "createTime": str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
             })
             # endregion
-            projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data(i.id)
-            for item in projectUnderStatisticalData['dataTable']:
-                performWeekTotal += item['performWeekTotal']
-                perforHistoryTotal += item['perforHistoryTotal']
-            unitCase = db_CaseBaseData.objects.filter(is_del=0, pid_id=i.id, testType='UnitTest').count()
-            HybridCase = db_CaseBaseData.objects.filter(is_del=0, pid_id=i.id, testType='HybridTest').count()
-            dataList.append(
-                {
-                    "id": i.id,
-                    "proName": i.proName,
-                    "remarks": i.remarks,
-                    "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                    "userName": f"{i.uid.userName}({i.uid.nickName})",
-                    "isEnterInto": isEnterInto,
-                    "isMembers": isMembers,
-                    "isEdit": isEdit,
-                    "isDelete": isDelete,
-                    "apiTotal": db_ApiBaseData.objects.filter(is_del=0, pid_id=i.id).count(),
-                    "caseTotal": f"{unitCase}/{HybridCase}",
-                    "taskTotal": db_ApiTimingTask.objects.filter(is_del=0, pid_id=i.id).count(),
-                    "batchTotal": db_ApiBatchTask.objects.filter(is_del=0, pid_id=i.id).count(),
-                    "performWeekTotal": performWeekTotal,
-                    "perforHistoryTotal": perforHistoryTotal,
-                    "tableItem": tableItem,
-                }
-            )
+            dataDict = {
+                "id": i.id,
+                "proName": i.proName,
+                "remarks": i.remarks,
+                "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
+                "isEnterInto": isEnterInto,
+                "isMembers": isMembers,
+                "isEdit": isEdit,
+                "isDelete": isDelete,
+                "tableItem": tableItem,
+            }
+            if sysType == "API":
+                projectUnderStatisticalData = cls_FindTable.get_pro_under_statistical_data(sysType, i.id)
+                for item in projectUnderStatisticalData['dataTable']:
+                    performWeekTotal += item['performWeekTotal']
+                    perforHistoryTotal += item['perforHistoryTotal']
+                unitCase = db_ApiCaseBaseData.objects.filter(is_del=0, pid_id=i.id, testType='UnitTest').count()
+                HybridCase = db_ApiCaseBaseData.objects.filter(is_del=0, pid_id=i.id, testType='HybridTest').count()
+                dataDict["apiTotal"] = db_ApiBaseData.objects.filter(is_del=0, pid_id=i.id).count()
+                dataDict["caseTotal"] = f"{unitCase}/{HybridCase}"
+                dataDict["taskTotal"] = db_ApiTimingTask.objects.filter(is_del=0, pid_id=i.id).count()
+                dataDict["batchTotal"] = db_ApiBatchTask.objects.filter(is_del=0, pid_id=i.id).count()
+                dataDict["performWeekTotal"] = performWeekTotal
+                dataDict["perforHistoryTotal"] = perforHistoryTotal
+
+            dataList.append(dataDict)
 
         response['TableData'] = dataList
         response['Total'] = obj_db_ProManagement.count()

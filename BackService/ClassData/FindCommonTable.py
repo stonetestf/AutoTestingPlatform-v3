@@ -192,7 +192,7 @@ class FindTable(cls_Logging):
         return results
 
     # 项目下所有数据的统计
-    def get_pro_under_statistical_data(self, proId):
+    def get_pro_under_statistical_data(self, sysType,proId):
         results = {
             'dataTable': []
         }
@@ -201,31 +201,32 @@ class FindTable(cls_Logging):
         staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
         endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
         # endregion
-        obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId)
-        # region 本周新增
-        weekTotal = 0  # 本周新增
-        weekTotal += obj_db_ApiBaseData.filter(  # 接口
-            pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
-        weekTotal += db_CaseBaseData.objects.filter(  # 测试用例
-            pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
-        weekTotal += db_ApiTimingTask.objects.filter(  # 定时任务
-            is_del=0, pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
-        weekTotal += db_ApiBatchTask.objects.filter(  # 批量任务
-            is_del=0, pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
-        # endregion
-        # region 本周执行
-        performWeekTotal = db_ApiQueue.objects.filter(
-            pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime).count()
-        # endregion
-        perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId).count()  # 历史执行
+        if sysType=="API":
+            obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId)
+            # region 本周新增
+            weekTotal = 0  # 本周新增
+            weekTotal += obj_db_ApiBaseData.filter(  # 接口
+                pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
+            weekTotal += db_CaseBaseData.objects.filter(  # 测试用例
+                pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
+            weekTotal += db_ApiTimingTask.objects.filter(  # 定时任务
+                is_del=0, pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
+            weekTotal += db_ApiBatchTask.objects.filter(  # 批量任务
+                is_del=0, pid_id=proId, createTime__gte=staTime, createTime__lte=endTime).count()
+            # endregion
+            # region 本周执行
+            performWeekTotal = db_ApiQueue.objects.filter(
+                pid_id=proId, updateTime__gte=staTime, updateTime__lte=endTime).count()
+            # endregion
+            perforHistoryTotal = db_ApiQueue.objects.filter(pid_id=proId).count()  # 历史执行
 
-        results['dataTable'].append({
-            'taskTotal': db_ApiTimingTask.objects.filter(is_del=0, pid_id=proId).count(),  # 定时任务
-            'batchTotal': db_ApiBatchTask.objects.filter(is_del=0, pid_id=proId).count(),  # 批量任务,
-            'weekTotal': weekTotal,
-            'performWeekTotal': performWeekTotal,
-            'perforHistoryTotal': perforHistoryTotal
-        })
+            results['dataTable'].append({
+                'taskTotal': db_ApiTimingTask.objects.filter(is_del=0, pid_id=proId).count(),  # 定时任务
+                'batchTotal': db_ApiBatchTask.objects.filter(is_del=0, pid_id=proId).count(),  # 批量任务,
+                'weekTotal': weekTotal,  # 本周新增
+                'performWeekTotal': performWeekTotal,
+                'perforHistoryTotal': perforHistoryTotal
+            })
         return results
 
     # 过去7天内Top10

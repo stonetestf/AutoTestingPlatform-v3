@@ -60,17 +60,17 @@ def select_data(request):
             obj_db_FunManagement = obj_db_FunManagement.filter(funName__icontains=funName)
         select_db_FunManagement = obj_db_FunManagement[minSize: maxSize]
         for i in select_db_FunManagement:
-            dataList.append(
-                {"id": i.id,
-                 "pageId": i.page_id,
-                 "pageName": i.page.pageName,
-                 "funName": i.funName,
-                 "remarks": i.remarks,
-                 "apiNum": db_ApiBaseData.objects.filter(is_del=0,fun_id=i.id).count(),
-                 "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-                 "userName": f"{i.uid.userName}({i.uid.nickName})",
-                 }
-            )
+            dataDict = {"id": i.id,
+                        "pageId": i.page_id,
+                        "pageName": i.page.pageName,
+                        "funName": i.funName,
+                        "remarks": i.remarks,
+                        "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                        "userName": f"{i.uid.userName}({i.uid.nickName})",
+                        }
+            if sysType == "API":
+                dataDict["apiNum"] = db_ApiBaseData.objects.filter(is_del=0, fun_id=i.id).count()
+            dataList.append(dataDict)
 
         response['TableData'] = dataList
         response['Total'] = obj_db_FunManagement.count()
@@ -122,7 +122,7 @@ def save_data(request):
                         cls_FindTable.get_pro_name(proId),
                         cls_FindTable.get_page_name(pageId), funName,
                         userId,
-                        '新增功能',CUFront=json.dumps(request.POST)
+                        '新增功能', CUFront=json.dumps(request.POST)
                     )
                     # endregion
                     # region 添加历史恢复
@@ -248,7 +248,7 @@ def delete_data(request):
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(id=funId)
         if obj_db_FunManagement.exists():
-            obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0,fun_id=funId)
+            obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, fun_id=funId)
             if obj_db_ApiBaseData.exists():
                 response['errorMsg'] = f'当前所属功能下存在 {obj_db_ApiBaseData.count()} 条接口信息,' \
                                        f'请删除或修改这些接口所属后在进行当前删除操作!'
@@ -268,7 +268,7 @@ def delete_data(request):
                     cls_FindTable.get_page_name(obj_db_FunManagement[0].page_id),
                     cls_FindTable.get_fun_name(funId),
                     userId,
-                    '删除功能',CUFront=json.dumps(request.POST)
+                    '删除功能', CUFront=json.dumps(request.POST)
                 )
                 # endregion
                 # region 添加历史恢复
@@ -341,7 +341,7 @@ def select_history(request):
     else:
         if funId:
             obj_db_FunHistory = db_FunHistory.objects.filter(
-                fun_id=funId,page__sysType=sysType).order_by('-createTime')
+                fun_id=funId, page__sysType=sysType).order_by('-createTime')
         else:
             obj_db_FunHistory = db_FunHistory.objects.filter(page__sysType=sysType).order_by('-createTime')
             if funName:
@@ -394,13 +394,13 @@ def restor_data(request):
             if is_admin or obj_db_FunHistory[0].pid.cuid == userId:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0,id=obj_db_FunHistory[0].pid_id)
+                        obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0, id=obj_db_FunHistory[0].pid_id)
                         if obj_db_ProManagement.exists():
                             obj_db_PageManagement = db_PageManagement.objects.filter(
-                                is_del=0,id=obj_db_FunHistory[0].page_id)
+                                is_del=0, id=obj_db_FunHistory[0].page_id)
                             if obj_db_PageManagement.exists():
                                 restoreData = obj_db_FunHistory[0].restoreData
-                                if obj_db_FunHistory[0].operationType in ["Add","Edit"]:
+                                if obj_db_FunHistory[0].operationType in ["Add", "Edit"]:
                                     obj_db_FunManagement = db_FunManagement.objects.filter(
                                         id=obj_db_FunHistory[0].fun_id)
                                     if obj_db_FunManagement.exists():
