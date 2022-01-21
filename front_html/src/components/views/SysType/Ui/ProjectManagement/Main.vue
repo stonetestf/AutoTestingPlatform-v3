@@ -349,7 +349,7 @@ export default {
         DeleteData(id){
             let self = this;
             self.$axios.post('/api/ProjectManagement/DeleteData',Qs.stringify({
-                "sysType":'API',
+                "sysType":'UI',
                 'proId':id,
             })).then(res => {
                 if(res.data.statusCode ==2003){

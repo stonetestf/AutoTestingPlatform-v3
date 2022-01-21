@@ -5,7 +5,7 @@
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
-                            <el-select v-model="SelectRomeData.pageName" clearable placeholder="请选择" style="width:200px;" @click.native="GetModuleNameOption()">
+                            <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetModuleNameOption()">
                                 <el-option
                                     v-for="item in SelectRomeData.pageNameOption"
                                     :key="item.value"
@@ -15,7 +15,7 @@
                             </el-select>
                         </el-form-item>
                         <el-form-item label="所属功能:">
-                            <el-select v-model="SelectRomeData.funName" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
+                            <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
                                 <el-option
                                     v-for="item in SelectRomeData.funNameOption"
                                     :key="item.value"
@@ -33,6 +33,7 @@
                 </div>
                 <div style="margin-top:-15px;">
                     <el-table
+                        v-loading="loading"
                         :data="tableData"
                         height="653px"
                         border
@@ -60,6 +61,21 @@
                                         :data="props.row.tableItem"
                                         border>
                                         <el-table-column
+                                            type="index"
+                                            label="Index"
+                                            align= "center"
+                                            width="80">
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="状态"
+                                            align= "center"
+                                            width="100">
+                                            <template slot-scope="scope">
+                                                <el-tag type="success" v-if="scope.row.state">启用</el-tag>
+                                                <el-tag type="danger" v-else>禁用</el-tag>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
                                             prop="targetingType"
                                             label="定位类型"
                                             align= "center"
@@ -81,6 +97,7 @@
                         </el-table-column>
                         <el-table-column
                             label="元素名称"
+                            width="300px"
                             align= "center"
                             prop="elementName">
                         </el-table-column>
@@ -106,7 +123,16 @@
                             label="定位数量"
                             align= "center"
                             width="100px"
-                            prop="targetingTotal">
+                            prop="locationTotal">
+                        </el-table-column>
+                        <el-table-column
+                            label="元素状态"
+                            align= "center"
+                            width="100px">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.elementState">启用</el-tag>
+                                <el-tag type="info" v-else>禁用</el-tag>
+                            </template>
                         </el-table-column>
                         <el-table-column
                             label="更新时间"
@@ -127,6 +153,7 @@
                             prop="createUserName">
                         </el-table-column>
                         <el-table-column
+                            fixed="right"
                             align="center"
                             width="210px">
                         <template slot="header">
@@ -143,15 +170,17 @@
                             </el-button-group>
                         </template>
                         <template slot-scope="scope" style="width:100px">
-                            <el-button
-                                size="mini"
-                                @click="handleEdit(scope.$index, scope.row)">Edit
-                            </el-button>
-                            <el-button
-                                size="mini"
-                                type="danger"
-                                @click="handleDelete(scope.$index, scope.row)">Delete
-                            </el-button>
+                            <el-button-group>
+                                <el-button
+                                    size="mini"
+                                    @click="handleEdit(scope.$index, scope.row)">Edit
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    type="danger"
+                                    @click="handleDelete(scope.$index, scope.row)">Delete
+                                </el-button>
+                            </el-button-group>
                         </template>
                         </el-table-column>
                     </el-table>
@@ -180,7 +209,8 @@
 </template>
 
 <script>
-import { PrintConsole } from '../../../../../../js/Logger';
+import Qs from 'qs';
+import {PrintConsole} from '../../../../../../js/Logger';
 import DialogEditor from "./Editor.vue";
 
 export default {
@@ -189,13 +219,15 @@ export default {
     },
     data() {
         return {
+            loading:false,
             tableData: [],
             multipleSelection:[],
             SelectRomeData:{
-                pageName:'',
+                pageId:'',
                 pageNameOption:[],
-                funName:'',
+                funId:'',
                 funNameOption:[],
+                elementName:'',
             },
             page: { 
                 current: 1,// 默认显示第几页
@@ -221,7 +253,51 @@ export default {
     },
     methods: {
         SelectData(){
+            let self = this;
+            self.loading=true;
+            self.tableData= [];
+            self.$axios.get('/api/UiElementMaintenance/SelectData',{
+                params:{
+                    'proId':self.$cookies.get('proId'),
+                    'pageId':self.SelectRomeData.pageId,
+                    'funId':self.SelectRomeData.funId,
+                    'elementName':self.SelectRomeData.elementName,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.id =d.id;
+                        obj.elementName=d.elementName;
+                        obj.pageName = d.pageName;
+                        obj.funName = d.funName;
+                        obj.elementType = d.elementType;
+                        obj.locationTotal = d.locationTotal;
+                        obj.elementState=d.elementState;
+                        obj.updateTime = d.updateTime;
+                        obj.userName = d.userName;
+                        obj.createUserName = d.createUserName;
+                        obj.tableItem=d.tableItem;
 
+                        self.tableData.push(obj);
+                    });
+                    if(self.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                    self.loading=false;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                }
+                // console.log(self.tableData);
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+            })
         },
         //编辑、新增
         closeEditDialog(){
@@ -234,6 +310,41 @@ export default {
                 isAddNew:true,//初始化是否新增\修改
             }
             self.dialog.editor.dialogVisible=true;
+        },
+        handleEdit(index,row){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑元素",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                elementId:row.id,
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                    this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/UiElementMaintenance/DeleteData',Qs.stringify({
+                'elementId':id,
+            })).then(res => {
+            if(res.data.statusCode ==2003){
+                self.$message.success('删除元素成功!');
+                self.SelectData();
+            }
+            else{
+                self.$message.error('删除元素失败:'+ res.data.errorMsg);
+            }
+            }).catch(function (error) {
+                console.log(error);
+            })
         },
         handleCommand(command){
             PrintConsole(command);

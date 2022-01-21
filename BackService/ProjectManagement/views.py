@@ -196,7 +196,7 @@ def save_data(request):
                         # endregion
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Add',
+                            sysType, 'Manual', 3, 'Add',
                             proName, None, None,
                             userId,
                             '新增项目', CUFront=json.dumps(request.POST)
@@ -282,7 +282,7 @@ def edit_data(request):
                                     onlyCode=onlyCode)
                                 # region 添加操作信息
                                 cls_Logging.record_operation_info(
-                                    'API', 'Manual', 3, 'Edit',
+                                    sysType, 'Manual', 3, 'Edit',
                                     proName, None, None,
                                     userId,
                                     "修改项目",
@@ -366,6 +366,7 @@ def delete_data(request):
     is_edit = False
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        sysType = request.POST['sysType']
         proId = request.POST['proId']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -406,7 +407,7 @@ def delete_data(request):
                             # endregion
                             # region 添加操作信息
                             cls_Logging.record_operation_info(
-                                'API', 'Manual', 3, 'Delete',
+                                sysType, 'Manual', 3, 'Delete',
                                 obj_db_ProManagement[0].proName, None, None,
                                 userId,
                                 '删除项目', CUFront=json.dumps(request.POST)

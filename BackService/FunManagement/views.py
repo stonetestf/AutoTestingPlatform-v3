@@ -118,7 +118,7 @@ def save_data(request):
                     # endregion
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Add',
+                        sysType, 'Manual', 3, 'Add',
                         cls_FindTable.get_pro_name(proId),
                         cls_FindTable.get_page_name(pageId), funName,
                         userId,
@@ -188,7 +188,7 @@ def edit_data(request):
                         oldData = list(obj_db_FunManagement.values())
                         newData = json.dumps(request.POST)
                         cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Edit',
+                            sysType, 'Manual', 3, 'Edit',
                             cls_FindTable.get_pro_name(proId),
                             cls_FindTable.get_page_name(pageId), funName,
                             userId,
@@ -239,6 +239,7 @@ def delete_data(request):
     response = {}
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        sysType = request.POST['sysType']
         funId = request.POST['funId']
         onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
@@ -263,7 +264,7 @@ def delete_data(request):
                 # endregion
                 # region 添加操作信息
                 cls_Logging.record_operation_info(
-                    'API', 'Manual', 3, 'Delete',
+                    sysType, 'Manual', 3, 'Delete',
                     cls_FindTable.get_pro_name(obj_db_FunManagement[0].pid_id),
                     cls_FindTable.get_page_name(obj_db_FunManagement[0].page_id),
                     cls_FindTable.get_fun_name(funId),

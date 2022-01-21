@@ -1189,7 +1189,7 @@ export default {
                 self.StepsRomeData.disPlay_Next = false;
                 self.StepsRomeData.disPlay_Previous = true;
             }
-            console.log('步骤',this.StepsRomeData.active)
+            PrintConsole('步骤',this.StepsRomeData.active)
         },
         'BasicRomeData.pageId': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
             let self = this;

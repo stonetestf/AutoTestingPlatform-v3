@@ -297,6 +297,7 @@ export default {
         DeleteData(id){
             let self = this;
             self.$axios.post('/api/FunManagement/DeleteData',Qs.stringify({
+                'sysType':'UI',
                 'funId':id,
             })).then(res => {
             if(res.data.statusCode ==2003){

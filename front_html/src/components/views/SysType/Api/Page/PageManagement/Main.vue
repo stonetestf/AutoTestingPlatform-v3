@@ -261,6 +261,7 @@ export default {
     DeleteData(id){
         let self = this;
         self.$axios.post('/api/PageManagement/DeleteData',Qs.stringify({
+          'sysType':'API',
           'pageId':id,
         })).then(res => {
         if(res.data.statusCode ==2003){

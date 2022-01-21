@@ -109,7 +109,7 @@ def save_data(request):
                     # endregion
                     # region 添加操作信息
                     cls_Logging.record_operation_info(
-                        'API', 'Manual', 3, 'Add',
+                        sysType, 'Manual', 3, 'Add',
                         cls_FindTable.get_pro_name(proId), pageName, None,
                         userId,
                         '新增页面',CUFront=json.dumps(request.POST)
@@ -176,7 +176,7 @@ def edit_data(request):
                         oldData = list(obj_db_PageManagement.values())
                         newData = json.dumps(request.POST)
                         cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Edit',
+                            sysType, 'Manual', 3, 'Edit',
                             cls_FindTable.get_pro_name(proId), pageName, None,
                             userId,
                             '修改页面',
@@ -224,6 +224,7 @@ def delete_data(request):
     response = {}
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        sysType = request.POST['sysType']
         pageId = request.POST['pageId']
         onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
@@ -247,7 +248,7 @@ def delete_data(request):
                         )
                         # region 添加操作信息
                         cls_Logging.record_operation_info(
-                            'API', 'Manual', 3, 'Delete',
+                            sysType, 'Manual', 3, 'Delete',
                             cls_FindTable.get_pro_name(obj_db_PageManagement[0].pid_id),
                             obj_db_PageManagement[0].pageName, None,
                             userId,
