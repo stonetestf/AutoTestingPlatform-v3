@@ -9,6 +9,8 @@ import ast
 from Ui_ElementMaintenance.models import ElementBaseData as db_ElementBaseData
 from Ui_ElementMaintenance.models import ElementLocation as db_ElementLocation
 from Ui_ElementMaintenance.models import ElementHistory as db_ElementHistory
+from Ui_ElementEvent.models import ElementEventComponent as db_ElementEventComponent
+from Ui_ElementEvent.models import ElementEvent as db_ElementEvent
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -71,14 +73,28 @@ def select_data(request):
                     'targetingPath': item_location.targetingPath,
                     'remarks': item_location.remarks,
                 })
+            elementType = ast.literal_eval(i.elementType) if i.elementType else []
+            if elementType:
+                obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0, eventLogo=elementType[0])
+                if obj_db_ElementEvent.exists():
+                    obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(
+                        is_del=0, event_id=obj_db_ElementEvent[0].id,value=elementType[1])
+                    if obj_db_ElementEventComponent.exists():
+                        elementTypeTxt = obj_db_ElementEventComponent[0].label
+                    else:
+                        elementTypeTxt = None
+                else:
+                    elementTypeTxt = None
+            else:
+                elementTypeTxt = None
             dataList.append({
                 "id": i.id,
                 "elementName": i.elementName,
                 "pageName": i.page.pageName,
                 "funName": i.fun.funName,
-                "elementType": i.elementType,
+                "elementType": elementTypeTxt,
                 "locationTotal": obj_db_ElementLocation.count(),
-                "elementState":True if i.elementState==1 else False,
+                "elementState": True if i.elementState == 1 else False,
                 "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 "userName": f"{i.uid.userName}({i.uid.nickName})",
                 "createUserName": cls_FindTable.get_userName(i.cuid),
@@ -115,7 +131,7 @@ def save_data(request):
         cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'save_data', errorMsg)
     else:
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(
-            is_del=0, pid_id=proId, fun_id=funId, page_id=pageId, elementName=elementName,elementType=elementType)
+            is_del=0, pid_id=proId, fun_id=funId, page_id=pageId, elementName=elementName, elementType=elementType)
         if obj_db_ElementBaseData.exists():
             response['errorMsg'] = "当前所属功能下已有相同元素名称或元素类型,请更改!"
         else:
@@ -134,7 +150,7 @@ def save_data(request):
                     # region 保存基本信息
                     save_db_ElementBaseData = db_ElementBaseData.objects.create(
                         pid_id=proId, page_id=pageId, fun_id=funId,
-                        elementName=elementName, elementType=elementType,elementState=elementState,
+                        elementName=elementName, elementType=elementType, elementState=elementState,
                         uid_id=userId, cuid=userId, is_del=0, onlyCode=onlyCode,
                     )
                     # endregion
@@ -202,7 +218,7 @@ def load_data(request):
                 'funId': obj_db_ElementBaseData[0].fun_id,
                 'elementName': obj_db_ElementBaseData[0].elementName,
                 'elementType': ast.literal_eval(obj_db_ElementBaseData[0].elementType),
-                'elementState':True if obj_db_ElementBaseData[0].elementState==1 else False,
+                'elementState': True if obj_db_ElementBaseData[0].elementState == 1 else False,
             }
             obj_db_ElementLocation = db_ElementLocation.objects.filter(is_del=0, element_id=elementId).order_by('index')
             locationTable = [{'id': i.id,
@@ -249,7 +265,7 @@ def edit_data(request):
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(id=elementId, is_del=0)
         if obj_db_ElementBaseData.exists():
             select_db_ElementBaseData = db_ElementBaseData.objects.filter(
-                pid_id=proId,page_id=pageId,fun_id=funId,elementName=elementName, elementType=elementType,is_del=0)
+                pid_id=proId, page_id=pageId, fun_id=funId, elementName=elementName, elementType=elementType, is_del=0)
             if select_db_ElementBaseData.exists():
                 if elementId == select_db_ElementBaseData[0].id:  # 自己修改自己
                     is_Edit = True
@@ -366,10 +382,10 @@ def delete_data(request):
                     # endregion
                     # region 删除关联信息
                     db_ElementLocation.objects.filter(
-                        is_del=0,element_id=elementId,onlyCode=obj_db_ElementBaseData[0].onlyCode).update(
+                        is_del=0, element_id=elementId, onlyCode=obj_db_ElementBaseData[0].onlyCode).update(
                         is_del=1, updateTime=cls_Common.get_date_time())
                     obj_db_ElementBaseData.update(
-                        is_del=1, updateTime=cls_Common.get_date_time(),uid_id=userId
+                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
                     )
                     # endregion
                     # region 添加操作信息
@@ -394,7 +410,7 @@ def delete_data(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
-@require_http_methods(["POST"])  # 效验接口数据的完成性
+@require_http_methods(["POST"])  # 效验数据的完成性
 def charm_element_data(request):
     response = {}
     dataList = []
@@ -460,6 +476,3 @@ def charm_element_data(request):
         response['statusCode'] = 2000
         response['TableData'] = dataList
     return JsonResponse(response)
-
-
-

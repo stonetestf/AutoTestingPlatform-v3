@@ -129,6 +129,7 @@ INSTALLED_APPS = [
     'Api_BatchTask',
 
     'Ui_ElementMaintenance',
+    'Ui_ElementEvent',
 ]
 # endregion
 

@@ -42,6 +42,7 @@ import Api_TimingTask.urls
 import Api_BatchTask.urls
 
 import Ui_ElementMaintenance.urls
+import Ui_ElementEvent.urls
 
 
 urlpatterns = [
@@ -71,5 +72,6 @@ urlpatterns = [
     url('api/ApiBatchTask/', include(Api_BatchTask.urls)),
 
     url('api/UiElementMaintenance/', include(Ui_ElementMaintenance.urls)),
+    url('api/UiElementEvent/', include(Ui_ElementEvent.urls)),
 
 ]

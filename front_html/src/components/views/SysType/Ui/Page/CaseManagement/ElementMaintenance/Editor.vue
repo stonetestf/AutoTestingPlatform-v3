@@ -19,7 +19,7 @@
                     element-loading-text="拼命加载中"
                     element-loading-spinner="el-icon-loading">
                     <template v-if="StepsRomeData.active==0">
-                           <div class="table">
+                        <div class="table">
                             <div class="father" style="width: 100%; height: 550px;">
                                 <div class="son" style="width:800px; height: 150px;">
                                     <div style="margin-top:20px;">
@@ -539,7 +539,7 @@ export default {
         LoadData(elementId){
             let self = this;
             self.loading=true;
-            return self.$axios.get('/api/UiElementMaintenance/LoadData',{
+            self.$axios.get('/api/UiElementMaintenance/LoadData',{
                 params:{
                   'elementId':elementId
                 }

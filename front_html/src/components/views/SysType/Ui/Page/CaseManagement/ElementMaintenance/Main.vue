@@ -116,7 +116,7 @@
                         <el-table-column
                             label="元素类型"
                             align= "center"
-                            width="120px"
+                            width="160px"
                             prop="elementType">
                         </el-table-column>
                         <el-table-column
