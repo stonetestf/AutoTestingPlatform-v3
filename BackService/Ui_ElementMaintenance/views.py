@@ -6,6 +6,9 @@ import json
 import ast
 
 # Create your db here.
+from ProjectManagement.models import ProManagement as db_ProManagement
+from PageManagement.models import PageManagement as db_PageManagement
+from FunManagement.models import FunManagement as db_FunManagement
 from Ui_ElementMaintenance.models import ElementBaseData as db_ElementBaseData
 from Ui_ElementMaintenance.models import ElementLocation as db_ElementLocation
 from Ui_ElementMaintenance.models import ElementHistory as db_ElementHistory
@@ -170,19 +173,19 @@ def save_data(request):
                     db_ElementLocation.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region 添加历史恢复
-                    restoreData = json.loads(json.dumps(request.POST))
-                    restoreData['updateTime'] = save_db_ElementBaseData.updateTime.strftime('%Y-%m-%d %H:%M:%S')
-                    restoreData['createTime'] = save_db_ElementBaseData.createTime.strftime('%Y-%m-%d %H:%M:%S')
-                    restoreData['uid_id'] = save_db_ElementBaseData.uid_id
-                    restoreData['cuid'] = save_db_ElementBaseData.cuid
-                    restoreData['onlyCode'] = onlyCode
+                    restoreData = json.loads(request.body)
+                    restoreData['baseData']['updateTime'] = save_db_ElementBaseData.updateTime.strftime('%Y-%m-%d %H:%M:%S')
+                    restoreData['baseData']['createTime'] = save_db_ElementBaseData.createTime.strftime('%Y-%m-%d %H:%M:%S')
+                    restoreData['baseData']['uid_id'] = save_db_ElementBaseData.uid_id
+                    restoreData['baseData']['cuid'] = save_db_ElementBaseData.cuid
+                    restoreData['baseData']['onlyCode'] = onlyCode
                     db_ElementHistory.objects.create(
                         pid_id=proId,
                         page_id=pageId,
                         fun_id=funId,
                         element_id=save_db_ElementBaseData.id,
                         elementName=elementName,
-                        onlyCode=cls_Common.generate_only_code(),
+                        onlyCode=onlyCode,
                         operationType='Add',
                         restoreData=restoreData,
                         uid_id=userId,
@@ -221,7 +224,7 @@ def load_data(request):
                 'elementState': True if obj_db_ElementBaseData[0].elementState == 1 else False,
             }
             obj_db_ElementLocation = db_ElementLocation.objects.filter(is_del=0, element_id=elementId).order_by('index')
-            locationTable = [{'id': i.id,
+            locationTable = [{
                               'state': True if i.state == 1 else False,
                               'targetingType': i.targetingType,
                               'targetingPath': i.targetingPath,
@@ -323,19 +326,19 @@ def edit_data(request):
                         db_ElementLocation.objects.bulk_create(product_list_to_insert)
                         # endregion
                         # region 添加历史恢复
-                        restoreData = json.loads(json.dumps(request.POST))
-                        restoreData['updateTime'] = obj_db_ElementBaseData[0].updateTime.strftime('%Y-%m-%d %H:%M:%S')
-                        restoreData['createTime'] = obj_db_ElementBaseData[0].createTime.strftime('%Y-%m-%d %H:%M:%S')
-                        restoreData['uid_id'] = obj_db_ElementBaseData[0].uid_id
-                        restoreData['cuid'] = obj_db_ElementBaseData[0].cuid
-                        restoreData['onlyCode'] = onlyCode
+                        restoreData = json.loads(request.body)
+                        restoreData['baseData']['updateTime'] = obj_db_ElementBaseData[0].updateTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['baseData']['createTime'] = obj_db_ElementBaseData[0].createTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['baseData']['uid_id'] = obj_db_ElementBaseData[0].uid_id
+                        restoreData['baseData']['cuid'] = obj_db_ElementBaseData[0].cuid
+                        restoreData['baseData']['onlyCode'] = onlyCode
                         db_ElementHistory.objects.create(
                             pid_id=proId,
                             page_id=pageId,
                             fun_id=funId,
                             element_id=elementId,
                             elementName=elementName,
-                            onlyCode=cls_Common.generate_only_code(),
+                            onlyCode=onlyCode,
                             operationType='Edit',
                             restoreData=restoreData,
                             uid_id=userId,
@@ -475,4 +478,163 @@ def charm_element_data(request):
         # endregion
         response['statusCode'] = 2000
         response['TableData'] = dataList
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询历史恢复
+def select_history(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        elementId = objData.elementId
+        pageId = objData.pageId
+        funId = objData.funId
+        elementName = objData.elementName
+
+        current = int(objData.current)  # 当前页数
+        pageSize = int(objData.pageSize)  # 一页多少条
+        minSize = (current - 1) * pageSize
+        maxSize = current * pageSize
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'select_history', errorMsg)
+    else:
+        if elementId:
+            obj_db_ElementHistory = db_ElementHistory.objects.filter(element_id=elementId)
+        else:
+            obj_db_ElementHistory = db_ElementHistory.objects.filter().order_by('-createTime')
+        if pageId:
+            obj_db_ElementHistory = obj_db_ElementHistory.filter(page_id=pageId).order_by('-createTime')
+        if funId:
+            obj_db_ElementHistory = obj_db_ElementHistory.filter(fun_id=funId).order_by('-createTime')
+        if elementName:
+            obj_db_ElementHistory = obj_db_ElementHistory.filter(
+                elementName__icontains=elementName).order_by('-createTime')
+        select_db_ElementHistory = obj_db_ElementHistory[minSize: maxSize]
+        for i in select_db_ElementHistory:
+            if i.restoreData:
+                restoreData = json.dumps(ast.literal_eval(i.restoreData),
+                                         sort_keys=True, indent=4, separators=(",", ": "), ensure_ascii=False)
+            else:
+                restoreData = None
+            if restoreData:
+                tableItem = [{'restoreData': restoreData}]
+            else:
+                tableItem = []
+            dataList.append({
+                'id': i.id,
+                'pageName': i.page.pageName,
+                'funName': i.fun.funName,
+                'elementName': i.elementName,
+                'operationType': i.operationType,
+                'tableItem': tableItem,
+                'createTime': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+                "userName": f"{i.uid.userName}({i.uid.nickName})",
+            })
+        response['TableData'] = dataList
+        response['Total'] = obj_db_ElementHistory.count()
+        response['statusCode'] = 2000
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
+def restor_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        roleId = cls_FindTable.get_roleId(userId)
+        is_admin = cls_FindTable.get_role_is_admin(roleId)
+        historyId = request.POST['historyId']
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'restor_data', errorMsg)
+    else:
+        obj_db_ElementHistory = db_ElementHistory.objects.filter(id=historyId)
+        if obj_db_ElementHistory.exists():
+            # 恢复时是管理员或是 当前项目的创建人时才可恢复
+            if is_admin or obj_db_ElementHistory[0].element.cuid == userId:
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        obj_db_ProManagement = db_ProManagement.objects.filter(
+                            is_del=0, id=obj_db_ElementHistory[0].pid_id)
+                        if obj_db_ProManagement.exists():
+                            obj_db_PageManagement = db_PageManagement.objects.filter(
+                                is_del=0, id=obj_db_ElementHistory[0].page_id)
+                            if obj_db_PageManagement.exists():
+                                obj_db_FunManagement = db_FunManagement.objects.filter(
+                                    is_del=0, id=obj_db_ElementHistory[0].fun_id)
+                                if obj_db_FunManagement.exists():
+                                    elementId = obj_db_ElementHistory[0].element_id
+                                    restoreData = obj_db_ElementHistory[0].restoreData
+                                    if obj_db_ElementHistory[0].operationType in ["Add", "Edit"]:
+                                        obj_db_ElementBaseData = db_ElementBaseData.objects.filter(id=elementId)
+                                        if obj_db_ElementBaseData.exists():
+                                            restoreData = ast.literal_eval(restoreData)
+                                            # region 操作记录
+                                            cls_Logging.record_operation_info(
+                                                'UI', 'Manual', 3, 'Update',
+                                                cls_FindTable.get_pro_name(obj_db_ElementHistory[0].pid_id),
+                                                cls_FindTable.get_page_name(obj_db_ElementHistory[0].page_id),
+                                                cls_FindTable.get_fun_name(obj_db_ElementHistory[0].fun_id),
+                                                userId,
+                                                f'【恢复元素维护】:'
+                                                f'ID:{elementId}:'
+                                                f"{obj_db_ElementHistory[0].elementName}",
+                                            )
+                                            # endregion
+                                            # region 需要删除原附属数据，不会恢复时会出现原数据还在
+                                            db_ElementLocation.objects.filter(
+                                                element_id=elementId,
+                                                onlyCode=obj_db_ElementBaseData[0].onlyCode).update(
+                                                is_del=1, updateTime=cls_Common.get_date_time())
+                                            # endregion
+                                            # region 基本数据
+                                            obj_db_ElementBaseData.update(
+                                                pid_id=restoreData['baseData']['proId'],
+                                                page_id=restoreData['baseData']['pageId'],
+                                                fun_id=restoreData['baseData']['funId'],
+                                                elementName=restoreData['baseData']['elementName'],
+                                                elementType=restoreData['baseData']['elementType'],
+                                                elementState=restoreData['baseData']['elementState'],
+                                                updateTime=restoreData['baseData']['updateTime'],
+                                                createTime=restoreData['baseData']['createTime'],
+                                                uid_id=restoreData['baseData']['uid_id'],
+                                                cuid=restoreData['baseData']['cuid'],
+                                                is_del=0,
+                                                onlyCode=restoreData['baseData']['onlyCode'],
+                                            )
+                                            # endregion
+                                            # region 定位表
+                                            db_ElementLocation.objects.filter(
+                                                is_del=1,
+                                                onlyCode=obj_db_ElementHistory[0].onlyCode,
+                                                element_id=elementId).update(is_del=0)
+                                            # endregion
+                                        else:
+                                            raise ValueError('此数据原始数据在库中无法查询到!')
+                                    else:
+                                        raise ValueError('使用了未录入的操作类型!')
+                                else:
+                                    raise ValueError(f"当前恢复的数据上级所属功能不存在,恢复失败!")
+                            else:
+                                raise ValueError(f"当前恢复的数据上级所属页面不存在,恢复失败!")
+                        else:
+                            raise ValueError(f"当前恢复的数据上级所属项目不存在,恢复失败!")
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f"数据恢复失败:{e}"
+                else:
+                    response['statusCode'] = 2002
+            else:
+                response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
+        else:
+            response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
     return JsonResponse(response)

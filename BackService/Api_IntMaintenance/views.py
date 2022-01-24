@@ -1739,14 +1739,14 @@ def select_history(request):
             obj_db_ApiHistory = db_ApiHistory.objects.filter(api_id=apiId).order_by('-createTime')
         else:
             obj_db_ApiHistory = db_ApiHistory.objects.filter().order_by('-createTime')
-            if pageId:
-                obj_db_ApiHistory = obj_db_ApiHistory.filter(page_id=pageId).order_by('-createTime')
-            if funId:
-                obj_db_ApiHistory = obj_db_ApiHistory.filter(fun_id=funId).order_by('-createTime')
-            if apiName:
-                obj_db_ApiHistory = obj_db_ApiHistory.filter(apiName__icontains=apiName).order_by('-createTime')
-            if operationType:
-                obj_db_ApiHistory = obj_db_ApiHistory.filter(operationType=operationType).order_by('-createTime')
+        if pageId:
+            obj_db_ApiHistory = obj_db_ApiHistory.filter(page_id=pageId).order_by('-createTime')
+        if funId:
+            obj_db_ApiHistory = obj_db_ApiHistory.filter(fun_id=funId).order_by('-createTime')
+        if apiName:
+            obj_db_ApiHistory = obj_db_ApiHistory.filter(apiName__icontains=apiName).order_by('-createTime')
+        if operationType:
+            obj_db_ApiHistory = obj_db_ApiHistory.filter(operationType=operationType).order_by('-createTime')
         select_db_ApiHistory = obj_db_ApiHistory[minSize: maxSize]
         for i in select_db_ApiHistory:
             if i.restoreData:

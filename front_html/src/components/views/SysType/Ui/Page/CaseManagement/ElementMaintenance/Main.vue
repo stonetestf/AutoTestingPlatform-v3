@@ -164,7 +164,7 @@
                                         更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                     </el-button>
                                     <el-dropdown-menu slot="dropdown">
-                                        <el-dropdown-item command="SwaggerImport">导入(Swagger)</el-dropdown-item>
+                                        <el-dropdown-item command="HistoryBack">历史恢复</el-dropdown-item>
                                     </el-dropdown-menu>
                                 </el-dropdown>
                             </el-button-group>
@@ -205,6 +205,14 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
+        <template>
+            <dialog-history-info
+                @closeDialog="closeHistoryInfoDialog" 
+                :isVisible="dialog.historyInfo.dialogVisible" 
+                :dialogPara="dialog.historyInfo.dialogPara"
+                @Succeed="SelectData">
+            </dialog-history-info>
+        </template>
     </div>
 </template>
 
@@ -212,10 +220,11 @@
 import Qs from 'qs';
 import {PrintConsole} from '../../../../../../js/Logger';
 import DialogEditor from "./Editor.vue";
+import DialogHistoryInfo from "./HistoryInfo.vue";
 
 export default {
     components: {
-       DialogEditor
+       DialogEditor,DialogHistoryInfo
     },
     data() {
         return {
@@ -236,6 +245,13 @@ export default {
             },
             dialog:{
                 editor:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                historyInfo:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -299,6 +315,42 @@ export default {
                 self.loading=false;
             })
         },
+        handleRowClick(row, column, event){//点击行选择勾选框
+          this.$refs.multipleTable.toggleRowSelection(row);
+        },
+        handleSelectionChange(val){//勾选数据时触发
+            // console.log(val)
+            this.multipleSelection=[];
+            val.forEach(d =>{
+                this.multipleSelection.push(d.id);
+            }); 
+        },
+        ClearSelectRomeData(){
+            let self = this;
+            self.SelectRomeData.pageName='';
+            self.SelectRomeData.funName='';
+            self.SelectRomeData.elementName='';
+            self.SelectData();
+        },
+        pageSizeChange(pageSize) {
+            let self = this;
+            self.page.current = 1;
+            self.page.pageSize = pageSize;
+        },
+        // 显示第几页
+        handleCurrentChange(val) {
+            let self = this;
+            // 改变默认的页数
+            self.page.current=val
+            self.SelectData();
+        },
+        handleCommand(command){
+            PrintConsole(command);
+            if(command=='HistoryBack'){
+                this.OpenHistoryInfoDialog();
+            }
+        },
+
         //编辑、新增
         closeEditDialog(){
             this.dialog.editor.dialogVisible =false;
@@ -346,39 +398,26 @@ export default {
                 console.log(error);
             })
         },
-        handleCommand(command){
-            PrintConsole(command);
 
+        //历史恢复
+        closeHistoryInfoDialog(){
+            this.dialog.historyInfo.dialogVisible =false;
         },
-        handleRowClick(row, column, event){//点击行选择勾选框
-          this.$refs.multipleTable.toggleRowSelection(row);
-        },
-        handleSelectionChange(val){//勾选数据时触发
-            // console.log(val)
-            this.multipleSelection=[];
-            val.forEach(d =>{
-                this.multipleSelection.push(d.id);
-            }); 
-        },
-        ClearSelectRomeData(){
+        OpenHistoryInfoDialog(){
             let self = this;
-            self.SelectRomeData.pageName='';
-            self.SelectRomeData.funName='';
-            self.SelectRomeData.elementName='';
-            self.SelectData();
+            if(self.multipleSelection.length>1){
+                self.$message.warning('只可勾选1条数据或不勾选数据进行历史查看及恢复!');
+            }else{
+                self.dialog.historyInfo.dialogPara={
+                    dialogTitle:"历史恢复",//初始化标题
+                    apiId:self.multipleSelection[0],
+                }
+                self.dialog.historyInfo.dialogVisible=true;
+            }
         },
-        pageSizeChange(pageSize) {
-            let self = this;
-            self.page.current = 1;
-            self.page.pageSize = pageSize;
-        },
-        // 显示第几页
-        handleCurrentChange(val) {
-            let self = this;
-            // 改变默认的页数
-            self.page.current=val
-            self.SelectData();
-        },
+     
+
+
     }
 };
 </script>

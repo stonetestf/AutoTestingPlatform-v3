@@ -11,5 +11,4 @@ urlpatterns = [
     url(r'LoadOperationData', views.load_operation_data, name='LoadOperationData'),
     url(r'UpdateOperationSort', views.update_operation_sort, name='UpdateOperationSort'),
     url(r'GetElementOperationTypeItems', views.get_element_operation_type_items, name='GetElementOperationTypeItems'),
-    # url(r'RestorData', views.restor_data, name='RestorData'),
 ]
