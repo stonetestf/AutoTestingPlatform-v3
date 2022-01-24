@@ -55,6 +55,10 @@
                                                         v-model="BaseRomeData.elementType"
                                                         :options="BaseRomeData.elementTypeOption"
                                                         style="float:left;">
+                                                        <template slot-scope="{ node, data }">
+                                                            <span>{{ data.label }}</span>
+                                                            <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                                                        </template>
                                                     </el-cascader>
                                                 </el-form-item>
                                                 <el-form-item label="元素状态:" prop="elementState">
@@ -214,33 +218,7 @@ export default {
                 funNameOption:[],
                 elementName:'',
                 elementType:'',
-                elementTypeOption:[
-                    // {'label':'点击事件','value':'ClickEvent',children:[
-                    //     {'label':'元素点击','value':'Click'},
-                    //     {'label':'坐标点击=>L','value':'LocationClick_L'},
-                    //     {'label':'坐标点击=>R','value':'LocationClick_R'},
-                    // ]},
-                    // {'label':'显示事件','value':'DisplayEvent',children:[
-                    //     {'label':'显示文本','value':'Label'},
-                    // ]},
-                    // {'label':'输入事件','value':'InputEvent',children:[
-                    //     {'label':'输入','value':'Input'},
-                    //     {'label':'引用变量赋值','value':'ReferenceVariableAssignment',disabled: true},
-                    //     {'label':'变量顺序输入','value':'VariableSequentialInput',disabled: true},
-                    //     {'label':'上传','value':'Upload'},
-                    // ]},
-                    // {'label':'验证事件','value':'VerificationEvent',children:[
-                    //     {'label':'元素验证','value':'ElementVerification'},
-                    //     // {'label':'图片对比器','value':'PictureContrast'},
-                    // ]},
-                    // {'label':'其他事件','value':'OrderEvent',children:[
-                    //     // {'label':'时间停顿','value':'Sleep'},
-                    //     {'label':'独立方法','value':'Method'},
-                    //     // {'label':'坐标偏移清除','value':'PositionOffsetClear'},
-                    //     // {'label':'修改URL参数','value':'EditUrlParams'},
-                    //     // {'label':'句柄切换','value':'HandleSwitch'},
-                    // ]},         
-                ],
+                elementTypeOption:[],
                 elementState:true,
                 elementStateOption:[
                     {'label':'启用','value':true},

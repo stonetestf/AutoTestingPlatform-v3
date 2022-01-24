@@ -5,7 +5,7 @@
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
-                            <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetModuleNameOption()">
+                            <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
                                 <el-option
                                     v-for="item in SelectRomeData.pageNameOption"
                                     :key="item.value"
@@ -15,7 +15,7 @@
                             </el-select>
                         </el-form-item>
                         <el-form-item label="所属功能:">
-                            <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
+                            <el-select v-model="SelectRomeData.funId" clearable placeholder="请选择" style="width:200px;" @click.native="GetFunNameOption()">
                                 <el-option
                                     v-for="item in SelectRomeData.funNameOption"
                                     :key="item.value"
@@ -165,7 +165,7 @@
                                     </el-button>
                                     <el-dropdown-menu slot="dropdown">
                                         <el-dropdown-item command="CopyElement">复制元素</el-dropdown-item>
-                                        <el-dropdown-item command="HistoryBack">历史恢复</el-dropdown-item>
+                                        <el-dropdown-item command="HistoryBack">历史恢复(勾选/不勾选)</el-dropdown-item>
                                     </el-dropdown-menu>
                                 </el-dropdown>
                             </el-button-group>
@@ -220,6 +220,9 @@
 <script>
 import Qs from 'qs';
 import {PrintConsole} from '../../../../../../js/Logger';
+import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
+
 import DialogEditor from "./Editor.vue";
 import DialogHistoryInfo from "./HistoryInfo.vue";
 
@@ -263,7 +266,13 @@ export default {
         };
     },
     watch:{//当我们输入值后，wacth监听每次修改变化的新值，然后计算输出值
-      
+        'SelectRomeData.pageId': function (newVal,oldVal) {//监听所属项目有变化的话就清空所属模块
+            let self = this;
+            if(newVal!=oldVal){
+                self.SelectRomeData.funId='';
+                self.SelectRomeData.funNameOption=[];
+            }
+        },
     },
     mounted(){
         this.SelectData();
@@ -316,6 +325,20 @@ export default {
                 self.loading=false;
             })
         },
+        GetFunNameOption(){
+            if(this.SelectRomeData.pageId){
+                GetFunNameItems(this.$cookies.get('proId'),this.SelectRomeData.pageId).then(d=>{
+                    this.SelectRomeData.funNameOption = d;
+                });
+            }else{
+                this.$message.warning('请先选择所属页面!');
+            }
+        },
+        GetPageNameOption(){
+            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+                this.SelectRomeData.pageNameOption = d;
+            });
+        },
         handleRowClick(row, column, event){//点击行选择勾选框
           this.$refs.multipleTable.toggleRowSelection(row);
         },
@@ -328,8 +351,8 @@ export default {
         },
         ClearSelectRomeData(){
             let self = this;
-            self.SelectRomeData.pageName='';
-            self.SelectRomeData.funName='';
+            self.SelectRomeData.pageId='';
+            self.SelectRomeData.funId='';
             self.SelectRomeData.elementName='';
             self.SelectData();
         },
