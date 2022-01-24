@@ -2,6 +2,7 @@ import Vue from 'vue'
 
 // Vue.prototype.$axios;
 
+//API
 // 获取项目名称下拉列表-无Token版本
 function NoTokenGetRoleNameItems(){
     return Vue.prototype.$axios.get('/api/role/NoTokenGetRoleNameItems',{
@@ -107,8 +108,23 @@ function GetConnectBaseItems(sysType){
     })
 }
 
+//UI
+//加载元素的操作类型
+function GetElementOperationTypeItems(){
+    return Vue.prototype.$axios.get('/api/UiElementEvent/GetElementOperationTypeItems',{
+        params:{
+            
+        }
+    }).then(res => {
+        return res.data;
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
+
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,
-    GetConnectBaseItems
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,GetConnectBaseItems,
+
+    GetElementOperationTypeItems,
   };
   
