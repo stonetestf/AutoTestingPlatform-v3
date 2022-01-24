@@ -546,7 +546,7 @@ export default {
         },
         resetForm(formName) {//清除正则验证
             if (this.$refs[formName] !== undefined) {
-                console.log('清除正则验证')
+                PrintConsole('清除正则验证')
                 this.$refs[formName].resetFields();
             }
         },

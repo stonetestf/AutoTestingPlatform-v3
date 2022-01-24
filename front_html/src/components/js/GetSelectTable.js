@@ -122,9 +122,22 @@ function GetElementOperationTypeItems(){
     })
 }
 
+//加载元素
+function GeElementNameItems(pageIdList){
+    return Vue.prototype.$axios.get('/api/UiElementMaintenance/GeElementNameItems',{
+        params:{
+            'pageIdList':pageIdList
+        }
+    }).then(res => {
+        return res.data;
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
+
 export {
     NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,GetConnectBaseItems,
 
-    GetElementOperationTypeItems,
+    GetElementOperationTypeItems,GeElementNameItems
   };
   

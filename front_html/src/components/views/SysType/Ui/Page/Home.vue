@@ -185,12 +185,13 @@ import Ui_PageManagement from '@/components/views/SysType/Ui/Page/PageManagement
 import Ui_FunManagement from '@/components/views/SysType/Ui/Page/FunManagement/Main';//所属功能
 import Ui_ElementMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/ElementMaintenance/Main';//元素维护
 import Ui_ElementEvent from '@/components/views/SysType/Ui/Page/Setting/ElementEvent/Main';//元素类型
-
+import Ui_CaseMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/CaseMaintenance/Main';//用例维护
+import Ui_PageEnvironment from '@/components/views/SysType/Ui/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
-    Ui_PageManagement,Ui_FunManagement,Ui_ElementMaintenance,Ui_ElementEvent
+    Ui_PageManagement,Ui_FunManagement,Ui_ElementMaintenance,Ui_ElementEvent,Ui_CaseMaintenance,Ui_PageEnvironment
 
   },
   data() {

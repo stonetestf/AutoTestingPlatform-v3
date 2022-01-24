@@ -177,7 +177,7 @@
                                         :src="IconImg.ui"
                                         fit="cover">
                                     </el-image>
-                                    <div class="btn-text">功能测试(建设中)</div>
+                                    <div class="btn-text">功能测试(开发中)</div>
                                 </el-card>
                             </el-col>
                             <el-col :span="4">
@@ -187,7 +187,7 @@
                                         :src="IconImg.pts"
                                         fit="cover">
                                     </el-image>
-                                    <div class="btn-text">梯度测试(建设中)</div>
+                                    <div class="btn-text">梯度测试(未开始)</div>
                                 </el-card>
                             </el-col>
                         </el-row>

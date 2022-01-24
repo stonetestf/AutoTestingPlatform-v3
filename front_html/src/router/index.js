@@ -40,7 +40,9 @@ import UiPageMain from '@/components/views/SysType/Ui/Page/Main'
 import Ui_PageManagement from '@/components/views/SysType/Ui/Page/PageManagement/Main';//所属页面
 import Ui_FunManagement from '@/components/views/SysType/Ui/Page/FunManagement/Main';//所属功能
 import Ui_ElementMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/ElementMaintenance/Main';//元素维护
-import Ui_ElementEvent from '@/components/views/SysType/Ui/Page/Setting/ElementEvent/Main';//元素类型
+import Ui_ElementEvent from '@/components/views/SysType/Ui/Page/Setting/ElementEvent/Main';//元素操作类型
+import Ui_CaseMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/CaseMaintenance/Main';//用例维护
+import Ui_PageEnvironment from '@/components/views/SysType/Ui/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 
 
 import Router from 'vue-router'
@@ -144,6 +146,12 @@ export default new Router({
       },
       {path: '/SysType/Ui/Page/Setting/ElementEvent/Main',name: 'Ui_ElementEvent',component: Ui_ElementEvent,
         meta:{name: '元素事件维护',url:'/SysType/Ui/Page/Setting/ElementEvent/Main',comp:'Ui_ElementEvent'}
+      },
+      {path: '/SysType/Ui/Page/CaseManagement/CaseMaintenance/Main',name: 'Ui_CaseMaintenance',component: Ui_CaseMaintenance,
+        meta:{name: '用例维护',url:'/SysType/Ui/Page/CaseManagement/CaseMaintenance/Main',comp:'Ui_CaseMaintenance'}
+      },
+      {path: '/SysType/Ui/Page/EnvironmentalManagement/PageEnvironment/Main',name: 'Ui_PageEnvironment',component: Ui_PageEnvironment,
+        meta:{name: '页面环境',url:'/SysType/Ui/Page/EnvironmentalManagement/PageEnvironment/Main',comp:'Ui_PageEnvironment'}
       },
     ]
   },
