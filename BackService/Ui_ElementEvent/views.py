@@ -444,7 +444,7 @@ def load_operation_data(request):
             #                      'allowDrag': False,  # 能否拖动
             #                      'allowDrop': False})  # 能否拖入
             dataList.append({'id': i.id,
-                             'index':i.index,
+                             'index': i.index,
                              'label': i.eventName,
                              'allowDrag': True,  # 能否拖动
                              'allowDrop': False,  # 能否拖入
@@ -469,9 +469,46 @@ def update_operation_sort(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'update_operation_sort', errorMsg)
     else:
-        for index,item in enumerate(TreeData,1):
-            db_ElementEvent.objects.filter(is_del=0,id=item.id).update(
-                index=index,updateTime=cls_Common.get_date_time())
+        for index, item in enumerate(TreeData, 1):
+            db_ElementEvent.objects.filter(is_del=0, id=item.id).update(
+                index=index, updateTime=cls_Common.get_date_time())
 
         response['statusCode'] = 2002
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 加载元素操作类型
+def get_element_operation_type_items(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'get_element_operation_type_items', errorMsg)
+    else:
+        obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0).order_by('index')
+        for i in obj_db_ElementEvent:
+            children = []
+            obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(
+                is_del=0,event_id=i.id).order_by('index')
+            for item in obj_db_ElementEventComponent:
+                children.append({
+                    'id':item.id,
+                    'label':item.label,
+                    'value':item.value,
+                    'disabled':False if item.state ==1 else True
+                })
+            dataList.append({
+                'id':i.id,
+                'label':i.eventName,
+                'value':i.eventLogo,
+                'children':children
+            })
+        response['statusCode'] = 2000
+        response['dataList'] = dataList
     return JsonResponse(response)

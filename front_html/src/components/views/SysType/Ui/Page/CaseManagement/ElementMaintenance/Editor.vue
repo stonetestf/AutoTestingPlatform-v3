@@ -50,6 +50,7 @@
                                                 </el-form-item>
                                                 <el-form-item label="元素类型:" prop="elementType">
                                                     <el-cascader
+                                                        @click.native="GetElementOperationType()"
                                                         clearable
                                                         v-model="BaseRomeData.elementType"
                                                         :options="BaseRomeData.elementTypeOption"
@@ -183,6 +184,7 @@ import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetElementOperationTypeItems} from "../../../../../../js/GetSelectTable.js";
 
 
 export default {
@@ -213,31 +215,31 @@ export default {
                 elementName:'',
                 elementType:'',
                 elementTypeOption:[
-                    {'label':'点击事件','value':'ClickEvent',children:[
-                        {'label':'元素点击','value':'Click'},
-                        {'label':'坐标点击=>L','value':'LocationClick_L'},
-                        {'label':'坐标点击=>R','value':'LocationClick_R'},
-                    ]},
-                    {'label':'显示事件','value':'DisplayEvent',children:[
-                        {'label':'显示文本','value':'Label'},
-                    ]},
-                    {'label':'输入事件','value':'InputEvent',children:[
-                        {'label':'输入','value':'Input'},
-                        {'label':'引用变量赋值','value':'ReferenceVariableAssignment',disabled: true},
-                        {'label':'变量顺序输入','value':'VariableSequentialInput',disabled: true},
-                        {'label':'上传','value':'Upload'},
-                    ]},
-                    {'label':'验证事件','value':'VerificationEvent',children:[
-                        {'label':'元素验证','value':'ElementVerification'},
-                        // {'label':'图片对比器','value':'PictureContrast'},
-                    ]},
-                    {'label':'其他事件','value':'OrderEvent',children:[
-                        // {'label':'时间停顿','value':'Sleep'},
-                        {'label':'独立方法','value':'Method'},
-                        // {'label':'坐标偏移清除','value':'PositionOffsetClear'},
-                        // {'label':'修改URL参数','value':'EditUrlParams'},
-                        // {'label':'句柄切换','value':'HandleSwitch'},
-                    ]},         
+                    // {'label':'点击事件','value':'ClickEvent',children:[
+                    //     {'label':'元素点击','value':'Click'},
+                    //     {'label':'坐标点击=>L','value':'LocationClick_L'},
+                    //     {'label':'坐标点击=>R','value':'LocationClick_R'},
+                    // ]},
+                    // {'label':'显示事件','value':'DisplayEvent',children:[
+                    //     {'label':'显示文本','value':'Label'},
+                    // ]},
+                    // {'label':'输入事件','value':'InputEvent',children:[
+                    //     {'label':'输入','value':'Input'},
+                    //     {'label':'引用变量赋值','value':'ReferenceVariableAssignment',disabled: true},
+                    //     {'label':'变量顺序输入','value':'VariableSequentialInput',disabled: true},
+                    //     {'label':'上传','value':'Upload'},
+                    // ]},
+                    // {'label':'验证事件','value':'VerificationEvent',children:[
+                    //     {'label':'元素验证','value':'ElementVerification'},
+                    //     // {'label':'图片对比器','value':'PictureContrast'},
+                    // ]},
+                    // {'label':'其他事件','value':'OrderEvent',children:[
+                    //     // {'label':'时间停顿','value':'Sleep'},
+                    //     {'label':'独立方法','value':'Method'},
+                    //     // {'label':'坐标偏移清除','value':'PositionOffsetClear'},
+                    //     // {'label':'修改URL参数','value':'EditUrlParams'},
+                    //     // {'label':'句柄切换','value':'HandleSwitch'},
+                    // ]},         
                 ],
                 elementState:true,
                 elementStateOption:[
@@ -398,7 +400,7 @@ export default {
         //基础信息
         ClearBaseRomeData(){
             let self = this;
-            self.resetForm('RomeData');
+            self.resetForm('BaseRomeData');
             self.BaseRomeData.elementId='';
             self.BaseRomeData.pageId='';
             self.BaseRomeData.funId='';
@@ -420,6 +422,15 @@ export default {
             }else{
                 this.$message.warning('请先选择所属页面!');
             }
+        },
+        GetElementOperationType(){
+            GetElementOperationTypeItems().then(d=>{
+                if(d.statusCode==2000){
+                    this.BaseRomeData.elementTypeOption = d.dataList;
+                }else{
+                    self.$message.errorMsg('列表数据获取失败:'+d.errorMsg);
+                }
+            });
         },
 
         //定位信息
@@ -551,11 +562,18 @@ export default {
                         GetFunNameItems(this.$cookies.get('proId'),this.BaseRomeData.pageId).then(d=>{
                             self.BaseRomeData.funNameOption = d;
                             self.BaseRomeData.funId=res.data.baseData.funId;
+                            GetElementOperationTypeItems().then(d=>{
+                                if(d.statusCode==2000){
+                                    self.BaseRomeData.elementTypeOption = d.dataList;
 
-                            self.BaseRomeData.elementName=res.data.baseData.elementName;
-                            self.BaseRomeData.elementType=res.data.baseData.elementType;
-                            self.LocationRomeData.tableData = res.data.locationTable;
-                            self.loading=false;
+                                    self.BaseRomeData.elementName=res.data.baseData.elementName;
+                                    self.BaseRomeData.elementType=res.data.baseData.elementType;
+                                    self.LocationRomeData.tableData = res.data.locationTable;
+                                    self.loading=false;
+                                }else{
+                                    self.$message.errorMsg('列表数据获取失败:'+d.errorMsg);
+                                }
+                            });
                         });
                     });
                 }else{
