@@ -56,7 +56,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'select_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'select_data', errorMsg)
     else:
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
         if pageId:
@@ -81,7 +81,7 @@ def select_data(request):
                 obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0, eventLogo=elementType[0])
                 if obj_db_ElementEvent.exists():
                     obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(
-                        is_del=0, event_id=obj_db_ElementEvent[0].id,value=elementType[1])
+                        is_del=0, event_id=obj_db_ElementEvent[0].id, value=elementType[1])
                     if obj_db_ElementEventComponent.exists():
                         elementTypeTxt = obj_db_ElementEventComponent[0].label
                     else:
@@ -131,7 +131,7 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'save_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'save_data', errorMsg)
     else:
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(
             is_del=0, pid_id=proId, fun_id=funId, page_id=pageId, elementName=elementName, elementType=elementType)
@@ -174,8 +174,10 @@ def save_data(request):
                     # endregion
                     # region 添加历史恢复
                     restoreData = json.loads(request.body)
-                    restoreData['baseData']['updateTime'] = save_db_ElementBaseData.updateTime.strftime('%Y-%m-%d %H:%M:%S')
-                    restoreData['baseData']['createTime'] = save_db_ElementBaseData.createTime.strftime('%Y-%m-%d %H:%M:%S')
+                    restoreData['baseData']['updateTime'] = save_db_ElementBaseData.updateTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+                    restoreData['baseData']['createTime'] = save_db_ElementBaseData.createTime.strftime(
+                        '%Y-%m-%d %H:%M:%S')
                     restoreData['baseData']['uid_id'] = save_db_ElementBaseData.uid_id
                     restoreData['baseData']['cuid'] = save_db_ElementBaseData.cuid
                     restoreData['baseData']['onlyCode'] = onlyCode
@@ -212,7 +214,7 @@ def load_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'load_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'load_data', errorMsg)
     else:
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(is_del=0, id=elementId)
         if obj_db_ElementBaseData.exists():
@@ -225,12 +227,12 @@ def load_data(request):
             }
             obj_db_ElementLocation = db_ElementLocation.objects.filter(is_del=0, element_id=elementId).order_by('index')
             locationTable = [{
-                              'state': True if i.state == 1 else False,
-                              'targetingType': i.targetingType,
-                              'targetingPath': i.targetingPath,
-                              'remarks': i.remarks
-                              }
-                             for i in obj_db_ElementLocation]
+                'state': True if i.state == 1 else False,
+                'targetingType': i.targetingType,
+                'targetingPath': i.targetingPath,
+                'remarks': i.remarks
+            }
+                for i in obj_db_ElementLocation]
 
             response['statusCode'] = 2000
             response['baseData'] = baseData
@@ -263,7 +265,7 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'edit_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'edit_data', errorMsg)
     else:
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(id=elementId, is_del=0)
         if obj_db_ElementBaseData.exists():
@@ -327,8 +329,10 @@ def edit_data(request):
                         # endregion
                         # region 添加历史恢复
                         restoreData = json.loads(request.body)
-                        restoreData['baseData']['updateTime'] = obj_db_ElementBaseData[0].updateTime.strftime('%Y-%m-%d %H:%M:%S')
-                        restoreData['baseData']['createTime'] = obj_db_ElementBaseData[0].createTime.strftime('%Y-%m-%d %H:%M:%S')
+                        restoreData['baseData']['updateTime'] = obj_db_ElementBaseData[0].updateTime.strftime(
+                            '%Y-%m-%d %H:%M:%S')
+                        restoreData['baseData']['createTime'] = obj_db_ElementBaseData[0].createTime.strftime(
+                            '%Y-%m-%d %H:%M:%S')
                         restoreData['baseData']['uid_id'] = obj_db_ElementBaseData[0].uid_id
                         restoreData['baseData']['cuid'] = obj_db_ElementBaseData[0].cuid
                         restoreData['baseData']['onlyCode'] = onlyCode
@@ -365,7 +369,7 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'delete_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'delete_data', errorMsg)
     else:
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(id=elementId)
         if obj_db_ElementBaseData.exists():
@@ -426,7 +430,7 @@ def charm_element_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'charm_element_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'charm_element_data', errorMsg)
     else:
         # region 验证 基本信息
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(
@@ -503,10 +507,10 @@ def select_history(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'select_history', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'select_history', errorMsg)
     else:
         if elementId:
-            obj_db_ElementHistory = db_ElementHistory.objects.filter(element_id=elementId)
+            obj_db_ElementHistory = db_ElementHistory.objects.filter(element_id=elementId).order_by('-createTime')
         else:
             obj_db_ElementHistory = db_ElementHistory.objects.filter().order_by('-createTime')
         if pageId:
@@ -556,7 +560,7 @@ def restor_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'restor_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'restor_data', errorMsg)
     else:
         obj_db_ElementHistory = db_ElementHistory.objects.filter(id=historyId)
         if obj_db_ElementHistory.exists():
@@ -637,4 +641,111 @@ def restor_data(request):
                 response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
         else:
             response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def copy_element(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        elementId = request.POST['elementId']
+        onlyCode = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'copy_element', errorMsg)
+    else:
+        obj_db_ElementBaseData = db_ElementBaseData.objects.filter(is_del=0, id=elementId)
+        if obj_db_ElementBaseData.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'UI', 'Manual', 3, 'Add',
+                        cls_FindTable.get_pro_name(obj_db_ElementBaseData[0].pid_id),
+                        cls_FindTable.get_page_name(obj_db_ElementBaseData[0].page_id),
+                        cls_FindTable.get_fun_name(obj_db_ElementBaseData[0].fun_id),
+                        userId,
+                        '【复制元素】', CUFront=f"ID:{elementId},{obj_db_ElementBaseData[0].elementName}"
+                    )
+                    # endregion
+                    # region 基础信息
+                    elementName = f"副本-{obj_db_ElementBaseData[0].elementName}"
+                    save_db_ElementBaseData = db_ElementBaseData.objects.create(
+                        pid_id=obj_db_ElementBaseData[0].pid_id,
+                        page_id=obj_db_ElementBaseData[0].page_id,
+                        fun_id=obj_db_ElementBaseData[0].fun_id,
+                        elementName=elementName,
+                        elementType=obj_db_ElementBaseData[0].elementType,
+                        elementState=obj_db_ElementBaseData[0].elementState,
+                        uid_id=userId,
+                        cuid=userId,
+                        is_del=0,
+                        onlyCode=onlyCode,
+                    )
+                    # endregion
+                    # region 定位
+                    obj_db_ElementLocation = db_ElementLocation.objects.filter(is_del=0,element_id=elementId)
+                    elementLocation = []
+                    product_list_to_insert = list()
+                    for item in obj_db_ElementLocation:
+                        product_list_to_insert.append(db_ElementLocation(
+                            element_id=save_db_ElementBaseData.id,
+                            index=item.index,
+                            targetingType=item.targetingType,
+                            targetingPath=item.targetingPath,
+                            remarks=item.remarks,
+                            state=item.state,
+                            is_del=0,
+                            onlyCode=onlyCode,
+                        ))
+                        elementLocation.append({
+                            'state':item.state,
+                            'targetingType':item.targetingType,
+                            'targetingPath':item.targetingPath,
+                            'remarks':item.remarks,
+                        })
+                    db_ElementLocation.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region 添加历史恢复
+                    restoreData = {
+                        'baseData':{
+                            'proId':obj_db_ElementBaseData[0].pid_id,
+                            'pageId':obj_db_ElementBaseData[0].page_id,
+                            'funId': obj_db_ElementBaseData[0].fun_id,
+                            'elementName': elementName,
+                            'elementType': obj_db_ElementBaseData[0].elementType,
+                            'elementState':True if obj_db_ElementBaseData[0].elementState==1 else False,
+                            'uid_id':userId,
+                            'cuid':userId,
+                            'onlyCode':onlyCode,
+                            'updateTime':save_db_ElementBaseData.updateTime.strftime('%Y-%m-%d %H:%M:%S'),
+                            'createTime':save_db_ElementBaseData.createTime.strftime('%Y-%m-%d %H:%M:%S')
+                        },
+                        'elementLocation':elementLocation
+                    }
+                    db_ElementHistory.objects.create(
+                        pid_id=obj_db_ElementBaseData[0].pid_id,
+                        page_id=obj_db_ElementBaseData[0].page_id,
+                        fun_id=obj_db_ElementBaseData[0].fun_id,
+                        element_id=save_db_ElementBaseData.id,
+                        elementName=elementName,
+                        onlyCode=onlyCode,
+                        operationType='Add',
+                        restoreData=restoreData,
+                        uid_id=userId,
+                    )
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                errorMsg = f"保存失败:{e}"
+                response['errorMsg'] = errorMsg
+                cls_Logging.print_log('error', 'copy_element', errorMsg)
+                cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'copy_element', errorMsg)
+            else:
+                response['statusCode'] = 2001
+        else:
+            response['errorMsg'] = "当前选择的数据不存在,请刷新后重新尝试!"
     return JsonResponse(response)

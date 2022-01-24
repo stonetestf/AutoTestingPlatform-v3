@@ -48,7 +48,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'select_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'select_data', errorMsg)
     else:
         obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0).order_by('index')
         if eventName:
@@ -94,7 +94,7 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'data_save', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'data_save', errorMsg)
     else:
         obj_db_ElementEvent = db_ElementEvent.objects.filter(
             is_del=0, eventName=baseData.eventName, eventLogo=baseData.eventLogo)
@@ -189,7 +189,7 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'edit_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'edit_data', errorMsg)
     else:
         obj_db_ElementEvent = db_ElementEvent.objects.filter(id=baseData.eventId, is_del=0)
         if obj_db_ElementEvent.exists():
@@ -284,7 +284,7 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'delete_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'delete_data', errorMsg)
     else:
         obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0, id=eventId)
         if obj_db_ElementEvent.exists():
@@ -340,7 +340,7 @@ def charm_event_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'charm_event_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'charm_event_data', errorMsg)
     else:
         # region 验证 基本信息
         obj_db_ElementEvent = db_ElementEvent.objects.filter(
@@ -392,7 +392,7 @@ def load_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'load_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'load_data', errorMsg)
     else:
         obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0, id=eventId)
         if obj_db_ElementEvent.exists():
@@ -431,7 +431,7 @@ def load_operation_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'load_operation_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'load_operation_data', errorMsg)
     else:
         obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0).order_by('index')
         for i in obj_db_ElementEvent:
@@ -467,7 +467,7 @@ def update_operation_sort(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'update_operation_sort', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'update_operation_sort', errorMsg)
     else:
         for index, item in enumerate(TreeData, 1):
             db_ElementEvent.objects.filter(is_del=0, id=item.id).update(
@@ -489,7 +489,7 @@ def get_element_operation_type_items(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'get_element_operation_type_items', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'get_element_operation_type_items', errorMsg)
     else:
         obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0).order_by('index')
         for i in obj_db_ElementEvent:

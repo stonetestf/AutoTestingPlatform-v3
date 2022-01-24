@@ -164,6 +164,7 @@
                                         更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
                                     </el-button>
                                     <el-dropdown-menu slot="dropdown">
+                                        <el-dropdown-item command="CopyElement">复制元素</el-dropdown-item>
                                         <el-dropdown-item command="HistoryBack">历史恢复</el-dropdown-item>
                                     </el-dropdown-menu>
                                 </el-dropdown>
@@ -348,6 +349,8 @@ export default {
             PrintConsole(command);
             if(command=='HistoryBack'){
                 this.OpenHistoryInfoDialog();
+            }else if(command=='CopyElement'){
+                this.CopyElement();
             }
         },
 
@@ -410,9 +413,34 @@ export default {
             }else{
                 self.dialog.historyInfo.dialogPara={
                     dialogTitle:"历史恢复",//初始化标题
-                    apiId:self.multipleSelection[0],
+                    elementId:self.multipleSelection[0],
                 }
                 self.dialog.historyInfo.dialogVisible=true;
+            }
+        },
+
+        CopyElement(){
+            let self = this;
+            if(self.multipleSelection.length!=1){
+                self.$message.warning('请勾选1条数据进行复制操作')
+            }else{
+                self.loading=true;
+                self.$axios.post('/api/UiElementMaintenance/CopyElement',Qs.stringify({
+                    "elementId":self.multipleSelection[0],
+                })).then(res => {
+                    if(res.data.statusCode==2001){
+                        self.$message.success('元素复制成功!');
+                        self.loading=false;
+                        self.SelectData();
+                    }
+                    else{
+                        self.$message.error('元素复制失败:'+res.data.errorMsg);
+                        self.loading=false;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                    self.loading=false;
+                })
             }
         },
      
