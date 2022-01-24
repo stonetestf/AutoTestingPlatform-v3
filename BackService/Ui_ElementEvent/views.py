@@ -108,7 +108,7 @@ def save_data(request):
                     indexList = [i.index for i in select_db_ElementEvent]
                     if indexList:
                         indexList.sort()
-                        index = indexList[-1]+1
+                        index = indexList[-1] + 1
                     else:
                         index = 1
                     # endregion
@@ -416,4 +416,62 @@ def load_data(request):
             response['componentTable'] = componentTable
         else:
             response['errorMsg'] = "当前选择的数据不存在,请刷新列表后重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 加载事件排序的一级事件名称
+def load_operation_data(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'load_operation_data', errorMsg)
+    else:
+        obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0).order_by('index')
+        for i in obj_db_ElementEvent:
+            # children = []
+            # obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(is_del=0,event_id=i.id)
+            # for item in obj_db_ElementEventComponent:
+            #     children.append({'id': item.id,
+            #                      'label': item.label,
+            #                      'index': item.index,
+            #                      'allowDrag': False,  # 能否拖动
+            #                      'allowDrop': False})  # 能否拖入
+            dataList.append({'id': i.id,
+                             'index':i.index,
+                             'label': i.eventName,
+                             'allowDrag': True,  # 能否拖动
+                             'allowDrop': False,  # 能否拖入
+                             })
+
+        response['statusCode'] = 2000
+        response['treeData'] = dataList
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])  # 更新一级目录的排序
+def update_operation_sort(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+        TreeData = objData.TreeData
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_ElementEvent', 'update_operation_sort', errorMsg)
+    else:
+        for index,item in enumerate(TreeData,1):
+            db_ElementEvent.objects.filter(is_del=0,id=item.id).update(
+                index=index,updateTime=cls_Common.get_date_time())
+
+        response['statusCode'] = 2002
     return JsonResponse(response)

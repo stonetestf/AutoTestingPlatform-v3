@@ -8,8 +8,8 @@ urlpatterns = [
     url(r'DeleteData', views.delete_data, name='DeleteData'),
     url(r'CharmEventData', views.charm_event_data, name='CharmEventData'),
     url(r'LoadData', views.load_data, name='LoadData'),
-    # url(r'DeleteMembers', views.delete_members, name='DeleteMembers'),
-    # url(r'VerifyEnterInto', views.verify_enter_into, name='VerifyEnterInto'),
+    url(r'LoadOperationData', views.load_operation_data, name='LoadOperationData'),
+    url(r'UpdateOperationSort', views.update_operation_sort, name='UpdateOperationSort'),
     # url(r'SelectHistory', views.select_history, name='SelectHistory'),
     # url(r'RestorData', views.restor_data, name='RestorData'),
 ]
