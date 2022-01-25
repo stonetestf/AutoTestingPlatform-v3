@@ -102,10 +102,24 @@
                                                 </el-select>
                                             </el-form-item>
                                             <el-form-item label="关联页面:">
-                                               <el-cascader 
+                                                <el-select 
+                                                @click.native="GetAssociatedPageNameOption()"
+                                                style="width:825px"
+                                                v-model="BasicRomeData.associatedPage" 
+                                                multiple 
+                                                placeholder="如需要在选择元素中找到别的所属页面元素,可在此选择关联相对应页面">
+                                                    <el-option
+                                                        v-for="item in BasicRomeData.associatedPageoOptions"
+                                                        :key="item.value"
+                                                        :label="item.label"
+                                                        :value="item.value">
+                                                    </el-option>
+                                                </el-select>
+                                               <!-- <el-cascader 
+                                               @click.native="GetAssociatedPageNameOption()"
                                                style="width:825px"
                                                placeholder="如需要在选择元素中找到别的所属页面元素,可在此选择关联相对应页面"
-                                               :options="BasicRomeData.associatedPage" :props="BasicRomeData.associatedProps" clearable></el-cascader>
+                                               :options="BasicRomeData.associatedPage" :props="BasicRomeData.associatedProps" clearable></el-cascader> -->
                                             </el-form-item>
                                         </el-form>
                                     </div>
@@ -259,6 +273,8 @@ import {PrintConsole} from "../../../../../../js/Logger.js";
 import {GetPageNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetAssociatedPageNameItems} from "../../../../../../js/GetSelectTable.js";
+
 import DialogCaseSteps from "./CaseSteps.vue";
 
 
@@ -313,7 +329,8 @@ export default {
                 ],
                 caseName:'',
                 associatedPage:[],
-                associatedProps: { multiple: true },
+                associatedPageoOptions:[],
+                // associatedProps: { multiple: true },
                 rules:{
                     pageId:[{ required: true, message: '请选择所属页面', trigger: 'change' }],
                     funId:[{ required: true, message: '请选择所属功能', trigger: 'change' }],
@@ -482,7 +499,7 @@ export default {
             self.BasicRomeData.associatedPage=[];
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('UI',this.$cookies.get('proId')).then(d=>{
                 this.BasicRomeData.pageNameOption = d;
             });
         },
@@ -494,6 +511,19 @@ export default {
                 });
             }else{
                 this.$message.warning('请先选择所属页面!');
+            }
+        },
+        GetAssociatedPageNameOption(){
+            if(this.BasicRomeData.pageId){
+                GetAssociatedPageNameItems('UI',this.BasicRomeData.pageId).then(d=>{
+                    if(d.statusCode==2000){
+                        this.BasicRomeData.associatedPageoOptions = d.dataList;
+                    }else{
+                        self.$message.error('关联页面数据获取失败:'+d.errorMsg);
+                    }
+                });
+            }else{
+                this.$message.warning('请先选择所属页面后,在选择关联页面!');
             }
         },
         GetPageEnvironmentNameOption(){

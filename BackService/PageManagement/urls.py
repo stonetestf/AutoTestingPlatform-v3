@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'GetPageNameItems', views.get_page_name_items, name='GetPageNameItems'),
     url(r'SelectHistory', views.select_history, name='SelectHistory'),
     url(r'RestorData', views.restor_data, name='RestorData'),
+    url(r'GetAssociatedPageNameItems', views.get_associated_page_name_items, name='GetAssociatedPageNameItems'),
 ]

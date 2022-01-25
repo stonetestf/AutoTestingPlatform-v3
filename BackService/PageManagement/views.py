@@ -34,6 +34,7 @@ cls_ImageProcessing = ImageProcessing()
 def select_data(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
@@ -48,7 +49,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageMaintenancet', 'select_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageMaintenancet', 'select_data', errorMsg)
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
@@ -76,6 +77,7 @@ def select_data(request):
 @require_http_methods(["POST"])
 def save_data(request):
     response = {}
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -86,10 +88,10 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'data_save', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageManagement', 'data_save', errorMsg)
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(
-            is_del=0, sysType=sysType, pid_id=proId,pageName=pageName)
+            is_del=0, sysType=sysType, pid_id=proId, pageName=pageName)
         if obj_db_PageManagement.exists():
             response['errorMsg'] = "当前所属项目下已有相同的所属页面存在,请更改!"
         else:
@@ -112,7 +114,7 @@ def save_data(request):
                         sysType, 'Manual', 3, 'Add',
                         cls_FindTable.get_pro_name(proId), pageName, None,
                         userId,
-                        '新增页面',CUFront=json.dumps(request.POST)
+                        '新增页面', CUFront=json.dumps(request.POST)
                     )
                     # endregion
                     # region 添加历史恢复
@@ -145,6 +147,7 @@ def save_data(request):
 def edit_data(request):
     response = {}
     is_Edit = False
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -156,12 +159,12 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'edit_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageManagement', 'edit_data', errorMsg)
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId, is_del=0)
         if obj_db_PageManagement.exists():
             select_db_PageManagement = db_PageManagement.objects.filter(
-                sysType=sysType,pid_id=proId,pageName=pageName, is_del=0)
+                sysType=sysType, pid_id=proId, pageName=pageName, is_del=0)
             if select_db_PageManagement.exists():
                 if pageId == select_db_PageManagement[0].id:  # 自己修改自己
                     is_Edit = True
@@ -222,6 +225,7 @@ def edit_data(request):
 @require_http_methods(["POST"])
 def delete_data(request):
     response = {}
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -230,11 +234,11 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'delete_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageManagement', 'delete_data', errorMsg)
     else:
         obj_db_PageManagement = db_PageManagement.objects.filter(id=pageId)
         if obj_db_PageManagement.exists():
-            obj_db_FunManagement = db_FunManagement.objects.filter(is_del=0,page_id=pageId)
+            obj_db_FunManagement = db_FunManagement.objects.filter(is_del=0, page_id=pageId)
             if obj_db_FunManagement.exists():
                 response['errorMsg'] = '当前所属页面下已有所属功能数据,请删除下级所属功能后在重新尝试删除'
             else:
@@ -252,7 +256,7 @@ def delete_data(request):
                             cls_FindTable.get_pro_name(obj_db_PageManagement[0].pid_id),
                             obj_db_PageManagement[0].pageName, None,
                             userId,
-                            '删除页面',CUFront=json.dumps(request.POST)
+                            '删除页面', CUFront=json.dumps(request.POST)
                         )
                         # endregion
                         # region 添加历史恢复
@@ -280,16 +284,18 @@ def delete_data(request):
 def get_page_name_items(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
         proId = objData.proId
+        sysType = objData.sysType
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageMaintenancet', 'get_page_name_items', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageMaintenancet', 'get_page_name_items', errorMsg)
     else:
-        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0,pid_id=proId).order_by('-updateTime')
+        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
         for i in obj_db_PageManagement:
             dataList.append({
                 'label': i.pageName, 'value': i.id
@@ -305,6 +311,7 @@ def get_page_name_items(request):
 def select_history(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
@@ -321,11 +328,11 @@ def select_history(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'select_history', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageManagement', 'select_history', errorMsg)
     else:
         if pageId:
             obj_db_PageHistory = db_PageHistory.objects.filter(
-                page_id=pageId,page__sysType=sysType).order_by('-createTime')
+                page_id=pageId, page__sysType=sysType).order_by('-createTime')
         else:
             obj_db_PageHistory = db_PageHistory.objects.filter(page__sysType=sysType).order_by('-createTime')
             if pageName:
@@ -362,15 +369,17 @@ def select_history(request):
 @require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
 def restor_data(request):
     response = {}
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         roleId = cls_FindTable.get_roleId(userId)
         is_admin = cls_FindTable.get_role_is_admin(roleId)
         historyId = request.POST['historyId']
+        sysType = request.POST['sysType']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageManagement', 'restor_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageManagement', 'restor_data', errorMsg)
     else:
         obj_db_PageHistory = db_PageHistory.objects.filter(id=historyId)
         if obj_db_PageHistory.exists():
@@ -378,10 +387,11 @@ def restor_data(request):
             if is_admin or obj_db_PageHistory[0].pid.cuid == userId:
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                        obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0,id=obj_db_PageHistory[0].pid_id)
+                        obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0,
+                                                                               id=obj_db_PageHistory[0].pid_id)
                         if obj_db_ProManagement.exists():
                             restoreData = obj_db_PageHistory[0].restoreData
-                            if obj_db_PageHistory[0].operationType in ["Add","Edit"]:
+                            if obj_db_PageHistory[0].operationType in ["Add", "Edit"]:
                                 restoreData = ast.literal_eval(restoreData)
                                 obj_db_PageManagement = db_PageManagement.objects.filter(
                                     id=obj_db_PageHistory[0].page_id)
@@ -423,4 +433,33 @@ def restor_data(request):
                 response['errorMsg'] = "您没有权限进行此操作,请联系项目的创建者或是管理员!"
         else:
             response['errorMsg'] = "当前选择的恢复数据不存在,请刷新后重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 获取关联页面
+def get_associated_page_name_items(request):
+    response = {}
+    dataList = []
+    sysType = None
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        sysType = objData.sysType
+        passPageId = int(objData.passPageId) if objData.passPageId else None
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info(sysType, 'PageMaintenancet', 'get_associated_page_name_items', errorMsg)
+    else:
+        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0,sysType=sysType)
+        for i in obj_db_PageManagement:
+            if i.id != passPageId:
+                dataList.append({
+                    'label':i.pageName,
+                    'value':i.id
+                })
+        response['statusCode'] = 2000
+        response['dataList'] = dataList
     return JsonResponse(response)

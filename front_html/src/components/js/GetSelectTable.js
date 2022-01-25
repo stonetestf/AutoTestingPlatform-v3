@@ -2,7 +2,7 @@ import Vue from 'vue'
 
 // Vue.prototype.$axios;
 
-//API
+//通用
 // 获取项目名称下拉列表-无Token版本
 function NoTokenGetRoleNameItems(){
     return Vue.prototype.$axios.get('/api/role/NoTokenGetRoleNameItems',{
@@ -34,9 +34,10 @@ function GetRoleNameItems(){
     })
 }
 
-function GetPageNameItems(proId){
+function GetPageNameItems(sysType,proId){
     return Vue.prototype.$axios.get('/api/PageManagement/GetPageNameItems',{
         params:{
+            'sysType':sysType,
             'proId':proId,
         }
     }).then(res => {
@@ -95,6 +96,22 @@ function GetUserNameItems(){
     })
 }
 
+//加载关联页面
+function GetAssociatedPageNameItems(sysType,passPageId){
+    return Vue.prototype.$axios.get('/api/PageManagement/GetAssociatedPageNameItems',{
+        params:{
+            'sysType':sysType,
+            'passPageId':passPageId,
+        }
+    }).then(res => {
+        return res.data;
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
+
+
+//API
 //加载数据库环境的IP及以下可用的库名
 function GetConnectBaseItems(sysType){
     return Vue.prototype.$axios.get('/api/DataBaseEnvironment/GetConnectBaseItems',{
@@ -122,6 +139,7 @@ function GetElementOperationTypeItems(){
     })
 }
 
+
 //加载元素
 function GeElementNameItems(pageIdList){
     return Vue.prototype.$axios.get('/api/UiElementMaintenance/GeElementNameItems',{
@@ -136,8 +154,9 @@ function GeElementNameItems(pageIdList){
 }
 
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,GetConnectBaseItems,
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,GetAssociatedPageNameItems,
 
+    GetConnectBaseItems,
     GetElementOperationTypeItems,GeElementNameItems
   };
   
