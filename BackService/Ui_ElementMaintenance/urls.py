@@ -11,7 +11,7 @@ urlpatterns = [
     url(r'SelectHistory', views.select_history, name='SelectHistory'),
     url(r'JoinMembers', views.copy_element, name='JoinMembers'),
     url(r'CopyElement', views.copy_element, name='CopyElement'),
-    # url(r'VerifyEnterInto', views.verify_enter_into, name='VerifyEnterInto'),
-    # url(r'SelectHistory', views.select_history, name='SelectHistory'),
+    url(r'GetElementNameItems', views.get_element_name_items, name='GetElementNameItems'),
+    url(r'SelectElementType', views.select_element_type, name='SelectElementType'),
     url(r'RestorData', views.restor_data, name='RestorData'),
 ]

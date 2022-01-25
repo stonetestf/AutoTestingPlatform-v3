@@ -102,7 +102,7 @@ function GetAssociatedPageNameItems(sysType,passPageId){
     return Vue.prototype.$axios.get('/api/PageManagement/GetAssociatedPageNameItems',{
         params:{
             'sysType':sysType,
-            'passPageId':passPageId,
+            'passPageId':passPageId
         }
     }).then(res => {
         return res.data;
@@ -143,7 +143,7 @@ function GetElementOperationTypeItems(){
 
 //加载元素
 function GeElementNameItems(pageIdList){
-    return Vue.prototype.$axios.get('/api/UiElementMaintenance/GeElementNameItems',{
+    return Vue.prototype.$axios.get('/api/UiElementMaintenance/GetElementNameItems',{
         params:{
             'pageIdList':pageIdList
         }

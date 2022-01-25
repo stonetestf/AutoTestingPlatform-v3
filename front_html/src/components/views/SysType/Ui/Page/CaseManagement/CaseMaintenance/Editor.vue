@@ -27,7 +27,11 @@
                                     <div style="width:1000px">
                                         <el-form ref="BasicRomeData" :inline="true" :rules="BasicRomeData.rules" :model="BasicRomeData"  label-width="100px">
                                             <el-form-item prop="pageId" label="所属页面:">
-                                                <el-select v-model="BasicRomeData.pageId" clearable placeholder="请选择" style="width:200px;float:left;" @click.native="GetPageNameOption()">
+                                                <el-select v-model="BasicRomeData.pageId" 
+                                                clearable 
+                                                placeholder="请选择" 
+                                                style="width:200px;float:left;" 
+                                                @click.native="GetPageNameOption()">
                                                     <el-option
                                                         v-for="item in BasicRomeData.pageNameOption"
                                                         :key="item.value"
@@ -144,6 +148,14 @@
                                     align="center">
                                 </el-table-column>
                                 <el-table-column
+                                    label="启用"
+                                    width="70px"
+                                    align= "center">
+                                    <template slot-scope="scope">
+                                        <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column
                                     label="事件名称"
                                     align= "center"
                                     prop="eventName">
@@ -152,7 +164,7 @@
                                     label="操作类型"
                                     align= "center"
                                     width="140" 
-                                    prop="operationTypeTxt">
+                                    prop="elementTypeTxt">
                                 </el-table-column>
                                 <el-table-column
                                     label="对比类型"
@@ -164,7 +176,7 @@
                                     label="输入/选择"
                                     show-overflow-tooltip
                                     align= "center"
-                                    prop="inputText">
+                                    prop="inputData">
                                 </el-table-column>
                                 <el-table-column
                                     label="断言类型"
@@ -185,26 +197,31 @@
                                     prop="assertValue">
                                 </el-table-column>
                                 <el-table-column 
-                                    width="290" 
+                                    width="210" 
                                     align= "center">
                                     <template slot="header">
                                         <el-button-group>
                                             <el-button type="primary" @click="openCaseStepsDialog()">新增步骤</el-button>
-                                            <el-button type="success" @click="handleAllDoe(1)">全启</el-button>
-                                            <el-button type="warning" @click="handleAllDoe(0)">全禁</el-button>
+                                            <el-dropdown @command="handleCommand">
+                                                <el-button type="warning">
+                                                    更多<i class="el-icon-arrow-down el-icon--right"></i>
+                                                </el-button>
+                                                <el-dropdown-menu slot="dropdown">
+                                                    <el-dropdown-item command="AllEnable">全部启用</el-dropdown-item>
+                                                    <el-dropdown-item command="AllDisable">全部禁用</el-dropdown-item>
+                                                </el-dropdown-menu>
+                                            </el-dropdown>
                                         </el-button-group>
                                     </template>
                                     <template slot-scope="scope">
                                         <el-button-group>
                                             <el-button
                                                 size="mini"
-                                                @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
-                                            <el-button v-if="scope.row.doeValue==1" size="mini" type="info" @click="handleDoe(scope.$index, scope.row,0)">禁用</el-button>
-                                            <el-button v-else size="mini" type="warning" @click="handleDoe(scope.$index, scope.row,1)">启用</el-button>
+                                                @click="handleTestSetEdit(scope.$index, scope.row)">编辑</el-button>
                                             <el-button
                                                 size="mini"
                                                 type="danger"
-                                                @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                                                @click="handleTestSetDelete(scope.$index, scope.row)">删除</el-button>
                                         </el-button-group>
                                     </template>
                                 </el-table-column>
@@ -212,7 +229,65 @@
                         </div>
                     </template>
                     <template v-else-if="StepsRomeData.active==2">
-                      
+                        <div style="width:1300px;margin-left:300px">
+                            <el-table
+                                ref="OperationSetTableData"
+                                id="OperationSet" 
+                                row-key="id"
+                                :data="OperationSetRomeData.tableData"
+                                height="720px"
+                                border>
+                                <el-table-column
+                                    label="启用"
+                                    width="70px"
+                                    align= "center">
+                                    <template slot-scope="scope">
+                                        <el-switch v-model="scope.row.state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column
+                                    label="操作位置"
+                                    width="200px" 
+                                    align= "center"
+                                    prop="locationName">
+                                </el-table-column>
+                                <el-table-column
+                                    label="操作类型"
+                                    width="200px" 
+                                    align= "center"
+                                    prop="operationType">
+                                </el-table-column>
+                                <el-table-column
+                                    label="操作数据"
+                                    align= "center"
+                                    prop="operationData">
+                                </el-table-column>
+                                <el-table-column
+                                    label="备注"
+                                    align= "center"
+                                    width="300px" 
+                                    prop="contrastTypeText">
+                                </el-table-column>
+                                <el-table-column 
+                                    width="120px" 
+                                    align= "center">
+                                    <template slot="header">
+                                        <el-button type="primary" @click="openOperationStepsDialog()">新增操作</el-button>
+                                    </template>
+                                    <template slot-scope="scope">
+                                        <el-button-group>
+                                            <el-button
+                                                size="mini"
+                                                @click="handleOperationStepsEdit(scope.$index, scope.row)">编辑</el-button>
+                                            <el-button
+                                                size="mini"
+                                                type="danger"
+                                                @click="handleOperationStepsDelete(scope.$index, scope.row)">删除</el-button>
+                                        </el-button-group>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </div>
                     </template>
                     <template v-else>
                         <div slot="header">
@@ -220,6 +295,7 @@
                         </div>
                         <div>
                             <el-table
+                            v-loading="CharmRomeData.loading"
                             :data="CharmRomeData.tableData"
                             border
                             height="660px">
@@ -252,15 +328,24 @@
                 </el-card>
                 <el-button style="margin-top: 12px;" icon="el-icon-arrow-left" type="primary" v-if="StepsRomeData.disPlay_Previous" @click="previous">上一步</el-button>
                 <el-button style="margin-top: 12px;" type="primary" v-if="StepsRomeData.disPlay_Next" @click="next">下一步<i class="el-icon-arrow-right el-icon--right"></i></el-button>
-                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" @click="SaveData()">保存</el-button>
+                <el-button style="margin-top: 12px;" type="success" v-if="StepsRomeData.disPlay_Save" :loading="StepsRomeData.saveLoading" @click="SaveData()">保存</el-button>
             </el-drawer>
         </template>
         <template>
             <dialog-case-steps
                 @closeDialog="closeCaseStepsDialog" 
                 :isVisible="dialog.caseSteps.dialogVisible" 
-                :dialogPara="dialog.caseSteps.dialogPara">
+                :dialogPara="dialog.caseSteps.dialogPara"
+                @getData="AddToTestStepsTable($event)">
             </dialog-case-steps>
+        </template>
+        <template>
+            <dialog-operation-steps
+                @closeDialog="closeOperationStepsDialog" 
+                :isVisible="dialog.operationSteps.dialogVisible" 
+                :dialogPara="dialog.operationSteps.dialogPara"
+                @getData="AddToOperationStepsTable($event)">
+            </dialog-operation-steps>
         </template>
     </div>
 </template>
@@ -276,11 +361,12 @@ import {GetPageEnvironmentNameItems} from "../../../../../../js/GetSelectTable.j
 import {GetAssociatedPageNameItems} from "../../../../../../js/GetSelectTable.js";
 
 import DialogCaseSteps from "./CaseSteps.vue";
+import DialogOperationSteps from "./OperationSteps.vue";
 
 
 export default {
     components: {
-        DialogCaseSteps
+        DialogCaseSteps,DialogOperationSteps
     },
     data() {
         return {
@@ -295,8 +381,9 @@ export default {
                 disPlay_Save:false,
                 disPlay_Next:true,
                 disPlay_Previous:false,
+                saveLoading:true,
             },
-            BasicRomeData:{
+            BasicRomeData:{//基本信息
                 caseId:'',
                 pageId:'',
                 pageNameOption:[],
@@ -306,8 +393,8 @@ export default {
                 environmentNameOption:[],
                 testType:'',
                 testTypeOption:[
-                    {'label':'单元测试','value':'UnitTest'},
-                    {'label':'混合测试','value':'HybridTest'},
+                    {'label':'功能测试','value':'Function'},
+                    {'label':'冒烟测试','value':'Smoke'},
                 ],
                 labelId:'',
                 labelNameOption:[
@@ -328,7 +415,7 @@ export default {
                     {'label':'弃用','value':'Discard'},
                 ],
                 caseName:'',
-                associatedPage:[],
+                associatedPage:[],//关联页面
                 associatedPageoOptions:[],
                 // associatedProps: { multiple: true },
                 rules:{
@@ -345,16 +432,26 @@ export default {
                     caseState:[{ required: true, message: '请选择用例状态', trigger: 'change' }],
                 },
             },
-            TestSetRomeData:{
+            TestSetRomeData:{//测试集
                 tableData:[],
             },
-          
+            OperationSetRomeData:{//操作集
+                tableData:[],
+            },
             CharmRomeData:{
+                loading:false,
                 title:'',
                 tableData:[],
             },
             dialog:{
                 caseSteps:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                operationSteps:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -387,14 +484,13 @@ export default {
                 this.ClearStepsRomeData();
                 this.ClearBasicRomeData();
                 this.ClearTestSetRomeData();
-
+                this.ClearCharmRomeData();
                 
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew;
 
                 if(newval.isAddNew==false){//进入编辑状态
                     this.BasicRomeData.caseId = newval.caseId;
-      
                   
                 }
             }
@@ -427,6 +523,13 @@ export default {
             if(newVal!=oldVal){
                 self.BasicRomeData.funId='';
                 self.BasicRomeData.funNameOption=[];
+                //每次切换所属页面的时候看下关联页面列表中有没有存在当前的，如果有就把关联页面中当前的给去掉
+                self.BasicRomeData.associatedPage.forEach((item,index) =>{
+                    if(item==newVal){
+                        self.BasicRomeData.associatedPage.splice(index,1)
+                    }
+                });
+
             }
         },
        
@@ -440,11 +543,14 @@ export default {
             let self = this;
             if(self.StepsRomeData.active==0){//基本用例数据
                 self.StepsRomeData.active++;
+                self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                    self.TestSetRowDrop();
+                })
                 // this.$refs['BasicRomeData'].validate((valid) => {
                 //     if (valid) {//通过
                 //         self.StepsRomeData.active++;
                 //         self.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                //             self.rowDrop();
+                //             self.TestSetRowDrop();
                 //         })
                 //     } 
                 // });
@@ -452,6 +558,7 @@ export default {
                 self.StepsRomeData.active++;
             }else if(self.StepsRomeData.active==2){
                 self.StepsRomeData.active++;
+                self.CharmCaseData();
             }
         },
         previous(){//上一步
@@ -459,6 +566,11 @@ export default {
             self.StepsRomeData.processStatus='process';
             if(self.StepsRomeData.active==0){
 
+            }else if(self.StepsRomeData.active==2){
+                self.StepsRomeData.active--;
+                self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                    self.TestSetRowDrop();
+                })
             }else if(self.StepsRomeData.active==4){
                 self.StepsRomeData.active--;
                 self.StepsRomeData.active--;
@@ -523,7 +635,7 @@ export default {
                     }
                 });
             }else{
-                this.$message.warning('请先选择所属页面后,在选择关联页面!');
+                this.$message.warning('请先选择所属页面!');
             }
         },
         GetPageEnvironmentNameOption(){
@@ -543,6 +655,14 @@ export default {
             let self = this;
             self.TestSetRomeData.tableData=[];
         },
+        handleCommand(command){
+            PrintConsole(command);
+            if(command=='AllEnable'){
+                this.updateStepsTableState(true);
+            }else if(command=='AllDisable'){
+                this.updateStepsTableState(false);
+            }
+        },
         tableRowClassName({row, rowIndex}) {//禁用时 当前行显示为高亮
             if (row.state === false) {
                 return 'warning-row';
@@ -554,13 +674,159 @@ export default {
         },
         openCaseStepsDialog(){
             let self = this;
+            let pageNameList = [];
+            if(self.BasicRomeData.pageId){
+                pageNameList.push(self.BasicRomeData.pageId);
+            }
+            self.BasicRomeData.associatedPage.forEach(d=>{
+                pageNameList.push(d);
+            });
+            
             self.dialog.caseSteps.dialogPara={
                 dialogTitle:"新增步骤",//初始化标题
                 isAddNew:true,//初始化是否新增\修改
+                id:self.TestSetRomeData.tableData.length+1,
+                pageNameList:pageNameList.join(',')
             }
             self.dialog.caseSteps.dialogVisible=true;
         },
+        AddToTestStepsTable(val){//添加步骤数据到列表中-回调传值
+            PrintConsole('回调-AddToTestStepsTable',val);
+            let self = this;
+            if(val.isAddNew){//新增
+                self.TestSetRomeData.tableData.push(val);
+            }else{//修改
 
+            }
+            self.TestSetRowDrop();
+        },
+        handleTestSetEdit(index,row){
+            let self = this;
+            let pageNameList = [];
+            if(self.BasicRomeData.pageId){
+                pageNameList.push(self.BasicRomeData.pageId);
+            }
+            self.BasicRomeData.associatedPage.forEach(d=>{
+                pageNameList.push(d);
+            });
+
+            self.dialog.caseSteps.dialogPara={
+                dialogTitle:"编辑步骤",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                id:self.TestSetRomeData.tableData.length+1,
+                pageNameList:pageNameList.join(','),
+
+                eventName:row.eventName,
+                elementId:row.elementId,
+                elementType:row.elementType,
+                inputData:row.inputData,
+                assertType:row.assertType,
+                assertValueType:row.assertValueType,
+                assertValue:row.assertValue,
+            }
+            self.dialog.caseSteps.dialogVisible=true;
+        },
+        handleTestSetDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                    this.TestSetRomeData.tableData.splice(index,1);
+                }).catch(() => {       
+            });
+        },
+        TestSetRowDrop() {//排序方法
+            PrintConsole('加载可拖动效果')
+            const tbody = document.querySelector('#TestSet > div:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
+            let self = this;
+            Sortable.create(tbody, {
+                onEnd ({ newIndex, oldIndex }) {
+                    const currRow = self.TestSetRomeData.tableData.splice(oldIndex, 1)[0];
+                    self.TestSetRomeData.tableData.splice(newIndex, 0, currRow);
+                    // console.log(self.RomeData.TableData);
+                }
+            });
+        },
+        updateStepsTableState(state){//全部启用或禁用
+            let self = this;
+            self.TestSetRomeData.tableData.forEach((d,i)=>{
+                self.TestSetRomeData.tableData[i].state=state;
+            });
+        },
+
+        //操作集
+        AddToOperationStepsTable(val){
+            PrintConsole('回调-AddToOperationStepsTable',val);
+        },
+        closeOperationStepsDialog(){
+            this.dialog.operationSteps.dialogVisible =false;
+        },
+        openOperationStepsDialog(){
+            let self = this; 
+            self.dialog.operationSteps.dialogPara={
+                dialogTitle:"新增操作",//初始化标题
+                isAddNew:true,//初始化是否新增\修改
+            }
+            self.dialog.operationSteps.dialogVisible=true;
+        },
+
+
+        //效验和保存加载
+        ClearCharmRomeData(){
+            let self =this;
+            self.CharmRomeData.title='';
+            self.CharmRomeData.tableData=[];
+        },
+        CharmCaseData(){//验证
+            let self = this;
+            self.CharmRomeData.tableData = [];
+            self.CharmRomeData.title = '';
+            self.CharmRomeData.loading=true;
+            self.$axios.post('/api/UiCaseMaintenance/CharmCaseData',{
+                'CharmType':self.isAddNew,
+                'BasicData':{
+                    'proId':self.$cookies.get('proId'),
+                    'caseId':self.BasicRomeData.caseId,
+                    'pageId':self.BasicRomeData.pageId,
+                    'funId':self.BasicRomeData.funId,
+                    'environmentId':self.BasicRomeData.environmentId,
+                    'testType':self.BasicRomeData.testType,
+                    'labelId':self.BasicRomeData.labelId,
+                    'caseName':self.BasicRomeData.caseName,
+                },
+                'TestSet':self.TestSetRomeData.tableData
+
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.stepsName =d.stepsName;
+                        obj.errorMsg = d.errorMsg;
+                        obj.updateTime = d.updateTime;
+                        self.CharmRomeData.tableData.push(obj);
+                    });
+                    if(self.CharmRomeData.tableData.length!=0){
+                        self.StepsRomeData.processStatus='error';
+                        self.CharmRomeData.title = '效验结果:失败,共发现错误数:'+self.CharmRomeData.tableData.length;
+                    }else{
+                        self.StepsRomeData.active++;
+                        self.CharmRomeData.title = '效验结果:完成,请点击保存';
+                    }
+                    self.CharmRomeData.loading=false;
+                }else{
+                    self.$message.error('效验用例信息发生错误:'+res.data.errorMsg);
+                    self.CharmRomeData.title='效验用例信息发生错误:'+res.data.errorMsg;
+                    self.StepsRomeData.processStatus='error';
+                    self.CharmRomeData.loading=false;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.CharmRomeData.title=error;
+                self.StepsRomeData.processStatus='error';
+                self.CharmRomeData.loading=false;
+            })
+        },
     }
 };
 </script>
@@ -571,5 +837,9 @@ export default {
 .son {margin: auto;}
 .bodyRome{
     margin-top:10px;
+}
+
+.el-table .warning-row {
+    background: oldlace;
 }
 </style>

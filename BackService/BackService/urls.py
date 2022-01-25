@@ -43,6 +43,7 @@ import Api_BatchTask.urls
 
 import Ui_ElementMaintenance.urls
 import Ui_ElementEvent.urls
+import Ui_CaseMaintenance.urls
 
 
 urlpatterns = [
@@ -73,5 +74,6 @@ urlpatterns = [
 
     url('api/UiElementMaintenance/', include(Ui_ElementMaintenance.urls)),
     url('api/UiElementEvent/', include(Ui_ElementEvent.urls)),
+    url('api/UiCaseMaintenance/', include(Ui_CaseMaintenance.urls)),
 
 ]

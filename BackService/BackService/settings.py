@@ -130,6 +130,7 @@ INSTALLED_APPS = [
 
     'Ui_ElementMaintenance',
     'Ui_ElementEvent',
+    'Ui_CaseMaintenance',
 ]
 # endregion
 

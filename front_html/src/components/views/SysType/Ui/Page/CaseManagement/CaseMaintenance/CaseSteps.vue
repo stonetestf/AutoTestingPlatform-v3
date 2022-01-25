@@ -6,7 +6,6 @@
             :wrapperClosable="false"
             :visible.sync="dialogVisible"
             direction='rtl'
-            :close-on-press-escape="false"
             :before-close="dialogClose">
             <div
                 v-loading="loading"
@@ -30,19 +29,23 @@
                         </el-form-item> -->
                         <div v-if="DisPlay.element">
                             <el-divider content-position="center">元素操作</el-divider>
-                            <el-form-item label="选择元素:" prop="elementId">
+                            <el-form-item label="选择元素:">
                                 <el-select 
                                     v-model="RomeData.elementId" 
                                     filterable clearable placeholder="请选择" 
                                     style="width:300px;float:left" 
-                                    @change="handleChange_elementId"
                                     @click.native="GeElementNameOption()">
-                                    <el-option
-                                        v-for="item in RomeData.elementNameOption"
-                                        :key="item.value"
-                                        :label="item.label"
-                                        :value="item.value">
-                                    </el-option>
+                                    <el-option-group
+                                        v-for="group in RomeData.elementNameOption"
+                                        :key="group.label"
+                                        :label="group.label">
+                                        <el-option
+                                            v-for="item in group.options"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                        </el-option>
+                                    </el-option-group>
                                 </el-select>
                             </el-form-item>
                         </div>
@@ -61,25 +64,25 @@
                         </el-form-item>
                         <div v-if="DisPlay.inputData">
                             <el-form-item label="输入/选择:">
-                            <div v-if="RomeData.operationType[1]=='Upload'">
-                                <!-- <el-upload 
-                                    :headers="headers"
-                                    :action="RomeData.uploadToTemp"
-                                    :on-success="upload_success"
-                                    :on-remove="upload_remove"
-                                    :limit="1"
-                                    :file-list="RomeData.fileList">
-                                    <el-button size="small" type="primary">点击上传</el-button>
-                                </el-upload> -->
-                            </div>
-                            <div v-else>
-                                <el-input v-model="RomeData.inputData" clearable style="width:300px;float:left"></el-input>
-                            </div>
+                                <div v-if="RomeData.elementType[1]=='Upload'">
+                                    <!-- <el-upload 
+                                        :headers="headers"
+                                        :action="RomeData.uploadToTemp"
+                                        :on-success="upload_success"
+                                        :on-remove="upload_remove"
+                                        :limit="1"
+                                        :file-list="RomeData.fileList">
+                                        <el-button size="small" type="primary">点击上传</el-button>
+                                    </el-upload> -->
+                                </div>
+                                <div v-else>
+                                    <el-input v-model="RomeData.inputData" clearable style="width:300px;float:left"></el-input>
+                                </div>
                             </el-form-item>
                         </div>
                         <div v-if="DisPlay.assert">
                             <el-divider content-position="center">断言操作</el-divider>
-                            <el-form-item label="断言类型:" prop="assertType">
+                            <el-form-item label="断言类型:">
                                 <el-select v-model="RomeData.assertType" placeholder="请选择" style="width:300px;float:left">
                                     <el-option
                                     v-for="item in RomeData.assertTypeOption"
@@ -89,7 +92,7 @@
                                     </el-option>
                                 </el-select>
                             </el-form-item>
-                            <el-form-item label="断言值类型:" prop="assertDataTypeId">
+                            <el-form-item label="断言值类型:">
                                 <el-select v-model="RomeData.assertValueType" placeholder="请选择" style="width:300px;float:left">
                                     <el-option
                                         v-for="item in RomeData.assertValueTypeOption"
@@ -139,8 +142,8 @@
                 </div>
                 <div>
                     <el-button v-if="RomeData.currentEventType=='Add'" type="primary" @click="submitForm_CaseSortRomeData()">新增</el-button>
-                    <el-button v-else type="warning" @click="EditCaseToTable()">保存</el-button>
-                    <el-button @click="ClearCaseSortRomeData('reset')">重置</el-button>
+                    <el-button v-else type="warning" @click="AddToStepsTable()">保存</el-button>
+                    <el-button @click="ClearRomeData('reset')">重置</el-button>
                 </div>
                 <el-divider >操作提示</el-divider>
                 <div class="operationTips">
@@ -160,6 +163,7 @@ import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import {GetElementOperationTypeItems} from "../../../../../../js/GetSelectTable.js";
+import {GeElementNameItems} from "../../../../../../js/GetSelectTable.js";
 
 export default {
     components: {
@@ -172,19 +176,21 @@ export default {
             isAddNew:true,//是否是新增窗口
             loading:false,
             RomeData:{
+                id:'',
+                pageNameList:[],
                 eventName:'',
-                elementId:'',
+                elementId:'',//选择元素
                 elementNameOption:[],
-                elementType:'',
+                elementType:'',//元素操作类型
                 elementTypeOptions:[],
                 inputData:'',
-                assertType:'',
+                assertType:'',//断言类型
                 assertTypeOption:[
                     {'label':'等于(Equals)','value':'Equals'},
                     {'label':'不等于(NotEquals)','value':'NotEquals'},
                     {'label':'包含(Contains)','value':'Contains'},
                 ],
-                assertValueType:'',
+                assertValueType:'',//断言值类型
                 assertValueTypeOption:[
                     {'label':'Str','value':'Str'},
                     {'label':'List','value':'List'},
@@ -192,10 +198,18 @@ export default {
                     {'label':'Int','value':'Int'},
                     {'label':'Float','value':'Float'},
                 ],
-                assertValue:'',
-
-
-
+                assertValue:'',//断言值
+                operationTips:[],
+                rules:{
+                    eventName:[
+                        { required: true, message: '请输入事件名称', trigger: 'blur' },
+                        { min: 1, max: 25, message: '长度在 1 到 25 个字符', trigger: 'blur' }
+                    ],
+                    // elementId:[{ required: true, message: '请选择元素', trigger: 'change' }],
+                    elementType:[{ required: true, message: '请选择元素操作类型', trigger: 'change' }],
+                    // assertType:[{ required: true, message: '请选择断言类型', trigger: 'change' }],
+                    // assertValueType:[{ required: true, message: '请选择断言值类型', trigger: 'change' }],
+                },
             },
             DisPlay:{
                 element:true,
@@ -225,23 +239,121 @@ export default {
             handler(newval,oldval)
             {
                 PrintConsole(newval);
+                this.ClearRomeData();
 
                 this.dialogTitle = newval.dialogTitle;
+                this.RomeData.id = newval.id;
                 this.isAddNew = newval.isAddNew;
+                this.RomeData.pageNameList = newval.pageNameList;
+               
 
                 if(newval.isAddNew==false){//进入编辑状态
-        
-                  
+                    let self = this;
+                    GeElementNameItems(self.RomeData.pageNameList).then(d=>{
+                        if(d.statusCode==2000){
+                            self.RomeData.elementNameOption = d.dataList;
+
+                            GetElementOperationTypeItems().then(d=>{
+                                if(d.statusCode==2000){
+                                    self.RomeData.elementTypeOptions = d.dataList;
+
+                                    self.RomeData.eventName=newval.eventName;
+                                    self.RomeData.elementId=newval.elementId;
+                                    self.RomeData.elementType=newval.elementType;
+                                    self.DisPlayControls(self.RomeData.elementType[1]);
+                                    self.RomeData.inputData=newval.inputData;
+                                    self.RomeData.assertType=newval.assertType;
+                                    self.RomeData.assertValueType=newval.assertValueType;
+                                    self.RomeData.assertValue=newval.assertValue;
+                                }else{
+                                    self.$message.errorMsg('列表数据获取失败:'+d.errorMsg);
+                                }
+                            });
+                        }else{
+                            self.$message.errorMsg('列表数据获取失败:'+d.errorMsg);
+                        }
+                    });
+                }else{
+                    this.GetElementOperationType();
                 }
             }
         },
-
+        'RomeData.elementId': function (newVal,oldVal) {//选择元素后加载当前这个元素的元素类型
+            let self = this;
+            if(newVal!=oldVal){
+                if(self.isAddNew){//只有新增的时候才会查
+                    self.RomeData.elementType=[];
+                    if(newVal){
+                        self.SelectElementType(newVal);
+                    }
+                }
+            }
+        },
+        'RomeData.elementType': function (newVal,oldVal) {//选择元素后加载当前这个元素的元素类型
+            if(newVal!=oldVal){
+                this.DisPlayControls(newVal[1]);
+            }
+        },
     },
     methods: {
         dialogClose(done){//用于调用父页面方法
             this.$emit('closeDialog');
         },
-        GetElementOperationType(){
+        resetForm(formName) {//清除正则验证
+            if (this.$refs[formName] !== undefined) {
+                PrintConsole('清除正则验证')
+                this.$refs[formName].resetFields();
+            }
+        },
+        ClearRomeData(){
+            let self = this;
+            self.resetForm('RomeData');
+            self.RomeData.eventName='';
+            self.RomeData.elementId='';
+            self.RomeData.elementType='';
+            self.RomeData.inputData='';
+            self.RomeData.assertType='';
+            self.RomeData.assertValueType='';
+            self.RomeData.assertValue='';
+
+            self.DisPlay.element=true;
+            self.DisPlay.inputData=false;
+            self.DisPlay.assert=false;
+            self.DisPlay.imageOperation=false;
+        },
+        AddToStepsTable(){
+            let self = this;
+            let obj = {};
+            obj.isAddNew = self.isAddNew;
+            obj.state=true;
+            obj.id=self.RomeData.id;
+            obj.eventName=self.RomeData.eventName;
+            obj.elementId=self.RomeData.elementId;
+            obj.elementType=self.RomeData.elementType;
+
+            let elementTypeTxt = ""
+            self.RomeData.elementTypeOptions.forEach(d=>{
+                let tempItem = d.children.find(item=>
+                    item.value == self.RomeData.elementType[1]
+                );
+                // PrintConsole(d.children)
+                // PrintConsole('elementTypeTxt',tempItem)
+                if(tempItem){
+                    elementTypeTxt = tempItem.label;
+                }
+            });
+           
+            obj.elementTypeTxt = elementTypeTxt;
+            obj.inputData=self.RomeData.inputData;
+            obj.assertType=self.RomeData.assertType;
+            obj.assertValueType=self.RomeData.assertValueType;
+            obj.assertValue=self.RomeData.assertValue;
+
+
+            self.$emit('getData',obj);//回调传值
+            self.dialogClose();
+        },
+        GetElementOperationType(){//返回元素类型
             GetElementOperationTypeItems().then(d=>{
                 if(d.statusCode==2000){
                     this.RomeData.elementTypeOptions = d.dataList;
@@ -250,10 +362,115 @@ export default {
                 }
             });
         },
+        GeElementNameOption(){
+            let self = this;
+            GeElementNameItems(self.RomeData.pageNameList).then(d=>{
+                if(d.statusCode==2000){
+                    self.RomeData.elementNameOption = d.dataList;
+                }else{
+                    self.$message.errorMsg('列表数据获取失败:'+d.errorMsg);
+                }
+            });
+        },
+        SelectElementType(elementId){//根据元素ID查询 元素类型
+            let self = this;
+            self.$axios.get('/api/UiElementMaintenance/SelectElementType',{
+                params:{
+                    'elementId':elementId,
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                   self.RomeData.elementType = res.data.elementType;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
+        DisPlayControls(elementType){//控件的显示及隐藏 和操作提示
+            let self = this;
+            PrintConsole('elementType',elementType)
+            self.RomeData.operationTips =[]
+            if(elementType=='Input'){
+                self.DisPlay.element=true;
+                self.DisPlay.inputData=true;
+                self.DisPlay.assert=false;
+
+                self.RomeData.assertType='';
+                self.RomeData.assertValueType='';
+                self.RomeData.assertValue='';
+            }else if(elementType=='Label'){
+                self.DisPlay.element=true;
+                self.DisPlay.assert=true;
+                self.DisPlay.inputData=false;
+
+                self.RomeData.inputData='';
+            }else if(elementType=='Click'){
+                self.DisPlay.element=true;
+                self.DisPlay.inputData=false;
+                self.DisPlay.assert=false;
+
+                self.RomeData.inputData='';
+                self.RomeData.assertType='';
+                self.RomeData.assertValueType='';
+                self.RomeData.assertValue='';
+            }else if(elementType=='Screenshots'){
+                self.DisPlay.inputData=true;
+                self.DisPlay.assert=false;
+                self.DisPlay.element=false;
+
+                self.RomeData.elementId='';
+                self.RomeData.assertType='';
+                self.RomeData.assertValueType='';
+                self.RomeData.assertValue='';
+
+                self.RomeData.eventName = '页面截图';
+                self.RomeData.operationTips.push('1.请在输入中填写截图后的名称.');
+            }else if(elementType=='Sleep'){
+                self.DisPlay.inputData=true;
+                self.DisPlay.element=false;
+                self.DisPlay.assert=false;
+
+                self.RomeData.elementId='';
+                self.RomeData.assertType='';
+                self.RomeData.assertValueType='';
+                self.RomeData.assertValue='';
+
+                if(self.RomeData.eventName){
+
+                }else{
+                    self.RomeData.eventName='进程停顿'
+                }
+            }else if(elementType=='HandleSwitch'){
+                self.DisPlay.inputData=true;
+                self.DisPlay.element=false;
+                self.DisPlay.assert=false;
+
+                self.RomeData.elementId='';
+                self.RomeData.assertType='';
+                self.RomeData.assertValueType='';
+                self.RomeData.assertValue='';
+
+                if(self.RomeData.eventName){
+
+                }else{
+                    self.RomeData.eventName = '切换句柄';
+                }
+                self.RomeData.operationTips.push('1.请在输入中填写需要切换到句柄的数值(0为第1页).');
+            }
+            else{
+                // self.DisPlay.inputData=false;
+                // self.DisPlay.assert=false;
+            }
+        },
+
     }
 };
 </script>
 
 <style>
-
+.operationTips{
+    text-align: left;
+}
 </style>

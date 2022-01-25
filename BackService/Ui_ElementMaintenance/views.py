@@ -688,7 +688,7 @@ def copy_element(request):
                     )
                     # endregion
                     # region 定位
-                    obj_db_ElementLocation = db_ElementLocation.objects.filter(is_del=0,element_id=elementId)
+                    obj_db_ElementLocation = db_ElementLocation.objects.filter(is_del=0, element_id=elementId)
                     elementLocation = []
                     product_list_to_insert = list()
                     for item in obj_db_ElementLocation:
@@ -703,29 +703,29 @@ def copy_element(request):
                             onlyCode=onlyCode,
                         ))
                         elementLocation.append({
-                            'state':item.state,
-                            'targetingType':item.targetingType,
-                            'targetingPath':item.targetingPath,
-                            'remarks':item.remarks,
+                            'state': item.state,
+                            'targetingType': item.targetingType,
+                            'targetingPath': item.targetingPath,
+                            'remarks': item.remarks,
                         })
                     db_ElementLocation.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region 添加历史恢复
                     restoreData = {
-                        'baseData':{
-                            'proId':obj_db_ElementBaseData[0].pid_id,
-                            'pageId':obj_db_ElementBaseData[0].page_id,
+                        'baseData': {
+                            'proId': obj_db_ElementBaseData[0].pid_id,
+                            'pageId': obj_db_ElementBaseData[0].page_id,
                             'funId': obj_db_ElementBaseData[0].fun_id,
                             'elementName': elementName,
                             'elementType': obj_db_ElementBaseData[0].elementType,
-                            'elementState':True if obj_db_ElementBaseData[0].elementState==1 else False,
-                            'uid_id':userId,
-                            'cuid':userId,
-                            'onlyCode':onlyCode,
-                            'updateTime':save_db_ElementBaseData.updateTime.strftime('%Y-%m-%d %H:%M:%S'),
-                            'createTime':save_db_ElementBaseData.createTime.strftime('%Y-%m-%d %H:%M:%S')
+                            'elementState': True if obj_db_ElementBaseData[0].elementState == 1 else False,
+                            'uid_id': userId,
+                            'cuid': userId,
+                            'onlyCode': onlyCode,
+                            'updateTime': save_db_ElementBaseData.updateTime.strftime('%Y-%m-%d %H:%M:%S'),
+                            'createTime': save_db_ElementBaseData.createTime.strftime('%Y-%m-%d %H:%M:%S')
                         },
-                        'elementLocation':elementLocation
+                        'elementLocation': elementLocation
                     }
                     db_ElementHistory.objects.create(
                         pid_id=obj_db_ElementBaseData[0].pid_id,
@@ -748,4 +748,63 @@ def copy_element(request):
                 response['statusCode'] = 2001
         else:
             response['errorMsg'] = "当前选择的数据不存在,请刷新后重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询所属页面列表为条件下的元素
+def get_element_name_items(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        pageIdList = objData.pageIdList.split(',')
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'get_element_name_items', errorMsg)
+    else:
+        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, id__in=pageIdList)
+        for item_page in obj_db_PageManagement:
+            obj_db_FunManagement = db_FunManagement.objects.filter(is_del=0, page_id=item_page.id)
+            for item_fun in obj_db_FunManagement:
+                options = []
+                obj_db_ElementBaseData = db_ElementBaseData.objects.filter(
+                    is_del=0, page_id=item_page.id, fun_id=item_fun.id)
+                for item_element in obj_db_ElementBaseData:
+                    options.append({'label': item_element.elementName, 'value': item_element.id})
+                dataList.append({
+                    'label': f"{item_page.pageName}>{item_fun.funName}",
+                    'options': options,
+                })
+        response['statusCode'] = 2000
+        response['dataList'] = dataList
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 根据元素ID查询 元素类型
+def select_element_type(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        elementId = objData.elementId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('UI', 'Ui_ElementMaintenance', 'select_element_type', errorMsg)
+    else:
+        obj_db_ElementBaseData = db_ElementBaseData.objects.filter(is_del=0,id=elementId)
+        if obj_db_ElementBaseData.exists():
+            elementType = obj_db_ElementBaseData[0].elementType
+            response['statusCode'] = 2000
+            response['elementType'] = ast.literal_eval(elementType) if elementType else []
+        else:
+            response['errorMsg'] = "当前选择的元素不存在,请重新下拉刷新元素列表!"
     return JsonResponse(response)
