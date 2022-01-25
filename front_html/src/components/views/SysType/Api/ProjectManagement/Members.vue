@@ -228,7 +228,7 @@ export default {
             self.JoinRomeData.tableData= [];
             self.$axios.get('/api/ProjectManagement/SelectJoinData',{
                 params:{
-                    // 'sysType':'API',
+                    'sysType':'API',
                     'proId':self.RomeData.proId,
                     'roleId':self.JoinRomeData.roleId,
                     'userName':self.JoinRomeData.userName,
@@ -259,7 +259,7 @@ export default {
             self.NotInJoinRomeData.tableData= [];
             self.$axios.get('/api/ProjectManagement/SelectNotInJoinData',{
                 params:{
-                    // 'sysType':'API',
+                    'sysType':'API',
                     'proId':self.RomeData.proId,
                     'roleId':self.NotInJoinRomeData.roleId,
                     'userName':self.NotInJoinRomeData.userName,
@@ -288,6 +288,7 @@ export default {
         handleJoin(index,row){//加入
             let self = this;
             self.$axios.post('/api/ProjectManagement/JoinMembers',Qs.stringify({
+                'sysType':'API',
                 'userId':row.id,
                 'proId':self.RomeData.proId,
             })).then(res => {
@@ -305,6 +306,7 @@ export default {
         handleDelete(index,row){//移除
             let self = this;
             self.$axios.post('/api/ProjectManagement/DeleteMembers',Qs.stringify({
+                'sysType':'API',
                 'userId':row.id,
                 'proId':self.RomeData.proId,
             })).then(res => {

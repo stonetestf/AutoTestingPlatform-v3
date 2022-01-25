@@ -264,7 +264,7 @@ export default {
         },
         GetFunNameOption(){
             if(this.SelectRomeData.pageId){
-                GetFunNameItems(this.$cookies.get('proId'),this.SelectRomeData.pageId).then(d=>{
+                GetFunNameItems('API',this.$cookies.get('proId'),this.SelectRomeData.pageId).then(d=>{
                     this.SelectRomeData.funNameOption = d;
                 });
             }else{

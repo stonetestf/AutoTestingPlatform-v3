@@ -532,7 +532,7 @@ export default {
         GetFunNameOption(){
             this.BasicRomeData.funNameOption = [];
             if(this.BasicRomeData.pageId){
-                GetFunNameItems(this.$cookies.get('proId'),this.BasicRomeData.pageId).then(d=>{
+                GetFunNameItems('API',this.$cookies.get('proId'),this.BasicRomeData.pageId).then(d=>{
                     this.BasicRomeData.funNameOption = d;
                 });
             }else{
@@ -844,7 +844,7 @@ export default {
                     GetPageNameItems('API',self.$cookies.get('proId')).then(d=>{
                         self.BasicRomeData.pageNameOption = d;
                         self.BasicRomeData.pageId = res.data.dataTable.basicInfo.pageId;
-                        GetFunNameItems(self.$cookies.get('proId'),self.BasicRomeData.pageId).then(d=>{
+                        GetFunNameItems('API',self.$cookies.get('proId'),self.BasicRomeData.pageId).then(d=>{
                             self.BasicRomeData.funNameOption = d;
                             self.BasicRomeData.funId = res.data.dataTable.basicInfo.funId;
                             GetPageEnvironmentNameItems(self.$cookies.get('proId')).then(d=>{

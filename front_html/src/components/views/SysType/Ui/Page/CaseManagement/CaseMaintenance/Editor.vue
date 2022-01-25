@@ -506,14 +506,14 @@ export default {
         GetFunNameOption(){
             this.BasicRomeData.funNameOption = [];
             if(this.BasicRomeData.pageId){
-                GetFunNameItems(this.$cookies.get('proId'),this.BasicRomeData.pageId).then(d=>{
+                GetFunNameItems('UI',this.$cookies.get('proId'),this.BasicRomeData.pageId).then(d=>{
                     this.BasicRomeData.funNameOption = d;
                 });
             }else{
                 this.$message.warning('请先选择所属页面!');
             }
         },
-        GetAssociatedPageNameOption(){
+        GetAssociatedPageNameOption(){//关联页面
             if(this.BasicRomeData.pageId){
                 GetAssociatedPageNameItems('UI',this.BasicRomeData.pageId).then(d=>{
                     if(d.statusCode==2000){

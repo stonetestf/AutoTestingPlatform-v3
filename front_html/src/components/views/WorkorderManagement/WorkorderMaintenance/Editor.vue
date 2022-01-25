@@ -241,7 +241,7 @@ export default {
                     GetPageNameItems('API',self.$cookies.get('proId')).then(d=>{
                         self.RomeData.pageNameOption = d;
                         self.RomeData.pageId=newval.pageId;
-                        GetFunNameItems(self.$cookies.get('proId'),self.RomeData.pageId).then(d=>{
+                        GetFunNameItems('API',self.$cookies.get('proId'),self.RomeData.pageId).then(d=>{
                             self.RomeData.funNameOption = d;
                             self.RomeData.funId=newval.funId;
                             self.RomeData.workName=newval.workName;
@@ -264,7 +264,7 @@ export default {
                                 GetPageNameItems('API',this.$cookies.get('proId')).then(dd=>{
                                     self.RomeData.pageNameOption = dd;
                                     self.RomeData.pageId = d.dataTabel.pageId;
-                                    GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(dd=>{
+                                    GetFunNameItems('API',this.$cookies.get('proId'),this.RomeData.pageId).then(dd=>{
                                         self.RomeData.funNameOption = dd;
                                         self.RomeData.funId = d.dataTabel.funId;
                                         self.RomeData.workName = d.dataTabel.workName;

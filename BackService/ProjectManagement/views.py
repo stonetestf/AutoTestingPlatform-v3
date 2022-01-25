@@ -42,6 +42,7 @@ cls_RedisHandle = RedisHandle()
 def select_data(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
@@ -56,7 +57,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'select_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'select_data', errorMsg)
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0, sysType=sysType).order_by('-updateTime')
         if proName:
@@ -156,6 +157,7 @@ def select_data(request):
 @require_http_methods(["POST"])
 def save_data(request):
     response = {}
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         roleId = cls_FindTable.get_roleId(userId)
@@ -166,7 +168,7 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'data_save', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'data_save', errorMsg)
     else:
         if roleId:
             obj_db_ProManagement = db_ProManagement.objects.filter(is_del=0, sysType=sysType, proName=proName)
@@ -236,6 +238,7 @@ def save_data(request):
 def edit_data(request):
     response = {}
     is_edit = False
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         roleId = cls_FindTable.get_roleId(userId)
@@ -248,7 +251,7 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'edit_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'edit_data', errorMsg)
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId, is_del=0)
         oldData = list(obj_db_ProManagement.values())
@@ -364,6 +367,7 @@ def edit_data(request):
 def delete_data(request):
     response = {}
     is_edit = False
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -371,7 +375,7 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'delete_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'delete_data', errorMsg)
     else:
         obj_db_ProManagement = db_ProManagement.objects.filter(id=proId)
         if obj_db_ProManagement.exists():
@@ -437,16 +441,18 @@ def delete_data(request):
 def select_join_data(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
         proId = objData.proId
         roleId = objData.roleId
         userName = objData.userName
+        sysType = objData.sysType
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'select_join_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'select_join_data', errorMsg)
     else:
         obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0, pid_id=proId)
         if roleId:
@@ -473,16 +479,18 @@ def select_join_data(request):
 def select_not_in_join_data(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
         proId = objData.proId
         roleId = objData.roleId
         userName = objData.userName
+        sysType = objData.sysType
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'select_not_in_join_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'select_not_in_join_data', errorMsg)
     else:
         obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0, pid_id=proId)
         hasJoinedMembers = [i.uid.id for i in obj_db_ProBindMembers]
@@ -512,14 +520,16 @@ def select_not_in_join_data(request):
 @require_http_methods(["POST"])  # 加入成员
 def join_members(request):
     response = {}
+    sysType = None
     try:
+        sysType = request.POST['sysType']
         proId = request.POST['proId']
         joinUserId = request.POST['userId']  # 需要加入项目的用户
         roleId = cls_FindTable.get_roleId(joinUserId)
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'join_members', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'join_members', errorMsg)
     else:
         if roleId:
             db_ProBindMembers.objects.create(
@@ -539,13 +549,15 @@ def join_members(request):
 @require_http_methods(["POST"])  # 删除成员
 def delete_members(request):
     response = {}
+    sysType = None
     try:
+        sysType = request.POST['sysType']
         proId = request.POST['proId']
         userId = request.POST['userId']  # 需要加入项目的用户
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'delete_members', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'delete_members', errorMsg)
     else:
         obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0, pid_id=proId, uid_id=userId)
         if obj_db_ProBindMembers.exists():
@@ -564,15 +576,17 @@ def delete_members(request):
 @require_http_methods(["GET"])  # 验证用户是否有进入此项目的权限
 def verify_enter_into(request):
     response = {}
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         proId = objData.proId
+        sysType = objData.sysType
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'verify_enter_into', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'verify_enter_into', errorMsg)
     else:
         obj_db_ProBindMembers = db_ProBindMembers.objects.filter(is_del=0, uid_id=userId, pid_id=proId)
         if obj_db_ProBindMembers.exists():
@@ -588,6 +602,7 @@ def verify_enter_into(request):
 def select_history(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
@@ -603,7 +618,7 @@ def select_history(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'select_history', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'select_history', errorMsg)
     else:
         if proId:
             obj_db_ProHistory = db_ProHistory.objects.filter(pid_id=proId, pid__sysType=sysType).order_by('-createTime')
@@ -643,15 +658,17 @@ def select_history(request):
 @require_http_methods(["POST"])  # 恢复数据 只有管理员组或是项目创建人才可以恢复
 def restor_data(request):
     response = {}
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         roleId = cls_FindTable.get_roleId(userId)
         is_admin = cls_FindTable.get_role_is_admin(roleId)
         historyId = int(request.POST['historyId'])
+        sysType = request.POST['sysType']
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'ProjectManagement', 'restor_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'ProjectManagement', 'restor_data', errorMsg)
     else:
         obj_db_ProHistory = db_ProHistory.objects.filter(id=historyId)
         if obj_db_ProHistory.exists():

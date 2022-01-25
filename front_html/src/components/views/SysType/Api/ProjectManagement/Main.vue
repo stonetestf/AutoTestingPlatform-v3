@@ -362,6 +362,7 @@ export default {
             let self = this;
             self.$axios.get('/api/ProjectManagement/VerifyEnterInto',{
                 params:{
+                    'sysType':'API',
                     'proId':row.id,
                 }
             }).then(res => {

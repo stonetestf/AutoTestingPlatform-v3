@@ -131,7 +131,7 @@ export default {
                     this.RomeData.pageId = newval.pageId;
                     this.RomeData.funNameOption = [];
                     if(this.RomeData.pageId){
-                        GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
+                        GetFunNameItems('API',this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
                             this.RomeData.funNameOption = d;
                             this.RomeData.funId = newval.funId;
                             this.SelectData();
@@ -171,7 +171,7 @@ export default {
         GetFunNameOption(){
             this.RomeData.funNameOption = [];
             if(this.RomeData.pageId){
-                GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
+                GetFunNameItems('API',this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
                     this.RomeData.funNameOption = d;
                 });
             }else{

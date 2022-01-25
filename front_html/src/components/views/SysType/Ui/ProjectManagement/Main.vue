@@ -331,6 +331,7 @@ export default {
             let self = this;
             self.$axios.get('/api/ProjectManagement/VerifyEnterInto',{
                 params:{
+                    'sysType':'UI',
                     'proId':row.id,
                 }
             }).then(res => {

@@ -342,7 +342,7 @@ export default {
         },
         GetFunNameOption(){
             if(this.RomeData.pageId){
-                GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
+                GetFunNameItems('API',this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
                     this.RomeData.funNameOption = d;
                 });
             }else{

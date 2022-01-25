@@ -50,9 +50,10 @@ function GetPageNameItems(sysType,proId){
     })
 }
 
-function GetFunNameItems(proId,pageId){
+function GetFunNameItems(sysType,proId,pageId){
     return Vue.prototype.$axios.get('/api/FunManagement/GetFunNameItems',{
         params:{
+            'sysType':sysType,
             'proId':proId,
             'pageId':pageId,
         }

@@ -35,6 +35,7 @@ cls_ImageProcessing = ImageProcessing()
 def select_data(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
@@ -50,7 +51,7 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'PageMaintenancet', 'select_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'PageMaintenancet', 'select_data', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId).order_by('-updateTime')
@@ -83,6 +84,7 @@ def select_data(request):
 @require_http_methods(["POST"])
 def save_data(request):
     response = {}
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -94,7 +96,7 @@ def save_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'FunManagement', 'data_save', errorMsg)
+        cls_Logging.record_error_info(sysType, 'FunManagement', 'data_save', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(
             is_del=0, sysType=sysType, pid_id=proId, page_id=pageId, funName=funName)
@@ -156,6 +158,7 @@ def save_data(request):
 def edit_data(request):
     response = {}
     is_Edit = False
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -168,7 +171,7 @@ def edit_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'FunManagement', 'edit_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'FunManagement', 'edit_data', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(id=funId, is_del=0)
         if obj_db_FunManagement.exists():
@@ -237,6 +240,7 @@ def edit_data(request):
 @require_http_methods(["POST"])
 def delete_data(request):
     response = {}
+    sysType = None
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         sysType = request.POST['sysType']
@@ -245,7 +249,7 @@ def delete_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'FunManagement', 'delete_data', errorMsg)
+        cls_Logging.record_error_info(sysType, 'FunManagement', 'delete_data', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(id=funId)
         if obj_db_FunManagement.exists():
@@ -295,15 +299,17 @@ def delete_data(request):
 def get_fun_name_items(request):
     response = {}
     dataList = []
+    sysType = None
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
         proId = objData.proId
         pageId = objData.pageId
+        sysType = objData.sysType
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('API', 'FunManagement', 'get_fun_name_items', errorMsg)
+        cls_Logging.record_error_info(sysType, 'FunManagement', 'get_fun_name_items', errorMsg)
     else:
         obj_db_FunManagement = db_FunManagement.objects.filter(
             is_del=0, pid_id=proId, page_id=pageId).order_by('-updateTime')
