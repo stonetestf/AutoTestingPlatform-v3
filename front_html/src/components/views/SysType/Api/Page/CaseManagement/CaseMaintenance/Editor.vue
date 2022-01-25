@@ -525,7 +525,7 @@ export default {
             self.BasicRomeData.caseState='';
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('API',this.$cookies.get('proId')).then(d=>{
                 this.BasicRomeData.pageNameOption = d;
             });
         },
@@ -841,7 +841,7 @@ export default {
                 }
             }).then(res => {
                 if(res.data.statusCode==2000){
-                    GetPageNameItems(self.$cookies.get('proId')).then(d=>{
+                    GetPageNameItems('API',self.$cookies.get('proId')).then(d=>{
                         self.BasicRomeData.pageNameOption = d;
                         self.BasicRomeData.pageId = res.data.dataTable.basicInfo.pageId;
                         GetFunNameItems(self.$cookies.get('proId'),self.BasicRomeData.pageId).then(d=>{

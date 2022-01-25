@@ -1034,7 +1034,7 @@ export default {
                     self.BasicRomeData.apiId = newval.apiId;
                     self.LoadData(newval.apiId).then(d=>{
                         if(d.statusCode==2000){
-                            GetPageNameItems(this.$cookies.get('proId')).then(dd=>{
+                            GetPageNameItems('API',this.$cookies.get('proId')).then(dd=>{
                                 self.BasicRomeData.pageNameOption = dd;
                                 self.BasicRomeData.pageId = d.basicInfo.pageId;
                                 GetFunNameItems(this.$cookies.get('proId'),self.BasicRomeData.pageId).then(dd=>{
@@ -1347,7 +1347,7 @@ export default {
         
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('API',this.$cookies.get('proId')).then(d=>{
                 this.BasicRomeData.pageNameOption = d;
             });
         },

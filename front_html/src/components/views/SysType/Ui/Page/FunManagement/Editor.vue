@@ -106,7 +106,7 @@ export default {
             self.RomeData.remarks='';
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('UI',this.$cookies.get('proId')).then(d=>{
                 this.RomeData.pageNameOption = d;
             });
         },

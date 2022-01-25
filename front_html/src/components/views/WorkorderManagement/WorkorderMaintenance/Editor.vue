@@ -238,7 +238,7 @@ export default {
                     let self = this;
                     self.RomeData.workType=newval.workType;
                     self.RomeData.workState=newval.workState;
-                    GetPageNameItems(self.$cookies.get('proId')).then(d=>{
+                    GetPageNameItems('API',self.$cookies.get('proId')).then(d=>{
                         self.RomeData.pageNameOption = d;
                         self.RomeData.pageId=newval.pageId;
                         GetFunNameItems(self.$cookies.get('proId'),self.RomeData.pageId).then(d=>{
@@ -261,7 +261,7 @@ export default {
                             if(d.statusCode==2000){
                                 self.RomeData.workType = d.dataTabel.workType;
                                 self.RomeData.workState = d.dataTabel.workState;
-                                GetPageNameItems(this.$cookies.get('proId')).then(dd=>{
+                                GetPageNameItems('API',this.$cookies.get('proId')).then(dd=>{
                                     self.RomeData.pageNameOption = dd;
                                     self.RomeData.pageId = d.dataTabel.pageId;
                                     GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(dd=>{
@@ -339,7 +339,7 @@ export default {
             self.RomeData.historyInfo=[];
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('API',this.$cookies.get('proId')).then(d=>{
                 this.RomeData.pageNameOption = d;
             });
         },

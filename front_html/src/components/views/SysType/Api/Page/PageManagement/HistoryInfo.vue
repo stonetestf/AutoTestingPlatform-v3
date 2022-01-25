@@ -254,6 +254,7 @@ export default {
         RestorData(historyId){//恢复数据
             let self = this;
             self.$axios.post('/api/PageManagement/RestorData',Qs.stringify({
+                'sysType':'API',
                 "historyId":historyId,
             })).then(res => {
                 if(res.data.statusCode==2002){

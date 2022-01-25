@@ -363,7 +363,7 @@ export default {
             }
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('UI',this.$cookies.get('proId')).then(d=>{
                 this.SelectRomeData.pageNameOption = d;
             });
         },

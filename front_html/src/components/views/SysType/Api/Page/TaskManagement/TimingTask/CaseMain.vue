@@ -188,7 +188,7 @@ export default {
             this.$emit('closeDialog');
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('API',this.$cookies.get('proId')).then(d=>{
                 this.RomeData.pageNameOption = d;
             });
         },

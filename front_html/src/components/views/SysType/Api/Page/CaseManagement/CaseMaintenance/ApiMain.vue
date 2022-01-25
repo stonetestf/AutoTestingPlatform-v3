@@ -126,7 +126,7 @@ export default {
                 this.ClearRomeData();
                 this.dialogTitle = newval.dialogTitle;
                  
-                GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+                GetPageNameItems('API',this.$cookies.get('proId')).then(d=>{
                     this.RomeData.pageNameOption = d;
                     this.RomeData.pageId = newval.pageId;
                     this.RomeData.funNameOption = [];
@@ -164,7 +164,7 @@ export default {
             this.$emit('closeDialog');
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('API',this.$cookies.get('proId')).then(d=>{
                 this.RomeData.pageNameOption = d;
             });
         },

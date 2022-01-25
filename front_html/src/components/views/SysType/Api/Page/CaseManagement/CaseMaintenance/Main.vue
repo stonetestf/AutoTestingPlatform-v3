@@ -481,7 +481,7 @@ export default {
             self.SelectData();
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('API',this.$cookies.get('proId')).then(d=>{
                 this.SelectRomeData.pageNameOption = d;
             });
         },

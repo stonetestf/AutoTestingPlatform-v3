@@ -261,7 +261,7 @@ export default {
             });
         },
         GetPageNameOption(){
-            GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+            GetPageNameItems('UI',this.$cookies.get('proId')).then(d=>{
                 this.RomeData.pageNameOption = d;
             });
         },
@@ -345,7 +345,7 @@ export default {
                 }
             }).then(res => {
                 if(res.data.statusCode==2000){
-                    GetPageNameItems(this.$cookies.get('proId')).then(d=>{
+                    GetPageNameItems('UI',this.$cookies.get('proId')).then(d=>{
                         self.RomeData.pageNameOption = d;
                         self.RomeData.pageId=res.data.baseData.pageId;
                         GetFunNameItems(this.$cookies.get('proId'),this.RomeData.pageId).then(d=>{
