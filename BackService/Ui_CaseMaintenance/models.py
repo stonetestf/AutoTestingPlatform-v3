@@ -17,6 +17,7 @@ class UiCaseBaseData(models.Model):  # 基础数据
     cuid = models.IntegerField("创建者用户", null=False)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
 
 
 class UiAssociatedPage(models.Model):  # 关联页面
@@ -24,3 +25,20 @@ class UiAssociatedPage(models.Model):  # 关联页面
     page = models.ForeignKey(to='PageManagement.PageManagement', to_field='id', on_delete=models.CASCADE)
     updateTime = models.DateTimeField('修改时间', auto_now=True)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
+
+
+class UiTestSet(models.Model):  # 测试集
+    case = models.ForeignKey(to='UiCaseBaseData', to_field='id', on_delete=models.CASCADE)
+    index = models.IntegerField("排序", null=False)
+    state = models.IntegerField("是否启用(1:启用,0:禁用)", null=False)
+    eventName = models.CharField('事件名称', max_length=50, null=True)
+    elementId = models.IntegerField("元素ID", null=True)
+    elementType = models.CharField('最终元素操作类型', max_length=100, null=True)
+    inputData = models.CharField('输入/选择', max_length=500, null=True)
+    assertType = models.CharField('断言类型', max_length=50, null=True)
+    assertValueType = models.CharField('断言值类型', max_length=50, null=True)
+    assertValue = models.TextField('断言值', null=True)
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    updateTime = models.DateTimeField('创建时间', auto_now=True)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)

@@ -9,6 +9,8 @@ import ast
 from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 from Ui_CaseMaintenance.models import UiCaseBaseData as db_CaseBaseData
 from Ui_CaseMaintenance.models import UiAssociatedPage as db_AssociatedPage
+from Ui_CaseMaintenance.models import UiTestSet as db_TestSet
+from Ui_ElementEvent.models import ElementEventComponent as db_ElementEventComponent
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -39,8 +41,14 @@ def select_data(request):
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
 
-        eventName = objData.eventName
-        eventLogo = objData.eventLogo
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        proId = objData.proId
+        pageId = objData.pageId
+        funId = objData.funId
+        labelId = objData.labelId
+        caseState = objData.caseState
+        caseName = objData.caseName
+        associations = objData.associations
 
         current = int(objData.current)  # 当前页数
         pageSize = int(objData.pageSize)  # 一页多少条
@@ -49,32 +57,80 @@ def select_data(request):
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
-        cls_Logging.record_error_info('UI', 'Ui_ElementEvent', 'select_data', errorMsg)
+        cls_Logging.record_error_info('UI', 'Ui_CaseMaintenance', 'select_data', errorMsg)
     else:
-        # obj_db_ElementEvent = db_ElementEvent.objects.filter(is_del=0).order_by('index')
-        # if eventName:
-        #     obj_db_ElementEvent = obj_db_ElementEvent.filter(eventName__icontains=eventName)
-        # if eventLogo:
-        #     obj_db_ElementEvent = obj_db_ElementEvent.filter(eventLogo__icontains=eventLogo)
-        # select_db_ElementEvent = obj_db_ElementEvent[minSize: maxSize]
-        # for i in select_db_ElementEvent:
-        #     obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(is_del=0, event_id=i.id)
-        #     component = [{'id': item.id,
-        #                   'label': item.label,
-        #                   'state': True if item.state == 1 else False}
-        #                  for item in obj_db_ElementEventComponent]
-        #
-        #     dataList.append({
-        #         'id': i.id,
-        #         'eventName': i.eventName,
-        #         'eventLogo': i.eventLogo,
-        #         'remarks': i.remarks,
-        #         'component': component,
-        #         "updateTime": str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
-        #         "userName": f"{i.uid.userName}({i.uid.nickName})",
-        #     })
-        # response['TableData'] = dataList
-        # response['Total'] = obj_db_ElementEvent.count()
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, pid_id=proId).order_by('-updateTime')
+        if pageId:
+            obj_db_CaseBaseData = obj_db_CaseBaseData.filter(page_id=pageId)
+        if funId:
+            obj_db_CaseBaseData = obj_db_CaseBaseData.filter(fun_id=funId)
+        # if testType:
+        #     obj_db_CaseBaseData = obj_db_CaseBaseData.filter(testType=testType)
+        if labelId:
+            obj_db_CaseBaseData = obj_db_CaseBaseData.filter(label=labelId)
+        if caseState:
+            obj_db_CaseBaseData = obj_db_CaseBaseData.filter(caseState=caseState)
+        if caseName:
+            obj_db_CaseBaseData = obj_db_CaseBaseData.filter(caseName__icontains=caseName)
+        select_db_CaseBaseData = obj_db_CaseBaseData[minSize: maxSize]
+        for i in select_db_CaseBaseData:
+            tableItem = []
+            obj_db_TestSet = db_TestSet.objects.filter(is_del=0, case_id=i.id)
+            for item_testSet in obj_db_TestSet:
+
+                elementType = ast.literal_eval(item_testSet.elementType)
+                obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(is_del=0,value=elementType[1])
+                if obj_db_ElementEventComponent.exists():
+                    elementTypeTxt = obj_db_ElementEventComponent[0].label
+                else:
+                    elementTypeTxt = ""
+                tableItem.append({
+                    'index': item_testSet.index,
+                    'eventName': item_testSet.eventName,
+                    'elementTypeTxt': elementTypeTxt,
+                    'inputData': item_testSet.inputData,
+                    # 'requestParamsType': requestParamsType,
+                    'state': True if item_testSet.state == 1 else False,
+                    'updateTime': str(item_testSet.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                })
+            if associations == 'My':
+                # 当前查询的用户是修改者 或是 创建者
+                if userId == i.uid_id or userId == i.cuid:
+                    dataList.append({
+                        'id': i.id,
+                        'tableItem': tableItem,
+                        'priority': i.priority,
+                        'testType': i.testType,
+                        'caseName': i.caseName,
+                        'pageName': i.page.pageName,
+                        'funName': i.fun.funName,
+                        'labelId': i.label,
+                        'elementdynamic': False,
+                        'caseState': i.caseState,
+                        'passRate': 0,
+                        'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                        "userName": f"{i.uid.userName}({i.uid.nickName})",
+                        'createUserName': cls_FindTable.get_userName(i.cuid),
+                    })
+            else:
+                dataList.append({
+                    'id': i.id,
+                    'tableItem': tableItem,
+                    'priority': i.priority,
+                    'testType': i.testType,
+                    'caseName': i.caseName,
+                    'pageName': i.page.pageName,
+                    'funName': i.fun.funName,
+                    'labelId': i.label,
+                    'elementdynamic': False,
+                    'caseState': i.caseState,
+                    'passRate': 0,
+                    'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
+                    "userName": f"{i.uid.userName}({i.uid.nickName})",
+                    'createUserName': cls_FindTable.get_userName(i.cuid),
+                })
+        response['TableData'] = dataList
+        response['Total'] = obj_db_CaseBaseData.count()
         response['statusCode'] = 2000
     return JsonResponse(response)
 
@@ -153,4 +209,106 @@ def charm_case_data(request):
         # endregion
         response['statusCode'] = 2000
         response['TableData'] = dataList
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def save_data(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
+        basicData = objData.BasicData
+        testSet = objData.TestSet
+        onlyCode = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('UI', 'Ui_CaseMaintenance', 'data_save', errorMsg)
+    else:
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(
+            is_del=0, pid_id=basicData.proId, page_id=basicData.pageId, fun_id=basicData.funId,
+            label=basicData.labelId, testType=basicData.testType, caseName=basicData.caseName
+        )
+        if obj_db_CaseBaseData.exists():
+            response['errorMsg'] = f'当前所属功能及同标签同类型下已有相同用例名称,请更改!'
+        else:
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'UI', 'Manual', 3, 'Add',
+                        cls_FindTable.get_pro_name(basicData.proId),
+                        cls_FindTable.get_page_name(basicData.pageId),
+                        cls_FindTable.get_fun_name(basicData.funId),
+                        userId,
+                        '【新增用例】', CUFront=responseData
+                    )
+                    # endregion
+                    # region 保存基本信息
+                    save_db_CaseBaseData = db_CaseBaseData.objects.create(
+                        pid_id=basicData.proId, page_id=basicData.pageId, fun_id=basicData.funId,
+                        environmentId_id=basicData.environmentId, testType=basicData.testType,
+                        label=basicData.labelId, priority=basicData.priorityId, caseName=basicData.caseName,
+                        caseState=basicData.caseState, cuid=userId, uid_id=userId, is_del=0,onlyCode=onlyCode
+                    )
+                    # endregion
+                    # region 历史恢复
+                    # restoreData = responseData
+                    # restoreData['BasicInfo']['updateTime'] = save_db_CaseBaseData.updateTime.strftime(
+                    #     '%Y-%m-%d %H:%M:%S')
+                    # restoreData['BasicInfo']['createTime'] = save_db_CaseBaseData.createTime.strftime(
+                    #     '%Y-%m-%d %H:%M:%S')
+                    # restoreData['BasicInfo']['uid_id'] = save_db_CaseBaseData.uid_id
+                    # restoreData['BasicInfo']['cuid'] = save_db_CaseBaseData.cuid
+                    # restoreData['onlyCode'] = onlyCode
+                    # db_ApiCaseHistory.objects.create(
+                    #     pid_id=basicInfo.proId,
+                    #     page_id=basicInfo.pageId,
+                    #     fun_id=basicInfo.funId,
+                    #     case_id=save_db_CaseBaseData.id,
+                    #     caseName=basicInfo.caseName,
+                    #     onlyCode=onlyCode,
+                    #     operationType='Add',
+                    #     restoreData=restoreData,
+                    #     uid_id=userId
+                    # )
+                    # endregion
+                    # region 关联页面
+                    product_list_to_insert = list()
+                    for item_page in basicData.associatedPage:
+                        product_list_to_insert.append(db_AssociatedPage(
+                            case_id=save_db_CaseBaseData.id,
+                            page_id=item_page,
+                            is_del=0,
+                            onlyCode=onlyCode
+                        ))
+                    db_AssociatedPage.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region 测试集
+                    product_list_to_insert = list()
+                    for item_index, item_testSet in enumerate(testSet, 0):
+                        product_list_to_insert.append(db_TestSet(
+                            case_id=save_db_CaseBaseData.id,
+                            index=item_index,
+                            state=1 if item_testSet.state else 0,
+                            eventName=item_testSet.eventName,
+                            elementId=item_testSet.elementId if item_testSet.elementId else None,
+                            elementType=item_testSet.elementType,
+                            inputData=item_testSet.inputData if item_testSet.inputData else None,
+                            assertType=item_testSet.assertType if item_testSet.assertType else None,
+                            assertValueType=item_testSet.assertValueType if item_testSet.assertValueType else None,
+                            assertValue=item_testSet.assertValue if item_testSet.assertValue else None,
+                            is_del=0,
+                            onlyCode=onlyCode
+                        ))
+                    db_TestSet.objects.bulk_create(product_list_to_insert)
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'保存失败:{e}'
+            else:
+                response['statusCode'] = 2001
     return JsonResponse(response)
