@@ -79,11 +79,7 @@ def select_data(request):
             for item_testSet in obj_db_TestSet:
 
                 elementType = ast.literal_eval(item_testSet.elementType)
-                obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(is_del=0,value=elementType[1])
-                if obj_db_ElementEventComponent.exists():
-                    elementTypeTxt = obj_db_ElementEventComponent[0].label
-                else:
-                    elementTypeTxt = ""
+                elementTypeTxt = cls_FindTable.get_element_label_name(elementType)
                 tableItem.append({
                     'index': item_testSet.index,
                     'eventName': item_testSet.eventName,
@@ -253,7 +249,7 @@ def save_data(request):
                         pid_id=basicData.proId, page_id=basicData.pageId, fun_id=basicData.funId,
                         environmentId_id=basicData.environmentId, testType=basicData.testType,
                         label=basicData.labelId, priority=basicData.priorityId, caseName=basicData.caseName,
-                        caseState=basicData.caseState, cuid=userId, uid_id=userId, is_del=0,onlyCode=onlyCode
+                        caseState=basicData.caseState, cuid=userId, uid_id=userId, is_del=0, onlyCode=onlyCode
                     )
                     # endregion
                     # region 历史恢复
@@ -311,4 +307,225 @@ def save_data(request):
                 response['errorMsg'] = f'保存失败:{e}'
             else:
                 response['statusCode'] = 2001
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def edit_data(request):
+    response = {}
+    try:
+        responseData = json.loads(request.body)
+        objData = cls_object_maker(responseData)
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
+        basicData = objData.BasicData
+        testSet = objData.TestSet
+        onlyCode = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_CaseMaintenance', 'edit_data', errorMsg)
+    else:
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, id=basicData.caseId)
+        if obj_db_CaseBaseData.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 添加操作信息
+                    # region 查询以前的数据
+                    oldTestSet = []
+                    # region 测试集
+                    obj_db_TestSet = db_TestSet.objects.filter(is_del=0, case_id=basicData.caseId).order_by('index')
+                    for item_testSet in obj_db_TestSet:
+                        elementType = ast.literal_eval(item_testSet.elementType)
+                        oldTestSet.append({
+                            'isAddNew':True,
+                            'state':True if item_testSet.state==1 else False,
+                            'index': item_testSet.index,
+                            'eventName': item_testSet.eventName,
+                            'elementId': item_testSet.elementId,
+                            'elementType': elementType,
+                            'elementTypeTxt':cls_FindTable.get_element_label_name(elementType),
+                            'inputData':item_testSet.inputData,
+                            'assertType':item_testSet.assertType,
+                            'assertValueType':item_testSet.assertValueType,
+                            'assertValue':item_testSet.assertValue,
+                        })
+                    # endregion
+                    # region 关联页面
+                    obj_db_AssociatedPage = db_AssociatedPage.objects.filter(is_del=0,case_id=basicData.caseId)
+                    oldAssociatedPage = [i.page_id for i in obj_db_AssociatedPage]
+                    # endregion
+                    oldData = {
+                        'BasicData': {
+                            'caseId':basicData.caseId,
+                            'proId':obj_db_CaseBaseData[0].pid_id,
+                            'pageId':obj_db_CaseBaseData[0].page_id,
+                            'funId':obj_db_CaseBaseData[0].fun_id,
+                            'environmentId':obj_db_CaseBaseData[0].environmentId_id,
+                            'testType':obj_db_CaseBaseData[0].testType,
+                            'labelId':obj_db_CaseBaseData[0].label,
+                            'priorityId':obj_db_CaseBaseData[0].priority,
+                            'caseName':obj_db_CaseBaseData[0].caseName,
+                            'caseState':obj_db_CaseBaseData[0].caseState,
+                            'associatedPage':oldAssociatedPage,
+                        },
+                        'TestSet': oldTestSet,
+
+                    }
+                    cls_Logging.record_operation_info(
+                        'UI', 'Manual', 3, 'Edit',
+                        cls_FindTable.get_pro_name(basicData.proId),
+                        cls_FindTable.get_page_name(basicData.pageId),
+                        cls_FindTable.get_fun_name(basicData.funId),
+                        userId,
+                        f'【修改用例】 ID{obj_db_CaseBaseData[0].id}:{obj_db_CaseBaseData[0].caseName}',
+                        CUFront=oldData, CURear=responseData
+                    )
+
+                    # endregion
+                    # endregion
+                    # region 历史恢复
+                    # restoreData = responseData
+                    # restoreData['BasicInfo']['updateTime'] = obj_db_CaseBaseData[0].updateTime.strftime(
+                    #     '%Y-%m-%d %H:%M:%S')
+                    # restoreData['BasicInfo']['createTime'] = obj_db_CaseBaseData[0].createTime.strftime(
+                    #     '%Y-%m-%d %H:%M:%S')
+                    # restoreData['BasicInfo']['uid_id'] = obj_db_CaseBaseData[0].uid_id
+                    # restoreData['BasicInfo']['cuid'] = obj_db_CaseBaseData[0].cuid
+                    # restoreData['onlyCode'] = onlyCode
+                    # db_ApiCaseHistory.objects.create(
+                    #     pid_id=basicInfo.proId,
+                    #     page_id=basicInfo.pageId,
+                    #     fun_id=basicInfo.funId,
+                    #     case_id=basicInfo.caseId,
+                    #     caseName=basicInfo.caseName,
+                    #     onlyCode=onlyCode,
+                    #     operationType='Edit',
+                    #     restoreData=restoreData,
+                    #     uid_id=userId
+                    # )
+                    # endregion
+                    # region 删除 各类原数据
+                    db_TestSet.objects.filter(
+                        is_del=0, case_id=basicData.caseId,onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time()
+                    )
+                    db_AssociatedPage.objects.filter(
+                        is_del=0, case_id=basicData.caseId,onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time()
+                    )
+                    # endregion
+                    # region 更新基本信息
+                    obj_db_CaseBaseData.update(
+                        pid_id=basicData.proId, page_id=basicData.pageId, fun_id=basicData.funId,
+                        environmentId_id=basicData.environmentId, testType=basicData.testType,
+                        label=basicData.labelId, priority=basicData.priorityId, caseName=basicData.caseName,
+                        caseState=basicData.caseState, uid_id=userId, updateTime=cls_Common.get_date_time(),
+                        onlyCode=onlyCode
+                    )
+                    # endregion
+                    # region 关联页面
+                    product_list_to_insert = list()
+                    for item_page in basicData.associatedPage:
+                        product_list_to_insert.append(db_AssociatedPage(
+                            case_id=basicData.caseId,
+                            page_id=item_page,
+                            is_del=0,
+                            onlyCode=onlyCode
+                        ))
+                    db_AssociatedPage.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region 测试集
+                    product_list_to_insert = list()
+                    for item_index, item_testSet in enumerate(testSet, 0):
+                        product_list_to_insert.append(db_TestSet(
+                            case_id=basicData.caseId,
+                            index=item_index,
+                            state=1 if item_testSet.state else 0,
+                            eventName=item_testSet.eventName,
+                            elementId=item_testSet.elementId if item_testSet.elementId else None,
+                            elementType=item_testSet.elementType,
+                            inputData=item_testSet.inputData if item_testSet.inputData else None,
+                            assertType=item_testSet.assertType if item_testSet.assertType else None,
+                            assertValueType=item_testSet.assertValueType if item_testSet.assertValueType else None,
+                            assertValue=item_testSet.assertValue if item_testSet.assertValue else None,
+                            is_del=0,
+                            onlyCode=onlyCode
+                        ))
+                    db_TestSet.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region 更新接口动态表为无更变
+                    # db_ApiDynamic.objects.filter(is_del=0, case_id=basicInfo.caseId).update(
+                    #     updateTime=cls_Common.get_date_time(), is_read=1, uid_id=userId
+                    # )
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'保存失败:{e}'
+            else:
+                response['statusCode'] = 2002
+        else:
+            response['errorMsg'] = '未找到当前测试用例,请刷新后在重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def load_case_data(request):
+    response = {}
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        caseId = objData.caseId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('UI', 'Ui_CaseMaintenance', 'load_case_data', errorMsg)
+    else:
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, id=caseId)
+        if obj_db_CaseBaseData.exists():
+            # region 基础数据
+            # 关联页面
+            obj_db_AssociatedPage = db_AssociatedPage.objects.filter(is_del=0, case_id=caseId)
+            associatedPage = [i.page_id for i in obj_db_AssociatedPage]
+            basicData = {
+                'pageId': obj_db_CaseBaseData[0].page_id,
+                'funId': obj_db_CaseBaseData[0].fun_id,
+                'environmentId': obj_db_CaseBaseData[0].environmentId_id,
+                'testType': obj_db_CaseBaseData[0].testType,
+                'labelId': obj_db_CaseBaseData[0].label,
+                'priorityId': obj_db_CaseBaseData[0].priority,
+                'caseName': obj_db_CaseBaseData[0].caseName,
+                'caseState': obj_db_CaseBaseData[0].caseState,
+                'associatedPage': associatedPage
+            }
+            # endregion
+            # region 测试集
+            testSet = []
+            obj_db_TestSet = db_TestSet.objects.filter(is_del=0, case_id=caseId).order_by('index')
+            for i in obj_db_TestSet:
+                elementType = ast.literal_eval(i.elementType) if i.elementType else []
+                elementTypeTxt = cls_FindTable.get_element_label_name(elementType)
+
+                testSet.append({'id': i.id,
+                                'isAddNew': True,
+                                'state': True if i.state == 1 else False,
+                                'eventName': i.eventName,
+                                'elementId': i.elementId,
+                                'elementType': elementType,
+                                'inputData': i.inputData,
+                                'assertType': i.assertType,
+                                'elementTypeTxt': elementTypeTxt,
+                                'assertValueType': i.assertValueType,
+                                'assertValue': i.assertValue,
+                                })
+
+            # endregion
+            response['statusCode'] = 2000
+            response['basicData'] = basicData
+            response['testSet'] = testSet
+        else:
+            response['errorMsg'] = "当前选择的数据不存在,请刷新列表后在重新尝试!"
     return JsonResponse(response)

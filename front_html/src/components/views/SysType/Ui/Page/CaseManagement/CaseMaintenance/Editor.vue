@@ -167,7 +167,7 @@
                                     prop="elementTypeTxt">
                                 </el-table-column>
                                 <el-table-column
-                                    label="对比类型"
+                                    label="图片对比类型"
                                     align= "center"
                                     width="140" 
                                     prop="contrastTypeText">
@@ -178,23 +178,26 @@
                                     align= "center"
                                     prop="inputData">
                                 </el-table-column>
-                                <el-table-column
-                                    label="断言类型"
-                                    align= "center"
-                                    width="120"
-                                    prop="assertType">
-                                </el-table-column>
-                                <el-table-column
-                                    label="断言值类型"
-                                    width="120"
-                                    align= "center"
-                                    prop="assertValueType">
-                                </el-table-column>
-                                <el-table-column
-                                    label="断言值"
-                                    width="200"
-                                    align= "center"
-                                    prop="assertValue">
+                                <el-table-column label="断言操作"
+                                    align= "center">
+                                    <el-table-column
+                                        label="断言类型"
+                                        align= "center"
+                                        width="120"
+                                        prop="assertType">
+                                    </el-table-column>
+                                    <el-table-column
+                                        label="断言值类型"
+                                        width="120"
+                                        align= "center"
+                                        prop="assertValueType">
+                                    </el-table-column>
+                                    <el-table-column
+                                        label="断言值"
+                                        width="200"
+                                        align= "center"
+                                        prop="assertValue">
+                                    </el-table-column>
                                 </el-table-column>
                                 <el-table-column 
                                     width="210" 
@@ -491,6 +494,7 @@ export default {
 
                 if(newval.isAddNew==false){//进入编辑状态
                     this.BasicRomeData.caseId = newval.caseId;
+                    this.LoadCaseData(this.BasicRomeData.caseId);
                   
                 }
             }
@@ -587,7 +591,7 @@ export default {
             self.StepsRomeData.disPlay_Save = false;
             self.StepsRomeData.disPlay_Next = true;
             self.StepsRomeData.processStatus ='process';
-           
+            self.StepsRomeData.saveLoading = true;
         },
         returnToMain(){
             let self = this;
@@ -848,7 +852,6 @@ export default {
             if(self.CharmRomeData.tableData.length==0){
                 if(self.isAddNew){  
                     self.$axios.post('/api/UiCaseMaintenance/SaveData',{
-                        'CharmType':self.isAddNew,
                         'BasicData':{
                             'proId':self.$cookies.get('proId'),
                             'pageId':self.BasicRomeData.pageId,
@@ -874,18 +877,19 @@ export default {
                         console.log(error);
                     })
                 }else{
-                    self.$axios.post('/api/ApiCaseMaintenance/EditData',{
-                       'BasicInfo':{
+                    self.$axios.post('/api/UiCaseMaintenance/EditData',{
+                        'BasicData':{
                             'caseId':self.BasicRomeData.caseId,
                             'proId':self.$cookies.get('proId'),
                             'pageId':self.BasicRomeData.pageId,
                             'funId':self.BasicRomeData.funId,
                             'environmentId':self.BasicRomeData.environmentId,
-                            'priorityId':self.BasicRomeData.priorityId,
-                            'labelId':self.BasicRomeData.labelId,
                             'testType':self.BasicRomeData.testType,
+                            'labelId':self.BasicRomeData.labelId,
+                            'priorityId':self.BasicRomeData.priorityId,
                             'caseName':self.BasicRomeData.caseName,
                             'caseState':self.BasicRomeData.caseState,
+                            'associatedPage':self.BasicRomeData.associatedPage,
                         },
                         'TestSet':self.TestSetRomeData.tableData
                     }).then(res => {
@@ -903,6 +907,56 @@ export default {
             }else{
                 self.$message.warning('请先修改错误数据后,在进行保存!');
             }
+        },
+        LoadCaseData(caseId){
+            let self = this;
+            self.loading=true;
+            self.$axios.get('/api/UiCaseMaintenance/LoadCaseData',{
+                params:{
+                    'caseId':caseId
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    GetPageNameItems('UI',this.$cookies.get('proId')).then(d=>{
+                        self.BasicRomeData.pageNameOption = d;
+                        self.BasicRomeData.pageId = res.data.basicData.pageId;
+                        GetFunNameItems('UI',this.$cookies.get('proId'),this.BasicRomeData.pageId).then(d=>{
+                            self.BasicRomeData.funNameOption = d;
+                            self.BasicRomeData.funId = res.data.basicData.funId;
+                            GetPageEnvironmentNameItems(this.$cookies.get('proId')).then(d=>{
+                                self.BasicRomeData.environmentNameOption = d;
+                                self.BasicRomeData.environmentId = res.data.basicData.environmentId;
+                                GetAssociatedPageNameItems('UI',this.BasicRomeData.pageId).then(d=>{
+                                    if(d.statusCode==2000){
+                                        self.BasicRomeData.associatedPageoOptions = d.dataList;
+                                        self.BasicRomeData.associatedPage = res.data.basicData.associatedPage;
+
+                                        self.BasicRomeData.testType = res.data.basicData.testType;
+                                        self.BasicRomeData.labelId = res.data.basicData.labelId;
+                                        self.BasicRomeData.priorityId = res.data.basicData.priorityId;
+                                        self.BasicRomeData.caseName = res.data.basicData.caseName;
+                                        self.BasicRomeData.caseState = res.data.basicData.caseState;
+
+                                        self.TestSetRomeData.tableData = res.data.testSet;
+
+                                        self.loading=false;
+                                    }else{
+                                        self.$message.error('关联页面数据获取失败:'+d.errorMsg);
+                                    }
+                                });
+                            });
+                        });
+                    });
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                    self.dialogClose();
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+                self.dialogClose();
+            })
         },
     }
 };

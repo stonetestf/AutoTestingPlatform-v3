@@ -404,7 +404,6 @@ export default {
                 self.loading=false;
             })
         },
-
         ClearSelectRomeData(){
             let self = this;
             self.SelectRomeData.pageId='';
@@ -464,6 +463,15 @@ export default {
             self.dialog.editor.dialogPara={
                 dialogTitle:"新增用例",//初始化标题
                 isAddNew:true,//初始化是否新增\修改
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+        handleEdit(index,row){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑用例",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                caseId:row.id
             }
             self.dialog.editor.dialogVisible=true;
         },

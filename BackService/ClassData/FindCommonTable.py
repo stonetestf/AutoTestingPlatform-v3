@@ -18,6 +18,7 @@ from WorkorderManagement.models import WorkBindPushToUsers as db_WorkBindPushToU
 from Api_TimingTask.models import ApiTimingTask as db_ApiTimingTask
 from Api_BatchTask.models import ApiBatchTask as db_ApiBatchTask
 from DataBaseEnvironment.models import DataBase as db_DataBase
+from Ui_ElementEvent.models import ElementEventComponent as db_ElementEventComponent
 
 # Create reference here.
 from ClassData.Logger import Logging as cls_Logging
@@ -192,7 +193,7 @@ class FindTable(cls_Logging):
         return results
 
     # 项目下所有数据的统计
-    def get_pro_under_statistical_data(self, sysType,proId):
+    def get_pro_under_statistical_data(self, sysType, proId):
         results = {
             'dataTable': []
         }
@@ -201,7 +202,7 @@ class FindTable(cls_Logging):
         staTime = weekData[0].strftime('%Y-%m-%d') + " 00:00:00"
         endTime = weekData[1].strftime('%Y-%m-%d') + " 23:59:59"
         # endregion
-        if sysType=="API":
+        if sysType == "API":
             obj_db_ApiBaseData = db_ApiBaseData.objects.filter(is_del=0, pid_id=proId)
             # region 本周新增
             weekTotal = 0  # 本周新增
@@ -391,3 +392,19 @@ class FindTable(cls_Logging):
             results['state'] = False
             results['errorMsg'] = '未找到当前数据库环境'
         return results
+
+    # 返回元素中文名称
+    def get_element_label_name(self, elementType):
+        """
+        :param elementType: 元素类型，List
+        :return: 元素label名称
+        """
+        if elementType:
+            obj_db_ElementEventComponent = db_ElementEventComponent.objects.filter(is_del=0, value=elementType[1])
+            if obj_db_ElementEventComponent.exists():
+                label = obj_db_ElementEventComponent[0].label
+            else:
+                label = ""
+        else:
+            label = ""
+        return label
