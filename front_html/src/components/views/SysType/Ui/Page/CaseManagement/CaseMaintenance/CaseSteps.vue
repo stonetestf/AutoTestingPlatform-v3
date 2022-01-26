@@ -141,8 +141,7 @@
                     </el-form>
                 </div>
                 <div>
-                    <el-button v-if="RomeData.currentEventType=='Add'" type="primary" @click="submitForm_CaseSortRomeData()">新增</el-button>
-                    <el-button v-else type="warning" @click="AddToStepsTable()">保存</el-button>
+                    <el-button type="warning" @click="AddToStepsTable()">保存</el-button>
                     <el-button @click="ClearRomeData('reset')">重置</el-button>
                 </div>
                 <el-divider >操作提示</el-divider>

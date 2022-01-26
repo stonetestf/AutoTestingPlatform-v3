@@ -266,7 +266,11 @@
                                     label="操作位置"
                                     width="200px" 
                                     align= "center"
-                                    prop="locationName">
+                                    prop="location">
+                                    <template slot-scope="scope">
+                                        <el-tag type="success" v-if="scope.row.location=='Pre'">前置操作</el-tag>
+                                        <el-tag type="danger" v-else>后置操作</el-tag>
+                                    </template>
                                 </el-table-column>
                                 <el-table-column
                                     label="操作类型"
@@ -286,7 +290,7 @@
                                     prop="contrastTypeText">
                                 </el-table-column>
                                 <el-table-column 
-                                    width="120px" 
+                                    width="140px" 
                                     align= "center">
                                     <template slot="header">
                                         <el-button type="primary" @click="openOperationStepsDialog()">新增操作</el-button>
@@ -361,7 +365,9 @@
                 @closeDialog="closeOperationStepsDialog" 
                 :isVisible="dialog.operationSteps.dialogVisible" 
                 :dialogPara="dialog.operationSteps.dialogPara"
-                @getData="AddToOperationStepsTable($event)">
+                @geAddtData="AddToOperationStepsTable($event)"
+                @geEditData="EditToOperationStepsTable($event)"
+                >
             </dialog-operation-steps>
         </template>
     </div>
@@ -502,6 +508,7 @@ export default {
                 this.ClearBasicRomeData();
                 this.ClearTestSetRomeData();
                 this.ClearCharmRomeData();
+                this.ClearOperationStepsRomeData();
                 
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew;
@@ -790,8 +797,22 @@ export default {
         },
 
         //操作集
+        ClearOperationStepsRomeData(){
+            let self = this;
+            self.OperationSetRomeData.tableData = [];
+        },
         AddToOperationStepsTable(val){
             PrintConsole('回调-AddToOperationStepsTable',val);
+            let self = this;
+            if(val.operationType=="TestCase"){
+                val.operationData = val.caseId;
+            }else if(val.operationType=="Methods"){
+                val.operationData = val.methodsName;
+            }
+            self.OperationSetRomeData.tableData.push(val)
+        },
+        EditToOperationStepsTable(){
+            PrintConsole('回调-EditToOperationStepsTable',val);
         },
         closeOperationStepsDialog(){
             this.dialog.operationSteps.dialogVisible =false;
@@ -801,6 +822,7 @@ export default {
             self.dialog.operationSteps.dialogPara={
                 dialogTitle:"新增操作",//初始化标题
                 isAddNew:true,//初始化是否新增\修改
+                id:self.OperationSetRomeData.tableData.length+1
             }
             self.dialog.operationSteps.dialogVisible=true;
         },
