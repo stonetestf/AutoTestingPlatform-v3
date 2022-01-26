@@ -696,7 +696,21 @@ export default {
             if(val.isAddNew){//新增
                 self.TestSetRomeData.tableData.push(val);
             }else{//修改
+                let tempSetTable = self.TestSetRomeData.tableData.find(item=>
+                    item.id == val.id
+                );
+                if(tempSetTable){
+                    tempSetTable.eventName=val.eventName;
+                    tempSetTable.elementId=val.elementId;
+                    tempSetTable.elementType=val.elementType;
+                    tempSetTable.elementTypeTxt=val.elementTypeTxt;
+                    
+                    tempSetTable.inputData=val.inputData;
+                    tempSetTable.assertType=val.assertType;
+                    tempSetTable.assertValueType=val.assertValueType;
+                    tempSetTable.assertValue=val.assertValue;
 
+                }
             }
             self.TestSetRowDrop();
         },
@@ -713,7 +727,7 @@ export default {
             self.dialog.caseSteps.dialogPara={
                 dialogTitle:"编辑步骤",//初始化标题
                 isAddNew:false,//初始化是否新增\修改
-                id:self.TestSetRomeData.tableData.length+1,
+                id:row.id,
                 pageNameList:pageNameList.join(','),
 
                 eventName:row.eventName,
@@ -812,6 +826,7 @@ export default {
                     }else{
                         self.StepsRomeData.active++;
                         self.CharmRomeData.title = '效验结果:完成,请点击保存';
+                        self.StepsRomeData.saveLoading=false;
                     }
                     self.CharmRomeData.loading=false;
                 }else{
@@ -826,6 +841,68 @@ export default {
                 self.StepsRomeData.processStatus='error';
                 self.CharmRomeData.loading=false;
             })
+        },
+
+        SaveData(){//保存接口
+            let self = this;
+            if(self.CharmRomeData.tableData.length==0){
+                if(self.isAddNew){  
+                    self.$axios.post('/api/UiCaseMaintenance/SaveData',{
+                        'CharmType':self.isAddNew,
+                        'BasicData':{
+                            'proId':self.$cookies.get('proId'),
+                            'pageId':self.BasicRomeData.pageId,
+                            'funId':self.BasicRomeData.funId,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'testType':self.BasicRomeData.testType,
+                            'labelId':self.BasicRomeData.labelId,
+                            'priorityId':self.BasicRomeData.priorityId,
+                            'caseName':self.BasicRomeData.caseName,
+                            'caseState':self.BasicRomeData.caseState,
+                            'associatedPage':self.BasicRomeData.associatedPage,
+                        },
+                        'TestSet':self.TestSetRomeData.tableData
+                    }).then(res => {
+                        if(res.data.statusCode==2001){
+                            self.$message.success('新增用例成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('保存失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }else{
+                    self.$axios.post('/api/ApiCaseMaintenance/EditData',{
+                       'BasicInfo':{
+                            'caseId':self.BasicRomeData.caseId,
+                            'proId':self.$cookies.get('proId'),
+                            'pageId':self.BasicRomeData.pageId,
+                            'funId':self.BasicRomeData.funId,
+                            'environmentId':self.BasicRomeData.environmentId,
+                            'priorityId':self.BasicRomeData.priorityId,
+                            'labelId':self.BasicRomeData.labelId,
+                            'testType':self.BasicRomeData.testType,
+                            'caseName':self.BasicRomeData.caseName,
+                            'caseState':self.BasicRomeData.caseState,
+                        },
+                        'TestSet':self.TestSetRomeData.tableData
+                    }).then(res => {
+                        if(res.data.statusCode==2002){
+                            self.$message.success('修改用例成功!');
+                            self.returnToMain();
+                        
+                        }else{
+                            self.$message.error('修改用例失败'+res.data.errorMsg);
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    })
+                }
+            }else{
+                self.$message.warning('请先修改错误数据后,在进行保存!');
+            }
         },
     }
 };

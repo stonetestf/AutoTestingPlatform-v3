@@ -281,7 +281,8 @@ export default {
         'RomeData.elementId': function (newVal,oldVal) {//选择元素后加载当前这个元素的元素类型
             let self = this;
             if(newVal!=oldVal){
-                if(self.isAddNew){//只有新增的时候才会查
+                PrintConsole(self.RomeData.elementType)
+                if(self.isAddNew || self.RomeData.elementType.length==0){//只有新增的时候才会查
                     self.RomeData.elementType=[];
                     if(newVal){
                         self.SelectElementType(newVal);
@@ -310,7 +311,7 @@ export default {
             self.resetForm('RomeData');
             self.RomeData.eventName='';
             self.RomeData.elementId='';
-            self.RomeData.elementType='';
+            self.RomeData.elementType=[];
             self.RomeData.inputData='';
             self.RomeData.assertType='';
             self.RomeData.assertValueType='';

@@ -63,6 +63,7 @@
                 </div>
                 <div style="margin-top:-15px;">
                     <el-table
+                        v-loading="loading"
                         :data="RomeData.tableData"
                         height="653px"
                         border
@@ -73,6 +74,12 @@
                             type="selection"
                             align= "center"
                             width="50">
+                        </el-table-column>
+                        <el-table-column
+                            label="ID"
+                            align= "center"
+                            width="80px"
+                            prop="id">
                         </el-table-column>
                         <el-table-column
                             label="优先级"
@@ -96,32 +103,35 @@
                                             width="100">
                                         </el-table-column>
                                         <el-table-column
-                                            prop="intName"
+                                            prop="eventName"
+                                            width="400"
                                             align= "center"
-                                            label="接口名称">
+                                            label="事件名称">
                                         </el-table-column>
                                         <el-table-column
-                                            prop="requestType"
+                                            prop="elementTypeTxt"
+                                            width="300"
                                             align= "center"
-                                            label="请求类型">
+                                            label="操作类型">
                                         </el-table-column>
                                         <el-table-column
-                                            prop="requestParamsType"
+                                            prop="inputData"
+                                            width="400"
                                             align= "center"
-                                            label="请求参数类型">
+                                            label="输入/选择">
                                         </el-table-column>
                                         <el-table-column
-                                            label="接口状态"
-                                            width="150"
+                                            label="启用"
+                                            width="100px"
                                             align= "center">
                                             <template slot-scope="scope">
-                                                <el-tag type="success" v-if="scope.row.intState==1" >启用</el-tag>
-                                                <el-tag type="info" v-else >禁用</el-tag>
+                                                <el-tag type="success" v-if="scope.row.state">启用</el-tag>
+                                                <el-tag type="danger" v-else>禁用</el-tag>
                                             </template>
                                         </el-table-column>
                                         <el-table-column
                                             prop="updateTime"
-                                            width="200"
+                                            width="220"
                                             align= "center"
                                             label="更新时间">
                                         </el-table-column>
@@ -134,8 +144,8 @@
                             align= "center"
                             width="100px">
                             <template slot-scope="scope">
-                                <el-tag type="info" v-if="scope.row.testType=='UnitTest'" >单元测试</el-tag>
-                                <el-tag type="warning" v-else-if="scope.row.testType=='HybridTest'" >混合测试</el-tag>
+                                <el-tag type="info" v-if="scope.row.testType=='Function'" >功能测试</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.testType=='Smoke'" >冒烟测试</el-tag>
                             </template>
                         </el-table-column>
                         <el-table-column
@@ -210,7 +220,7 @@
                         <el-table-column
                             fixed="right"
                             align="center"
-                            width="240px">
+                            width="230px">
                         <template slot="header">
                             <el-button-group>
                                 <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
@@ -226,20 +236,22 @@
                             </el-button-group>
                         </template>
                         <template slot-scope="scope" style="width:100px">
-                            <el-button
-                                size="mini"
-                                type="success"
-                                @click="OpenDialog_Run(scope.$index, scope.row)">RunCase
-                            </el-button>
-                            <el-button
-                                size="mini"
-                                @click="handleEdit(scope.$index, scope.row)">Edit
-                            </el-button>
-                            <el-button
-                                size="mini"
-                                type="danger"
-                                @click="handleDelete(scope.$index, scope.row)">Delete
-                            </el-button>
+                            <el-button-group>
+                                <el-button
+                                    size="mini"
+                                    type="success"
+                                    @click="OpenDialog_Run(scope.$index, scope.row)">RunCase
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    @click="handleEdit(scope.$index, scope.row)">Edit
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    type="danger"
+                                    @click="handleDelete(scope.$index, scope.row)">Delete
+                                </el-button>
+                            </el-button-group>
                         </template>
                         </el-table-column>
                     </el-table>
@@ -282,6 +294,7 @@ export default {
     },
     data() {
         return {
+            loading:false,
             multipleSelection:[],
             SelectRomeData:{
                 pageId:'',
@@ -335,11 +348,61 @@ export default {
         },
     },
     mounted(){
-        // this.SelectData();
+        this.SelectData();
     },
     methods: {
         SelectData(){
+            let self = this;
+            self.RomeData.tableData= [];
+            self.loading=true;
+            self.$axios.get('/api/UiCaseMaintenance/SelectData',{
+                params:{
+                    "proId":self.$cookies.get('proId'),
+                    "pageId":self.SelectRomeData.pageId,
+                    "funId":self.SelectRomeData.funId,
+                    'testType':self.SelectRomeData.testType,
+                    "labelId":self.SelectRomeData.caseLabel,
+                    "caseState":self.SelectRomeData.caseState,
+                    'caseName':self.SelectRomeData.caseName,
+                    'associations':self.SelectRomeData.associations,
+                    'current':self.page.current,
+                    'pageSize':self.page.pageSize
+                }
+            }).then(res => {
+                if(res.data.statusCode==2000){
+                    res.data.TableData.forEach(d => {
+                        let obj = {};
+                        obj.id =d.id;
+                        obj.tableItem=d.tableItem;
+                        obj.priority=d.priority;
+                        obj.testType = d.testType;
+                        obj.caseName = d.caseName;
+                        obj.pageName=d.pageName;
+                        obj.funName=d.funName;
+                        obj.labelId = d.labelId;
+                        obj.elementdynamic=d.elementdynamic;
+                        obj.caseState = d.caseState;
+                        obj.passRate = d.passRate+'%';
+                        obj.updateTime = d.updateTime;
+                        obj.userName = d.userName;     
+                        obj.createUserName = d.createUserName;     
 
+                        self.RomeData.tableData.push(obj);
+                    });
+                    if(self.RomeData.tableData.length==0 && self.page.current != 1){
+                        self.page.current = 1;
+                        self.SelectData();
+                    }
+                    self.page.total = res.data.Total;
+                    self.loading=false;
+                }else{
+                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                    self.loading=false;
+                }
+            }).catch(function (error) {
+                console.log(error);
+                self.loading=false;
+            })
         },
 
         ClearSelectRomeData(){
