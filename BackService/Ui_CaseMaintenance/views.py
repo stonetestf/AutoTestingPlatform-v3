@@ -10,7 +10,7 @@ from PageEnvironment.models import PageEnvironment as db_PageEnvironment
 from Ui_CaseMaintenance.models import UiCaseBaseData as db_CaseBaseData
 from Ui_CaseMaintenance.models import UiAssociatedPage as db_AssociatedPage
 from Ui_CaseMaintenance.models import UiTestSet as db_TestSet
-from Ui_ElementEvent.models import ElementEventComponent as db_ElementEventComponent
+from Ui_ElementMaintenance.models import ElementDynamic as db_ElementDynamic
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -76,8 +76,8 @@ def select_data(request):
         for i in select_db_CaseBaseData:
             tableItem = []
             obj_db_TestSet = db_TestSet.objects.filter(is_del=0, case_id=i.id)
+            # region 步骤排序
             for item_testSet in obj_db_TestSet:
-
                 elementType = ast.literal_eval(item_testSet.elementType)
                 elementTypeTxt = cls_FindTable.get_element_label_name(elementType)
                 tableItem.append({
@@ -89,6 +89,14 @@ def select_data(request):
                     'state': True if item_testSet.state == 1 else False,
                     'updateTime': str(item_testSet.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
                 })
+            # endregion
+            # region 元素动态
+            obj_db_ElementDynamic = db_ElementDynamic.objects.filter(is_del=0, case_id=i.id, is_read=0)
+            if obj_db_ElementDynamic.exists():
+                apidynamic = True
+            else:
+                apidynamic = False
+            # endregion
             if associations == 'My':
                 # 当前查询的用户是修改者 或是 创建者
                 if userId == i.uid_id or userId == i.cuid:
@@ -101,7 +109,7 @@ def select_data(request):
                         'pageName': i.page.pageName,
                         'funName': i.fun.funName,
                         'labelId': i.label,
-                        'elementdynamic': False,
+                        'elementdynamic': apidynamic,
                         'caseState': i.caseState,
                         'passRate': 0,
                         'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
@@ -118,7 +126,7 @@ def select_data(request):
                     'pageName': i.page.pageName,
                     'funName': i.fun.funName,
                     'labelId': i.label,
-                    'elementdynamic': False,
+                    'elementdynamic': apidynamic,
                     'caseState': i.caseState,
                     'passRate': 0,
                     'updateTime': str(i.updateTime.strftime('%Y-%m-%d %H:%M:%S')),
@@ -339,36 +347,36 @@ def edit_data(request):
                     for item_testSet in obj_db_TestSet:
                         elementType = ast.literal_eval(item_testSet.elementType)
                         oldTestSet.append({
-                            'isAddNew':True,
-                            'state':True if item_testSet.state==1 else False,
+                            'isAddNew': True,
+                            'state': True if item_testSet.state == 1 else False,
                             'index': item_testSet.index,
                             'eventName': item_testSet.eventName,
                             'elementId': item_testSet.elementId,
                             'elementType': elementType,
-                            'elementTypeTxt':cls_FindTable.get_element_label_name(elementType),
-                            'inputData':item_testSet.inputData,
-                            'assertType':item_testSet.assertType,
-                            'assertValueType':item_testSet.assertValueType,
-                            'assertValue':item_testSet.assertValue,
+                            'elementTypeTxt': cls_FindTable.get_element_label_name(elementType),
+                            'inputData': item_testSet.inputData,
+                            'assertType': item_testSet.assertType,
+                            'assertValueType': item_testSet.assertValueType,
+                            'assertValue': item_testSet.assertValue,
                         })
                     # endregion
                     # region 关联页面
-                    obj_db_AssociatedPage = db_AssociatedPage.objects.filter(is_del=0,case_id=basicData.caseId)
+                    obj_db_AssociatedPage = db_AssociatedPage.objects.filter(is_del=0, case_id=basicData.caseId)
                     oldAssociatedPage = [i.page_id for i in obj_db_AssociatedPage]
                     # endregion
                     oldData = {
                         'BasicData': {
-                            'caseId':basicData.caseId,
-                            'proId':obj_db_CaseBaseData[0].pid_id,
-                            'pageId':obj_db_CaseBaseData[0].page_id,
-                            'funId':obj_db_CaseBaseData[0].fun_id,
-                            'environmentId':obj_db_CaseBaseData[0].environmentId_id,
-                            'testType':obj_db_CaseBaseData[0].testType,
-                            'labelId':obj_db_CaseBaseData[0].label,
-                            'priorityId':obj_db_CaseBaseData[0].priority,
-                            'caseName':obj_db_CaseBaseData[0].caseName,
-                            'caseState':obj_db_CaseBaseData[0].caseState,
-                            'associatedPage':oldAssociatedPage,
+                            'caseId': basicData.caseId,
+                            'proId': obj_db_CaseBaseData[0].pid_id,
+                            'pageId': obj_db_CaseBaseData[0].page_id,
+                            'funId': obj_db_CaseBaseData[0].fun_id,
+                            'environmentId': obj_db_CaseBaseData[0].environmentId_id,
+                            'testType': obj_db_CaseBaseData[0].testType,
+                            'labelId': obj_db_CaseBaseData[0].label,
+                            'priorityId': obj_db_CaseBaseData[0].priority,
+                            'caseName': obj_db_CaseBaseData[0].caseName,
+                            'caseState': obj_db_CaseBaseData[0].caseState,
+                            'associatedPage': oldAssociatedPage,
                         },
                         'TestSet': oldTestSet,
 
@@ -408,11 +416,11 @@ def edit_data(request):
                     # endregion
                     # region 删除 各类原数据
                     db_TestSet.objects.filter(
-                        is_del=0, case_id=basicData.caseId,onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=0, case_id=basicData.caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
                     db_AssociatedPage.objects.filter(
-                        is_del=0, case_id=basicData.caseId,onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=0, case_id=basicData.caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
                     # endregion
@@ -455,10 +463,10 @@ def edit_data(request):
                         ))
                     db_TestSet.objects.bulk_create(product_list_to_insert)
                     # endregion
-                    # region 更新接口动态表为无更变
-                    # db_ApiDynamic.objects.filter(is_del=0, case_id=basicInfo.caseId).update(
-                    #     updateTime=cls_Common.get_date_time(), is_read=1, uid_id=userId
-                    # )
+                    # region 更新元素动态表为无更变
+                    db_ElementDynamic.objects.filter(is_del=0, case_id=basicData.caseId).update(
+                        updateTime=cls_Common.get_date_time(), is_read=1, uid_id=userId
+                    )
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
@@ -483,7 +491,7 @@ def delete_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'Ui_CaseMaintenance', 'delete_data', errorMsg)
     else:
-        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0,id=caseId)
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, id=caseId)
         if obj_db_CaseBaseData.exists():
             try:
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
@@ -519,7 +527,7 @@ def delete_data(request):
                         is_del=0, case_id=caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
-                    obj_db_CaseBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(),uid_id=userId)
+                    obj_db_CaseBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId)
                     # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'数据删除失败:{e}'
@@ -569,7 +577,15 @@ def load_case_data(request):
             for i in obj_db_TestSet:
                 elementType = ast.literal_eval(i.elementType) if i.elementType else []
                 elementTypeTxt = cls_FindTable.get_element_label_name(elementType)
-
+                obj_db_ElementDynamic = db_ElementDynamic.objects.filter(
+                    is_del=0, is_read=0, case_id=caseId, element_id=i.elementId)
+                if obj_db_ElementDynamic.exists():
+                    elementDynamic = 1
+                else:
+                    if i.elementId:
+                        elementDynamic = 0
+                    else:
+                        elementDynamic = 3
                 testSet.append({'id': i.id,
                                 'isAddNew': True,
                                 'state': True if i.state == 1 else False,
@@ -577,6 +593,7 @@ def load_case_data(request):
                                 'elementId': i.elementId,
                                 'elementType': elementType,
                                 'inputData': i.inputData,
+                                'elementDynamic': elementDynamic,
                                 'assertType': i.assertType,
                                 'elementTypeTxt': elementTypeTxt,
                                 'assertValueType': i.assertValueType,

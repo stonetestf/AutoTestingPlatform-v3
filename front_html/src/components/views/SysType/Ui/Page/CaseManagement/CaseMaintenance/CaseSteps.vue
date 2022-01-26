@@ -184,6 +184,7 @@ export default {
                 elementType:'',//元素操作类型
                 elementTypeOptions:[],
                 inputData:'',
+                elementDynamic:'',//元素动态
                 assertType:'',//断言类型
                 assertTypeOption:[
                     {'label':'等于(Equals)','value':'Equals'},
@@ -262,6 +263,7 @@ export default {
                                     self.RomeData.elementType=newval.elementType;
                                     self.DisPlayControls(self.RomeData.elementType[1]);
                                     self.RomeData.inputData=newval.inputData;
+                                    self.RomeData.elementDynamic=newval.elementDynamic;
                                     self.RomeData.assertType=newval.assertType;
                                     self.RomeData.assertValueType=newval.assertValueType;
                                     self.RomeData.assertValue=newval.assertValue;
@@ -346,6 +348,22 @@ export default {
            
             obj.elementTypeTxt = elementTypeTxt;
             obj.inputData=self.RomeData.inputData;
+            if(self.RomeData.elementId){
+                if(self.isAddNew){
+                    obj.elementDynamic=0;
+                }else{
+                    if(self.RomeData.elementDynamic==0){
+                        obj.elementDynamic=0;
+                    }else if(self.RomeData.elementDynamic==1){
+                        obj.elementDynamic=2;
+                    }else{
+                        obj.elementDynamic=2;
+                    }
+                }
+            }else{
+                obj.elementDynamic=3;
+            }
+            
             obj.assertType=self.RomeData.assertType;
             obj.assertValueType=self.RomeData.assertValueType;
             obj.assertValue=self.RomeData.assertValue;

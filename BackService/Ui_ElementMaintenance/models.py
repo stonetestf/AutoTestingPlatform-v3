@@ -29,6 +29,17 @@ class ElementLocation(models.Model):  # 元素定位表
     onlyCode = models.CharField('历史记录唯一码', max_length=100, null=False)
 
 
+class ElementDynamic(models.Model):  # 元素更变动态表
+    element = models.ForeignKey(to='ElementBaseData', to_field='id', on_delete=models.CASCADE)
+    case = models.ForeignKey(to='Ui_CaseMaintenance.UiCaseBaseData', to_field='id', on_delete=models.CASCADE)
+    is_read = models.IntegerField("是否已读(1:已看,0:未看)", null=False)
+    createTime = models.DateTimeField('创建时间', auto_now=True)
+    updateTime = models.DateTimeField('更新时间', auto_now=True)
+    uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
+    cuid = models.IntegerField("创建者用户", null=False)
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+
+
 class ElementHistory(models.Model):  # 历史记录，恢复使用
     pid = models.ForeignKey("ProjectManagement.ProManagement", to_field='id', on_delete=models.CASCADE)
     page = models.ForeignKey("PageManagement.PageManagement", to_field='id', on_delete=models.CASCADE)

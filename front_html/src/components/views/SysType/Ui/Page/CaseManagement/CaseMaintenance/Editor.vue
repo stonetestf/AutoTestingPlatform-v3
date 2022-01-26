@@ -157,6 +157,7 @@
                                 </el-table-column>
                                 <el-table-column
                                     label="事件名称"
+                                    width="300px" 
                                     align= "center"
                                     prop="eventName">
                                 </el-table-column>
@@ -174,10 +175,22 @@
                                 </el-table-column>
                                 <el-table-column
                                     label="输入/选择"
+                                    width="400px" 
                                     show-overflow-tooltip
                                     align= "center"
                                     prop="inputData">
                                 </el-table-column>
+                                <el-table-column
+                                    label="元素动态"
+                                    width="100px"
+                                    align= "center">
+                                    <template slot-scope="scope">
+                                        <el-tag type="success" v-if="scope.row.elementDynamic==0">无更变</el-tag>
+                                        <el-link type="danger" v-else-if="scope.row.elementDynamic==1" @click="OpenLifeCycleDialog(scope.row)">已更变</el-link>
+                                        <el-tag type="warning" v-else-if="scope.row.elementDynamic==2">已知晓</el-tag>
+                                        <el-tag type="info" v-else>无元素</el-tag>
+                                    </template>
+                                </el-table-column> 
                                 <el-table-column label="断言操作"
                                     align= "center">
                                     <el-table-column
@@ -200,6 +213,7 @@
                                     </el-table-column>
                                 </el-table-column>
                                 <el-table-column 
+                                    fixed="right"
                                     width="210" 
                                     align= "center">
                                     <template slot="header">
@@ -710,6 +724,7 @@ export default {
                     tempSetTable.elementTypeTxt=val.elementTypeTxt;
                     
                     tempSetTable.inputData=val.inputData;
+                    tempSetTable.elementDynamic=val.elementDynamic;
                     tempSetTable.assertType=val.assertType;
                     tempSetTable.assertValueType=val.assertValueType;
                     tempSetTable.assertValue=val.assertValue;
@@ -738,6 +753,7 @@ export default {
                 elementId:row.elementId,
                 elementType:row.elementType,
                 inputData:row.inputData,
+                elementDynamic:row.elementDynamic,
                 assertType:row.assertType,
                 assertValueType:row.assertValueType,
                 assertValue:row.assertValue,

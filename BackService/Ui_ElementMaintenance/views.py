@@ -14,6 +14,8 @@ from Ui_ElementMaintenance.models import ElementLocation as db_ElementLocation
 from Ui_ElementMaintenance.models import ElementHistory as db_ElementHistory
 from Ui_ElementEvent.models import ElementEventComponent as db_ElementEventComponent
 from Ui_ElementEvent.models import ElementEvent as db_ElementEvent
+from Ui_CaseMaintenance.models import UiTestSet as db_TestSet
+from Ui_ElementMaintenance.models import ElementDynamic as db_ElementDynamic
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -327,6 +329,25 @@ def edit_data(request):
                             )
                         db_ElementLocation.objects.bulk_create(product_list_to_insert)
                         # endregion
+                        # region 添加接口更变信息,用于用例中提醒使用
+                        obj_db_TestSet = db_TestSet.objects.filter(is_del=0, elementId=elementId)
+                        product_list_to_insert = list()
+                        for item_testSet in obj_db_TestSet:
+                            obj_db_ElementDynamic = db_ElementDynamic.objects.filter(
+                                is_del=0, element_id=elementId, case_id=item_testSet.case_id, is_read=0)
+                            if obj_db_ElementDynamic.exists():
+                                obj_db_ElementDynamic.update(updateTime=cls_Common.get_date_time(), uid_id=userId)
+                            else:
+                                product_list_to_insert.append(db_ElementDynamic(
+                                    element_id=elementId,
+                                    case_id=item_testSet.case_id,
+                                    uid_id=userId,
+                                    cuid=userId,
+                                    is_read=0,
+                                    is_del=0,
+                                ))
+                        db_ElementDynamic.objects.bulk_create(product_list_to_insert)
+                        # endregion
                         # region 添加历史恢复
                         restoreData = json.loads(request.body)
                         restoreData['baseData']['updateTime'] = obj_db_ElementBaseData[0].updateTime.strftime(
@@ -373,43 +394,50 @@ def delete_data(request):
     else:
         obj_db_ElementBaseData = db_ElementBaseData.objects.filter(id=elementId)
         if obj_db_ElementBaseData.exists():
-            try:
-                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
-                    # region 添加历史恢复
-                    db_ElementHistory.objects.create(
-                        pid_id=obj_db_ElementBaseData[0].pid_id,
-                        page_id=obj_db_ElementBaseData[0].page_id,
-                        fun_id=obj_db_ElementBaseData[0].fun_id,
-                        element_id=elementId,
-                        elementName=obj_db_ElementBaseData[0].elementName,
-                        operationType='Delete',
-                        onlyCode=onlyCode,
-                        uid_id=userId,
-                    )
-                    # endregion
-                    # region 删除关联信息
-                    db_ElementLocation.objects.filter(
-                        is_del=0, element_id=elementId, onlyCode=obj_db_ElementBaseData[0].onlyCode).update(
-                        is_del=1, updateTime=cls_Common.get_date_time())
-                    obj_db_ElementBaseData.update(
-                        is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
-                    )
-                    # endregion
-                    # region 添加操作信息
-                    cls_Logging.record_operation_info(
-                        'UI', 'Manual', 3, 'Delete',
-                        cls_FindTable.get_pro_name(obj_db_ElementBaseData[0].pid_id),
-                        cls_FindTable.get_page_name(obj_db_ElementBaseData[0].page_id),
-                        cls_FindTable.get_fun_name(obj_db_ElementBaseData[0].fun_id),
-                        userId,
-                        f'【删除元素】 ID:{elementId}:{obj_db_ElementBaseData[0].elementName}',
-                        CUFront=json.dumps(request.POST)
-                    )
-                    # endregion
-            except BaseException as e:  # 自动回滚，不需要任何操作
-                response['errorMsg'] = f'数据删除失败:{e}'
+            obj_db_TestSet = db_TestSet.objects.filter(is_del=0,elementId=elementId)
+            if obj_db_TestSet.exists():
+                caseTable = [i.case.caseName for i in obj_db_TestSet]
+                caseTable = set(caseTable)
+                response['errorMsg'] = '当前元素已绑定用例,请解除绑定后在进行删除操作!' \
+                                       f'用例列表:{caseTable}'
             else:
-                response['statusCode'] = 2003
+                try:
+                    with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                        # region 添加历史恢复
+                        db_ElementHistory.objects.create(
+                            pid_id=obj_db_ElementBaseData[0].pid_id,
+                            page_id=obj_db_ElementBaseData[0].page_id,
+                            fun_id=obj_db_ElementBaseData[0].fun_id,
+                            element_id=elementId,
+                            elementName=obj_db_ElementBaseData[0].elementName,
+                            operationType='Delete',
+                            onlyCode=onlyCode,
+                            uid_id=userId,
+                        )
+                        # endregion
+                        # region 删除关联信息
+                        db_ElementLocation.objects.filter(
+                            is_del=0, element_id=elementId, onlyCode=obj_db_ElementBaseData[0].onlyCode).update(
+                            is_del=1, updateTime=cls_Common.get_date_time())
+                        obj_db_ElementBaseData.update(
+                            is_del=1, updateTime=cls_Common.get_date_time(), uid_id=userId
+                        )
+                        # endregion
+                        # region 添加操作信息
+                        cls_Logging.record_operation_info(
+                            'UI', 'Manual', 3, 'Delete',
+                            cls_FindTable.get_pro_name(obj_db_ElementBaseData[0].pid_id),
+                            cls_FindTable.get_page_name(obj_db_ElementBaseData[0].page_id),
+                            cls_FindTable.get_fun_name(obj_db_ElementBaseData[0].fun_id),
+                            userId,
+                            f'【删除元素】 ID:{elementId}:{obj_db_ElementBaseData[0].elementName}',
+                            CUFront=json.dumps(request.POST)
+                        )
+                        # endregion
+                except BaseException as e:  # 自动回滚，不需要任何操作
+                    response['errorMsg'] = f'数据删除失败:{e}'
+                else:
+                    response['statusCode'] = 2003
         else:
             response['errorMsg'] = '未找到当前数据,请刷新后重新尝试!'
     return JsonResponse(response)

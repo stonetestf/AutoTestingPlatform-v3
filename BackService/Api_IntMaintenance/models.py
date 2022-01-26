@@ -132,7 +132,7 @@ class ApiHistory(models.Model):  # 历史记录，恢复使用
 class ApiDynamic(models.Model):  # 接口动态表
     apiId = models.ForeignKey(to='ApiBaseData', to_field='id', on_delete=models.CASCADE)
     case = models.ForeignKey(to='Api_CaseMaintenance.CaseBaseData', to_field='id', on_delete=models.CASCADE)
-    is_read = models.IntegerField("是否删除(1:已看,0:未看)", null=False)
+    is_read = models.IntegerField("是否已读(1:已看,0:未看)", null=False)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     updateTime = models.DateTimeField('更新时间', auto_now=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id
