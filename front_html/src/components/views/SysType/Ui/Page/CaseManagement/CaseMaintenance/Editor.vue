@@ -546,18 +546,18 @@ export default {
         next() {//下一步
             let self = this;
             if(self.StepsRomeData.active==0){//基本用例数据
-                self.StepsRomeData.active++;
-                self.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                    self.TestSetRowDrop();
-                })
-                // this.$refs['BasicRomeData'].validate((valid) => {
-                //     if (valid) {//通过
-                //         self.StepsRomeData.active++;
-                //         self.$nextTick(function () {//当DOM加载完成后才会执行这个!
-                //             self.TestSetRowDrop();
-                //         })
-                //     } 
-                // });
+                // self.StepsRomeData.active++;
+                // self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                //     self.TestSetRowDrop();
+                // })
+                this.$refs['BasicRomeData'].validate((valid) => {
+                    if (valid) {//通过
+                        self.StepsRomeData.active++;
+                        self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                            self.TestSetRowDrop();
+                        })
+                    } 
+                });
             }else if(self.StepsRomeData.active==1){
                 self.StepsRomeData.active++;
             }else if(self.StepsRomeData.active==2){

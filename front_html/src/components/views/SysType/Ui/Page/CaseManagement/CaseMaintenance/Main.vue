@@ -475,6 +475,32 @@ export default {
             }
             self.dialog.editor.dialogVisible=true;
         },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                    this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/UiCaseMaintenance/DeleteData',Qs.stringify({
+                'caseId':id,
+            })).then(res => {
+            if(res.data.statusCode ==2003){
+                self.$message.success('用例删除成功!');
+                self.SelectData();
+            }
+            else{
+                self.$message.error('用例删除失败:'+ res.data.errorMsg);
+            }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
     }
 };
 </script>

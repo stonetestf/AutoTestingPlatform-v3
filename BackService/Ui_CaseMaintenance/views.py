@@ -471,6 +471,67 @@ def edit_data(request):
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken
+@require_http_methods(["POST"])
+def delete_data(request):
+    response = {}
+    try:
+        userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
+        caseId = request.POST['caseId']
+        onlyCode = cls_Common.generate_only_code()
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_CaseMaintenance', 'delete_data', errorMsg)
+    else:
+        obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0,id=caseId)
+        if obj_db_CaseBaseData.exists():
+            try:
+                with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
+                    # region 历史恢复
+                    # db_ApiCaseHistory.objects.create(
+                    #     pid_id=obj_db_CaseBaseData[0].pid_id,
+                    #     page_id=obj_db_CaseBaseData[0].page_id,
+                    #     fun_id=obj_db_CaseBaseData[0].fun_id,
+                    #     case_id=caseId,
+                    #     caseName=obj_db_CaseBaseData[0].caseName,
+                    #     onlyCode=onlyCode,
+                    #     operationType='Delete',
+                    #     uid_id=userId
+                    # )
+                    # endregion
+                    # region 添加操作信息
+                    cls_Logging.record_operation_info(
+                        'UI', 'Manual', 3, 'Delete',
+                        cls_FindTable.get_pro_name(obj_db_CaseBaseData[0].pid_id),
+                        cls_FindTable.get_page_name(obj_db_CaseBaseData[0].page_id),
+                        cls_FindTable.get_fun_name(obj_db_CaseBaseData[0].fun_id),
+                        userId,
+                        f'【删除用例】 ID:{caseId}:{obj_db_CaseBaseData[0].caseName}',
+                        CUFront=json.dumps(request.POST)
+                    )
+                    # endregion
+                    # region 删除关联信息
+                    db_TestSet.objects.filter(
+                        is_del=0, case_id=caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time()
+                    )
+                    db_AssociatedPage.objects.filter(
+                        is_del=0, case_id=caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time()
+                    )
+                    obj_db_CaseBaseData.update(is_del=1, updateTime=cls_Common.get_date_time(),uid_id=userId)
+                    # endregion
+            except BaseException as e:  # 自动回滚，不需要任何操作
+                response['errorMsg'] = f'数据删除失败:{e}'
+            else:
+                response['statusCode'] = 2003
+        else:
+            response['errorMsg'] = '未找到当前用例数据,请刷新后重新尝试!'
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
 @require_http_methods(["GET"])
 def load_case_data(request):
     response = {}
