@@ -1,5 +1,5 @@
 <template>
-    <div class="MainCard">
+    <div style="height: 775px;">
         <el-form ref="RomeData"  :model="RomeData">
             <el-form-item>
                 <el-row :gutter="20">
@@ -146,7 +146,5 @@ export default {
 </script>
 
 <style>
-.MainCard{
-    height: 770px;
-}
+
 </style>

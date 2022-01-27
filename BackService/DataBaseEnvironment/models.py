@@ -3,7 +3,7 @@ from django.db import models
 
 # Create your models here.
 class DataBase(models.Model):
-    sysType = models.CharField("所属系统", max_length=10, null=False)
+    # sysType = models.CharField("所属系统", max_length=10, null=False)
     dbType = models.CharField('数据库类型(MySql,)', max_length=50, null=False)
     dataBaseIp = models.CharField('IP', max_length=50, null=False)
     port = models.CharField('端口', max_length=10, null=False)

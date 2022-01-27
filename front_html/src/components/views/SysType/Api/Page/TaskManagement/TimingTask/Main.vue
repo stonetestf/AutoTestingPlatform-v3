@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <div class="MainCard">
+            <div style="height: 775px;">
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="任务名称:">
@@ -22,11 +22,11 @@
                     </el-form>
                 </div>
                 <div>
-                    <div style="margin-top:-15px;">
+                    <div>
                         <el-table
                             v-loading="loading"
                             :data="RomeData.tableData"
-                            height="690px"
+                            height="670px"
                             border
                             ref="multipleTable"
                             @selection-change="handleSelectionChange"
@@ -492,7 +492,5 @@ export default {
 </script>
 
 <style>
-.MainCard{
-    height: 780px;
-}
+
 </style>

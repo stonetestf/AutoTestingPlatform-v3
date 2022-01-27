@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <div class="MainCard">
+            <div style="height: 775px;">
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
@@ -72,211 +72,209 @@
                     </el-form>
                 </div>
                 <div>
-                    <div style="margin-top:-15px;">
-                        <el-table
-                            v-loading="loading"
-                            :data="tableData"
-                            height="690px"
-                            border
-                            ref="multipleTable"
-                            @selection-change="handleSelectionChange"
-                            @row-click="handleRowClick">
-                            <el-table-column
-                                type="selection"
-                                align= "center"
-                                width="50">
-                            </el-table-column>
-                            <el-table-column
-                                label="ID"
-                                align= "center"
-                                width="80px"
-                                prop="id">
-                            </el-table-column>
-                            <el-table-column 
-                                label="步骤排序" 
-                                width="50px"
-                                type="expand">
-                                <template slot-scope="props">
-                                    <el-form label-position="left" >
-                                        <el-table
-                                            :data="props.row.tableItem"
-                                            border>
-                                            <el-table-column
-                                                label="步骤"
-                                                prop="index"
-                                                align= "center"
-                                                width="100">
-                                            </el-table-column>
-                                            <el-table-column
-                                                prop="apiName"
-                                                align= "center"
-                                                label="接口名称">
-                                            </el-table-column>
-                                            <el-table-column
-                                                prop="testName"
-                                                align= "center"
-                                                label="测试名称">
-                                            </el-table-column>
-                                            <el-table-column
-                                                width="100px"
-                                                prop="requestType"
-                                                align= "center"
-                                                label="请求类型">
-                                            </el-table-column>
-                                            <el-table-column
-                                                width="120px"
-                                                prop="requestParamsType"
-                                                align= "center"
-                                                label="请求参数类型">
-                                            </el-table-column>
-                                            <el-table-column
-                                                label="用例接口状态"
-                                                width="130"
-                                                align= "center">
-                                                <template slot-scope="scope">
-                                                    <el-tag type="success" v-if="scope.row.state" >启用</el-tag>
-                                                    <el-tag type="info" v-else >禁用</el-tag>
-                                                </template>
-                                            </el-table-column>
-                                            <el-table-column
-                                                prop="updateTime"
-                                                width="200"
-                                                align= "center"
-                                                label="更新时间">
-                                            </el-table-column>
-                                        </el-table>
-                                    </el-form>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="优先级"
-                                width="70px"
-                                align= "center"
-                                prop="priority">
-                            </el-table-column>
-                            <el-table-column
-                                label="测试类型"
-                                align= "center"
-                                width="100px">
-                                <template slot-scope="scope">
-                                    <el-tag type="info" v-if="scope.row.testType=='UnitTest'" >单元测试</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.testType=='HybridTest'" >混合测试</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="用例名称"
-                                width="300px"
-                                align= "center"
-                                prop="caseName">
-                            </el-table-column>
-                            <el-table-column
-                                label="所属页面"
-                                width="200px"
-                                align= "center"
-                                prop="pageName">
-                            </el-table-column>
-                            <el-table-column
-                                label="所属功能"
-                                width="200px"
-                                align= "center"
-                                prop="funName">
-                            </el-table-column>
-                            <el-table-column
-                                label="用例标签"
-                                align= "center"
-                                width="120px"
-                                prop="labelId">
-                                <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.labelId=='CommonCase'">普通用例</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.labelId=='ReturnCase'">回归用例</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="用例状态"
-                                align= "center"
-                                width="100px">
-                                <template slot-scope="scope">
-                                    <el-tag type="warning" v-if="scope.row.caseState=='InDev'">研发中</el-tag>
-                                    <el-tag type="success" v-else-if="scope.row.caseState=='Completed'">已完成</el-tag>
-                                    <!-- <el-tag type="success" v-else-if="scope.row.caseState=='Completed'"><i class="el-icon-check"></i></el-tag> -->
-                                    <el-tag type="info" v-else>弃用</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="接口动态"
-                                align= "center"
-                                width="100px">
-                                <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.apidynamic==false">无更变</el-tag>
-                                    <el-tag type="danger" v-else>已更变</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="通过率"
-                                width="80px"
-                                align= "center">
-                                <template slot-scope="scope">
-                                    <el-button type="text" @click="openReport(scope.row.id)">{{scope.row.passRate}}</el-button>
-                                </template>
-                            </el-table-column> 
-                            <el-table-column
-                                label="更新时间"
-                                width="160px"
-                                align= "center"
-                                prop="updateTime">
-                            </el-table-column>
-                            <el-table-column
-                                show-overflow-tooltip
-                                label="修改者"
-                                width="150px"
-                                align= "center"
-                                prop="userName">
-                            </el-table-column>
-                            <el-table-column
-                                label="创建者"
-                                width="120px"
-                                align= "center"
-                                prop="createUserName">
-                            </el-table-column>
-                            <el-table-column
-                                fixed="right"
-                                align="center"
-                                width="240px">
-                            <template slot="header">
-                                <el-button-group>
-                                    <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
-                                    <el-dropdown @command="handleCommand">
-                                        <el-button type="warning">
-                                            更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
-                                        </el-button>
-                                        <el-dropdown-menu slot="dropdown">
-                                            <el-dropdown-item command="CopyCase">复制用例</el-dropdown-item>
-                                            <el-dropdown-item command="CaseRestore">历史恢复(勾选/不勾选)</el-dropdown-item>
-                                        </el-dropdown-menu>
-                                    </el-dropdown>
-                                </el-button-group>
+                    <el-table
+                        v-loading="loading"
+                        :data="tableData"
+                        height="670px"
+                        border
+                        ref="multipleTable"
+                        @selection-change="handleSelectionChange"
+                        @row-click="handleRowClick">
+                        <el-table-column
+                            type="selection"
+                            align= "center"
+                            width="50">
+                        </el-table-column>
+                        <el-table-column
+                            label="ID"
+                            align= "center"
+                            width="80px"
+                            prop="id">
+                        </el-table-column>
+                        <el-table-column 
+                            label="步骤排序" 
+                            width="50px"
+                            type="expand">
+                            <template slot-scope="props">
+                                <el-form label-position="left" >
+                                    <el-table
+                                        :data="props.row.tableItem"
+                                        border>
+                                        <el-table-column
+                                            label="步骤"
+                                            prop="index"
+                                            align= "center"
+                                            width="100">
+                                        </el-table-column>
+                                        <el-table-column
+                                            prop="apiName"
+                                            align= "center"
+                                            label="接口名称">
+                                        </el-table-column>
+                                        <el-table-column
+                                            prop="testName"
+                                            align= "center"
+                                            label="测试名称">
+                                        </el-table-column>
+                                        <el-table-column
+                                            width="100px"
+                                            prop="requestType"
+                                            align= "center"
+                                            label="请求类型">
+                                        </el-table-column>
+                                        <el-table-column
+                                            width="120px"
+                                            prop="requestParamsType"
+                                            align= "center"
+                                            label="请求参数类型">
+                                        </el-table-column>
+                                        <el-table-column
+                                            label="用例接口状态"
+                                            width="130"
+                                            align= "center">
+                                            <template slot-scope="scope">
+                                                <el-tag type="success" v-if="scope.row.state" >启用</el-tag>
+                                                <el-tag type="info" v-else >禁用</el-tag>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column
+                                            prop="updateTime"
+                                            width="200"
+                                            align= "center"
+                                            label="更新时间">
+                                        </el-table-column>
+                                    </el-table>
+                                </el-form>
                             </template>
-                            <template slot-scope="scope" style="width:100px">
-                                <el-button-group>
-                                <el-button
-                                    size="mini"
-                                    type="success"
-                                    @click="OpenRunTypeDialog(scope.$index, scope.row)">RunCase
-                                </el-button>
-                                <el-button
-                                    size="mini"
-                                    @click="handleEdit(scope.$index, scope.row)">Edit
-                                </el-button>
-                                <el-button
-                                    size="mini"
-                                    type="danger"
-                                    @click="handleDelete(scope.$index, scope.row)">Delete
-                                </el-button>
-                                </el-button-group>
+                        </el-table-column>
+                        <el-table-column
+                            label="优先级"
+                            width="70px"
+                            align= "center"
+                            prop="priority">
+                        </el-table-column>
+                        <el-table-column
+                            label="测试类型"
+                            align= "center"
+                            width="100px">
+                            <template slot-scope="scope">
+                                <el-tag type="info" v-if="scope.row.testType=='UnitTest'" >单元测试</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.testType=='HybridTest'" >混合测试</el-tag>
                             </template>
-                            </el-table-column>
-                        </el-table>
-                    </div>
+                        </el-table-column>
+                        <el-table-column
+                            label="用例名称"
+                            width="300px"
+                            align= "center"
+                            prop="caseName">
+                        </el-table-column>
+                        <el-table-column
+                            label="所属页面"
+                            width="200px"
+                            align= "center"
+                            prop="pageName">
+                        </el-table-column>
+                        <el-table-column
+                            label="所属功能"
+                            width="200px"
+                            align= "center"
+                            prop="funName">
+                        </el-table-column>
+                        <el-table-column
+                            label="用例标签"
+                            align= "center"
+                            width="120px"
+                            prop="labelId">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.labelId=='CommonCase'">普通用例</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.labelId=='ReturnCase'">回归用例</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="用例状态"
+                            align= "center"
+                            width="100px">
+                            <template slot-scope="scope">
+                                <el-tag type="warning" v-if="scope.row.caseState=='InDev'">研发中</el-tag>
+                                <el-tag type="success" v-else-if="scope.row.caseState=='Completed'">已完成</el-tag>
+                                <!-- <el-tag type="success" v-else-if="scope.row.caseState=='Completed'"><i class="el-icon-check"></i></el-tag> -->
+                                <el-tag type="info" v-else>弃用</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="接口动态"
+                            align= "center"
+                            width="100px">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.apidynamic==false">无更变</el-tag>
+                                <el-tag type="danger" v-else>已更变</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="通过率"
+                            width="80px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-button type="text" @click="openReport(scope.row.id)">{{scope.row.passRate}}</el-button>
+                            </template>
+                        </el-table-column> 
+                        <el-table-column
+                            label="更新时间"
+                            width="160px"
+                            align= "center"
+                            prop="updateTime">
+                        </el-table-column>
+                        <el-table-column
+                            show-overflow-tooltip
+                            label="修改者"
+                            width="150px"
+                            align= "center"
+                            prop="userName">
+                        </el-table-column>
+                        <el-table-column
+                            label="创建者"
+                            width="120px"
+                            align= "center"
+                            prop="createUserName">
+                        </el-table-column>
+                        <el-table-column
+                            fixed="right"
+                            align="center"
+                            width="240px">
+                        <template slot="header">
+                            <el-button-group>
+                                <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                                <el-dropdown @command="handleCommand">
+                                    <el-button type="warning">
+                                        更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
+                                    </el-button>
+                                    <el-dropdown-menu slot="dropdown">
+                                        <el-dropdown-item command="CopyCase">复制用例</el-dropdown-item>
+                                        <el-dropdown-item command="CaseRestore">历史恢复(勾选/不勾选)</el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </el-dropdown>
+                            </el-button-group>
+                        </template>
+                        <template slot-scope="scope" style="width:100px">
+                            <el-button-group>
+                            <el-button
+                                size="mini"
+                                type="success"
+                                @click="OpenRunTypeDialog(scope.$index, scope.row)">RunCase
+                            </el-button>
+                            <el-button
+                                size="mini"
+                                @click="handleEdit(scope.$index, scope.row)">Edit
+                            </el-button>
+                            <el-button
+                                size="mini"
+                                type="danger"
+                                @click="handleDelete(scope.$index, scope.row)">Delete
+                            </el-button>
+                            </el-button-group>
+                        </template>
+                        </el-table-column>
+                    </el-table>
                 </div>
                 <div>
                     <div style="margin-top:-10px">
@@ -664,7 +662,5 @@ export default {
 </script>
 
 <style>
-.MainCard{
-    height: 780px;
-}
+
 </style>

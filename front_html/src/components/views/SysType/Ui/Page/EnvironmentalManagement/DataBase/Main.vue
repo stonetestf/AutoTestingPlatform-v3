@@ -1,24 +1,31 @@
 <template>
-    <div>
+    <div ref="tab-main"  id="tab-main">
         <template>
             <div style="height: 775px;">
                 <div>
                     <el-form :inline="true"  method="post">
-                        <el-form-item label="事件名称:">
-                            <el-input clearable v-model.trim="SelectRomeData.eventName"></el-input>
+                        <el-form-item label="数据库类型:">
+                            <el-select v-model="SelectRomeData.dbType" clearable placeholder="请选择" style="width:200px;float:left">
+                                <el-option
+                                    v-for="item in SelectRomeData.dbTypeOption"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-select>
                         </el-form-item>
-                        <el-form-item label="事件名称:">
-                            <el-input clearable v-model.trim="SelectRomeData.eventLogo"></el-input>
+                        <el-form-item label="IP:">
+                            <el-input clearable v-model.trim="SelectRomeData.dataBaseIp"></el-input>
                         </el-form-item>
                         <el-button type="primary" @click="SelectData()">查询</el-button>
                         <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
                     </el-form>
                 </div>
-                <div style="margin-top:-15px;">
+                <div>
                     <el-table
                         v-loading="loading"
                         :data="tableData"
-                        height="680px"
+                        height="619px"
                         border>
                         <el-table-column
                             label="ID"
@@ -27,56 +34,60 @@
                             prop="id">
                         </el-table-column>
                         <el-table-column
-                            label="事件名称"
-                            width="250px"
-                            align= "center"
-                            prop="eventName">
-                        </el-table-column>
-                        <el-table-column
-                            label="事件标识"
-                            width="200px"
-                            align= "center"
-                            prop="eventLogo">
-                        </el-table-column>
-                        <el-table-column
-                            label="元素组件"
-                            width="500px"
+                            label="数据库类型"
+                            width="150px"
                             align= "center">
                             <template slot-scope="scope">
-                                <el-tag 
-                                v-for="item in scope.row.component" 
-                                :key="item.id" 
-                                :type="item.state ? 'success':'info'" 
-                                style="margin:5px 5px">{{item.label}}</el-tag>
+                                <el-tag type="info">{{scope.row.dbType}}</el-tag>
                             </template>
+                        </el-table-column> 
+                        <el-table-column
+                            label="IP"
+                            align= "center"
+                            prop="dataBaseIp">
+                        </el-table-column>
+                        <el-table-column
+                            label="端口"
+                            align= "center"
+                            prop="port">
+                        </el-table-column>
+                        <el-table-column
+                            label="用户名"
+                            align= "center"
+                            prop="dbUser">
                         </el-table-column>
                         <el-table-column
                             label="备注"
                             align= "center"
-                            width="300px"
                             prop="remarks">
                         </el-table-column>
                         <el-table-column
+                            label="状态"
+                            width="150px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.state" >正常</el-tag>
+                                <el-tag type="danger" v-else>异常</el-tag>
+                            </template>
+                        </el-table-column> 
+                        <el-table-column
                             label="更新时间"
-                            width="160px"
                             align= "center"
+                            width="200px"
                             prop="updateTime">
-                        </el-table-column>
+                        </el-table-column>   
                         <el-table-column
+                            show-overflow-tooltip
                             label="修改者"
-                            width="160px"
                             align= "center"
+                            width="150px"
                             prop="userName">
-                        </el-table-column>
+                        </el-table-column>   
                         <el-table-column
-                            fixed="right"
                             align="center"
-                            width="200px">
+                            width="160px">
                         <template slot="header">
-                            <el-button-group>
-                                <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
-                                <el-button type="warning" @click="OpenSequencingDialog()">事件排序</el-button>
-                            </el-button-group>
+                            <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
                         </template>
                         <template slot-scope="scope" style="width:100px">
                             <el-button-group>
@@ -94,7 +105,7 @@
                         </el-table-column>
                     </el-table>
                 </div>
-                <div style="margin-top:-10px">
+                <div style="margin-top:30px">
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                         @size-change="pageSizeChange"
                         @current-change="handleCurrentChange"
@@ -114,34 +125,30 @@
                 @Succeed="SelectData">
             </dialog-editor>
         </template>
-        <template>
-            <dialog-event-sequencing
-                @closeDialog="closeSequencingDialog" 
-                :isVisible="dialog.sequencing.dialogVisible" 
-                :dialogPara="dialog.sequencing.dialogPara"
-                @Succeed="SelectData">
-            </dialog-event-sequencing>
-        </template>
     </div>
 </template>
 
 <script>
 import Qs from 'qs';
-import {PrintConsole} from '../../../../../../js/Logger';
 import DialogEditor from "./Editor.vue";
-import DialogEventSequencing from "./EventSequencing.vue";
 
 export default {
     components: {
-       DialogEditor,DialogEventSequencing
+        DialogEditor,
     },
     data() {
         return {
             loading:false,
             tableData: [],
             SelectRomeData:{
-                eventName:'',
-                eventLogo:'',
+                dbType:'',
+                dbTypeOption:[
+                    {'label':'MySql','value':'MySql'}
+                ],
+                dataBaseIp:'',
+            },
+            RomeData:{
+    
             },
             page: { 
                 current: 1,// 默认显示第几页
@@ -156,31 +163,22 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
-                sequencing:{
-                    dialogVisible:false,
-                    dialogPara:{
-                        dialogTitle:"",//初始化标题
-                        isAddNew:true,//初始化是否新增\修改
-                    },
-                },
             },
+           
         };
-    },
-    watch:{//当我们输入值后，wacth监听每次修改变化的新值，然后计算输出值
-      
     },
     mounted(){
         this.SelectData();
     },
     methods: {
-        SelectData(){
+        SelectData(){//刷新列表数据
             let self = this;
-            self.loading=true;
             self.tableData= [];
-            self.$axios.get('/api/UiElementEvent/SelectData',{
+            self.loading=true;
+            self.$axios.get('/api/DataBaseEnvironment/SelectData',{
                 params:{
-                    'eventName':self.SelectRomeData.eventName,
-                    'eventLogo':self.SelectRomeData.eventLogo,
+                    'dbType':self.SelectRomeData.dbType,
+                    'dataBaseIp':self.SelectRomeData.dataBaseIp,
                     'current':self.page.current,
                     'pageSize':self.page.pageSize
                 }
@@ -189,11 +187,13 @@ export default {
                     res.data.TableData.forEach(d => {
                         let obj = {};
                         obj.id =d.id;
-                        obj.eventName=d.eventName;
-                        obj.eventLogo=d.eventLogo;
+                        obj.dbType = d.dbType;
+                        obj.dataBaseIp = d.dataBaseIp;
+                        obj.port=d.port;
+                        obj.dbUser = d.dbUser;
+                        obj.dbpwd = d.dbpwd;
                         obj.remarks = d.remarks;
-                        obj.component=d.component;
-
+                        obj.state = d.state;
                         obj.updateTime = d.updateTime;
                         obj.userName = d.userName;
 
@@ -205,8 +205,9 @@ export default {
                     }
                     self.page.total = res.data.Total;
                     self.loading=false;
-                }else{
-                    self.$message.error('获取数据失败:'+res.data.errorMsg);
+                }
+                else{
+                    self.$message.error('列表数据获取失败:'+res.data.errorMsg);
                     self.loading=false;
                 }
                 // console.log(self.tableData);
@@ -214,11 +215,63 @@ export default {
                 console.log(error);
                 self.loading=false;
             })
-        },  
+        },
+        closeEditDialog(){
+            this.dialog.editor.dialogVisible =false;
+        },
+        OpenEditDialog(){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"新增数据库",//初始化标题
+                isAddNew:true,//初始化是否新增\修改
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+        handleEdit(index,row){
+            let self = this;
+            self.dialog.editor.dialogPara={
+                dialogTitle:"编辑数据库",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                dbId:row.id,
+                dbType:row.dbType,
+                dataBaseIp:row.dataBaseIp,
+                port:row.port,
+                dbUser:row.dbUser,
+                dbpwd:row.dbpwd,
+                remarks:row.remarks,
+            }
+            self.dialog.editor.dialogVisible=true;
+        },
+        handleDelete(index,row){
+            this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                   this.DeleteData(row.id);     
+                }).catch(() => {       
+            });
+        },
+        DeleteData(id){
+            let self = this;
+            self.$axios.post('/api/DataBaseEnvironment/DeleteData',Qs.stringify({
+                'dbId':id,
+            })).then(res => {
+            if(res.data.statusCode ==2003){
+                self.$message.success('数据库删除成功!');
+                self.SelectData();
+            }
+            else{
+                self.$message.error('数据库删除失败:'+ res.data.errorMsg);
+            }
+            }).catch(function (error) {
+                console.log(error);
+            })
+        },
         ClearSelectRomeData(){
             let self = this;
-            self.SelectRomeData.eventName='';
-            self.SelectRomeData.eventLogo='';
+            self.SelectRomeData.dbType='';
+            self.SelectRomeData.dataBaseIp='';
             self.SelectData();
         },
         pageSizeChange(pageSize) {
@@ -232,70 +285,6 @@ export default {
             // 改变默认的页数
             self.page.current=val
             self.SelectData();
-        },
-
-        //编辑、新增
-        closeEditDialog(){
-            this.dialog.editor.dialogVisible =false;
-        },
-        OpenEditDialog(){
-            let self = this;
-            self.dialog.editor.dialogPara={
-                dialogTitle:"新增元素操作",//初始化标题
-                isAddNew:true,//初始化是否新增\修改
-            }
-            self.dialog.editor.dialogVisible=true;
-        },
-        handleEdit(index,row){
-            let self = this;
-            self.dialog.editor.dialogPara={
-                dialogTitle:"编辑元素操作",//初始化标题
-                isAddNew:false,//初始化是否新增\修改
-                eventId:row.id,
-                eventName:row.eventName,
-                eventLogo:row.eventLogo,
-                remarks:row.remarks,
-            }
-            self.dialog.editor.dialogVisible=true;
-        },
-        handleDelete(index,row){
-            this.$confirm('请确定是否删除?', '提示', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-                type: 'warning'
-                }).then(() => {
-                    this.DeleteData(row.id);     
-                }).catch(() => {       
-            });
-        },
-        DeleteData(id){
-            let self = this;
-            self.$axios.post('/api/UiElementEvent/DeleteData',Qs.stringify({
-                'eventId':id,
-            })).then(res => {
-            if(res.data.statusCode ==2003){
-                self.$message.success('删除元素事件成功!');
-                self.SelectData();
-            }
-            else{
-                self.$message.error('删除元素事件失败:'+ res.data.errorMsg);
-            }
-            }).catch(function (error) {
-                console.log(error);
-            })
-        },
-
-        //事件排序
-        closeSequencingDialog(){
-            this.dialog.sequencing.dialogVisible =false;
-        },
-        OpenSequencingDialog(){
-            let self = this;
-            self.dialog.sequencing.dialogPara={
-                dialogTitle:"事件排序",//初始化标题
-                isAddNew:true,//初始化是否新增\修改
-            }
-            self.dialog.sequencing.dialogVisible=true;
         },
     }
 };

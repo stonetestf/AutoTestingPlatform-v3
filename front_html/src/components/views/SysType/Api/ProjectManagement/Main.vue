@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <div class="MainCard">
+            <div style="height:760px;">
                 <div style="margin-top:15px">
                     <div>
                         <el-form :inline="true"  method="post">
@@ -442,7 +442,4 @@ export default {
 </script>
 
 <style>
-.MainCard{
-    height:760px ;
-}
 </style>

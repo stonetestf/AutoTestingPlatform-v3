@@ -188,11 +188,12 @@ import Ui_ElementEvent from '@/components/views/SysType/Ui/Page/Setting/ElementE
 import Ui_CaseMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/CaseMaintenance/Main';//用例维护
 import Ui_PageEnvironment from '@/components/views/SysType/Ui/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 import Ui_DebugTalk from '@/components/views/SysType/Ui/Page/Setting/DebugTalk/Main';//DebugTalk.py
+import Ui_DataBase from '@/components/views/SysType/Ui/Page/EnvironmentalManagement/DataBase/Main';//数据库环境
 
 export default {
   components: {
     DialogUserInfo,DialogRemindInfo,
-    Ui_PageManagement,Ui_FunManagement,Ui_ElementMaintenance,Ui_ElementEvent,Ui_CaseMaintenance,Ui_PageEnvironment,Ui_DebugTalk
+    Ui_PageManagement,Ui_FunManagement,Ui_ElementMaintenance,Ui_ElementEvent,Ui_CaseMaintenance,Ui_PageEnvironment,Ui_DebugTalk,Ui_DataBase
 
   },
   data() {

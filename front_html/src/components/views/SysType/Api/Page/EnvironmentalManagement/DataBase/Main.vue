@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <div class="MainCard">
+            <div style="height: 775px;">
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="数据库类型:">
@@ -177,7 +177,6 @@ export default {
             self.loading=true;
             self.$axios.get('/api/DataBaseEnvironment/SelectData',{
                 params:{
-                    'sysType':'API',
                     // 'proId':self.$cookies.get('proId'),
                     'dbType':self.SelectRomeData.dbType,
                     'dataBaseIp':self.SelectRomeData.dataBaseIp,

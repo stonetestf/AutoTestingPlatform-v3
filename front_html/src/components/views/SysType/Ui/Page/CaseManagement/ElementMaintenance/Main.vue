@@ -1,7 +1,7 @@
 <template>
     <div>
         <template>
-            <div class="MainCard">
+            <div style="height: 775px;">
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
@@ -474,7 +474,5 @@ export default {
 </script>
 
 <style>
-.MainCard{
-    height: 775px;
-}
+
 </style>

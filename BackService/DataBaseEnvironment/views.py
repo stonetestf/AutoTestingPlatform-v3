@@ -47,7 +47,7 @@ def select_data(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
-        sysType = objData.sysType
+        # sysType = objData.sysType
         dbType = objData.dbType
         dataBaseIp = objData.dataBaseIp
 
@@ -60,7 +60,7 @@ def select_data(request):
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'DataBaseEnvironment', 'select_data', errorMsg)
     else:
-        obj_db_DataBase = db_DataBase.objects.filter(is_del=0, sysType=sysType).order_by('-updateTime')
+        obj_db_DataBase = db_DataBase.objects.filter(is_del=0).order_by('-updateTime')
         if dbType:
             obj_db_DataBase = obj_db_DataBase.filter(dbType=dbType)
         if dataBaseIp:
@@ -126,7 +126,7 @@ def save_data(request):
     response = {}
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
-        sysType = request.POST['sysType']
+        # sysType = request.POST['sysType']
         dbType = request.POST['dbType']
         dataBaseIp = request.POST['dataBaseIp']
         port = request.POST['port']
@@ -147,7 +147,7 @@ def save_data(request):
                     aesEncrypt = cls_DataSecurity.aes_encrypt(passWord)
                     # region 保存基本信息
                     db_DataBase.objects.create(
-                        sysType=sysType,
+                        # sysType=sysType,
                         dbType=dbType,
                         dataBaseIp=dataBaseIp,
                         port=port,
@@ -183,7 +183,7 @@ def edit_data(request):
     try:
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])
         dbId = int(request.POST['dbId'])
-        sysType = request.POST['sysType']
+        # sysType = request.POST['sysType']
         dbType = request.POST['dbType']
         dataBaseIp = request.POST['dataBaseIp']
         port = request.POST['port']
@@ -197,8 +197,7 @@ def edit_data(request):
     else:
         obj_db_DataBase = db_DataBase.objects.filter(id=dbId, is_del=0)
         if obj_db_DataBase.exists():
-            select_db_DataBase = db_DataBase.objects.filter(
-                sysType=sysType, dbType=dbType, dataBaseIp=dataBaseIp, port=port, is_del=0)
+            select_db_DataBase = db_DataBase.objects.filter(dbType=dbType, dataBaseIp=dataBaseIp, port=port, is_del=0)
             if select_db_DataBase.exists():
                 if dbId == select_db_DataBase[0].id:  # 自己修改自己
                     is_Edit = True
@@ -226,7 +225,7 @@ def edit_data(request):
                         else:
                             aesEncrypt = cls_DataSecurity.aes_encrypt(passWord)  # 加密
                         obj_db_DataBase.update(
-                            sysType=sysType,
+                            # sysType=sysType,
                             dbType=dbType,
                             dataBaseIp=dataBaseIp,
                             port=port,
@@ -282,6 +281,7 @@ def delete_data(request):
         else:
             response['errorMsg'] = '未找到当前系统下的全局变量,请刷新后重新尝试!'
     return JsonResponse(response)
+
 
 @cls_Logging.log
 @cls_GlobalDer.foo_isToken

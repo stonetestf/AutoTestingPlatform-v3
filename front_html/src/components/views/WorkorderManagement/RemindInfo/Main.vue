@@ -1,6 +1,6 @@
 <template>
     <div ref="tab-main"  id="tab-main">
-        <div class="MainCard">
+        <div style="height: 775px;">
             <div>
                 <el-form :inline="true" class="demo-form-inline" method="post">
                     <el-form-item label="提醒类别:">

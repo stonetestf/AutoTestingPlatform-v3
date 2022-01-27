@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <div class="MainCard">
+            <div style="height: 775px;">
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
@@ -39,114 +39,112 @@
                     </el-form>
                 </div>
                 <div>
-                    <div style="margin-top:-15px;">
-                        <el-table
-                            :data="tableData"
-                            height="680px"
-                            border>
-                            <el-table-column
-                                label="编号"
-                                align= "center"
-                                width="100px"
-                                prop="codeId">
-                            </el-table-column>
-                            <el-table-column
-                                label="工单来源"
-                                width="100px"
-                                align= "center">
-                                <template slot-scope="scope">
-                                    <el-tag type="primary" v-if="scope.row.workSource==0">手工录入</el-tag>
-                                    <el-tag type="info"  v-else>系统录入</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="工单类型"
-                                width="80px"
-                                align= "center"
-                                prop="workType">
-                                <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.workType=='Add'">新增</el-tag>
-                                    <el-tag type="warning"  v-else-if="scope.row.workType=='Edit'">修改</el-tag>
-                                    <el-tag type="danger"  v-else-if="scope.row.workType=='Delete'">删除</el-tag>
-                                    <el-tag type="warning"  v-else-if="scope.row.workType=='BUG'">BUG</el-tag>
-                                    <el-tag type="info" v-else>其他</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="所属页面/功能"
-                                width="300px"
-                                align= "center"
-                                prop="pageNameAndfunName">
-                            </el-table-column>
-                            <!-- <el-table-column
-                                label="所属功能"
-                                width="200px"
-                                align= "center"
-                                prop="funName">
-                            </el-table-column> -->
-                            <el-table-column
-                                label="工单名称"
-                                align= "center"
-                                prop="workName">
-                            </el-table-column>
-                            <el-table-column
-                                label="工单信息"
-                                show-overflow-tooltip
-                                align= "center"
-                                prop="message">
-                            </el-table-column>
-                            <el-table-column
-                                label="工单状态"
-                                width="100px"
-                                align= "center"
-                                prop="workState">
-                                <template slot-scope="scope">
-                                    <el-tag type="info" v-if="scope.row.workState==0">待受理</el-tag>
-                                    <el-tag type="danger" v-else-if="scope.row.workState==1">受理中</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.workState==2">已解决</el-tag>
-                                    <el-tag type="success" v-else>已关闭</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="更新时间"
-                                align= "center"
-                                width="160px"
-                                prop="updateTime">
-                            </el-table-column>   
-                            <el-table-column
-                                show-overflow-tooltip
-                                label="创建者"
-                                align= "center"
-                                width="150px"
-                                prop="createUserName">
-                            </el-table-column>   
-                            <el-table-column
-                                align="center"
-                                width="170px">
-                            <template slot="header">
-                                <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                    <el-table
+                        :data="tableData"
+                        height="670px"
+                        border>
+                        <el-table-column
+                            label="编号"
+                            align= "center"
+                            width="100px"
+                            prop="codeId">
+                        </el-table-column>
+                        <el-table-column
+                            label="工单来源"
+                            width="100px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="primary" v-if="scope.row.workSource==0">手工录入</el-tag>
+                                <el-tag type="info"  v-else>系统录入</el-tag>
                             </template>
-                            <template slot-scope="scope" style="width:100px">
-                                <!-- <el-button-group> -->
-                                    <!-- <el-button
-                                        size="mini"
-                                        type="warning"
-                                        @click="handleLifeCycle(scope.$index, scope.row)">生命周期
-                                    </el-button> -->
-                                    <el-button
-                                        size="mini"
-                                        @click="handleEdit(scope.$index, scope.row)">Edit
-                                    </el-button>
-                                    <el-button
-                                        size="mini"
-                                        type="danger"
-                                        @click="handleDelete(scope.$index, scope.row)">Delete
-                                    </el-button>
-                                <!-- </el-button-group> -->
+                        </el-table-column>
+                        <el-table-column
+                            label="工单类型"
+                            width="80px"
+                            align= "center"
+                            prop="workType">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.workType=='Add'">新增</el-tag>
+                                <el-tag type="warning"  v-else-if="scope.row.workType=='Edit'">修改</el-tag>
+                                <el-tag type="danger"  v-else-if="scope.row.workType=='Delete'">删除</el-tag>
+                                <el-tag type="warning"  v-else-if="scope.row.workType=='BUG'">BUG</el-tag>
+                                <el-tag type="info" v-else>其他</el-tag>
                             </template>
-                            </el-table-column>
-                        </el-table>
-                    </div>
+                        </el-table-column>
+                        <el-table-column
+                            label="所属页面/功能"
+                            width="300px"
+                            align= "center"
+                            prop="pageNameAndfunName">
+                        </el-table-column>
+                        <!-- <el-table-column
+                            label="所属功能"
+                            width="200px"
+                            align= "center"
+                            prop="funName">
+                        </el-table-column> -->
+                        <el-table-column
+                            label="工单名称"
+                            align= "center"
+                            prop="workName">
+                        </el-table-column>
+                        <el-table-column
+                            label="工单信息"
+                            show-overflow-tooltip
+                            align= "center"
+                            prop="message">
+                        </el-table-column>
+                        <el-table-column
+                            label="工单状态"
+                            width="100px"
+                            align= "center"
+                            prop="workState">
+                            <template slot-scope="scope">
+                                <el-tag type="info" v-if="scope.row.workState==0">待受理</el-tag>
+                                <el-tag type="danger" v-else-if="scope.row.workState==1">受理中</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.workState==2">已解决</el-tag>
+                                <el-tag type="success" v-else>已关闭</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            label="更新时间"
+                            align= "center"
+                            width="160px"
+                            prop="updateTime">
+                        </el-table-column>   
+                        <el-table-column
+                            show-overflow-tooltip
+                            label="创建者"
+                            align= "center"
+                            width="150px"
+                            prop="createUserName">
+                        </el-table-column>   
+                        <el-table-column
+                            align="center"
+                            width="170px">
+                        <template slot="header">
+                            <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                        </template>
+                        <template slot-scope="scope" style="width:100px">
+                            <!-- <el-button-group> -->
+                                <!-- <el-button
+                                    size="mini"
+                                    type="warning"
+                                    @click="handleLifeCycle(scope.$index, scope.row)">生命周期
+                                </el-button> -->
+                                <el-button
+                                    size="mini"
+                                    @click="handleEdit(scope.$index, scope.row)">Edit
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    type="danger"
+                                    @click="handleDelete(scope.$index, scope.row)">Delete
+                                </el-button>
+                            <!-- </el-button-group> -->
+                        </template>
+                        </el-table-column>
+                    </el-table>
                 </div>
                 <div style="margin-top:-10px">
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
@@ -369,7 +367,5 @@ export default {
 </script>
 
 <style>
-.MainCard{
-    height: 775px;
-}
+
 </style>

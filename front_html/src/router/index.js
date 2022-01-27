@@ -44,6 +44,7 @@ import Ui_ElementEvent from '@/components/views/SysType/Ui/Page/Setting/ElementE
 import Ui_CaseMaintenance from '@/components/views/SysType/Ui/Page/CaseManagement/CaseMaintenance/Main';//用例维护
 import Ui_PageEnvironment from '@/components/views/SysType/Ui/Page/EnvironmentalManagement/PageEnvironment/Main';//页面环境
 import Ui_DebugTalk from '@/components/views/SysType/Ui/Page/Setting/DebugTalk/Main';//DebugTalk.py
+import Ui_DataBase from '@/components/views/SysType/Ui/Page/EnvironmentalManagement/DataBase/Main';//数据库环境
 
 
 import Router from 'vue-router'
@@ -156,6 +157,9 @@ export default new Router({
       },
       {path: '/SysType/Ui/Page/Setting/DebugTalk/Main',name: 'Ui_DebugTalk',component: Ui_DebugTalk,
         meta:{name: 'DebugTalk.py',url:'/SysType/Ui/Page/Setting/DebugTalk/Main',comp:'Ui_DebugTalk'}
+      },
+      {path: '/SysType/Ui/Page/EnvironmentalManagement/DataBase/Main',name: 'Ui_DataBase',component: Ui_DataBase,
+        meta:{name: '数据库环境',url:'/SysType/Ui/Page/EnvironmentalManagement/DataBase/Main',comp:'Ui_DataBase'}
       },
     ]
   },
