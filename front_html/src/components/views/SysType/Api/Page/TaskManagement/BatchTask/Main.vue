@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card class="MainCard">
+            <div class="MainCard">
                 <div>
                     <el-form :inline="true"  method="post">
                         <el-row>
@@ -28,143 +28,141 @@
                         </el-row>
                     </el-form>
                 </div>
-                <div>
-                    <div style="margin-top:-15px;">
-                        <el-table
-                            v-loading="loading"
-                            :data="RomeData.tableData"
-                            height="653px"
-                            border
-                            ref="multipleTable"
-                            @selection-change="handleSelectionChange"
-                            @row-click="handleRowClick">
-                            <el-table-column
-                                type="selection"
-                                align= "center"
-                                width="50">
-                            </el-table-column>
-                            <el-table-column
-                                label="ID"
-                                align= "center"
-                                width="80px"
-                                prop="id">
-                            </el-table-column>
-                            <el-table-column
-                                label="任务名称"
-                                width="300px"
-                                align= "center"
-                                prop="batchName">
-                            </el-table-column>
-                            <el-table-column
-                                show-overflow-tooltip
-                                label="备注"
-                                width="300px"
-                                align= "center"
-                                prop="remarks">
-                            </el-table-column>    
-                            <el-table-column
-                                label="任务数量"
-                                width="100px"
-                                align= "center"
-                                prop="taskTotal">
-                            </el-table-column>  
-                            <el-table-column
-                                label="钩子状态"
-                                width="100px"
-                                align= "center">
-                                <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.hookState">开启</el-tag>
-                                    <el-tag type="danger" v-else>关闭</el-tag>
-                                </template>
-                            </el-table-column>      
-                            <el-table-column
-                                label="最后报告时间"
-                                width="160px"
-                                align= "center">
-                                <template slot-scope="scope">
-                                    <span type="success" v-if="scope.row.lastReportTime" >{{scope.row.lastReportTime}}</span>
-                                    <el-tag v-else>无最新数据</el-tag>
-                                </template>
-                            </el-table-column>
-                            <el-table-column
-                                label="最后报告状态"
-                                width="110px"
-                                align= "center">
-                                <template slot-scope="scope">
-                                    <el-tag type="success" v-if="scope.row.lastReportStatus=='Pass'" >Pass</el-tag>
-                                    <el-tag type="warning" v-else-if="scope.row.lastReportStatus=='Fail'">Fail</el-tag>
-                                    <el-tag type="danger" v-else-if="scope.row.lastReportStatus=='Error'">Error</el-tag>
-                                    <el-tag v-else>无最新数据</el-tag>
-                                </template>
-                            </el-table-column> 
-                            <el-table-column
-                                label="通过率"
-                                width="80px"
-                                align= "center">
-                                <template slot-scope="scope">
-                                    <el-button type="text" @click="openReport(scope.row.id)">{{scope.row.passRate}}</el-button>
-                                </template>
-                            </el-table-column> 
-                            <el-table-column
-                                label="更新时间"
-                                align= "center"
-                                width="200px"
-                                prop="updateTime">
-                            </el-table-column>   
-                            <el-table-column
-                                show-overflow-tooltip
-                                label="修改者"
-                                align= "center"
-                                width="150px"
-                                prop="userName">
-                            </el-table-column>
-                            <el-table-column
-                                show-overflow-tooltip
-                                label="创建者"
-                                align= "center"
-                                width="150px"
-                                prop="createUserName">
-                            </el-table-column>   
-                            <el-table-column
-                                fixed="right"
-                                align="center"
-                                width="250px">
-                            <template slot="header">
-                                <el-button-group>
-                                    <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
-                                    <el-dropdown @command="handleCommand">
-                                        <el-button type="warning">
-                                            更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
-                                        </el-button>
-                                        <el-dropdown-menu slot="dropdown">
-                                            <el-dropdown-item command="ExecutiveLogging">执行记录</el-dropdown-item>
-                                            <el-dropdown-item command="CopyTask">复制批量任务(未开发)</el-dropdown-item>
-                                            <el-dropdown-item command="TaskRestore">历史恢复(勾选/不勾选)</el-dropdown-item>
-                                        </el-dropdown-menu>
-                                    </el-dropdown>
-                                </el-button-group>
+                <div style="margin-top:-15px;">
+                    <el-table
+                        v-loading="loading"
+                        :data="RomeData.tableData"
+                        height="690px"
+                        border
+                        ref="multipleTable"
+                        @selection-change="handleSelectionChange"
+                        @row-click="handleRowClick">
+                        <el-table-column
+                            type="selection"
+                            align= "center"
+                            width="50">
+                        </el-table-column>
+                        <el-table-column
+                            label="ID"
+                            align= "center"
+                            width="80px"
+                            prop="id">
+                        </el-table-column>
+                        <el-table-column
+                            label="任务名称"
+                            width="300px"
+                            align= "center"
+                            prop="batchName">
+                        </el-table-column>
+                        <el-table-column
+                            show-overflow-tooltip
+                            label="备注"
+                            width="300px"
+                            align= "center"
+                            prop="remarks">
+                        </el-table-column>    
+                        <el-table-column
+                            label="任务数量"
+                            width="100px"
+                            align= "center"
+                            prop="taskTotal">
+                        </el-table-column>  
+                        <el-table-column
+                            label="钩子状态"
+                            width="100px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.hookState">开启</el-tag>
+                                <el-tag type="danger" v-else>关闭</el-tag>
                             </template>
-                            <template slot-scope="scope" style="width:100px">
-                                <el-button-group>
-                                    <el-button
-                                        size="mini"
-                                        type="success"
-                                        @click="OpenVersionsDialog(scope.$index, scope.row)">RunBatch
-                                    </el-button>
-                                    <el-button
-                                        size="mini"
-                                        @click="handleEdit(scope.$index, scope.row)">Edit
-                                    </el-button>
-                                    <el-button
-                                        size="mini"
-                                        type="danger"
-                                        @click="handleDelete(scope.$index, scope.row)">Delete
-                                    </el-button>
-                                </el-button-group>
+                        </el-table-column>      
+                        <el-table-column
+                            label="最后报告时间"
+                            width="160px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <span type="success" v-if="scope.row.lastReportTime" >{{scope.row.lastReportTime}}</span>
+                                <el-tag v-else>无最新数据</el-tag>
                             </template>
-                            </el-table-column>
-                        </el-table>
-                    </div>
+                        </el-table-column>
+                        <el-table-column
+                            label="最后报告状态"
+                            width="110px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-tag type="success" v-if="scope.row.lastReportStatus=='Pass'" >Pass</el-tag>
+                                <el-tag type="warning" v-else-if="scope.row.lastReportStatus=='Fail'">Fail</el-tag>
+                                <el-tag type="danger" v-else-if="scope.row.lastReportStatus=='Error'">Error</el-tag>
+                                <el-tag v-else>无最新数据</el-tag>
+                            </template>
+                        </el-table-column> 
+                        <el-table-column
+                            label="通过率"
+                            width="80px"
+                            align= "center">
+                            <template slot-scope="scope">
+                                <el-button type="text" @click="openReport(scope.row.id)">{{scope.row.passRate}}</el-button>
+                            </template>
+                        </el-table-column> 
+                        <el-table-column
+                            label="更新时间"
+                            align= "center"
+                            width="200px"
+                            prop="updateTime">
+                        </el-table-column>   
+                        <el-table-column
+                            show-overflow-tooltip
+                            label="修改者"
+                            align= "center"
+                            width="150px"
+                            prop="userName">
+                        </el-table-column>
+                        <el-table-column
+                            show-overflow-tooltip
+                            label="创建者"
+                            align= "center"
+                            width="150px"
+                            prop="createUserName">
+                        </el-table-column>   
+                        <el-table-column
+                            fixed="right"
+                            align="center"
+                            width="250px">
+                        <template slot="header">
+                            <el-button-group>
+                                <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                                <el-dropdown @command="handleCommand">
+                                    <el-button type="warning">
+                                        更多菜单<i class="el-icon-arrow-down el-icon--right"></i>
+                                    </el-button>
+                                    <el-dropdown-menu slot="dropdown">
+                                        <el-dropdown-item command="ExecutiveLogging">执行记录</el-dropdown-item>
+                                        <el-dropdown-item command="CopyTask">复制批量任务(未开发)</el-dropdown-item>
+                                        <el-dropdown-item command="TaskRestore">历史恢复(勾选/不勾选)</el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </el-dropdown>
+                            </el-button-group>
+                        </template>
+                        <template slot-scope="scope" style="width:100px">
+                            <el-button-group>
+                                <el-button
+                                    size="mini"
+                                    type="success"
+                                    @click="OpenVersionsDialog(scope.$index, scope.row)">RunBatch
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    @click="handleEdit(scope.$index, scope.row)">Edit
+                                </el-button>
+                                <el-button
+                                    size="mini"
+                                    type="danger"
+                                    @click="handleDelete(scope.$index, scope.row)">Delete
+                                </el-button>
+                            </el-button-group>
+                        </template>
+                        </el-table-column>
+                    </el-table>
                 </div>
                 <div style="margin-top:-10px">
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
@@ -176,7 +174,7 @@
                         style="margin: 20px auto auto auto;">
                     </el-pagination>
                 </div>
-            </el-card>
+            </div>
         </template>
         <template>
             <dialog-editor
@@ -499,6 +497,6 @@ export default {
 
 <style>
 .MainCard{
-    height: 770px;
+    height: 780px;
 }
 </style>

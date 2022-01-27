@@ -1,8 +1,8 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card class="MainCard">
-                <template>
+            <div class="MainCard">
+                <div>
                     <el-form :inline="true"  method="post">
                         <el-row>
                             <el-col :span="22">
@@ -17,8 +17,8 @@
                             </el-col>
                         </el-row>
                     </el-form>
-                </template>
-                <template>
+                </div>
+                <div>
                     <div>
                         <el-table
                             :data="tableData"
@@ -95,8 +95,8 @@
                             </el-table-column>
                         </el-table>
                     </div>
-                </template>
-                <template>
+                </div>
+                <div style="margin-top:30px">
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                         @size-change="pageSizeChange"
                         @current-change="handleCurrentChange"
@@ -105,8 +105,8 @@
                         :page-sizes = [10,30,50,100]
                         style="margin: 20px auto auto auto;">
                     </el-pagination>
-                </template>
-            </el-card>
+                </div>
+            </div>
         </template>
     </div>
 </template>

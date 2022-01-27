@@ -1,8 +1,8 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card class="MainCard">
-                <template>
+            <div class="MainCard">
+                <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
                             <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
@@ -37,12 +37,12 @@
                         <el-button type="primary" @click="SelectData()">查询</el-button>
                         <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
                     </el-form>
-                </template>
-                <template>
-                    <div>
+                </div>
+                <div>
+                    <div style="margin-top:-15px;">
                         <el-table
                             :data="tableData"
-                            height="619px"
+                            height="680px"
                             border>
                             <el-table-column
                                 label="编号"
@@ -147,8 +147,8 @@
                             </el-table-column>
                         </el-table>
                     </div>
-                </template>
-                <template>
+                </div>
+                <div style="margin-top:-10px">
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                         @size-change="pageSizeChange"
                         @current-change="handleCurrentChange"
@@ -157,8 +157,8 @@
                         :page-sizes = [10,30,50,100]
                         style="margin: 20px auto auto auto;">
                     </el-pagination>
-                </template>
-            </el-card>
+                </div>
+            </div>
         </template>
         <template>
             <dialog-editor
@@ -369,5 +369,7 @@ export default {
 </script>
 
 <style>
-
+.MainCard{
+    height: 775px;
+}
 </style>

@@ -1,22 +1,22 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card class="MainCard">
-                <template>
-                    <el-form :inline="true"  method="post">
-                        <el-form-item label="项目名称:">
-                            <el-input clearable v-model.trim="RomeData.proName"></el-input>
-                        </el-form-item>
-                        <el-button type="primary" @click="SelectData()">查询</el-button>
-                        <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
-                    </el-form>
-                </template>
-                <template>
-                    <div style="margin-top:-15px;">
+            <div class="MainCard">
+                <div style="margin-top:15px">
+                    <div>
+                        <el-form :inline="true"  method="post">
+                            <el-form-item label="项目名称:">
+                                <el-input clearable v-model.trim="RomeData.proName"></el-input>
+                            </el-form-item>
+                            <el-button type="primary" @click="SelectData()">查询</el-button>
+                            <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
+                        </el-form>
+                    </div>
+                    <div>
                         <el-table
                             v-loading="loading"
                             :data="RomeData.tableData"
-                            height="596px"
+                            height="619px"
                             border
                             ref="multipleTable"
                             @selection-change="handleSelectionChange"
@@ -167,18 +167,18 @@
                             </el-table-column>
                         </el-table>
                     </div>
-                </template>
-                <template>
-                    <el-pagination background layout="total, sizes, prev, pager, next, jumper"
-                        @size-change="pageSizeChange"
-                        @current-change="handleCurrentChange"
-                        :current-page="page.current" 
-                        :total="page.total"
-                        :page-sizes = [10,30,50,100]
-                        style="margin: 20px auto auto auto;">
-                    </el-pagination>
-                </template>
-            </el-card>
+                    <div style="margin-top:40px">
+                        <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                            @size-change="pageSizeChange"
+                            @current-change="handleCurrentChange"
+                            :current-page="page.current" 
+                            :total="page.total"
+                            :page-sizes = [10,30,50,100]
+                            style="margin: 20px auto auto auto;">
+                        </el-pagination>
+                    </div>
+                </div>
+            </div>
         </template>
         <template>
             <dialog-editor
@@ -443,6 +443,6 @@ export default {
 
 <style>
 .MainCard{
-    height:770px ;
+   height:760px ;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div ref="tab-main"  id="tab-main">
     <template>
-      <el-card class="MainCard">
+      <div class="MainCard">
           <div>
             <el-row :gutter="10">
               <el-col :span="11">
@@ -127,7 +127,7 @@
                     </div>
                     <div style="margin-top:10px">
                       <el-table
-                        height="330px"
+                        height="379px"
                         :data="RomeData.formerlyTableData">
                         <el-table-column
                           prop="index"
@@ -180,7 +180,7 @@
                     </div>
                     <div style="margin-top:10px">
                     <el-table
-                        height="330px"
+                        height="379px"
                         :data="RomeData.myWorkTableData">
                         <el-table-column
                           label="编号"
@@ -261,7 +261,7 @@
           <div ref="dragDiv" class="float-drag-button" v-if="dialog.queue.dialogVisible==false && dialog.myWork.dialogVisible==false">
             <span @click="OpenQueueDialog()">队列({{RomeData.queueTableData.length}})</span>
           </div>
-      </el-card>
+      </div>
     </template>
     <template>
       <el-drawer
@@ -945,7 +945,7 @@ export default {
   height: 330px;
 }
 .DownCard{
-  height: 400px;
+  height: 430px;
 }
 .float-drag-button {
   position: absolute;

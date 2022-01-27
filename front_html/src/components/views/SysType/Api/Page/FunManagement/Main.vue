@@ -1,8 +1,8 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card class="MainCard">
-                <template>
+            <div class="MainCard">
+                <div>
                     <el-form :inline="true"  method="post">
                         <el-form-item label="所属页面:">
                             <el-select v-model="SelectRomeData.pageId" clearable placeholder="请选择" style="width:200px;" @click.native="GetPageNameOption()">
@@ -20,13 +20,13 @@
                         <el-button type="primary" @click="SelectData()">查询</el-button>
                         <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
                     </el-form>
-                </template>
-                <template>
+                </div>
+                <div>
                     <div>
                         <el-table
                             v-loading="loading"
                             :data="tableData"
-                            height="619px"
+                            height="649px"
                             border
                             ref="multipleTable"
                             @selection-change="handleSelectionChange"
@@ -101,18 +101,18 @@
                             </el-table-column>
                         </el-table>
                     </div>
-                </template>
-                <template>
+                </div>
+                <div>
                     <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                         @size-change="pageSizeChange"
                         @current-change="handleCurrentChange"
                         :current-page="page.current" 
                         :total="page.total"
-                        :page-sizes = [10,30,50,100]
+                        :page-sizes = [11,30,50,100]
                         style="margin: 20px auto auto auto;">
                     </el-pagination>
-                </template>
-            </el-card>
+                </div>
+            </div>
         </template>
         <template>
             <dialog-editor
@@ -159,7 +159,7 @@ export default {
             page: { 
                 current: 1,// 默认显示第几页
                 total: 0,// 总条数，根据接口获取数据长度(注意：这里不能为空)
-                pageSize: 10, // 默认每页显示的条数（可修改）
+                pageSize: 11, // 默认每页显示的条数（可修改）
             },
             dialog:{
                 editor:{

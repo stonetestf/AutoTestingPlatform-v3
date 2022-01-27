@@ -1,8 +1,8 @@
 <template>
   <div ref="tab-main"  id="tab-main">
     <template>
-      <el-card class="MainCard">
-        <template>
+      <div class="MainCard">
+        <div>
           <el-form :inline="true"  method="post">
             <el-form-item label="页面名称:">
                 <el-input clearable v-model.trim="SelectRomeData.pageName"></el-input>
@@ -10,78 +10,76 @@
             <el-button type="primary" @click="SelectData()">查询</el-button>
             <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
           </el-form>
-        </template>
-        <template>
-          <div>
-            <el-table
-              v-loading="loading"
-              :data="tableData"
-              height="619px"
-              border
-              ref="multipleTable"
-              @selection-change="handleSelectionChange"
-              @row-click="handleRowClick">
-              <el-table-column
-                  type="selection"
-                  align= "center"
-                  width="50">
-              </el-table-column>
-              <el-table-column
-                label="ID"
-                width="80px"
+        </div>
+        <div>
+          <el-table
+            v-loading="loading"
+            :data="tableData"
+            height="619px"
+            border
+            ref="multipleTable"
+            @selection-change="handleSelectionChange"
+            @row-click="handleRowClick">
+            <el-table-column
+                type="selection"
                 align= "center"
-                prop="id">
-              </el-table-column>
-              <el-table-column
-                label="页面名称"
-                align= "center"
-                prop="pageName">
-              </el-table-column>
-              <el-table-column
-                label="备注"
-                align= "center"
-                prop="remarks">
-              </el-table-column>         
-              <el-table-column
-                label="更新时间"
-                align= "center"
-                width="200px"
-                prop="updateTime">
-              </el-table-column>   
-              <el-table-column
-                show-overflow-tooltip
-                label="修改者"
-                align= "center"
-                width="150px"
-                prop="userName">
-              </el-table-column>   
-              <el-table-column
-                  align="center"
-                  width="200px">
-                <template slot="header">
-                  <el-button-group>
-                    <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
-                    <el-button type="warning" @click="OpenHistoryInfoDialog()">历史恢复</el-button>
-                  </el-button-group>
-                </template>
-                <template slot-scope="scope" style="width:100px">
-                  <el-button-group>
-                    <el-button
-                        size="mini"
-                        @click="handleEdit(scope.$index, scope.row)">Edit
-                    </el-button>
-                    <el-button
-                        size="mini"
-                        type="danger"
-                        @click="handleDelete(scope.$index, scope.row)">Delete
-                    </el-button>
-                  </el-button-group>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </template>
-        <template>
+                width="50">
+            </el-table-column>
+            <el-table-column
+              label="ID"
+              width="80px"
+              align= "center"
+              prop="id">
+            </el-table-column>
+            <el-table-column
+              label="页面名称"
+              align= "center"
+              prop="pageName">
+            </el-table-column>
+            <el-table-column
+              label="备注"
+              align= "center"
+              prop="remarks">
+            </el-table-column>         
+            <el-table-column
+              label="更新时间"
+              align= "center"
+              width="200px"
+              prop="updateTime">
+            </el-table-column>   
+            <el-table-column
+              show-overflow-tooltip
+              label="修改者"
+              align= "center"
+              width="150px"
+              prop="userName">
+            </el-table-column>   
+            <el-table-column
+                align="center"
+                width="200px">
+              <template slot="header">
+                <el-button-group>
+                  <el-button type="primary" @click="OpenEditDialog()">新增</el-button>
+                  <el-button type="warning" @click="OpenHistoryInfoDialog()">历史恢复</el-button>
+                </el-button-group>
+              </template>
+              <template slot-scope="scope" style="width:100px">
+                <el-button-group>
+                  <el-button
+                      size="mini"
+                      @click="handleEdit(scope.$index, scope.row)">Edit
+                  </el-button>
+                  <el-button
+                      size="mini"
+                      type="danger"
+                      @click="handleDelete(scope.$index, scope.row)">Delete
+                  </el-button>
+                </el-button-group>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <div style="margin-top:30px">
             <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                 @size-change="pageSizeChange"
                 @current-change="handleCurrentChange"
@@ -90,8 +88,8 @@
                 :page-sizes = [10,30,50,100]
                 style="margin: 20px auto auto auto;">
             </el-pagination>
-        </template>
-      </el-card>
+        </div>
+      </div>
     </template>
     <template>
       <dialog-editor

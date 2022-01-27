@@ -1,8 +1,8 @@
 <template>
   <div ref="tab-main"  id="tab-main">
     <template>
-      <el-card class="MainCard">
-        <template>
+      <div class="MainCard">
+        <div>
           <el-form :inline="true"  method="post">
             <el-form-item label="页面名称:">
                 <el-input clearable v-model.trim="SelectRomeData.pageName"></el-input>
@@ -10,8 +10,8 @@
             <el-button type="primary" @click="SelectData()">查询</el-button>
             <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
           </el-form>
-        </template>
-        <template>
+        </div>
+        <div>
           <div>
             <el-table
               v-loading="loading"
@@ -80,8 +80,8 @@
               </el-table-column>
             </el-table>
           </div>
-        </template>
-        <template>
+        </div>
+        <div style="margin-top:30px">
             <el-pagination background layout="total, sizes, prev, pager, next, jumper"
                 @size-change="pageSizeChange"
                 @current-change="handleCurrentChange"
@@ -90,8 +90,8 @@
                 :page-sizes = [10,30,50,100]
                 style="margin: 20px auto auto auto;">
             </el-pagination>
-        </template>
-      </el-card>
+        </div>
+      </div>
     </template>
     <template>
       <dialog-editor

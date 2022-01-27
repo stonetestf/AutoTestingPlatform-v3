@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card class="MainCard">
+            <div class="MainCard">
                 <div>
                     <el-form :inline="true" class="demo-form-inline" method="post">
                         <el-form-item label="所属页面:">
@@ -57,12 +57,11 @@
                         <!-- </div> -->
                     </el-form>
                 </div>
-                <div>
-                    <div style="margin-top:-15px;">
+                <div style="margin-top:-15px;">
                     <el-table
                         v-loading="loading"
                         :data=tableData
-                        height="653px"
+                        height="690px"
                         border
                         ref="multipleTable"
                         @selection-change="handleSelectionChange"
@@ -195,7 +194,6 @@
                         </template>
                         </el-table-column>
                     </el-table>
-                    </div>
                 </div>
                 <div>
                     <div style="margin-top:-10px">
@@ -209,7 +207,7 @@
                     </el-pagination>
                     </div>
                 </div>
-            </el-card>
+            </div>
         </template>
         <template>
             <dialog-editor
