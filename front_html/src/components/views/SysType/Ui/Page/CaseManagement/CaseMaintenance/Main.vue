@@ -61,11 +61,11 @@
                         <el-button type="info"  @click="ClearSelectRomeData()">重置</el-button>
                     </el-form>
                 </div>
-                <div style="margin-top:-15px;">
+                <div>
                     <el-table
                         v-loading="loading"
                         :data="RomeData.tableData"
-                        height="680px"
+                        height="670px"
                         border
                         ref="multipleTable"
                         @selection-change="handleSelectionChange"
