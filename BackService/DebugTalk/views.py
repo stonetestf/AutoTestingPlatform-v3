@@ -42,7 +42,7 @@ def select_data(request):
         if sysType == "API":
             fileName = 'ApiDebug'
         else:
-            fileName = ''
+            fileName = 'UiDebug'
         try:
             with open(f"{settings.BASE_DIR}/DebugTalk/Data/{fileName}.py", encoding="utf8") as f:
                 readText = f.read()
@@ -82,7 +82,7 @@ def data_save(request):
         if sysType == "API":
             fileName = 'ApiDebug'
         else:
-            fileName = ''
+            fileName = 'UiDebug'
         try:
             with open(f"{settings.BASE_DIR}/DebugTalk/Data/{fileName}.py", 'w', encoding="utf8") as f:
                 f.write(text)
@@ -119,10 +119,9 @@ def run_debug(request):
                 retData = eval(strCmd)
             else:
                 pass
-                # import DebugTalk.Data.FunDebug
-                # strCmd = f"DebugTalk.Data.FunDebug.{methods}"
-                # retData = eval(strCmd)
-                retData = ""
+                import DebugTalk.Data.UiDebug
+                strCmd = f"DebugTalk.Data.UiDebug.{methods}"
+                retData = eval(strCmd)
         except Exception as e:
             errorMsg = f"{methods} 执行错误:{e}"
             response['errorMsg'] = errorMsg

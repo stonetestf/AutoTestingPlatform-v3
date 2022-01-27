@@ -1,7 +1,7 @@
 <template>
     <div ref="tab-main"  id="tab-main">
         <template>
-            <el-card class="MainCard">
+            <div class="MainCard">
                 <div>
                     <el-form :inline="true"  method="post">
                        <el-form-item label="所属页面:">
@@ -65,7 +65,7 @@
                     <el-table
                         v-loading="loading"
                         :data="RomeData.tableData"
-                        height="653px"
+                        height="680px"
                         border
                         ref="multipleTable"
                         @selection-change="handleSelectionChange"
@@ -266,7 +266,7 @@
                         style="margin: 20px auto auto auto;">
                     </el-pagination>
                 </div>
-            </el-card>
+            </div>
         </template>
         <template>
             <dialog-editor

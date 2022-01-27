@@ -31,24 +31,35 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="选择用例:" v-if="RomeData.operationType=='TestCase'">
-                        <el-select v-model="RomeData.caseId" clearable placeholder="请选择需要运行的用例" style="width:300px;float:left;" >
+                        <el-cascader 
+                        :options="RomeData.caseNameOption" 
+                        v-model="RomeData.caseId" 
+                        placeholder="请选择需要运行的用例" 
+                        style="width:300px;float:left;"
+                        @click.native="GetCaseNameOption()">
+                            <template slot-scope="{ node, data }">
+                                <span>{{ data.label }}</span>
+                                <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                            </template>
+                        </el-cascader>
+                        <!-- <el-select v-model="RomeData.caseId" clearable placeholder="请选择需要运行的用例" style="width:300px;float:left;" >
                             <el-option
                                 v-for="item in RomeData.caseNameOption"
                                 :key="item.value"
                                 :label="item.label"
                                 :value="item.value">
                             </el-option>
-                        </el-select>
+                        </el-select> -->
                     </el-form-item>
                     <el-form-item label="输入方法:" v-else-if="RomeData.operationType=='Methods'">
                         <el-input v-model="RomeData.methodsName" clearable placeholder="输入方法函数名称" style="width:300px;float:left;"></el-input>
                     </el-form-item>
-                    <el-form-item label="选择DB:" v-else-if="RomeData.operationType=='DataBase'">
+                    <el-form-item label="选择DB:" v-else-if="RomeData.operationType=='dataBase'">
                         <el-cascader
                             style="float:left;width:300px;"
                             clearable
                             placeholder="请选择连接的数据库" 
-                            v-model="RomeData.dataBase"
+                            v-model="RomeData.dataBaseId"
                             :options="RomeData.dataBaseOptions"
                             @click.native="getDataBaseOption()">
                             <template slot-scope="{ node, data }">
@@ -68,8 +79,8 @@
                 </el-form>
             </div>
             <div>
-                <el-button type="success" @click="AddToOperationTable()" v-if="isAddNew">保存</el-button>
-                <el-button type="warning" @click="EditToOperationTable()" v-else>修改</el-button>
+                <el-button type="success" @click="AddToOperationTable(isAddNew)" v-if="isAddNew">保存</el-button>
+                <el-button type="warning" @click="AddToOperationTable(isAddNew)" v-else>修改</el-button>
                 <el-button @click="ClearRomeData('reset')">重置</el-button>  
             </div>
             </el-drawer>
@@ -80,6 +91,8 @@
 <script>
 import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
+
+import {GetUiCaseNameItems} from "../../../../../../js/GetSelectTable.js";
 
 export default {
     components: {
@@ -93,6 +106,7 @@ export default {
             loading:false,
             RomeData:{
                 id:'',
+                caseId:'',
                 location:'',//位置
                 locationOption:[
                     {'label':'前置操作','value':'Pre'},
@@ -107,9 +121,10 @@ export default {
                 caseId:'',
                 caseNameOption:[],
                 methodsName:'',
-                dataBase:'',
+                dataBaseId:'',
                 dataBaseOptions:[],
                 remarks:'',
+                pageNameList:[],
                 rules:{
                     location:[{ required: true, message: '请选择操作位置', trigger: 'change' }],
                     operationType:[{ required: true, message: '请选择操作类型', trigger: 'change' }],
@@ -141,11 +156,17 @@ export default {
 
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew;
+                this.RomeData.caseId=newval.caseId;
                 this.RomeData.id=newval.id;
+                this.RomeData.pageNameList=newval.pageNameList;
 
                 if(newval.isAddNew==false){//进入编辑状态
                     let self = this;
-
+                    self.RomeData.location=newval.location;
+                    self.RomeData.operationType=newval.operationType;
+                    self.RomeData.methodsName=newval.methodsName;
+                    self.RomeData.dataBaseId=newval.dataBaseId;
+                    self.RomeData.remarks=newval.remarks;
                 }
             }
         },
@@ -173,27 +194,31 @@ export default {
             self.RomeData.operationType='';
             self.RomeData.caseId='';
             self.RomeData.methodsName='';
-            self.RomeData.dataBase='';
+            self.RomeData.dataBaseId='';
             self.RomeData.remarks='';
         },
-        AddToOperationTable(){
+        AddToOperationTable(val){
             let self = this;
             let obj = {};
-            obj.state = true;
             obj.id=self.RomeData.id;
             obj.location = self.RomeData.location;
             obj.operationType = self.RomeData.operationType;
             obj.caseId = self.RomeData.caseId;
             obj.methodsName = self.RomeData.methodsName;
-            obj.dataBase = self.RomeData.dataBase;
+            obj.dataBaseId = self.RomeData.dataBaseId;
             obj.remarks = self.RomeData.remarks;
-
-            self.$emit('geAddtData',obj);//回调传值
+            if(val){
+                self.$emit('geAddtData',obj);//回调传值
+            }else{
+                self.$emit('geEditData',obj);//回调传值
+            }
             self.dialogClose();
         },
-        EditToOperationTable(){
-            let self = this;
-            self.$emit('geEditData',);//回调传值
+        GetCaseNameOption(){//加载用例列表,根据页面Id及需要排除的用例id
+            GetUiCaseNameItems(this.$cookies.get('proId'),this.RomeData.pageNameList,this.RomeData.caseId).then(d=>{
+                this.RomeData.caseNameOption = d.dataList;
+            });
+            
         },
 
     }

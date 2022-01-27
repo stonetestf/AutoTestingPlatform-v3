@@ -11,6 +11,8 @@ from Ui_CaseMaintenance.models import UiCaseBaseData as db_CaseBaseData
 from Ui_CaseMaintenance.models import UiAssociatedPage as db_AssociatedPage
 from Ui_CaseMaintenance.models import UiTestSet as db_TestSet
 from Ui_ElementMaintenance.models import ElementDynamic as db_ElementDynamic
+from PageManagement.models import PageManagement as db_PageManagement
+from Ui_CaseMaintenance.models import UiOperationSet as db_OperationSet
 
 # Create reference here.
 from ClassData.Logger import Logging
@@ -151,6 +153,7 @@ def charm_case_data(request):
         charmType = objData.CharmType  # true 新增，false 修改
         basicData = objData.BasicData
         testSet = objData.TestSet
+        operationSet = objData.OperationSet
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
@@ -211,6 +214,38 @@ def charm_case_data(request):
                             'updateTime': cls_Common.get_date_time()})
 
         # endregion
+        # region 验证操作集
+        for item_index, item_operationSet in enumerate(operationSet, 1):
+            if item_operationSet.state:
+                if not item_operationSet.operationType:
+                    dataList.append({
+                        'stepsName': f'操作集',
+                        'errorMsg': f'第{item_index}行:操作类型不可为空!',
+                        'updateTime': cls_Common.get_date_time()})
+                if not item_operationSet.location:
+                    dataList.append({
+                        'stepsName': f'操作集',
+                        'errorMsg': f'第{item_index}行:操作位置不可为空!',
+                        'updateTime': cls_Common.get_date_time()})
+                if item_operationSet.operationType == 'TestCase':
+                    if not item_operationSet.caseId:
+                        dataList.append({
+                            'stepsName': f'操作集',
+                            'errorMsg': f'第{item_index}行:当前操作类型为用例,选择用例不可为空!',
+                            'updateTime': cls_Common.get_date_time()})
+                elif item_operationSet.operationType == 'Methods':
+                    if not item_operationSet.methodsName:
+                        dataList.append({
+                            'stepsName': f'操作集',
+                            'errorMsg': f'第{item_index}行:当前操作类型为函数方法,调用函数名称不可为空!',
+                            'updateTime': cls_Common.get_date_time()})
+                elif item_operationSet.operationType == 'DataBase':
+                    if not item_operationSet.dataBase:
+                        dataList.append({
+                            'stepsName': f'操作集',
+                            'errorMsg': f'第{item_index}行:当前操作类型为数据库,调用数据库地址不可为空!',
+                            'updateTime': cls_Common.get_date_time()})
+        # endregion
         response['statusCode'] = 2000
         response['TableData'] = dataList
     return JsonResponse(response)
@@ -227,6 +262,7 @@ def save_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
         basicData = objData.BasicData
         testSet = objData.TestSet
+        operationSet = objData.OperationSet
         onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -311,6 +347,24 @@ def save_data(request):
                         ))
                     db_TestSet.objects.bulk_create(product_list_to_insert)
                     # endregion
+                    # region 操作集
+                    product_list_to_insert = list()
+                    for item_index, item_operationSet in enumerate(operationSet, 1):
+                        product_list_to_insert.append(db_OperationSet(
+                            case_id=save_db_CaseBaseData.id,
+                            index=item_index,
+                            state=1 if item_operationSet.state else 0,
+                            location=item_operationSet.location,
+                            operationType=item_operationSet.operationType,
+                            methodsName=item_operationSet.methodsName,
+                            caseId=item_operationSet.caseId,
+                            dataBaseId=item_operationSet.dataBaseId,
+                            remarks=item_operationSet.remarks,
+                            is_del=0,
+                            onlyCode=onlyCode
+                        ))
+                    db_OperationSet.objects.bulk_create(product_list_to_insert)
+                    # endregion
             except BaseException as e:  # 自动回滚，不需要任何操作
                 response['errorMsg'] = f'保存失败:{e}'
             else:
@@ -329,6 +383,7 @@ def edit_data(request):
         userId = cls_FindTable.get_userId(request.META['HTTP_TOKEN'])  # 当前操作者
         basicData = objData.BasicData
         testSet = objData.TestSet
+        operationSet = objData.OperationSet
         onlyCode = cls_Common.generate_only_code()
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
@@ -341,13 +396,12 @@ def edit_data(request):
                 with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                     # region 添加操作信息
                     # region 查询以前的数据
-                    oldTestSet = []
                     # region 测试集
+                    oldTestSet = []
                     obj_db_TestSet = db_TestSet.objects.filter(is_del=0, case_id=basicData.caseId).order_by('index')
                     for item_testSet in obj_db_TestSet:
                         elementType = ast.literal_eval(item_testSet.elementType)
                         oldTestSet.append({
-                            'isAddNew': True,
                             'state': True if item_testSet.state == 1 else False,
                             'index': item_testSet.index,
                             'eventName': item_testSet.eventName,
@@ -358,6 +412,22 @@ def edit_data(request):
                             'assertType': item_testSet.assertType,
                             'assertValueType': item_testSet.assertValueType,
                             'assertValue': item_testSet.assertValue,
+                        })
+                    # endregion
+                    # region 操作集
+                    oldOperationSet = []
+                    obj_db_OperationSet = db_OperationSet.objects.filter(
+                        is_del=0, case_id=basicData.caseId).order_by('index')
+                    for item_operationSet in obj_db_OperationSet:
+                        oldOperationSet.append({
+                            'state': True if item_operationSet.state == 1 else False,
+                            'index': item_operationSet.index,
+                            'location': item_operationSet.location,
+                            'operationType': item_operationSet.operationType,
+                            'methodsName': item_operationSet.methodsName,
+                            'dataBaseId': item_operationSet.dataBaseId,
+                            'caseId': item_operationSet.caseId,
+                            'remarks': item_operationSet.remarks,
                         })
                     # endregion
                     # region 关联页面
@@ -379,6 +449,7 @@ def edit_data(request):
                             'associatedPage': oldAssociatedPage,
                         },
                         'TestSet': oldTestSet,
+                        'OperationSet':oldOperationSet,
 
                     }
                     cls_Logging.record_operation_info(
@@ -393,7 +464,7 @@ def edit_data(request):
 
                     # endregion
                     # endregion
-                    # region 历史恢复
+                    # region 历史恢复!!!
                     # restoreData = responseData
                     # restoreData['BasicInfo']['updateTime'] = obj_db_CaseBaseData[0].updateTime.strftime(
                     #     '%Y-%m-%d %H:%M:%S')
@@ -420,6 +491,10 @@ def edit_data(request):
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
                     db_AssociatedPage.objects.filter(
+                        is_del=0, case_id=basicData.caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time()
+                    )
+                    db_OperationSet.objects.filter(
                         is_del=0, case_id=basicData.caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
@@ -462,6 +537,24 @@ def edit_data(request):
                             onlyCode=onlyCode
                         ))
                     db_TestSet.objects.bulk_create(product_list_to_insert)
+                    # endregion
+                    # region 操作集
+                    product_list_to_insert = list()
+                    for item_index, item_operationSet in enumerate(operationSet, 1):
+                        product_list_to_insert.append(db_OperationSet(
+                            case_id=basicData.caseId,
+                            index=item_index,
+                            state=1 if item_operationSet.state else 0,
+                            location=item_operationSet.location,
+                            operationType=item_operationSet.operationType,
+                            methodsName=item_operationSet.methodsName,
+                            caseId=item_operationSet.caseId,
+                            dataBaseId=item_operationSet.dataBaseId,
+                            remarks=item_operationSet.remarks,
+                            is_del=0,
+                            onlyCode=onlyCode
+                        ))
+                    db_OperationSet.objects.bulk_create(product_list_to_insert)
                     # endregion
                     # region 更新元素动态表为无更变
                     db_ElementDynamic.objects.filter(is_del=0, case_id=basicData.caseId).update(
@@ -524,6 +617,10 @@ def delete_data(request):
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
                     db_AssociatedPage.objects.filter(
+                        is_del=0, case_id=caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
+                        is_del=1, updateTime=cls_Common.get_date_time()
+                    )
+                    db_OperationSet.objects.filter(
                         is_del=0, case_id=caseId, onlyCode=obj_db_CaseBaseData[0].onlyCode).update(
                         is_del=1, updateTime=cls_Common.get_date_time()
                     )
@@ -601,9 +698,74 @@ def load_case_data(request):
                                 })
 
             # endregion
+            # region 操作集
+            operationSet = []
+            obj_db_OperationSet = db_OperationSet.objects.filter(is_del=0, case_id=caseId).order_by('index').order_by('location')
+            for i in obj_db_OperationSet:
+                if i.operationType == 'TestCase':
+                    operationData = i.caseId
+                elif i.operationType == 'Methods':
+                    operationData = i.methodsName
+                elif i.operationType == 'Methods':
+                    operationData = i.dataBaseId
+                else:
+                    operationData = None
+                operationSet.append({'id': i.id,
+                                     'index': i.index,
+                                     'state': True if i.state == 1 else False,
+                                     'location': i.location,
+                                     'operationType': i.operationType,
+                                     'methodsName': i.methodsName,
+                                     'dataBaseId': i.dataBaseId,
+                                     'caseId': i.caseId,
+                                     'remarks': i.remarks,
+                                     'operationData': operationData,
+                                     })
+
+            # endregion
             response['statusCode'] = 2000
             response['basicData'] = basicData
             response['testSet'] = testSet
+            response['operationSet'] = operationSet
         else:
             response['errorMsg'] = "当前选择的数据不存在,请刷新列表后在重新尝试!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])
+def get_case_name_items(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+
+        proId = objData.proId
+        pageIdList = objData.pageIdList.split(',')
+        passCaseId = int(objData.passCaseId) if objData.passCaseId else None
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('UI', 'Ui_CaseMaintenance', 'select_data', errorMsg)
+    else:
+        obj_db_PageManagement = db_PageManagement.objects.filter(is_del=0, id__in=pageIdList)
+        for item_page in obj_db_PageManagement:
+            children = []
+            obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0, pid_id=proId, page_id=item_page.id)
+            for i in obj_db_CaseBaseData:
+                if i.id != passCaseId:
+                    children.append({
+                        'label': i.caseName,
+                        'value': i.id,
+                    })
+            dataList.append({
+                'label': item_page.pageName,
+                'value': item_page.id,
+                'children': children
+            })
+
+        response['statusCode'] = 2000
+        response['dataList'] = dataList
     return JsonResponse(response)

@@ -141,7 +141,8 @@
                     </el-form>
                 </div>
                 <div>
-                    <el-button type="warning" @click="AddToStepsTable()">保存</el-button>
+                    <el-button type="success" @click="AddToStepsTable()" v-if="isAddNew">保存</el-button>
+                    <el-button type="warning" @click="AddToStepsTable()" v-else>修改</el-button>
                     <el-button @click="ClearRomeData('reset')">重置</el-button>
                 </div>
                 <el-divider >操作提示</el-divider>
@@ -176,6 +177,7 @@ export default {
             loading:false,
             RomeData:{
                 id:'',
+                state:true,
                 pageNameList:[],
                 eventName:'',
                 elementId:'',//选择元素
@@ -252,11 +254,11 @@ export default {
                     GeElementNameItems(self.RomeData.pageNameList).then(d=>{
                         if(d.statusCode==2000){
                             self.RomeData.elementNameOption = d.dataList;
-
                             GetElementOperationTypeItems().then(d=>{
                                 if(d.statusCode==2000){
                                     self.RomeData.elementTypeOptions = d.dataList;
-
+                                    
+                                    self.RomeData.state=newval.state;
                                     self.RomeData.eventName=newval.eventName;
                                     self.RomeData.elementId=newval.elementId;
                                     self.RomeData.elementType=newval.elementType;
@@ -310,6 +312,7 @@ export default {
         ClearRomeData(){
             let self = this;
             self.resetForm('RomeData');
+            self.RomeData.state=true;
             self.RomeData.eventName='';
             self.RomeData.elementId='';
             self.RomeData.elementType=[];
@@ -326,8 +329,7 @@ export default {
         AddToStepsTable(){
             let self = this;
             let obj = {};
-            obj.isAddNew = self.isAddNew;
-            obj.state=true;
+            obj.state=self.RomeData.state;
             obj.id=self.RomeData.id;
             obj.eventName=self.RomeData.eventName;
             obj.elementId=self.RomeData.elementId;
@@ -367,8 +369,11 @@ export default {
             obj.assertValueType=self.RomeData.assertValueType;
             obj.assertValue=self.RomeData.assertValue;
 
-
-            self.$emit('getData',obj);//回调传值
+            if(self.isAddNew){
+                self.$emit('geAddtData',obj);//回调传值
+            }else{
+                self.$emit('geEditData',obj);//回调传值
+            }
             self.dialogClose();
         },
         GetElementOperationType(){//返回元素类型

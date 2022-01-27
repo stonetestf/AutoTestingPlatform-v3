@@ -42,3 +42,18 @@ class UiTestSet(models.Model):  # 测试集
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
     updateTime = models.DateTimeField('创建时间', auto_now=True)
     onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)
+
+
+class UiOperationSet(models.Model):  # 操作集
+    case = models.ForeignKey(to='UiCaseBaseData', to_field='id', on_delete=models.CASCADE)
+    index = models.IntegerField("排序", null=False)
+    state = models.IntegerField("是否启用(1:启用,0:禁用)", null=False)
+    location = models.CharField('位置 前/后(Pre,Rear)', max_length=20, null=False)
+    operationType = models.CharField('操作类型(Methods,DataBase,TestCase)', max_length=20, null=False)
+    methodsName = models.CharField('函数方法', max_length=100, null=True)
+    dataBaseId = models.CharField('要执行的数据库连接ID', max_length=50, null=True)
+    caseId = models.CharField('要执行的用例ID', max_length=50, null=True)
+    remarks = models.TextField('备注', null=True)
+    is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
+    updateTime = models.DateTimeField('创建时间', auto_now=True)
+    onlyCode = models.CharField('历史记录唯一码,新增的时候会创建1个', max_length=100, null=False)

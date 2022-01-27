@@ -154,10 +154,25 @@ function GeElementNameItems(pageIdList){
     })
 }
 
+//加载用例列表,根据页面Id及需要排除的用例id
+function GetUiCaseNameItems(proId,pageIdList,passCaseId){
+    return Vue.prototype.$axios.get('/api/UiCaseMaintenance/GetCaseNameItems',{
+        params:{
+            'proId':proId,
+            'pageIdList':pageIdList,
+            'passCaseId':passCaseId,
+        }
+    }).then(res => {
+        return res.data;
+    }).catch(function (error) {
+        console.log(error);
+    })
+}
+
 export {
     NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,GetAssociatedPageNameItems,
 
     GetConnectBaseItems,
-    GetElementOperationTypeItems,GeElementNameItems
+    GetElementOperationTypeItems,GeElementNameItems,GetUiCaseNameItems
   };
   

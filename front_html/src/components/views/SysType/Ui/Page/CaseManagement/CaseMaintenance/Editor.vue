@@ -218,7 +218,7 @@
                                     align= "center">
                                     <template slot="header">
                                         <el-button-group>
-                                            <el-button type="primary" @click="openCaseStepsDialog()">新增步骤</el-button>
+                                            <el-button type="primary" @click="openAddCaseStepsDialog()">新增步骤</el-button>
                                             <el-dropdown @command="handleCommand">
                                                 <el-button type="warning">
                                                     更多<i class="el-icon-arrow-down el-icon--right"></i>
@@ -234,7 +234,7 @@
                                         <el-button-group>
                                             <el-button
                                                 size="mini"
-                                                @click="handleTestSetEdit(scope.$index, scope.row)">编辑</el-button>
+                                                @click="openEditCaseStepsDialog(scope.$index, scope.row)">编辑</el-button>
                                             <el-button
                                                 size="mini"
                                                 type="danger"
@@ -254,6 +254,12 @@
                                 :data="OperationSetRomeData.tableData"
                                 height="720px"
                                 border>
+                                <el-table-column
+                                    label="序列"  
+                                    type="index" 
+                                    width="60" 
+                                    align="center">
+                                </el-table-column>
                                 <el-table-column
                                     label="启用"
                                     width="70px"
@@ -287,19 +293,19 @@
                                     label="备注"
                                     align= "center"
                                     width="300px" 
-                                    prop="contrastTypeText">
+                                    prop="remarks">
                                 </el-table-column>
                                 <el-table-column 
                                     width="140px" 
                                     align= "center">
                                     <template slot="header">
-                                        <el-button type="primary" @click="openOperationStepsDialog()">新增操作</el-button>
+                                        <el-button type="primary" @click="openAddOperationStepsDialog()">新增操作</el-button>
                                     </template>
                                     <template slot-scope="scope">
                                         <el-button-group>
                                             <el-button
                                                 size="mini"
-                                                @click="handleOperationStepsEdit(scope.$index, scope.row)">编辑</el-button>
+                                                @click="openEditOperationStepsDialog(scope.$index, scope.row)">编辑</el-button>
                                             <el-button
                                                 size="mini"
                                                 type="danger"
@@ -357,7 +363,9 @@
                 @closeDialog="closeCaseStepsDialog" 
                 :isVisible="dialog.caseSteps.dialogVisible" 
                 :dialogPara="dialog.caseSteps.dialogPara"
-                @getData="AddToTestStepsTable($event)">
+                @geAddtData="AddToTestStepsTable($event)"
+                @geEditData="EditToTestStepsTable($event)"
+                >
             </dialog-case-steps>
         </template>
         <template>
@@ -581,6 +589,9 @@ export default {
                 });
             }else if(self.StepsRomeData.active==1){
                 self.StepsRomeData.active++;
+                self.$nextTick(function () {//当DOM加载完成后才会执行这个!
+                    self.OperationStepsRowDrop();
+                })
             }else if(self.StepsRomeData.active==2){
                 self.StepsRomeData.active++;
                 self.CharmCaseData();
@@ -697,7 +708,7 @@ export default {
         closeCaseStepsDialog(){
             this.dialog.caseSteps.dialogVisible =false;
         },
-        openCaseStepsDialog(){
+        openAddCaseStepsDialog(){//打开新增
             let self = this;
             let pageNameList = [];
             if(self.BasicRomeData.pageId){
@@ -715,32 +726,7 @@ export default {
             }
             self.dialog.caseSteps.dialogVisible=true;
         },
-        AddToTestStepsTable(val){//添加步骤数据到列表中-回调传值
-            PrintConsole('回调-AddToTestStepsTable',val);
-            let self = this;
-            if(val.isAddNew){//新增
-                self.TestSetRomeData.tableData.push(val);
-            }else{//修改
-                let tempSetTable = self.TestSetRomeData.tableData.find(item=>
-                    item.id == val.id
-                );
-                if(tempSetTable){
-                    tempSetTable.eventName=val.eventName;
-                    tempSetTable.elementId=val.elementId;
-                    tempSetTable.elementType=val.elementType;
-                    tempSetTable.elementTypeTxt=val.elementTypeTxt;
-                    
-                    tempSetTable.inputData=val.inputData;
-                    tempSetTable.elementDynamic=val.elementDynamic;
-                    tempSetTable.assertType=val.assertType;
-                    tempSetTable.assertValueType=val.assertValueType;
-                    tempSetTable.assertValue=val.assertValue;
-
-                }
-            }
-            self.TestSetRowDrop();
-        },
-        handleTestSetEdit(index,row){
+        openEditCaseStepsDialog(index,row){//打开编辑
             let self = this;
             let pageNameList = [];
             if(self.BasicRomeData.pageId){
@@ -756,6 +742,7 @@ export default {
                 id:row.id,
                 pageNameList:pageNameList.join(','),
 
+                state:row.state,
                 eventName:row.eventName,
                 elementId:row.elementId,
                 elementType:row.elementType,
@@ -767,7 +754,7 @@ export default {
             }
             self.dialog.caseSteps.dialogVisible=true;
         },
-        handleTestSetDelete(index,row){
+        handleTestSetDelete(index,row){//删除数据
             this.$confirm('请确定是否删除?', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
@@ -776,6 +763,34 @@ export default {
                     this.TestSetRomeData.tableData.splice(index,1);
                 }).catch(() => {       
             });
+        },
+        AddToTestStepsTable(val){//添加步骤数据到列表中-回调传值
+            PrintConsole('回调-AddToTestStepsTable',val);
+            let self = this;
+            self.TestSetRomeData.tableData.push(val);
+          
+            self.TestSetRowDrop();
+        },
+        EditToTestStepsTable(val){//修改步骤数据到列表中-回调传值
+            PrintConsole('回调-EditToTestStepsTable',val);
+            let self = this;
+            let tempSetTable = self.TestSetRomeData.tableData.find(item=>
+                item.id == val.id
+            );
+            if(tempSetTable){
+                tempSetTable.eventName=val.eventName;
+                tempSetTable.elementId=val.elementId;
+                tempSetTable.elementType=val.elementType;
+                tempSetTable.elementTypeTxt=val.elementTypeTxt;
+                
+                tempSetTable.inputData=val.inputData;
+                tempSetTable.elementDynamic=val.elementDynamic;
+                tempSetTable.assertType=val.assertType;
+                tempSetTable.assertValueType=val.assertValueType;
+                tempSetTable.assertValue=val.assertValue;
+
+            }
+            self.TestSetRowDrop();
         },
         TestSetRowDrop() {//排序方法
             PrintConsole('加载可拖动效果')
@@ -804,27 +819,103 @@ export default {
         AddToOperationStepsTable(val){
             PrintConsole('回调-AddToOperationStepsTable',val);
             let self = this;
+            val.state = true;
             if(val.operationType=="TestCase"){
                 val.operationData = val.caseId;
             }else if(val.operationType=="Methods"){
                 val.operationData = val.methodsName;
             }
             self.OperationSetRomeData.tableData.push(val)
+            self.OperationStepsRowDrop();
         },
-        EditToOperationStepsTable(){
+        EditToOperationStepsTable(val){
             PrintConsole('回调-EditToOperationStepsTable',val);
+            let tempData = this.OperationSetRomeData.tableData.find(item=>
+                item.id == val.id
+            );
+            if(tempData){
+                tempData.location=val.location;
+                tempData.operationType=val.operationType;
+                tempData.methodsName=val.methodsName;
+                tempData.caseId=val.caseId;
+                tempData.dataBaseId=val.dataBaseId;
+
+
+                if(val.operationType=="TestCase"){
+                    tempData.operationData = val.caseId;
+                }else if(val.operationType=="Methods"){
+                    tempData.operationData = val.methodsName;
+                }
+                tempData.remarks=val.remarks;
+            }
+            self.OperationStepsRowDrop();
         },
         closeOperationStepsDialog(){
             this.dialog.operationSteps.dialogVisible =false;
         },
-        openOperationStepsDialog(){
+        openAddOperationStepsDialog(){
             let self = this; 
+            let pageNameList = [];
+            if(self.BasicRomeData.pageId){
+                pageNameList.push(self.BasicRomeData.pageId);
+            }
+            self.BasicRomeData.associatedPage.forEach(d=>{
+                pageNameList.push(d);
+            });
             self.dialog.operationSteps.dialogPara={
                 dialogTitle:"新增操作",//初始化标题
                 isAddNew:true,//初始化是否新增\修改
-                id:self.OperationSetRomeData.tableData.length+1
+                caseId:self.BasicRomeData.caseId,
+                id:self.OperationSetRomeData.tableData.length+1,
+                pageNameList:pageNameList.join(',')
             }
             self.dialog.operationSteps.dialogVisible=true;
+        },
+        openEditOperationStepsDialog(index,row){
+            let self = this; 
+            let pageNameList = [];
+            if(self.BasicRomeData.pageId){
+                pageNameList.push(self.BasicRomeData.pageId);
+            }
+            self.BasicRomeData.associatedPage.forEach(d=>{
+                pageNameList.push(d);
+            });
+            self.dialog.operationSteps.dialogPara={
+                dialogTitle:"编辑操作",//初始化标题
+                isAddNew:false,//初始化是否新增\修改
+                caseId:self.BasicRomeData.caseId,
+                id:row.id,
+                location:row.location,
+                operationType:row.operationType,
+                caseId:row.caseId,
+                methodsName:row.methodsName,
+                dataBaseId:row.dataBaseId,
+                remarks:row.remarks,
+                pageNameList:pageNameList.join(','),
+            }
+            self.dialog.operationSteps.dialogVisible=true;
+        },
+        handleOperationStepsDelete(index,row){
+              this.$confirm('请确定是否删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+                }).then(() => {
+                    this.OperationSetRomeData.tableData.splice(index,1);
+                }).catch(() => {       
+            });
+        },
+        OperationStepsRowDrop() {//排序方法
+            PrintConsole('加载可拖动效果')
+            const tbody = document.querySelector('#OperationSet > div:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
+            let self = this;
+            Sortable.create(tbody, {
+                onEnd ({ newIndex, oldIndex }) {
+                    const currRow = self.OperationSetRomeData.tableData.splice(oldIndex, 1)[0];
+                    self.OperationSetRomeData.tableData.splice(newIndex, 0, currRow);
+                    // console.log(self.RomeData.TableData);
+                }
+            });
         },
 
 
@@ -839,6 +930,7 @@ export default {
             self.CharmRomeData.tableData = [];
             self.CharmRomeData.title = '';
             self.CharmRomeData.loading=true;
+            self.StepsRomeData.saveLoading = true;
             self.$axios.post('/api/UiCaseMaintenance/CharmCaseData',{
                 'CharmType':self.isAddNew,
                 'BasicData':{
@@ -851,7 +943,8 @@ export default {
                     'labelId':self.BasicRomeData.labelId,
                     'caseName':self.BasicRomeData.caseName,
                 },
-                'TestSet':self.TestSetRomeData.tableData
+                'TestSet':self.TestSetRomeData.tableData,
+                'OperationSet':self.OperationSetRomeData.tableData
 
             }).then(res => {
                 if(res.data.statusCode==2000){
@@ -902,7 +995,8 @@ export default {
                             'caseState':self.BasicRomeData.caseState,
                             'associatedPage':self.BasicRomeData.associatedPage,
                         },
-                        'TestSet':self.TestSetRomeData.tableData
+                        'TestSet':self.TestSetRomeData.tableData,
+                        'OperationSet':self.OperationSetRomeData.tableData
                     }).then(res => {
                         if(res.data.statusCode==2001){
                             self.$message.success('新增用例成功!');
@@ -929,7 +1023,8 @@ export default {
                             'caseState':self.BasicRomeData.caseState,
                             'associatedPage':self.BasicRomeData.associatedPage,
                         },
-                        'TestSet':self.TestSetRomeData.tableData
+                        'TestSet':self.TestSetRomeData.tableData,
+                        'OperationSet':self.OperationSetRomeData.tableData
                     }).then(res => {
                         if(res.data.statusCode==2002){
                             self.$message.success('修改用例成功!');
@@ -976,6 +1071,8 @@ export default {
                                         self.BasicRomeData.caseState = res.data.basicData.caseState;
 
                                         self.TestSetRomeData.tableData = res.data.testSet;
+                                        self.OperationSetRomeData.tableData = res.data.operationSet;
+
 
                                         self.loading=false;
                                     }else{
