@@ -25,6 +25,7 @@ from ClassData.Common import Common
 from ClassData.ImageProcessing import ImageProcessing
 from ClassData.ObjectMaker import object_maker as cls_object_maker
 from ClassData.Redis import RedisHandle
+from ClassData.Element import Element
 
 # Create info here.
 cls_Logging = Logging()
@@ -33,7 +34,7 @@ cls_FindTable = FindTable()
 cls_Common = Common()
 cls_ImageProcessing = ImageProcessing()
 cls_RedisHandle = RedisHandle()
-
+cls_Element = Element()
 
 # Create your views here.
 @cls_Logging.log
@@ -284,8 +285,28 @@ def edit_data(request):
                 try:
                     with transaction.atomic():  # 上下文格式，可以在python代码的任何位置使用
                         # region 添加操作信息
-                        oldData = list(obj_db_ElementBaseData.values())
-                        newData = json.dumps(request.POST)
+                        # region oldData
+                        obj_db_ElementLocation = db_ElementLocation.objects.filter(
+                            is_del=0,element_id=elementId).order_by('index')
+                        oldElementLocation = [{
+                            'state':i.state,
+                            'targetingType':i.targetingType,
+                            'targetingPath':i.targetingPath,
+                            'remarks':i.remarks,
+                        } for i in obj_db_ElementLocation]
+                        oldData = {
+                            'baseData':{
+                                'proId':obj_db_ElementBaseData[0].pid_id,
+                                'pageId':obj_db_ElementBaseData[0].page_id,
+                                'funId':obj_db_ElementBaseData[0].fun_id,
+                                'elementName':obj_db_ElementBaseData[0].elementName,
+                                'elementType':ast.literal_eval(obj_db_ElementBaseData[0].elementType),
+                                'elementState': True if obj_db_ElementBaseData[0].elementState==1 else False,
+                            },
+                            'elementLocation':oldElementLocation
+                        }
+                        # endregion
+                        newData = json.loads(request.body)
                         cls_Logging.record_operation_info(
                             "UI", 'Manual', 3, 'Edit',
                             cls_FindTable.get_pro_name(proId),
@@ -296,6 +317,10 @@ def edit_data(request):
                             oldData, newData
                         )
                         # endregion
+                        # region 对比新数据和老数据的差异
+                        textInfo = cls_Element.select_edit_element_dfif(oldData,newData)
+
+                        # endreigon
                         # region 删除原数据
                         db_ElementLocation.objects.filter(
                             is_del=0, element_id=elementId, onlyCode=obj_db_ElementBaseData[0].onlyCode).update(
@@ -366,6 +391,7 @@ def edit_data(request):
                             onlyCode=onlyCode,
                             operationType='Edit',
                             restoreData=restoreData,
+                            textInfo=textInfo,
                             uid_id=userId,
                         )
                         # endregion
@@ -835,4 +861,41 @@ def select_element_type(request):
             response['elementType'] = ast.literal_eval(elementType) if elementType else []
         else:
             response['errorMsg'] = "当前选择的元素不存在,请重新下拉刷新元素列表!"
+    return JsonResponse(response)
+
+
+@cls_Logging.log
+@cls_GlobalDer.foo_isToken
+@require_http_methods(["GET"])  # 查询元素的生命周期
+def select_life_cycle(request):
+    response = {}
+    dataList = []
+    try:
+        responseData = json.loads(json.dumps(request.GET))
+        objData = cls_object_maker(responseData)
+        elementId = objData.elementId
+    except BaseException as e:
+        errorMsg = f"入参错误:{e}"
+        response['errorMsg'] = errorMsg
+        cls_Logging.record_error_info('API', 'Ui_ElementMaintenance', 'select_life_cycle', errorMsg)
+    else:
+        obj_db_ElementHistory = db_ElementHistory.objects.filter(element_id=elementId).order_by('-createTime')
+        for i in obj_db_ElementHistory:
+            content = ""
+            operationType = i.operationType
+            if operationType == "Add":
+                title = f'【创建元素】 {i.uid.userName}({i.uid.nickName})'
+            elif operationType == "Edit":
+                title = f'【修改元素】 {i.uid.userName}({i.uid.nickName})'
+                content = i.textInfo
+            else:
+                title = f'【删除元素】 {i.uid.userName}({i.uid.nickName})'
+            dataList.append({
+                'title': title,
+                'content': content,
+                'timestamp': str(i.createTime.strftime('%Y-%m-%d %H:%M:%S')),
+            })
+
+        response['TableData'] = dataList
+        response['statusCode'] = 2000
     return JsonResponse(response)

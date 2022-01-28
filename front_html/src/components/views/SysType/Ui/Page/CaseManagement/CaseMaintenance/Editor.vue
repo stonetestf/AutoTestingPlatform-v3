@@ -378,6 +378,13 @@
                 >
             </dialog-operation-steps>
         </template>
+        <template> 
+            <dialog-life-cycle
+                @closeDialog="closeLifeCycleDialog" 
+                :isVisible="dialog.lifeCycle.dialogVisible" 
+                :dialogPara="dialog.lifeCycle.dialogPara">
+            </dialog-life-cycle>
+        </template>
     </div>
 </template>
 
@@ -393,11 +400,12 @@ import {GetAssociatedPageNameItems} from "../../../../../../js/GetSelectTable.js
 
 import DialogCaseSteps from "./CaseSteps.vue";
 import DialogOperationSteps from "./OperationSteps.vue";
+import DialogLifeCycle from "../ElementMaintenance/LifeCycle.vue";
 
 
 export default {
     components: {
-        DialogCaseSteps,DialogOperationSteps
+        DialogCaseSteps,DialogOperationSteps,DialogLifeCycle
     },
     data() {
         return {
@@ -489,6 +497,13 @@ export default {
                         isAddNew:true,//初始化是否新增\修改
                     },
                 },
+                lifeCycle:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                }
             },
         };
     },
@@ -809,6 +824,17 @@ export default {
             self.TestSetRomeData.tableData.forEach((d,i)=>{
                 self.TestSetRomeData.tableData[i].state=state;
             });
+        },
+        OpenLifeCycleDialog(row){//打开接口生命周期
+            let self = this;
+            self.dialog.lifeCycle.dialogPara={
+                dialogTitle:row.elementName+'(生命周期)',//初始化标题
+                elementId:row.elementId,
+            }
+            self.dialog.lifeCycle.dialogVisible=true;
+        },
+        closeLifeCycleDialog(){
+            this.dialog.lifeCycle.dialogVisible =false;
         },
 
         //操作集

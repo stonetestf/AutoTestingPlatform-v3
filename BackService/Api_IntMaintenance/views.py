@@ -1946,12 +1946,12 @@ def select_life_cycle(request):
             content = ""
             operationType = i.operationType
             if operationType == "Add":
-                title = f'【创建接口】 {i.api.uid.userName}({i.api.uid.nickName})'
+                title = f'【创建接口】 {i.uid.userName}({i.uid.nickName})'
             elif operationType == "Edit":
-                title = f'【修改接口】 {i.api.uid.userName}({i.api.uid.nickName})'
+                title = f'【修改接口】 {i.uid.userName}({i.uid.nickName})'
                 content = i.textInfo
             else:
-                title = f'【删除接口】 {i.api.uid.userName}({i.api.uid.nickName})'
+                title = f'【删除接口】 {i.uid.userName}({i.uid.nickName})'
             dataList.append({
                 'title': title,
                 'content': content,

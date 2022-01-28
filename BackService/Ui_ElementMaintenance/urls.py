@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'GetElementNameItems', views.get_element_name_items, name='GetElementNameItems'),
     url(r'SelectElementType', views.select_element_type, name='SelectElementType'),
     url(r'RestorData', views.restor_data, name='RestorData'),
+    url(r'SelectLifeCycle', views.select_life_cycle, name='SelectLifeCycle'),
 ]

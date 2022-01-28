@@ -50,5 +50,6 @@ class ElementHistory(models.Model):  # 历史记录，恢复使用
     # 如果是删除的话，在恢复数据时取上一个操作的数据
     operationType = models.CharField("操作类型(Add,Edit,Delete)", max_length=10, null=False)
     restoreData = models.TextField('恢复数据', null=True)
+    textInfo = models.TextField('保存变动的文本信息', null=True)
     createTime = models.DateTimeField('创建时间', auto_now=True)
     uid = models.ForeignKey(to='login.UserTable', to_field='id', on_delete=models.CASCADE)  # 用户Id

@@ -177,6 +177,10 @@
                                     @click="handleEdit(scope.$index, scope.row)">Edit
                                 </el-button>
                                 <el-button
+                                    type="warning"
+                                    size="mini"
+                                    @click="OpenLifeCycleDialog(scope.$index, scope.row)">生命</el-button>
+                                <el-button
                                     size="mini"
                                     type="danger"
                                     @click="handleDelete(scope.$index, scope.row)">Delete
@@ -214,6 +218,14 @@
                 @Succeed="SelectData">
             </dialog-history-info>
         </template>
+        <template>
+            <dialog-life-cycle
+                @closeDialog="closeLifeCycleDialog" 
+                :isVisible="dialog.lifeCycle.dialogVisible" 
+                :dialogPara="dialog.lifeCycle.dialogPara"
+                @Succeed="SelectData">
+            </dialog-life-cycle>
+        </template>
     </div>
 </template>
 
@@ -225,10 +237,11 @@ import {GetFunNameItems} from "../../../../../../js/GetSelectTable.js";
 
 import DialogEditor from "./Editor.vue";
 import DialogHistoryInfo from "./HistoryInfo.vue";
+import DialogLifeCycle from "./LifeCycle.vue";
 
 export default {
     components: {
-       DialogEditor,DialogHistoryInfo
+       DialogEditor,DialogHistoryInfo,DialogLifeCycle
     },
     data() {
         return {
@@ -256,6 +269,13 @@ export default {
                     },
                 },
                 historyInfo:{
+                    dialogVisible:false,
+                    dialogPara:{
+                        dialogTitle:"",//初始化标题
+                        isAddNew:true,//初始化是否新增\修改
+                    },
+                },
+                lifeCycle:{
                     dialogVisible:false,
                     dialogPara:{
                         dialogTitle:"",//初始化标题
@@ -466,9 +486,19 @@ export default {
                 })
             }
         },
-     
 
-
+        //生命周期
+        closeLifeCycleDialog(){
+            this.dialog.lifeCycle.dialogVisible =false;
+        },
+        OpenLifeCycleDialog(index,row){//生命
+            let self = this;
+            self.dialog.lifeCycle.dialogPara={
+                dialogTitle:row.elementName+'(生命周期)',//初始化标题
+                elementId:row.id,
+            }
+            self.dialog.lifeCycle.dialogVisible=true;
+        },
     }
 };
 </script>
