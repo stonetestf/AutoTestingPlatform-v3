@@ -48,20 +48,28 @@
                     <el-form-item label="输入方法:" v-else-if="RomeData.operationType=='Methods'">
                         <el-input v-model="RomeData.methodsName" clearable placeholder="输入方法函数名称" style="width:300px;float:left;"></el-input>
                     </el-form-item>
-                    <el-form-item label="选择DB:" v-else-if="RomeData.operationType=='dataBase'">
-                        <el-cascader
-                            style="float:left;width:300px;"
-                            clearable
-                            placeholder="请选择连接的数据库" 
-                            v-model="RomeData.dataBaseId"
-                            :options="RomeData.dataBaseOptions"
-                            @click.native="getDataBaseOption()">
-                            <template slot-scope="{ node, data }">
-                                <span>{{ data.label }}</span>
-                                <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
-                            </template>
-                        </el-cascader>
-                    </el-form-item>
+                    <div v-else-if="RomeData.operationType=='DataBase'">
+                        <el-form-item label="选择DB:" >
+                            <el-cascader
+                                style="float:left;width:300px;"
+                                clearable
+                                placeholder="请选择连接的数据库" 
+                                v-model="RomeData.dataBaseId"
+                                :options="RomeData.dataBaseOptions"
+                                @click.native="getDataBaseOption()"
+                                @change="changeDataBase">
+                                <template slot-scope="{ node, data }">
+                                    <span>{{ data.label }}</span>
+                                    <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+                                </template>
+                            </el-cascader>
+                        </el-form-item>
+                        <el-form-item label="SQL:">
+                            <el-input  
+                                v-model="RomeData.sql"  style="float:left;width:300px;" clearable placeholder="请输入正确的SQL语句" 
+                                type="textarea"></el-input>
+                        </el-form-item>
+                    </div>
                     <el-form-item label="备注:">
                             <el-input  
                                 style="width:300px"
@@ -87,6 +95,7 @@ import Qs from 'qs';
 import {PrintConsole} from "../../../../../../js/Logger.js";
 
 import {GetUiCaseNameItems} from "../../../../../../js/GetSelectTable.js";
+import {GetConnectBaseItems} from "../../../../../../js/GetSelectTable.js";
 
 export default {
     components: {
@@ -118,6 +127,8 @@ export default {
                 caseNameOption:[],
                 methodsName:'',
                 dataBaseId:'',
+                dataBaseName:'',
+                sql:'',
                 dataBaseOptions:[],
                 remarks:'',
                 pageNameList:[],
@@ -166,6 +177,7 @@ export default {
                         self.RomeData.methodsName=newval.methodsName;
                         self.RomeData.caseId=newval.caseId;
                         self.RomeData.dataBaseId=newval.dataBaseId;
+                        self.RomeData.sql=newval.sql;
                         self.RomeData.remarks=newval.remarks;
                     });
                    
@@ -197,6 +209,7 @@ export default {
             self.RomeData.caseId='';
             self.RomeData.methodsName='';
             self.RomeData.dataBaseId='';
+            self.RomeData.sql='';
             self.RomeData.remarks='';
         },
         AddToOperationTable(val){
@@ -211,9 +224,10 @@ export default {
             }else{
                 obj.caseName = self.RomeData.caseName;
             }
-            
             obj.methodsName = self.RomeData.methodsName;
             obj.dataBaseId = self.RomeData.dataBaseId;
+            obj.dataBaseName = self.RomeData.dataBaseName;
+            obj.sql = self.RomeData.sql;
             obj.remarks = self.RomeData.remarks;
             if(val){
                 self.$emit('geAddtData',obj);//回调传值
@@ -248,6 +262,36 @@ export default {
             }else{
                 self.RomeData.caseName = '';
             }
+        },
+        changeDataBase(val){//选中DB后触发
+            // PrintConsole(val);
+            let self = this;
+            let tempDbTable = self.RomeData.dataBaseOptions.find(item=>
+                item.value == val[0]
+            );
+            if(tempDbTable){
+                PrintConsole('tempDbTable',tempDbTable)
+                let tempChildren = tempDbTable.children.find(item=>
+                    item.value == val[1]
+                );
+                if(tempChildren){
+                    PrintConsole('tempChildren',tempChildren)
+                    self.RomeData.dataBaseName = tempChildren.label;
+                }else{
+                    self.RomeData.dataBaseName = '';
+                }
+            }else{
+                self.RomeData.dataBaseName = '';
+            }
+        },
+        getDataBaseOption(){//加载数据库环境的IP及以下可用的库名
+            GetConnectBaseItems().then(d=>{
+                if(d.statusCode==2000){
+                    this.RomeData.dataBaseOptions = d.dataList;
+                }else{
+                    this.$message.error('数据库环境加载失败:'+d.errorMsg);
+                }
+            });
         },
 
     }

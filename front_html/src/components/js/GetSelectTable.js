@@ -111,13 +111,11 @@ function GetAssociatedPageNameItems(sysType,passPageId){
     })
 }
 
-
-//API
 //加载数据库环境的IP及以下可用的库名
-function GetConnectBaseItems(sysType){
+function GetConnectBaseItems(){
     return Vue.prototype.$axios.get('/api/DataBaseEnvironment/GetConnectBaseItems',{
         params:{
-            'sysType':sysType
+            // 'sysType':sysType
         }
     }).then(res => {
         return res.data;
@@ -125,6 +123,10 @@ function GetConnectBaseItems(sysType){
         console.log(error);
     })
 }
+
+
+//API
+
 
 //UI
 //加载元素的操作类型
@@ -170,9 +172,9 @@ function GetUiCaseNameItems(proId,pageIdList,passCaseId){
 }
 
 export {
-    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,GetAssociatedPageNameItems,
+    NoTokenGetRoleNameItems,GetRoleNameItems,GetPageNameItems,GetFunNameItems,GetUserNameItems,GetPageEnvironmentNameItems,GetAssociatedPageNameItems,GetConnectBaseItems,
 
-    GetConnectBaseItems,
+    
     GetElementOperationTypeItems,GeElementNameItems,GetUiCaseNameItems
   };
   

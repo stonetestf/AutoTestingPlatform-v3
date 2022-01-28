@@ -240,10 +240,15 @@ def charm_case_data(request):
                             'errorMsg': f'第{item_index}行:当前操作类型为函数方法,调用函数名称不可为空!',
                             'updateTime': cls_Common.get_date_time()})
                 elif item_operationSet.operationType == 'DataBase':
-                    if not item_operationSet.dataBase:
+                    if not item_operationSet.dataBaseId:
                         dataList.append({
                             'stepsName': f'操作集',
                             'errorMsg': f'第{item_index}行:当前操作类型为数据库,调用数据库地址不可为空!',
+                            'updateTime': cls_Common.get_date_time()})
+                    if not item_operationSet.sql:
+                        dataList.append({
+                            'stepsName': f'操作集',
+                            'errorMsg': f'第{item_index}行:当前操作类型为数据库,SQL语句不可为空!',
                             'updateTime': cls_Common.get_date_time()})
         # endregion
         response['statusCode'] = 2000
@@ -359,6 +364,7 @@ def save_data(request):
                             methodsName=item_operationSet.methodsName,
                             caseId=item_operationSet.caseId,
                             dataBaseId=item_operationSet.dataBaseId,
+                            sql=item_operationSet.sql,
                             remarks=item_operationSet.remarks,
                             is_del=0,
                             onlyCode=onlyCode
@@ -550,6 +556,7 @@ def edit_data(request):
                             methodsName=item_operationSet.methodsName,
                             caseId=item_operationSet.caseId,
                             dataBaseId=item_operationSet.dataBaseId,
+                            sql=item_operationSet.sql,
                             remarks=item_operationSet.remarks,
                             is_del=0,
                             onlyCode=onlyCode
@@ -711,8 +718,9 @@ def load_case_data(request):
                         operationData = None
                 elif i.operationType == 'Methods':
                     operationData = i.methodsName
-                elif i.operationType == 'Methods':
-                    operationData = i.dataBaseId
+                elif i.operationType == 'DataBase':
+                    dbId,dbName = ast.literal_eval(i.dataBaseId)
+                    operationData = dbName
                 else:
                     operationData = None
                 operationSet.append({'id': i.id,
@@ -721,7 +729,8 @@ def load_case_data(request):
                                      'location': i.location,
                                      'operationType': i.operationType,
                                      'methodsName': i.methodsName,
-                                     'dataBaseId': i.dataBaseId,
+                                     'dataBaseId': ast.literal_eval(i.dataBaseId) if i.dataBaseId else [],
+                                     'sql': i.sql,
                                      'caseId': ast.literal_eval(i.caseId) if i.caseId else [],
                                      'remarks': i.remarks,
                                      'operationData': operationData,

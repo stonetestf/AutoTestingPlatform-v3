@@ -824,6 +824,8 @@ export default {
                 val.operationData = val.caseName;
             }else if(val.operationType=="Methods"){
                 val.operationData = val.methodsName;
+            }else if(val.operationType=="DataBase"){
+                val.operationData = val.dataBaseName;
             }
             self.OperationSetRomeData.tableData.push(val)
             self.OperationStepsRowDrop();
@@ -839,12 +841,14 @@ export default {
                 tempData.methodsName=val.methodsName;
                 tempData.caseId=val.caseId;
                 tempData.dataBaseId=val.dataBaseId;
-
+                tempData.sql=val.sql;
 
                 if(val.operationType=="TestCase"){
                     tempData.operationData = val.caseName;
                 }else if(val.operationType=="Methods"){
                     tempData.operationData = val.methodsName;
+                }else if(val.operationType=="DataBase"){
+                    tempData.operationData = val.dataBaseName;
                 }
                 tempData.remarks=val.remarks;
             }
@@ -890,6 +894,7 @@ export default {
                 caseId:row.caseId,
                 methodsName:row.methodsName,
                 dataBaseId:row.dataBaseId,
+                sql:row.sql,
                 remarks:row.remarks,
                 pageNameList:pageNameList.join(','),
             }

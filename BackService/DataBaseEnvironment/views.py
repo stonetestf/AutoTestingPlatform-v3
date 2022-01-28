@@ -292,13 +292,13 @@ def get_connect_base_items(request):
     try:
         responseData = json.loads(json.dumps(request.GET))
         objData = cls_object_maker(responseData)
-        sysType = objData.sysType
+        # sysType = objData.sysType
     except BaseException as e:
         errorMsg = f"入参错误:{e}"
         response['errorMsg'] = errorMsg
         cls_Logging.record_error_info('API', 'DataBaseEnvironment', 'select_data', errorMsg)
     else:
-        obj_db_DataBase = db_DataBase.objects.filter(is_del=0, sysType=sysType).order_by('-updateTime')
+        obj_db_DataBase = db_DataBase.objects.filter(is_del=0).order_by('-updateTime')
         for i in obj_db_DataBase:
             children = []
             connectTest = cls_DataBase.connect_test(

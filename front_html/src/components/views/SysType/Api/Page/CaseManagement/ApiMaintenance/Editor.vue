@@ -1859,7 +1859,7 @@ export default {
             PrintConsole('SortPreOperation:重新排序',self.EditApiRomeData.preOperationRomeData.tableData);
         },
         getDataBaseOption(){//加载数据库环境的IP及以下可用的库名
-            GetConnectBaseItems('API').then(d=>{
+            GetConnectBaseItems().then(d=>{
                 if(d.statusCode==2000){
                     this.EditApiRomeData.preOperationRomeData.dataBaseOptions = d.dataList;
                     this.EditApiRomeData.rearOperationRomeData.dataBaseOptions = d.dataList;

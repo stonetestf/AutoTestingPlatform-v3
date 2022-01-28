@@ -52,6 +52,7 @@ class UiOperationSet(models.Model):  # 操作集
     operationType = models.CharField('操作类型(Methods,DataBase,TestCase)', max_length=20, null=False)
     methodsName = models.CharField('函数方法', max_length=100, null=True)
     dataBaseId = models.CharField('要执行的数据库连接ID', max_length=50, null=True)
+    sql = models.TextField('SQL', null=True)
     caseId = models.CharField('要执行的用例ID', max_length=50, null=True)
     remarks = models.TextField('备注', null=True)
     is_del = models.IntegerField("是否删除(1:删除,0:不删除)", null=False)
