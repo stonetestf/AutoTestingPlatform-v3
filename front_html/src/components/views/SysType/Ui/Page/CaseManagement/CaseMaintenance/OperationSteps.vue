@@ -32,24 +32,18 @@
                     </el-form-item>
                     <el-form-item label="选择用例:" v-if="RomeData.operationType=='TestCase'">
                         <el-cascader 
+                        clearable
                         :options="RomeData.caseNameOption" 
                         v-model="RomeData.caseId" 
                         placeholder="请选择需要运行的用例" 
                         style="width:300px;float:left;"
-                        @click.native="GetCaseNameOption()">
+                        @click.native="GetCaseNameOption()"
+                        @change="changeCase">
                             <template slot-scope="{ node, data }">
                                 <span>{{ data.label }}</span>
                                 <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
                             </template>
                         </el-cascader>
-                        <!-- <el-select v-model="RomeData.caseId" clearable placeholder="请选择需要运行的用例" style="width:300px;float:left;" >
-                            <el-option
-                                v-for="item in RomeData.caseNameOption"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select> -->
                     </el-form-item>
                     <el-form-item label="输入方法:" v-else-if="RomeData.operationType=='Methods'">
                         <el-input v-model="RomeData.methodsName" clearable placeholder="输入方法函数名称" style="width:300px;float:left;"></el-input>
@@ -106,7 +100,8 @@ export default {
             loading:false,
             RomeData:{
                 id:'',
-                caseId:'',
+                currentCaseId:'',
+                
                 location:'',//位置
                 locationOption:[
                     {'label':'前置操作','value':'Pre'},
@@ -119,6 +114,7 @@ export default {
                     {'label':'数据库操作','value':'DataBase'},
                 ],
                 caseId:'',
+                caseName:'',
                 caseNameOption:[],
                 methodsName:'',
                 dataBaseId:'',
@@ -156,17 +152,23 @@ export default {
 
                 this.dialogTitle = newval.dialogTitle;
                 this.isAddNew = newval.isAddNew;
-                this.RomeData.caseId=newval.caseId;
+                this.RomeData.currentCaseId=newval.currentCaseId;
                 this.RomeData.id=newval.id;
                 this.RomeData.pageNameList=newval.pageNameList;
 
                 if(newval.isAddNew==false){//进入编辑状态
                     let self = this;
-                    self.RomeData.location=newval.location;
-                    self.RomeData.operationType=newval.operationType;
-                    self.RomeData.methodsName=newval.methodsName;
-                    self.RomeData.dataBaseId=newval.dataBaseId;
-                    self.RomeData.remarks=newval.remarks;
+                    GetUiCaseNameItems(self.$cookies.get('proId'),self.RomeData.pageNameList,self.RomeData.currentCaseId).then(d=>{
+                        self.RomeData.caseNameOption = d.dataList;
+
+                        self.RomeData.location=newval.location;
+                        self.RomeData.operationType=newval.operationType;
+                        self.RomeData.methodsName=newval.methodsName;
+                        self.RomeData.caseId=newval.caseId;
+                        self.RomeData.dataBaseId=newval.dataBaseId;
+                        self.RomeData.remarks=newval.remarks;
+                    });
+                   
                 }
             }
         },
@@ -204,6 +206,12 @@ export default {
             obj.location = self.RomeData.location;
             obj.operationType = self.RomeData.operationType;
             obj.caseId = self.RomeData.caseId;
+            if(self.RomeData.caseId.length==0){
+                obj.caseName = '';
+            }else{
+                obj.caseName = self.RomeData.caseName;
+            }
+            
             obj.methodsName = self.RomeData.methodsName;
             obj.dataBaseId = self.RomeData.dataBaseId;
             obj.remarks = self.RomeData.remarks;
@@ -215,10 +223,31 @@ export default {
             self.dialogClose();
         },
         GetCaseNameOption(){//加载用例列表,根据页面Id及需要排除的用例id
-            GetUiCaseNameItems(this.$cookies.get('proId'),this.RomeData.pageNameList,this.RomeData.caseId).then(d=>{
+            GetUiCaseNameItems(this.$cookies.get('proId'),this.RomeData.pageNameList,this.RomeData.currentCaseId).then(d=>{
                 this.RomeData.caseNameOption = d.dataList;
             });
             
+        },
+        changeCase(val){//选中用例后触发
+            // PrintConsole(val);
+            let self = this;
+            let tempCaseTable = self.RomeData.caseNameOption.find(item=>
+                item.value == val[0]
+            );
+            if(tempCaseTable){
+                PrintConsole('tempCaseTable',tempCaseTable)
+                let tempChildren = tempCaseTable.children.find(item=>
+                    item.value == val[1]
+                );
+                if(tempChildren){
+                    PrintConsole('tempChildren',tempChildren)
+                    self.RomeData.caseName = tempChildren.label;
+                }else{
+                    self.RomeData.caseName = '';
+                }
+            }else{
+                self.RomeData.caseName = '';
+            }
         },
 
     }

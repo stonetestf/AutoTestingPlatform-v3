@@ -821,7 +821,7 @@ export default {
             let self = this;
             val.state = true;
             if(val.operationType=="TestCase"){
-                val.operationData = val.caseId;
+                val.operationData = val.caseName;
             }else if(val.operationType=="Methods"){
                 val.operationData = val.methodsName;
             }
@@ -842,13 +842,13 @@ export default {
 
 
                 if(val.operationType=="TestCase"){
-                    tempData.operationData = val.caseId;
+                    tempData.operationData = val.caseName;
                 }else if(val.operationType=="Methods"){
                     tempData.operationData = val.methodsName;
                 }
                 tempData.remarks=val.remarks;
             }
-            self.OperationStepsRowDrop();
+            this.OperationStepsRowDrop();
         },
         closeOperationStepsDialog(){
             this.dialog.operationSteps.dialogVisible =false;
@@ -865,7 +865,7 @@ export default {
             self.dialog.operationSteps.dialogPara={
                 dialogTitle:"新增操作",//初始化标题
                 isAddNew:true,//初始化是否新增\修改
-                caseId:self.BasicRomeData.caseId,
+                currentCaseId:self.BasicRomeData.caseId,
                 id:self.OperationSetRomeData.tableData.length+1,
                 pageNameList:pageNameList.join(',')
             }
@@ -883,7 +883,7 @@ export default {
             self.dialog.operationSteps.dialogPara={
                 dialogTitle:"编辑操作",//初始化标题
                 isAddNew:false,//初始化是否新增\修改
-                caseId:self.BasicRomeData.caseId,
+                currentCaseId:self.BasicRomeData.caseId,
                 id:row.id,
                 location:row.location,
                 operationType:row.operationType,

@@ -703,7 +703,12 @@ def load_case_data(request):
             obj_db_OperationSet = db_OperationSet.objects.filter(is_del=0, case_id=caseId).order_by('index').order_by('location')
             for i in obj_db_OperationSet:
                 if i.operationType == 'TestCase':
-                    operationData = i.caseId
+                    pageId,caseId = ast.literal_eval(i.caseId)
+                    obj_db_CaseBaseData = db_CaseBaseData.objects.filter(is_del=0,id=caseId)
+                    if obj_db_CaseBaseData.exists():
+                        operationData = obj_db_CaseBaseData[0].caseName
+                    else:
+                        operationData = None
                 elif i.operationType == 'Methods':
                     operationData = i.methodsName
                 elif i.operationType == 'Methods':
@@ -717,7 +722,7 @@ def load_case_data(request):
                                      'operationType': i.operationType,
                                      'methodsName': i.methodsName,
                                      'dataBaseId': i.dataBaseId,
-                                     'caseId': i.caseId,
+                                     'caseId': ast.literal_eval(i.caseId) if i.caseId else [],
                                      'remarks': i.remarks,
                                      'operationData': operationData,
                                      })
