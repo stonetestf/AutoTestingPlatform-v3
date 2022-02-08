@@ -143,7 +143,9 @@ class RequstOperation(cls_Logging, cls_Common):
                     bodyFile = {'name': item_body['key'], 'url': filePath}
                 else:
                     bodyDict[item_body['key']] = item_body['value']
-        elif bodyType in ('json', 'raw'):
+        elif bodyType == 'json':
+            bodyDict = json.loads(body)
+        elif bodyType == 'raw':
             pass
         else:
             bodyDict = {}
@@ -534,14 +536,14 @@ class RequstOperation(cls_Logging, cls_Common):
 
         try:
             if requestType == "GET":
-                r = requests.get(url, headers=headers, params=requestData, timeout=timeout)
+                r = requests.get(url, headers=headers, params=requestData, timeout=timeout,verify=False)
             elif requestType == "POST":
                 files = {requestFile['name']: open(requestFile['url'], 'rb')} if requestFile else {}
                 if bodyRequestType in ("form-data", "raw", 'none'):
-                    r = requests.post(url, headers=headers, data=requestData, files=files, timeout=timeout)
+                    r = requests.post(url, headers=headers, data=requestData, files=files, timeout=timeout,verify=False)
                 else:  # json
                     requestData = json.dumps(requestData)
-                    r = requests.post(url, headers=headers, params=requestData, timeout=timeout)
+                    r = requests.post(url, headers=headers, data=requestData, timeout=timeout,verify=False)
             else:
                 message = f"当前使用了未录入的请求参数:{requestType}"
                 results['state'] = False

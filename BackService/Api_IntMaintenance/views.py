@@ -1502,8 +1502,10 @@ def send_test_request(request):
             bodyRequestType = testSendData['ApiInfo']['request']['body']['requestSaveType']
             if bodyRequestType == 'form-data':
                 bodyData = testSendData['ApiInfo']['request']['body']['formData']
-            elif bodyRequestType in ('json', 'raw'):
+            elif bodyRequestType == 'raw':
                 bodyData = testSendData['ApiInfo']['request']['body']['raw']
+            elif bodyRequestType == 'json':
+                bodyData = testSendData['ApiInfo']['request']['body']['json']
             else:
                 bodyData = []
             requestUrlRadio = testSendData["ApiInfo"]["requestUrlRadio"]

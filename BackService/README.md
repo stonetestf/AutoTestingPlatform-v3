@@ -1,20 +1,52 @@
-# 部署说明
+# Centos7部署说明 
 ## 环境安装
 ### 环境注意
-    要使用dwebsocket时必须使用 Django==2.0.7 dwebsocket==0.4.2 这个版本不然会报错
-### 安装Python依赖
-    1. 安装python310环境
-    2. pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --no-dependencies
+    一定要使用Django==2.0.7 和 dwebsocket==0.4.2 这个版本 --- 不然会报错
+
+### 1.安装python37环境
+    1.将部署文件中的 Python-3.7.0.tar.xz 上传到服务器中
+    2.tar -xvJf  Python-3.7.0.tar.xz
+    3.编译安装
+        mkdir /usr/local/python3
+        cd Python-3.7.0
+        /configure --prefix=/usr/local/python3
+        make && make install
+    4.创建软连接
+        ln -s /usr/local/python3/bin/python3 /usr/local/bin/python3
+        ln -s /usr/local/python3/bin/pip3 /usr/local/bin/pip3
+    5.测试
+        python3 -V
+        pip3 -V
+
+### 2.安装Python依赖
+    1.进入后端项目根目录
+    2.pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --no-dependencies
+    3.如遇报错请看下面环境安装错误提示
+
+### 3.安装mysql数据库 如果已有可以跳过安装直接把SQL文件导入到库中
+    1.wget -i -c http://dev.mysql.com/get/mysql57-community-release-el7-10.noarch.rpm
+2.yum -y install mysql57-community-release-el7-10.noarch.rpm
+3.yum -y install mysql-community-server
 
 
-## 环境安装可能错误处理：
+### 4.修改配置文件
+
+
+## 环境安装错误处理：
 ### 安装mysqlcen错误处理
     yum install mysql-devel gcc gcc-devel python-devel
     pip3 install mysqlclient
 
+### Could not find a version that satisfies the requirement numpy==1.13.3
+    pip3 install --upgrade pip
 
 # 运行说明
-    /usr/local/nginx/sbin/nginx
+    1.运行nginx
+        /usr/local/nginx/sbin/nginx
+    
+    2.进入后端目录 运行
+        python3 -u manage.py runserver 0.0.0.0:9090
+    
 
 
 
