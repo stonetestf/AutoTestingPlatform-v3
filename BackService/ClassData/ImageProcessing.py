@@ -9,7 +9,7 @@ import base64
 
 from ClassData.Logger import Logging as cls_Logging
 
-
+# 图片转换
 class ImageProcessing(cls_Logging):
     def img_to_base64(self, imgPath):
         try:

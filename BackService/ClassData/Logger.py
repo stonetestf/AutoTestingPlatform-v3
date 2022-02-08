@@ -8,6 +8,7 @@ from login.models import UserTable as db_UserTable
 import json
 import colorlog
 
+
 # # region 配置日志
 # log_colors_config = {
 #     'DEBUG': 'cyan',
@@ -64,39 +65,39 @@ class Logging(object):
             if method == "GET":
                 params = args[0].META['QUERY_STRING']
                 logger.debug(f"[{func.__name__}]:\n"
-                            f"{method} {path}?{params} {SERVER_PROTOCOL} {res.status_code}\n"
-                            f"Host:{args[0].META['HTTP_HOST']}\n"
-                            f"Connection:{args[0].META['HTTP_CONNECTION']}\n"
-                            f"Accept:{args[0].META['HTTP_CONNECTION']}\n"
-                            f"Accept:{args[0].META['HTTP_ACCEPT']}\n"
-                            f"User-Agent:{args[0].META['HTTP_USER_AGENT']}\n"
-                            f"token:{HTTP_TOKEN}\n"
-                            f"Origin:{HTTP_ORIGIN}\n"
-                            f"Referer:{HTTP_REFERER}\n"
-                            f"Accept-Encoding:{args[0].META['HTTP_ACCEPT_ENCODING']}\n"
-                            f"Accept-Language:{HTTP_ACCEPT_LANGUAGE}\n"
-                            f"{text}\n"
-                            f"----------------------------------------------------------------------\n")
+                             f"{method} {path}?{params} {SERVER_PROTOCOL} {res.status_code}\n"
+                             f"Host:{args[0].META['HTTP_HOST']}\n"
+                             f"Connection:{args[0].META['HTTP_CONNECTION']}\n"
+                             f"Accept:{args[0].META['HTTP_CONNECTION']}\n"
+                             f"Accept:{args[0].META['HTTP_ACCEPT']}\n"
+                             f"User-Agent:{args[0].META['HTTP_USER_AGENT']}\n"
+                             f"token:{HTTP_TOKEN}\n"
+                             f"Origin:{HTTP_ORIGIN}\n"
+                             f"Referer:{HTTP_REFERER}\n"
+                             f"Accept-Encoding:{args[0].META['HTTP_ACCEPT_ENCODING']}\n"
+                             f"Accept-Language:{HTTP_ACCEPT_LANGUAGE}\n"
+                             f"{text}\n"
+                             f"----------------------------------------------------------------------\n")
             elif method == "POST":
                 dicts = {}
                 for i in args[0].POST:
                     dicts[i] = args[0].POST[i]
                 params = dicts
                 logger.debug(f"[{func.__name__}]:\n"
-                            f"{method} {path} {args[0].META['SERVER_PROTOCOL']} {res.status_code}\n"
-                            f"Host:{args[0].META['HTTP_HOST']}\n"
-                            f"Connection:{args[0].META['HTTP_CONNECTION']}\n"
-                            f"Accept:{args[0].META['HTTP_CONNECTION']}\n"
-                            f"Accept:{args[0].META['HTTP_ACCEPT']}\n"
-                            f"User-Agent:{args[0].META['HTTP_USER_AGENT']}\n"
-                            f"token:{HTTP_TOKEN}\n"
-                            f"Origin:{HTTP_ORIGIN}\n"
-                            f"Referer:{HTTP_REFERER}\n"
-                            f"Accept-Encoding:{args[0].META['HTTP_ACCEPT_ENCODING']}\n"
-                            f"Accept-Language:{HTTP_ACCEPT_LANGUAGE}\n"
-                            f"{params}\n"
-                            f"{text}\n"
-                            f"----------------------------------------------------------------------\n")
+                             f"{method} {path} {args[0].META['SERVER_PROTOCOL']} {res.status_code}\n"
+                             f"Host:{args[0].META['HTTP_HOST']}\n"
+                             f"Connection:{args[0].META['HTTP_CONNECTION']}\n"
+                             f"Accept:{args[0].META['HTTP_CONNECTION']}\n"
+                             f"Accept:{args[0].META['HTTP_ACCEPT']}\n"
+                             f"User-Agent:{args[0].META['HTTP_USER_AGENT']}\n"
+                             f"token:{HTTP_TOKEN}\n"
+                             f"Origin:{HTTP_ORIGIN}\n"
+                             f"Referer:{HTTP_REFERER}\n"
+                             f"Accept-Encoding:{args[0].META['HTTP_ACCEPT_ENCODING']}\n"
+                             f"Accept-Language:{HTTP_ACCEPT_LANGUAGE}\n"
+                             f"{params}\n"
+                             f"{text}\n"
+                             f"----------------------------------------------------------------------\n")
             return res
 
         return inner
@@ -166,7 +167,7 @@ class Logging(object):
             obj_db_UserTable = db_UserTable.objects.filter(userName="admin")
             save_db_OperateInfo = db_OperateInfo.objects.create(
                 sysType=sysType, triggerType=triggerType, level=level, remindType=remindType,
-                toPro=toPro, toPage=toPage, toFun=toFun, info=info,uid_id=obj_db_UserTable[0].id
+                toPro=toPro, toPage=toPage, toFun=toFun, info=info, uid_id=obj_db_UserTable[0].id
             )
         except BaseException as e:
             self.print_log('error', 'record_local_operation_info', str(e))
