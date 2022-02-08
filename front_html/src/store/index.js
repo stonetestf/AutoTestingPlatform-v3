@@ -11,17 +11,23 @@ const store = new Vuex.Store({
     userImage:'',
     version:'211122',
     
-    //测试
-    // userName:'',
-    // passWord:'',
+    //部署
+    userName:'',
+    passWord:'',
 
     //开发
-    userName:'admin',
-    passWord:'hbwj@123',
+    // userName:'admin',
+    // passWord:'hbwj@123',
     
-    BackService:'http://192.168.2.12:9090',
-    nginxUrl:'http://192.168.2.12:9092/',// 注意这里的端口不是网页的端口，是网络目录的地址
-    WebSock:'ws://192.168.2.12:9090',
+    // //调试配置
+    // BackService:'http://192.168.2.12:9090',
+    // nginxUrl:'http://192.168.2.12:9092/',// 注意这里的端口不是网页的端口，是网络目录的地址
+    // WebSock:'ws://192.168.2.12:9090',
+
+    //部署配置
+    BackService:'http://0.0.0.0:9090',
+    nginxUrl:'http://0.0.0.0:9092/',// 注意这里的端口不是网页的端口，是网络目录的地址
+    WebSock:'ws://0.0.0.0:9090',
   },
   mutations: {
     //vueX 不能直接赋值，必须在这里声明
