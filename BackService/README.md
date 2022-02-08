@@ -23,13 +23,29 @@
     2.pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --no-dependencies
     3.如遇报错请看下面环境安装错误提示
 
-### 3.安装mysql数据库 如果已有可以跳过安装直接把SQL文件导入到库中
-    1.wget -i -c http://dev.mysql.com/get/mysql57-community-release-el7-10.noarch.rpm
-2.yum -y install mysql57-community-release-el7-10.noarch.rpm
-3.yum -y install mysql-community-server
+### 3.安装docker
+    1.sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+    2.sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    3.sudo yum install docker-ce docker-ce-cli containerd.io
+    如果安装失败，需要进行升级包 yum -y update
+    4.开启docker服务 systemctl start docker
 
+### 4.创建docker内网
+    1.docker network create --driver bridge --subnet=172.16.12.0/16 --gateway=172.16.12.1 mynetwork
+
+### 安装 mysql 如有Mysql可不装
+    1.docker pull mysql:5.7.27
+    2. 生成容器
+    docker run -p 3306:3306 --restart=always --name mysql --network=mynetwork --ip 172.16.12.2 -v /home/docker/mysql/conf.d:/etc/mysql/conf.d -v /home/docker/mysql/my.cnf:/etc/my.cnf -v /home/docker/mysql/logs:/logs -v /home/docker/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=Hbwj@123 -d mysql:5.7.27
+    3.开放端口
+    firewall-cmd --zone=public --add-port=3306/tcp --permanent
+    firewall-cmd --reload
+    
+    用户密码默认为 root Hbwj@123
 
 ### 4.修改配置文件
+    1.进入后端根目录
+    2.vim文件 BackService/settings.py
 
 
 ## 环境安装错误处理：
