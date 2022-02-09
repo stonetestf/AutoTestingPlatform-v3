@@ -250,8 +250,10 @@ def load_data(request):
                         'state': True if item_body.state else False,
                     })
                 bodyData = body
-            elif obj_db_ApiBaseData[0].bodyRequestSaveType == 'raw':
+            elif obj_db_ApiBaseData[0].bodyRequestSaveType in ('raw','json'):
                 bodyData = obj_db_ApiBody[0].value
+            else:
+                pass
             # endregion
 
             apiInfo = {
