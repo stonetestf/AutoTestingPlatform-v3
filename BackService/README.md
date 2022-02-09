@@ -1,4 +1,12 @@
-# Centos7部署说明 
+# 运行说明
+    1.运行nginx
+        /usr/local/nginx/sbin/nginx
+    2.进入后端目录 运行
+    nohup python3 manage.py runserver 0.0.0.0:9090 > /home/lipenglo/workPro/ATP3/log/manage.log 2>&1 &
+    nohup celery -A BackService worker -l info > /home/lipenglo/workPro/ATP3/log/celery_worker.log 2>&1 &
+    nohup celery -A BackService beat -l info > /home/lipenglo/workPro/ATP3/log/celery_beat.log 2>&1 &
+
+# Centos7部署说明
 ## 环境安装
 ### 环境注意
     一定要使用Django==2.0.7 和 dwebsocket==0.4.2 这个版本 --- 不然会报错
@@ -73,7 +81,6 @@
     2.修改 CACHES下的LOCATION为redis宿主机的IP地址也就是docker安装在哪台服务器上的地址
     3.PASSWORD 默认可不改
 
-
 ### 8.启动后台
     # 开放端口
     firewall-cmd --zone=public --add-port=9090/tcp --permanent
@@ -94,23 +101,13 @@
     nohup celery -A BackService worker -l info > /home/lipenglo/workPro/ATP3/log/celery_worker.log 2>&1 &
     nohup celery -A BackService beat -l info > /home/lipenglo/workPro/ATP3/log/celery_beat.log 2>&1 &
 
-## 环境安装错误处理：
-### 安装mysqlcen错误处理
+# 环境安装错误处理：
+## 安装mysqlcen错误处理
     yum install mysql-devel gcc gcc-devel python-devel
     pip3 install mysqlclient
 
-### Could not find a version that satisfies the requirement numpy==1.13.3
+## Could not find a version that satisfies the requirement numpy==1.13.3
     pip3 install --upgrade pip
-
-# 运行说明
-    1.运行nginx
-        /usr/local/nginx/sbin/nginx
-    
-    2.进入后端目录 运行
-        python3 -u manage.py runserver 0.0.0.0:9090
-    
-
-
 
 # 平台说明
 ## 接口维护
