@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 from django.conf import settings
 
 # Create your db here.
@@ -571,7 +572,8 @@ class RequstOperation(cls_Logging, cls_Common):
                 else:
                     text = r.text
                 try:
-                    text = json.dumps(json.loads(text), ensure_ascii=False)
+                    # text = json.dumps(json.loads(text), ensure_ascii=False)
+                    text = ast.literal_eval(text)
                     if 'true' in text:
                         text = text.replace('true', 'True')
                     if 'false' in text:
