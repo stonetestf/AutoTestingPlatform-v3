@@ -1,4 +1,4 @@
-# 部署说明
+# 部署说明：本系统需要自己修改store/index.js文件中的 3个IP地址的配置后在npm run build  生成的dist文件夹下的文件请复制到 部署文件的manage下，复制前请删除原manage下的文件
 ## Centos 部署VUE
 ### 1.安装 node、npm模块
     # 下载
@@ -46,7 +46,7 @@
 
     7.访问站点 http://ip:9091
 
-    本系统需要自己修改store/index.js文件中的 3个IP地址的配置后在npm run build 
+    
 
 ### 安装Nginx
     https://www.jianshu.com/p/7a37e03b2107
