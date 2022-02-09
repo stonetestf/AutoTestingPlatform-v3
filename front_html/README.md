@@ -46,6 +46,8 @@
 
     7.访问站点 http://ip:9091
 
+    本系统需要自己修改store/index.js文件中的 3个IP地址的配置后在npm run build 
+
 ### 安装Nginx
     https://www.jianshu.com/p/7a37e03b2107
 

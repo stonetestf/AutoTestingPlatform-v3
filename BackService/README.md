@@ -33,7 +33,7 @@
 ### 4.创建docker内网
     1.docker network create --driver bridge --subnet=172.16.12.0/16 --gateway=172.16.12.1 mynetwork
 
-### 安装 mysql 如有Mysql可不装
+### 5.安装 mysql 如有Mysql可跳过安装
     1.docker pull mysql:5.7.27
     2. 生成容器
     docker run -p 3306:3306 --restart=always --name mysql --network=mynetwork --ip 172.16.12.2 -v /home/docker/mysql/conf.d:/etc/mysql/conf.d -v /home/docker/mysql/my.cnf:/etc/my.cnf -v /home/docker/mysql/logs:/logs -v /home/docker/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=Hbwj@123 -d mysql:5.7.27
@@ -42,12 +42,57 @@
     firewall-cmd --reload
     4.将环境目录下的sql导入到新增库中
     
-    用户密码默认为 root Hbwj@123
-
-### 4.修改配置文件
+    配置参数
     1.进入后端根目录
     2.vim文件 BackService/settings.py
+    3.修改 DATABASES参数:填写新增的数据库名称、IP、用户、密码。 用户密码默认为 root Hbwj@123
 
+### 6.安装RabbitMQ 如有可跳过安装，但需要进入管理台中配置
+    1.docker pull rabbitmq:3.6.6-management
+    2.生成容器
+    docker run -d --restart=always --name rabbitmq --network=mynetwork --ip 172.16.12.4 -p 5672:5672 -p 15672:15672 -v /home/rabbitmq/data:/var/lib/rabbitmq --hostname myRabbit -e RABBITMQ_DEFAULT_VHOST=/  -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=admin rabbitmq:3.6.6-management
+    3.开发端口
+    firewall-cmd --zone=public --add-port=15672/tcp --permanent
+    firewall-cmd --reload
+    4.访问 http://Server-IP:15672 用户密码都是admin
+
+    配置参数：
+    1.点击Queues
+    2.点击Add a new queue
+    3.Name中填写 celery 后点击添加
+    4.回到后端根目录 vim文件 BackService/settings.py
+    5.修改BROKER_URL amqp://用户名:密码@MQ的IP地址:5672
+
+### 7.安装Redis 如已安装可跳过安装，但需要配置参数
+    1.docker pull redis:3.2.12
+    2.生成容器
+    docker run -p 6379:6379 --restart=always --name redis --network=mynetwork --ip 172.16.12.3 -v /home/redis/redis.conf:/etc/redis/redis.conf -v /home/redis/data:/data -d redis:3.2.12 redis-server /etc/redis/redis.conf --appendonly yes --requirepass "Hbwj@123"
+    
+    配置参数：
+    1.回到后端根目录 vim文件 BackService/settings.py
+    2.修改 CACHES下的LOCATION为redis宿主机的IP地址也就是docker安装在哪台服务器上的地址
+    3.PASSWORD 默认可不改
+
+
+### 8.启动后台
+    # 开放端口
+    firewall-cmd --zone=public --add-port=9090/tcp --permanent
+    firewall-cmd --reload
+
+    分别运行以下命令运行成功后用，使用 ctrl+c 可返回 
+    1.进入后台项目根目录
+    python3 -u manage.py runserver 0.0.0.0:9090
+    celery -A BackService worker -l info
+    celery -A BackService beat -l info
+    
+    当提示未找到celery命令时，执行下面2行命令:
+    export PATH=/usr/local/python3/bin:$PATH
+    echo 'export PATH=/usr/local/python3/bin:$PATH' >> /etc/profile.d/python3.sh
+
+    2.如果3个都没有问题时就可以使用以下命令后台启动：LOG地址可以根据自己修改保存
+    nohup python3 manage.py runserver 0.0.0.0:9090 > /home/lipenglo/workPro/ATP3/log/manage.log 2>&1 &
+    nohup celery -A BackService worker -l info > /home/lipenglo/workPro/ATP3/log/celery_worker.log 2>&1 &
+    nohup celery -A BackService beat -l info > /home/lipenglo/workPro/ATP3/log/celery_beat.log 2>&1 &
 
 ## 环境安装错误处理：
 ### 安装mysqlcen错误处理
