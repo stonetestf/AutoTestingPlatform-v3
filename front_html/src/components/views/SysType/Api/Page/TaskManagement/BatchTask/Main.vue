@@ -442,6 +442,7 @@ export default {
                         name: "Api_Report",
                         query: {
                             testReportId:testReportId,
+                            reportType:'BATCH'
                         }
                     });
                     window.open(routeUrl.href, '_blank');

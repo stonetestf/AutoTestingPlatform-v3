@@ -301,7 +301,7 @@ export default {
                 name: "Api_Report",
                 query: {
                     testReportId:row.id,
-                    // reportType:row.reportType,
+                    reportType:row.reportType,
                 }
             });
             window.open(routeUrl.href, '_blank');

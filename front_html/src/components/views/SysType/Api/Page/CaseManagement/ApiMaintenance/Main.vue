@@ -529,6 +529,7 @@ export default {
                         name: "Api_Report",
                         query: {
                             testReportId:testReportId,
+                            reportType:'API'
                         }
                     });
                     window.open(routeUrl.href, '_blank');

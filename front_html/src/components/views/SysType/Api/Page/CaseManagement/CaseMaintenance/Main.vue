@@ -633,6 +633,7 @@ export default {
                         name: "Api_Report",
                         query: {
                             testReportId:testReportId,
+                            reportType:'CASE'
                         }
                     });
                     window.open(routeUrl.href, '_blank');
