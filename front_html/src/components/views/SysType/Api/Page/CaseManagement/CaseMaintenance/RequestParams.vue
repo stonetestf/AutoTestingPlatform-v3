@@ -1537,6 +1537,25 @@ export default {
         //bodyRomeDta
         changeBodyRequestType(val){
             PrintConsole(val);
+            let self = this;
+            if(val=='json'){
+                let tempData = self.RomeData.headersRomeData.tableData.find(item=>
+                    item.key == 'Content-Type'
+                );
+                if(tempData){
+                    PrintConsole(tempData);
+                }else{
+                    let obj = {};
+                    obj.index = self.RomeData.headersRomeData.index;
+                    obj.state = true;
+                    obj.key = 'Content-Type';
+                    obj.value='application/json';
+                    obj.remarks='';
+
+                    self.RomeData.headersRomeData.tableData.push(obj);
+                    self.RomeData.headersRomeData.index+=1;
+                }
+            }
         },
         CreateNewBodyData(){
             let self = this;

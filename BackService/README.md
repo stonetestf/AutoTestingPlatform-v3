@@ -40,6 +40,7 @@
     3.开放端口
     firewall-cmd --zone=public --add-port=3306/tcp --permanent
     firewall-cmd --reload
+    4.将环境目录下的sql导入到新增库中
     
     用户密码默认为 root Hbwj@123
 

@@ -9,7 +9,7 @@ const store = new Vuex.Store({
   state: {
     isDebug:true,
     userImage:'',
-    version:'211122',
+    version:'220209',
     
     //部署
     // userName:'',

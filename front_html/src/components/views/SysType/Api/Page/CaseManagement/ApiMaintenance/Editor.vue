@@ -1617,6 +1617,25 @@ export default {
         //bodyRomeDta
         changeBodyRequestType(val){
             PrintConsole(val);
+            let self = this;
+            if(val=='json'){
+                let tempData = self.EditApiRomeData.headersRomeData.tableData.find(item=>
+                    item.key == 'Content-Type'
+                );
+                if(tempData){
+                    PrintConsole(tempData);
+                }else{
+                    let obj = {};
+                    obj.index = self.EditApiRomeData.headersRomeData.index;
+                    obj.state = true;
+                    obj.key = 'Content-Type';
+                    obj.value='application/json';
+                    obj.remarks='';
+
+                    self.EditApiRomeData.headersRomeData.tableData.push(obj);
+                    self.EditApiRomeData.headersRomeData.index+=1;
+                }
+            }
         },
         CreateNewBodyData(){
             let self = this;
